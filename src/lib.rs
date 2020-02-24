@@ -7,9 +7,9 @@ mod macros;
 use aftereffects_sys as ae_sys;
 use std::{mem, ptr};
 
-// This is confusing but For some structs, Ae expects the caller to
+// This is confusing: for some structs, Ae expects the caller to
 // manage the memory and for others it doesn't (the caller only
-// deals with a pointer that only gets dereferenced for actually
+// deals with a pointer that gets dereferenced for actually
 // calling into the suite). In this case the struct ends
 // with a 'H' (for handle).
 // When the struct misses the trailing 'H', Ae does expect us to
@@ -20,7 +20,7 @@ pub struct PicaBasicSuiteHandle {
 }
 
 impl PicaBasicSuiteHandle {
-    pub fn new(
+    pub fn from_raw(
         pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
     ) -> PicaBasicSuiteHandle {
         /*if pica_basic_suite_ptr == ptr::null() {
@@ -48,6 +48,55 @@ pub trait Suite: Drop {
     ) -> Self;
 }
 
+pub mod pr {
+    use aftereffects_sys as ae_sys;
+
+    #[derive(Copy, Clone, Debug, Hash)]
+    pub struct InDataHandle {
+        in_data_ptr: *const ae_sys::PR_InData,
+    }
+
+    impl InDataHandle {
+        pub fn from_raw(
+            in_data_ptr: *const ae_sys::PR_InData,
+        ) -> InDataHandle {
+            InDataHandle { in_data_ptr }
+        }
+
+        pub fn as_ptr(&self) -> *const ae_sys::PR_InData {
+            self.in_data_ptr
+        }
+
+        pub fn pica_basic_handle(&self) -> crate::PicaBasicSuiteHandle {
+            crate::PicaBasicSuiteHandle::from_raw(unsafe {
+                (*self.in_data_ptr).pica_basicP
+            })
+        }
+
+        pub fn plugin_id(&self) -> i32 {
+            unsafe { (*self.in_data_ptr).aegp_plug_id }
+        }
+
+        pub fn reference_context_ptr(
+            &self,
+        ) -> Box<std::os::raw::c_void> {
+            unsafe {
+                Box::<std::os::raw::c_void>::from_raw(
+                    (*self.in_data_ptr).aegp_refconPV,
+                )
+            }
+        }
+    }
+
+    #[derive(Copy, Clone, Debug, Hash)]
+    pub struct RenderContextHandle {
+        pub render_context_ptr: ae_sys::PR_RenderContextH,
+    }
+}
+
+// FIXME: combine handles and suite traits for
+// all below.
+
 pub mod aegp {
     use crate::{PFEffectWorld, Suite};
     use aftereffects_sys as ae_sys;
@@ -55,6 +104,198 @@ pub mod aegp {
     #[derive(Copy, Clone, Debug, Hash)]
     pub struct WorldHandle {
         world_ptr: ae_sys::AEGP_WorldH,
+    }
+
+    pub struct Scene3D {
+        // We need to store this pointer to be able to
+        // drop resources at the end of our lifetime
+        pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
+
+        suite_ptr: *const ae_sys::AEGP_Scene3DSuite2,
+
+        scene3d_ptr: *mut ae_sys::AEGP_Scene3D,
+        texture_context_ptr: *mut ae_sys::AEGP_Scene3DTextureContext,
+
+        in_data_ptr: *const ae_sys::PR_InData,
+        render_context_ptr: ae_sys::PR_RenderContextH,
+    }
+
+    impl Scene3D {
+        pub fn new(
+            pica_basic_suite_handle: &crate::PicaBasicSuiteHandle,
+
+            in_data_handle: crate::pr::InDataHandle,
+            render_context: crate::pr::RenderContextHandle,
+            global_texture_cache_handle: crate::aegp::Scene3DTextureCacheHandle,
+        ) -> Scene3D {
+            let suite_ptr = ae_acquire_suite_ptr!(
+                pica_basic_suite_handle.as_ptr(),
+                AEGP_Scene3DSuite2,
+                kAEGPScene3DSuite,
+                kAEGPScene3DSuiteVersion2
+            )
+            .expect(concat!(
+                "Could not aquire ",
+                stringify!(AEGP_Scene3DSuite2),
+                "."
+            ));
+
+            let mut scene3d_ptr: *mut ae_sys::AEGP_Scene3D =
+                std::ptr::null_mut();
+
+            ae_call_suite_fn!(
+                suite_ptr,
+                AEGP_Scene3DAlloc,
+                &mut scene3d_ptr,
+            );
+
+            let mut texture_context_ptr: *mut ae_sys::AEGP_Scene3DTextureContext = std::ptr::null_mut();
+
+            ae_call_suite_fn!(
+                suite_ptr,
+                AEGP_Scene3DTextureContextAlloc,
+                in_data_handle.as_ptr(),
+                render_context.render_context_ptr,
+                global_texture_cache_handle.texture_cache_ptr,
+                false as u8, // unlock all
+                &mut texture_context_ptr
+            );
+
+            Scene3D {
+                pica_basic_suite_ptr: pica_basic_suite_handle.as_ptr(),
+                suite_ptr: suite_ptr,
+                scene3d_ptr: scene3d_ptr,
+                texture_context_ptr: texture_context_ptr,
+                in_data_ptr: in_data_handle.as_ptr(),
+                render_context_ptr: render_context.render_context_ptr,
+            }
+        }
+
+        pub fn get_scene3d_ptr(&self) -> *mut ae_sys::AEGP_Scene3D {
+            self.scene3d_ptr
+        }
+
+        pub fn get_scene3d_suite_ptr(
+            &self,
+        ) -> *const ae_sys::AEGP_Scene3DSuite2 {
+            self.suite_ptr
+        }
+
+        pub fn setup_motion_blur_samples(
+            &self,
+            motion_samples: usize,
+            sample_method: ae_sys::Scene3DMotionSampleMethod,
+        ) {
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_Scene3D_SetupMotionBlurSamples,
+                self.in_data_ptr,
+                self.render_context_ptr,
+                self.scene3d_ptr, /* the empty scene,
+                                   * modified */
+                motion_samples as i32, // how many motion samples
+                sample_method
+            );
+        }
+
+        pub fn build(
+            &self,
+            progress_abort_callback_ptr: *mut ae_sys::AEGP_Scene3DProgressAbort,
+        ) {
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_Scene3D_Build,
+                self.in_data_ptr,
+                self.render_context_ptr,
+                self.texture_context_ptr,
+                progress_abort_callback_ptr,
+                self.scene3d_ptr
+            );
+        }
+
+        pub fn scene_num_lights(&self) -> usize {
+            let mut num_lights: i32 = 0;
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_Scene3DSceneNumLights,
+                self.scene3d_ptr,
+                &mut num_lights
+            );
+
+            num_lights as usize
+        }
+
+        // FIXME: make this neat, see
+        // https://blog.seantheprogrammer.com/neat-rust-tricks-passing-rust-closures-to-c
+        pub fn node_traverser(
+            &self,
+            node_visitor_func: ae_sys::Scene3DNodeVisitorFunc,
+            reference_context: *mut std::os::raw::c_void, /* FIXME: can we use a Box
+                                                           * here? Box<*
+                                                           * mut
+                                                           * ::std::os::raw::c_void> */
+            flags: ae_sys::Scene3DTraverseFlags,
+        ) {
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_Scene3DNodeTraverser,
+                self.scene3d_ptr,
+                node_visitor_func,
+                reference_context,
+                flags
+            );
+            //.expect( "3Delight/Ae – ae_scene_to_final_frame(): Could
+            //.expect( not traverse the scene." );
+        }
+    }
+
+    impl Drop for Scene3D {
+        fn drop(&mut self) {
+            // dispose texture contex
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_Scene3DTextureContextDispose,
+                self.texture_context_ptr
+            );
+
+            // dispose scene
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_Scene3DDispose,
+                self.scene3d_ptr
+            );
+
+            // release suite
+            ae_release_suite_ptr!(
+                self.pica_basic_suite_ptr,
+                kAEGPScene3DSuite,
+                kAEGPScene3DSuiteVersion2
+            );
+        }
+    }
+
+    pub struct Scene3DTextureCacheHandle {
+        texture_cache_ptr: *mut ae_sys::AEGP_Scene3DTextureCache,
+    }
+
+    impl Scene3DTextureCacheHandle {
+        pub fn new(scene3d: Scene3D) -> Scene3DTextureCacheHandle {
+            let mut texture_cache_ptr: *mut ae_sys::AEGP_Scene3DTextureCache = std::ptr::null_mut();
+
+            ae_call_suite_fn!(
+                scene3d.suite_ptr,
+                AEGP_Scene3DTextureCacheAlloc,
+                &mut texture_cache_ptr,
+            );
+
+            Scene3DTextureCacheHandle { texture_cache_ptr }
+        }
+
+        pub fn from_raw(
+            texture_cache_ptr: *mut ae_sys::AEGP_Scene3DTextureCache,
+        ) -> Scene3DTextureCacheHandle {
+            Scene3DTextureCacheHandle { texture_cache_ptr }
+        }
     }
 
     #[derive(Copy, Clone, Debug, Hash)]
@@ -95,7 +336,6 @@ pub mod aegp {
             let mut pf_effect_world =
                 Box::<ae_sys::PF_EffectWorld>::new_uninit();
 
-            //let world_suite_ptr = self.suite_ptr;
             ae_call_suite_fn!(
                 self.suite_ptr,
                 AEGP_FillOutPFEffectWorld,
@@ -326,7 +566,7 @@ pub mod aegp {
             );
 
             /*unsafe {
-                (num_vertex.assume_init(), num_face.assume_init())
+                (*num_vertex.assume_init(), *num_face.assume_init())
             }*/
             (num_vertex, num_face)
         }

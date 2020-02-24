@@ -97,6 +97,21 @@ macro_rules! ae_aquire_suite_and_call_suite_fn {
     }};
 }
 
+macro_rules! define_handle_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:expr, $data_name:ident) => {
+        #[derive(Clone, Debug, Hash)]
+        pub struct wrapper_pretty_name {
+            $data_name: $data_type;
+        }
+
+        impl wrapper_pretty_name {
+            pub as_ptr() -> $data_type:expr {
+                $data_name
+            }
+        }
+    };
+}
+
 macro_rules! define_suite{
     ($suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
         #[allow(deprecated)]
