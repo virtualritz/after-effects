@@ -1,11 +1,44 @@
+// FIXME: make ALL the functions below return Result-wrapped values
+
 #![feature(new_uninit)]
-#[macro_use]
-mod macros;
+
+//#[macro_use]
+//extern crate casey;
 
 //use std::mem; //::MaybeUninit;
 
 use aftereffects_sys as ae_sys;
 use std::{mem, ptr};
+
+use num_enum::UnsafeFromPrimitive;
+
+#[derive(Debug, Eq, PartialEq, UnsafeFromPrimitive)]
+#[repr(i32)]
+pub enum Error {
+    Generic = ae_sys::A_Err_GENERIC as i32,
+    Struct = ae_sys::A_Err_STRUCT as i32,
+    Parameter = ae_sys::A_Err_PARAMETER as i32,
+    Alloc = ae_sys::A_Err_ALLOC as i32,
+    // Some calls can only be used on UI (Main) or Render threads.
+    // Also, calls back to Ae can only be made from the same thread Ae
+    // called you on.
+    WrongThread = ae_sys::A_Err_WRONG_THREAD as i32,
+    // An attempt was made to write to a read only copy of an AE
+    // project. Project changes must originate in the UI/Main thread.
+    ConstProjectModification =
+        ae_sys::A_Err_CONST_PROJECT_MODIFICATION as i32,
+    // Acquire suite failed on a required suite.
+    MissingSuite = ae_sys::A_Err_MISSING_SUITE as i32,
+}
+
+#[macro_use]
+mod macros;
+
+#[repr(C)]
+pub struct Time {
+    value: ae_sys::A_long,
+    scale: ae_sys::A_u_long,
+}
 
 // This is confusing: for some structs, Ae expects the caller to
 // manage the memory and for others it doesn't (the caller only
@@ -36,16 +69,21 @@ impl PicaBasicSuiteHandle {
     }
 }
 
-pub struct PFEffectWorld {
-    pf_effect_world: Box<ae_sys::PF_EffectWorld>,
-}
-
 pub trait Suite: Drop {
     fn new(pica_basic_suite: &crate::PicaBasicSuiteHandle) -> Self;
 
     fn from_raw(
         pica_basic_suite_raw_ptr: *const crate::ae_sys::SPBasicSuite,
     ) -> Self;
+}
+
+pub mod pf {
+    use aftereffects_sys as ae_sys;
+
+    // FIXME: wrap this nicely
+    pub struct EffectWorld {
+        pub effect_world: Box<ae_sys::PF_EffectWorld>,
+    }
 }
 
 pub mod pr {
@@ -88,22 +126,184 @@ pub mod pr {
         }
     }
 
+    define_handle_wrapper!(
+        RenderContextHandle,
+        PR_RenderContextH,
+        render_context_ptr
+    );
+
+    /*
+    // FIXME: wrap this nicely
     #[derive(Copy, Clone, Debug, Hash)]
     pub struct RenderContextHandle {
         pub render_context_ptr: ae_sys::PR_RenderContextH,
     }
+
+    impl RenderContextHandle {
+        fn as_ptr(&self): ae_sys::PR_RenderContextH {
+            render_context_ptr
+        }
+    }*/
 }
 
 // FIXME: combine handles and suite traits for
 // all below.
 
 pub mod aegp {
-    use crate::{PFEffectWorld, Suite};
+    use crate::{pf::EffectWorld, Suite};
     use aftereffects_sys as ae_sys;
 
+    // FIXME: wrap this nicely or combine WorldHandle & WorldSuite into
+    // single World
     #[derive(Copy, Clone, Debug, Hash)]
     pub struct WorldHandle {
         world_ptr: ae_sys::AEGP_WorldH,
+    }
+
+    define_suite!(
+        WorldSuite,
+        AEGP_WorldSuite3,
+        kAEGPWorldSuite,
+        kAEGPWorldSuiteVersion3
+    );
+
+    impl WorldSuite {
+        pub fn fill_out_pf_effect_world(
+            &self,
+            world: &WorldHandle,
+        ) -> Result<EffectWorld, crate::Error> {
+            let mut effect_world =
+                Box::<ae_sys::PF_EffectWorld>::new_uninit();
+
+            match ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_FillOutPFEffectWorld,
+                world.world_ptr,
+                effect_world.as_mut_ptr()
+            ) {
+                Ok(()) => Ok(EffectWorld {
+                    effect_world: unsafe { effect_world.assume_init() },
+                }),
+                Err(e) => Err(e),
+            }
+        }
+    }
+
+    #[derive(Copy, Clone, Debug, Hash)]
+    pub struct StreamReferenceHandle {
+        stream_reference_ptr: ae_sys::AEGP_StreamRefH,
+    }
+
+    /*
+    #[derive(Copy, Clone, Debug, Hash)]
+    pub struct LayerHandle {
+        layer_ptr: ae_sys::AEGP_LayerH,
+    }
+
+    impl LayerHandle {
+        fn from_raw( layer_ptr: ae_sys::AEGP_LayerH ) -> LayerHandle {
+            LayerHandle {
+                layer_ptr
+            }
+        }
+        fn as_ptr(&self) -> ae_sys::AEGP_LayerH {
+            layer_ptr
+        }
+    }*/
+
+    define_handle_wrapper!(LayerHandle, AEGP_LayerH, layer_ptr);
+
+    #[derive(Clone)]
+    pub struct StreamValue {
+        pub stream_value: Box<ae_sys::AEGP_StreamValue2>,
+    }
+
+    define_suite!(
+        StreamSuite,
+        AEGP_StreamSuite4,
+        kAEGPStreamSuite,
+        kAEGPStreamSuiteVersion4
+    );
+
+    impl StreamSuite {
+        pub fn get_new_layer_stream(
+            &self,
+            plugin_id: u32,
+            layer_handle: &LayerHandle,
+            stream_name: ae_sys::AEGP_LayerStream, // FIXME
+        ) -> Result<StreamReferenceHandle, crate::Error> {
+            let mut stream_reference_ptr: ae_sys::AEGP_StreamRefH =
+                std::ptr::null_mut();
+
+            match ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_GetNewLayerStream,
+                plugin_id as i32,
+                layer_handle.layer_ptr,
+                stream_name,
+                &mut stream_reference_ptr
+            ) {
+                Ok(()) => Ok(StreamReferenceHandle {
+                    stream_reference_ptr,
+                }),
+                Err(e) => Err(e),
+            }
+        }
+
+        pub fn get_new_stream_value(
+            &self,
+            plugin_id: u32,
+            stream_reference_handle: &StreamReferenceHandle,
+            time_mode: ae_sys::AEGP_LTimeMode, // FIXME
+            time: &ae_sys::A_Time,             // FIXME
+            sample_stream_pre_expression: bool,
+        ) -> StreamValue {
+            let mut stream_value =
+                Box::<ae_sys::AEGP_StreamValue2>::new_uninit();
+
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_GetNewStreamValue,
+                plugin_id as i32,
+                stream_reference_handle.stream_reference_ptr,
+                time_mode,
+                &(*time),
+                sample_stream_pre_expression as u8,
+                stream_value.as_mut_ptr(),
+            );
+
+            StreamValue {
+                stream_value: unsafe { stream_value.assume_init() },
+            }
+        }
+    }
+
+    define_suite!(
+        CameraSuite,
+        AEGP_CameraSuite2,
+        kAEGPCameraSuite,
+        kAEGPCameraSuiteVersion2
+    );
+
+    impl CameraSuite {
+        fn get_camera(
+            &self,
+            render_context_handle: &crate::pr::RenderContextHandle,
+            time: &crate::Time,
+        ) -> LayerHandle {
+            let mut layer_ptr: ae_sys::AEGP_LayerH =
+                std::ptr::null_mut();
+
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                AEGP_GetCamera,
+                render_context_handle.as_ptr(),
+                &(*time) as *const _ as *const ae_sys::A_Time,
+                &mut layer_ptr,
+            );
+
+            LayerHandle::from_raw(layer_ptr)
+        }
     }
 
     pub struct Scene3D {
@@ -127,18 +327,13 @@ pub mod aegp {
             in_data_handle: crate::pr::InDataHandle,
             render_context: crate::pr::RenderContextHandle,
             global_texture_cache_handle: crate::aegp::Scene3DTextureCacheHandle,
-        ) -> Scene3D {
+        ) -> Result<Scene3D, crate::Error> {
             let suite_ptr = ae_acquire_suite_ptr!(
                 pica_basic_suite_handle.as_ptr(),
                 AEGP_Scene3DSuite2,
                 kAEGPScene3DSuite,
                 kAEGPScene3DSuiteVersion2
-            )
-            .expect(concat!(
-                "Could not aquire ",
-                stringify!(AEGP_Scene3DSuite2),
-                "."
-            ));
+            )?;
 
             let mut scene3d_ptr: *mut ae_sys::AEGP_Scene3D =
                 std::ptr::null_mut();
@@ -147,27 +342,29 @@ pub mod aegp {
                 suite_ptr,
                 AEGP_Scene3DAlloc,
                 &mut scene3d_ptr,
-            );
+            )?;
 
             let mut texture_context_ptr: *mut ae_sys::AEGP_Scene3DTextureContext = std::ptr::null_mut();
 
-            ae_call_suite_fn!(
+            match ae_call_suite_fn!(
                 suite_ptr,
                 AEGP_Scene3DTextureContextAlloc,
                 in_data_handle.as_ptr(),
-                render_context.render_context_ptr,
+                render_context.as_ptr(),
                 global_texture_cache_handle.texture_cache_ptr,
                 false as u8, // unlock all
                 &mut texture_context_ptr
-            );
-
-            Scene3D {
-                pica_basic_suite_ptr: pica_basic_suite_handle.as_ptr(),
-                suite_ptr: suite_ptr,
-                scene3d_ptr: scene3d_ptr,
-                texture_context_ptr: texture_context_ptr,
-                in_data_ptr: in_data_handle.as_ptr(),
-                render_context_ptr: render_context.render_context_ptr,
+            ) {
+                Ok(()) => Ok(Scene3D {
+                    pica_basic_suite_ptr: pica_basic_suite_handle
+                        .as_ptr(),
+                    suite_ptr: suite_ptr,
+                    scene3d_ptr: scene3d_ptr,
+                    texture_context_ptr: texture_context_ptr,
+                    in_data_ptr: in_data_handle.as_ptr(),
+                    render_context_ptr: render_context.as_ptr(),
+                }),
+                Err(e) => Err(e),
             }
         }
 
@@ -185,7 +382,7 @@ pub mod aegp {
             &self,
             motion_samples: usize,
             sample_method: ae_sys::Scene3DMotionSampleMethod,
-        ) {
+        ) -> Result<(), crate::Error> {
             ae_call_suite_fn!(
                 self.suite_ptr,
                 AEGP_Scene3D_SetupMotionBlurSamples,
@@ -195,13 +392,13 @@ pub mod aegp {
                                    * modified */
                 motion_samples as i32, // how many motion samples
                 sample_method
-            );
+            )
         }
 
         pub fn build(
             &self,
             progress_abort_callback_ptr: *mut ae_sys::AEGP_Scene3DProgressAbort,
-        ) {
+        ) -> Result<(), crate::Error> {
             ae_call_suite_fn!(
                 self.suite_ptr,
                 AEGP_Scene3D_Build,
@@ -210,19 +407,20 @@ pub mod aegp {
                 self.texture_context_ptr,
                 progress_abort_callback_ptr,
                 self.scene3d_ptr
-            );
+            )
         }
 
-        pub fn scene_num_lights(&self) -> usize {
+        pub fn scene_num_lights(&self) -> Result<usize, crate::Error> {
             let mut num_lights: i32 = 0;
-            ae_call_suite_fn!(
+            match ae_call_suite_fn!(
                 self.suite_ptr,
                 AEGP_Scene3DSceneNumLights,
                 self.scene3d_ptr,
                 &mut num_lights
-            );
-
-            num_lights as usize
+            ) {
+                Ok(()) => Ok(num_lights as usize),
+                Err(e) => Err(e),
+            }
         }
 
         // FIXME: make this neat, see
@@ -235,7 +433,7 @@ pub mod aegp {
                                                            * mut
                                                            * ::std::os::raw::c_void> */
             flags: ae_sys::Scene3DTraverseFlags,
-        ) {
+        ) -> Result<(), crate::Error> {
             ae_call_suite_fn!(
                 self.suite_ptr,
                 AEGP_Scene3DNodeTraverser,
@@ -243,7 +441,7 @@ pub mod aegp {
                 node_visitor_func,
                 reference_context,
                 flags
-            );
+            )
             //.expect( "3Delight/Ae – ae_scene_to_final_frame(): Could
             //.expect( not traverse the scene." );
         }
@@ -319,35 +517,6 @@ pub mod aegp {
     #[derive(Copy, Clone, Debug, Hash)]
     pub struct Scene3DMeshHandle {
         mesh_ptr: *mut ae_sys::AEGP_Scene3DMesh,
-    }
-
-    define_suite!(
-        WorldSuite,
-        AEGP_WorldSuite3,
-        kAEGPWorldSuite,
-        kAEGPWorldSuiteVersion3
-    );
-
-    impl WorldSuite {
-        pub fn fill_out_pf_effect_world(
-            &self,
-            world: &WorldHandle,
-        ) -> PFEffectWorld {
-            let mut pf_effect_world =
-                Box::<ae_sys::PF_EffectWorld>::new_uninit();
-
-            ae_call_suite_fn!(
-                self.suite_ptr,
-                AEGP_FillOutPFEffectWorld,
-                world.world_ptr,
-                pf_effect_world.as_mut_ptr()
-            );
-            unsafe {
-                PFEffectWorld {
-                    pf_effect_world: pf_effect_world.assume_init(),
-                }
-            }
-        }
     }
 
     define_suite!(

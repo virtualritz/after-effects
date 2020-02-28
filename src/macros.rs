@@ -1,3 +1,5 @@
+#![feature(proc_macro_hygiene)]
+
 use std::mem::MaybeUninit;
 
 macro_rules! ae_acquire_suite_ptr {
@@ -22,11 +24,7 @@ macro_rules! ae_acquire_suite_ptr {
             //suite_ptr
 
             if std::ptr::null() == suite_ptr {
-                Err(concat!(
-                    "Could not aquite pointer to ",
-                    stringify!($type),
-                    " suite."
-                ))
+                Err(crate::Error::MissingSuite)
             } else {
                 Ok(suite_ptr)
             }
@@ -58,13 +56,12 @@ macro_rules! ae_get_suite_fn {
 
 macro_rules! ae_call_suite_fn {
     ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
-        unsafe {
-            let err = ae_get_suite_fn!(($suite_ptr), $function)($($arg)*);
-            if err == 0 {
-                Ok(())
-            } else {
-                Err(err)
-            }
+        use std::convert::TryInto;
+        let err = unsafe { ae_get_suite_fn!(($suite_ptr), $function)($($arg)*) };
+
+        match err {
+            0 => Ok(()),
+            _ => Err( unsafe { crate::Error::from_unchecked(err) } )
         }
     }};
 }
@@ -90,23 +87,51 @@ macro_rules! ae_aquire_suite_and_call_suite_fn {
             Ok(suite_ptr) =>
                 ae_call_suite_fn!(suite_ptr, $function, $($arg)*),
             Err(err_str) => {
-                eprintln!("{}", err_str);
-                Err(0)
+                Err(err_str)
             },
         }
     }};
 }
 
-macro_rules! define_handle_wrapper {
-    ($wrapper_pretty_name:ident, $data_type:expr, $data_name:ident) => {
+/*
+macro_rules! define_handle_wrapper_v2 {
+    ($wrapper_pretty_name:ident, $data_type:ident,) => {
+
         #[derive(Clone, Debug, Hash)]
-        pub struct wrapper_pretty_name {
-            $data_name: $data_type;
+        pub struct $wrapper_pretty_name {
+            snake!($wrapper_pretty_name): ae_sys::$data_type,
         }
 
-        impl wrapper_pretty_name {
-            pub as_ptr() -> $data_type:expr {
-                $data_name
+        impl $wrapper_pretty_name {
+            pub fn from_raw(ptr: ae_sys::$data_type) -> $wrapper_pretty_name {
+                $wrapper_pretty_name {
+                    snake!($wrapper_pretty_name): ptr,
+                }
+            }
+
+            pub fn as_ptr(&self) -> ae_sys::$data_type {
+                &self.snake!($wrapper_pretty_name)
+            }
+        }
+    };
+}*/
+
+macro_rules! define_handle_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident) => {
+        #[derive(Copy, Clone, Debug, Hash)]
+        pub struct $wrapper_pretty_name {
+            $data_name: ae_sys::$data_type,
+        }
+
+        impl $wrapper_pretty_name {
+            pub fn from_raw(
+                $data_name: ae_sys::$data_type,
+            ) -> $wrapper_pretty_name {
+                $wrapper_pretty_name { $data_name }
+            }
+
+            pub fn as_ptr(&self) -> ae_sys::$data_type {
+                self.$data_name
             }
         }
     };
