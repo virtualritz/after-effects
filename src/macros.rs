@@ -25,7 +25,7 @@ macro_rules! ae_acquire_suite_ptr {
             //suite_ptr
 
             if std::ptr::null() == suite_ptr {
-                Err(crate::Error::MissingSuite)
+                Err($crate::Error::MissingSuite)
             } else {
                 Ok(suite_ptr)
             }
@@ -65,7 +65,7 @@ macro_rules! ae_call_suite_fn {
 
         match err {
             0 => Ok(()),
-            _ => Err( unsafe { crate::Error::from_unchecked(err) } )
+            _ => Err( unsafe { $crate::Error::from_unchecked(err) } )
         }
     }};
 }
@@ -74,6 +74,7 @@ macro_rules! ae_call_suite_fn {
 // Some new functions in AE_Scene3D_Private.h abandon suite API design
 // practices and return a value instead of an error. E.g. the
 // AEGP_*BufferElementSize() ones.
+#[macro_export]
 macro_rules! ae_call_suite_fn_no_err {
     ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
         unsafe {
@@ -88,7 +89,7 @@ macro_rules! ae_acquire_suite_and_call_suite_fn {
         #[allow(deprecated)]
 
         //let suite_ptr: *mut *const aftereffects_sys::$type =
-        match ae_aquire_suite_ptr!( $pica, $type, $name, $version) {
+        match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
             Ok(suite_ptr) =>
                 ae_call_suite_fn!(suite_ptr, $function, $($arg)*),
             Err(e) => {
@@ -153,7 +154,7 @@ macro_rules! define_suite{
 
         impl Suite for $suite_pretty_name {
             fn new(
-                pica_basic_suite: &crate::PicaBasicSuiteHandle,
+                pica_basic_suite: &$crate::PicaBasicSuiteHandle,
             ) -> $suite_pretty_name {
                 $suite_pretty_name {
                     pica_basic_suite_ptr: pica_basic_suite.as_ptr(),
@@ -171,7 +172,7 @@ macro_rules! define_suite{
             }
 
             fn from_raw(
-                pica_basic_suite_raw_ptr: *const crate::ae_sys::SPBasicSuite,
+                pica_basic_suite_raw_ptr: *const $crate::ae_sys::SPBasicSuite,
             ) -> $suite_pretty_name {
                 $suite_pretty_name {
                     pica_basic_suite_ptr: pica_basic_suite_raw_ptr,
