@@ -1,5 +1,3 @@
-#![feature(proc_macro_hygiene)]
-
 use std::mem::MaybeUninit;
 
 #[macro_export]
@@ -60,7 +58,6 @@ macro_rules! ae_get_suite_fn {
 #[macro_export]
 macro_rules! ae_call_suite_fn {
     ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
-        use std::convert::TryInto;
         let err = unsafe { ae_get_suite_fn!(($suite_ptr), $function)($($arg)*) };
 
         match err {

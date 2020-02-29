@@ -9,4 +9,5 @@ edition = "2018"
 [dependencies]
 aftereffects-sys = { path = "../aftereffects-sys" }
 num_enum = { git = "https://github.com/Dentosal/num_enum_simplified" }
+nalgebra = "*"
 # casey = ">=0.2.0"
