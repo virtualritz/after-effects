@@ -2,6 +2,7 @@
 
 use std::mem::MaybeUninit;
 
+#[macro_export]
 macro_rules! ae_acquire_suite_ptr {
     ($pica:expr, $type:ident, $name:ident, $version:ident) => {{
         #[allow(deprecated)]
@@ -32,6 +33,7 @@ macro_rules! ae_acquire_suite_ptr {
     }};
 }
 
+#[macro_export]
 macro_rules! ae_release_suite_ptr {
     ($pica:expr, $name:ident, $version:ident) => {{
         #[allow(deprecated)]
@@ -47,6 +49,7 @@ macro_rules! ae_release_suite_ptr {
     }};
 }
 
+#[macro_export]
 macro_rules! ae_get_suite_fn {
     ($suite_ptr:expr, $function:ident ) => {{
         // return an invocable function
@@ -54,6 +57,7 @@ macro_rules! ae_get_suite_fn {
     }};
 }
 
+#[macro_export]
 macro_rules! ae_call_suite_fn {
     ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
         use std::convert::TryInto;
@@ -78,7 +82,8 @@ macro_rules! ae_call_suite_fn_no_err {
     }};
 }
 
-macro_rules! ae_aquire_suite_and_call_suite_fn {
+#[macro_export]
+macro_rules! ae_acquire_suite_and_call_suite_fn {
     ($pica:ident, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
         #[allow(deprecated)]
 
@@ -86,8 +91,8 @@ macro_rules! ae_aquire_suite_and_call_suite_fn {
         match ae_aquire_suite_ptr!( $pica, $type, $name, $version) {
             Ok(suite_ptr) =>
                 ae_call_suite_fn!(suite_ptr, $function, $($arg)*),
-            Err(err_str) => {
-                Err(err_str)
+            Err(e) => {
+                Err(e)
             },
         }
     }};
