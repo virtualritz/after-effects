@@ -26,6 +26,7 @@ impl InDataHandle {
         unsafe { (*self.in_data_ptr).aegp_plug_id }
     }
 
+    // Fixme: do we own this memory???!
     pub fn reference_context_ptr(&self) -> Box<std::os::raw::c_void> {
         unsafe {
             Box::<std::os::raw::c_void>::from_raw(
@@ -39,6 +40,12 @@ define_handle_wrapper!(
     RenderContextHandle,
     PR_RenderContextH,
     render_context_ptr
+);
+
+define_handle_wrapper!(
+    InstanceData,
+    PR_InstanceDataH,
+    instance_data_pt
 );
 
 /*

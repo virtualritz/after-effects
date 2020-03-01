@@ -1,14 +1,47 @@
 use crate::{pf::EffectWorld, Suite};
 use aftereffects_sys as ae_sys;
-
-use nalgebra::Matrix4;
-
+//use nalgebra::Matrix4;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
+use std::ffi::CString; //, mem::transmute};
 
-use std::mem::transmute;
+pub type PluginID = ae_sys::A_long;
+
+pub type CompFlags = u32;
+
+pub const COMP_FLAG_SHOW_ALL_SHY: u32 =
+    ae_sys::AEGP_CompFlag_SHOW_ALL_SHY;
+pub const COMP_FLAG_RESERVED_1: u32 = ae_sys::AEGP_CompFlag_RESERVED_1;
+pub const COMP_FLAG_RESERVED_2: u32 = ae_sys::AEGP_CompFlag_RESERVED_2;
+pub const COMP_FLAG_ENABLE_MOTION_BLUR: u32 =
+    ae_sys::AEGP_CompFlag_ENABLE_MOTION_BLUR;
+pub const COMP_FLAG_ENABLE_TIME_FILTER: u32 =
+    ae_sys::AEGP_CompFlag_ENABLE_TIME_FILTER;
+pub const COMP_FLAG_GRID_TO_FRAMES: u32 =
+    ae_sys::AEGP_CompFlag_GRID_TO_FRAMES;
+pub const COMP_FLAG_GRID_TO_FIELDS: u32 =
+    ae_sys::AEGP_CompFlag_GRID_TO_FIELDS;
+pub const COMP_FLAG_USE_LOCAL_DSF: u32 =
+    ae_sys::AEGP_CompFlag_USE_LOCAL_DSF;
+pub const COMP_FLAG_DRAFT_3D: u32 = ae_sys::AEGP_CompFlag_DRAFT_3D;
+pub const COMP_FLAG_SHOW_GRAPH: u32 = ae_sys::AEGP_CompFlag_SHOW_GRAPH;
+pub const COMP_FLAG_RESERVED_3: u32 = ae_sys::AEGP_CompFlag_RESERVED_3;
+
+pub type MemFlag = u32;
+
+pub const MEM_FLAG_NONE: u32 = ae_sys::AEGP_MemFlag_NONE;
+pub const MEM_FLAG_CLEAR: u32 = ae_sys::AEGP_MemFlag_CLEAR;
+pub const MEM_FLAG_QUIET: u32 = ae_sys::AEGP_MemFlag_QUIET;
 
 #[allow(dead_code)]
-#[derive(Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    IntoPrimitive,
+    UnsafeFromPrimitive,
+)]
 #[repr(i32)]
 pub enum FilmSizeUnits {
     None = ae_sys::AEGP_FilmSizeUnits_NONE as i32,
@@ -18,13 +51,114 @@ pub enum FilmSizeUnits {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    IntoPrimitive,
+    UnsafeFromPrimitive,
+)]
 #[repr(i32)]
 pub enum CameraType {
     None = ae_sys::AEGP_CameraType_NONE as i32,
     Persepctive = ae_sys::AEGP_CameraType_PERSPECTIVE as i32,
     Orthographic = ae_sys::AEGP_CameraType_ORTHOGRAPHIC as i32,
     NumTypes = ae_sys::AEGP_CameraType_NUM_TYPES as i32,
+}
+
+//define_handle_wrapper!(MemHandle, AEGP_MemHandle, mem_ptr);
+
+define_suite!(
+    MemorySuite,
+    AEGP_MemorySuite1,
+    kAEGPMemorySuite,
+    kAEGPMemorySuiteVersion1
+);
+
+pub struct MemHandle<T> {
+    ptr: *mut T,
+    pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
+    mem_handle: ae_sys::AEGP_MemHandle,
+}
+
+impl<T> MemHandle<T> {
+    pub fn new(
+        pica_basic_suite_handle: &crate::PicaBasicSuiteHandle,
+        plugin_id: PluginID,
+        name: &str,
+        flags: MemFlag,
+    ) -> Result<Self, crate::Error> {
+        let mut mem_handle: ae_sys::AEGP_MemHandle =
+            std::ptr::null_mut();
+        let pica_basic_suite_ptr = pica_basic_suite_handle.as_ptr();
+
+        match ae_acquire_suite_and_call_suite_fn!(
+            pica_basic_suite_ptr,
+            AEGP_MemorySuite1,
+            kAEGPMemorySuite,
+            kAEGPMemorySuiteVersion1,
+            // Function -----------
+            AEGP_NewMemHandle,
+            // Arguments ----------
+            plugin_id,
+            CString::new(name).unwrap().as_ptr(),
+            std::mem::size_of::<T>() as u32,
+            flags as i32,
+            &mut mem_handle,
+        ) {
+            Ok(()) => Ok(Self {
+                ptr: std::ptr::null_mut(),
+                pica_basic_suite_ptr,
+                mem_handle,
+            }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn as_ptr(&self) -> *mut T {
+        self.ptr
+    }
+
+    pub fn lock(&mut self) -> Result<*mut T, crate::Error> {
+        //let mut ptr: *mut T = std::ptr::null_mut();
+
+        match ae_acquire_suite_and_call_suite_fn!(
+            (self.pica_basic_suite_ptr),
+            AEGP_MemorySuite1,
+            kAEGPMemorySuite,
+            kAEGPMemorySuiteVersion1,
+            // Function -----------
+            AEGP_LockMemHandle,
+            // Arguments ----------
+            self.mem_handle,
+            self.ptr as *mut _
+        ) {
+            Ok(()) => Ok(self.ptr),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn unlock(&mut self) -> Result<(), crate::Error> {
+        ae_acquire_suite_and_call_suite_fn!(
+            self.pica_basic_suite_ptr,
+            AEGP_MemorySuite1,
+            kAEGPMemorySuite,
+            kAEGPMemorySuiteVersion1,
+            // Function -----------
+            AEGP_UnlockMemHandle,
+            // Arguments ----------
+            self.mem_handle
+        )
+    }
+}
+
+impl<T> Drop for MemHandle<T> {
+    #[allow(unused_must_use)]
+    fn drop(&mut self) {
+        self.unlock();
+    }
 }
 
 // FIXME: wrap this nicely or combine WorldHandle & WorldSuite into
@@ -46,17 +180,19 @@ impl WorldSuite {
         &self,
         world: &WorldHandle,
     ) -> Result<EffectWorld, crate::Error> {
-        let mut effect_world =
+        let mut effect_world_boxed =
             Box::<ae_sys::PF_EffectWorld>::new_uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_FillOutPFEffectWorld,
             world.world_ptr,
-            effect_world.as_mut_ptr()
+            effect_world_boxed.as_mut_ptr()
         ) {
             Ok(()) => Ok(EffectWorld {
-                effect_world: unsafe { effect_world.assume_init() },
+                effect_world_boxed: unsafe {
+                    effect_world_boxed.assume_init()
+                },
             }),
             Err(e) => Err(e),
         }
@@ -64,6 +200,8 @@ impl WorldSuite {
 }
 
 define_handle_wrapper!(CompHandle, AEGP_CompH, comp_ptr);
+
+define_handle_wrapper!(ItemHandle, AEGP_ItemH, item_ptr);
 
 #[derive(Copy, Clone, Debug, Hash)]
 pub struct StreamReferenceHandle {
@@ -85,19 +223,43 @@ impl LayerSuite {
         layer_handle: &LayerHandle,
         time: &crate::Time,
     ) -> Result<nalgebra::Matrix4<f64>, crate::Error> {
-        let mut matrix = nalgebra::Matrix4::<f64>::zeros();
+        let mut matrix = Box::<ae_sys::A_Matrix4>::new_uninit();
+
+        //let mut matrix = nalgebra::Matrix4::<f64>::zeros();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetLayerToWorldXform,
             layer_handle.as_ptr(),
             &(*time) as *const _ as *const ae_sys::A_Time,
-            transmute::<
+            matrix.as_mut_ptr(),
+            /*transmute::<
                 *mut nalgebra::Matrix4<f64>,
                 *mut ae_sys::A_Matrix4,
-            >(&mut matrix)
+            >(&mut matrix)*/
         ) {
-            Ok(()) => Ok(matrix),
+            Ok(()) => {
+                let m = &mut unsafe { *matrix.assume_init() };
+                Ok(nalgebra::Matrix4::<f64>::new(
+                    m.mat[0][0],
+                    m.mat[0][1],
+                    m.mat[0][2],
+                    m.mat[0][3],
+                    m.mat[1][0],
+                    m.mat[1][1],
+                    m.mat[1][2],
+                    m.mat[1][3],
+                    m.mat[2][0],
+                    m.mat[2][1],
+                    m.mat[2][2],
+                    m.mat[2][3],
+                    m.mat[3][0],
+                    m.mat[3][1],
+                    m.mat[3][2],
+                    m.mat[3][3],
+                ))
+                //Ok(matrix)
+            }
             Err(e) => Err(e),
         }
     }
@@ -391,9 +553,9 @@ impl Scene3D {
 }
 
 impl Drop for Scene3D {
+    #[allow(unused_must_use)]
     fn drop(&mut self) {
         // dispose texture contex
-        #[allow(unused_must_use)]
         ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_Scene3DTextureContextDispose,
@@ -401,7 +563,6 @@ impl Drop for Scene3D {
         );
 
         // dispose scene
-        #[allow(unused_must_use)]
         ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_Scene3DDispose,
@@ -409,7 +570,6 @@ impl Drop for Scene3D {
         );
 
         // release suite
-        #[allow(unused_must_use)]
         ae_release_suite_ptr!(
             self.pica_basic_suite_ptr,
             kAEGPScene3DSuite,

@@ -1,5 +1,3 @@
-use std::mem::MaybeUninit;
-
 #[macro_export]
 macro_rules! ae_acquire_suite_ptr {
     ($pica:expr, $type:ident, $name:ident, $version:ident) => {{
@@ -82,7 +80,7 @@ macro_rules! ae_call_suite_fn_no_err {
 
 #[macro_export]
 macro_rules! ae_acquire_suite_and_call_suite_fn {
-    ($pica:ident, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
+    ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
         #[allow(deprecated)]
 
         //let suite_ptr: *mut *const aftereffects_sys::$type =

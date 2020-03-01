@@ -9,7 +9,6 @@
 
 use aftereffects_sys as ae_sys;
 
-
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
 
 #[derive(Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
@@ -51,9 +50,9 @@ impl From<AeError> for i32 {
 #[macro_use]
 pub mod macros;
 
+pub mod aegp;
 pub mod pf;
 pub mod pr;
-pub mod aegp;
 
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
@@ -64,7 +63,10 @@ pub struct Time {
 
 impl From<Time> for ae_sys::A_Time {
     fn from(time: Time) -> Self {
-        Self { value: time.value, scale: time.scale }
+        Self {
+            value: time.value,
+            scale: time.scale,
+        }
     }
 }
 
