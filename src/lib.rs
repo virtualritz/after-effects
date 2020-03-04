@@ -8,6 +8,7 @@
 //use std::mem; //::MaybeUninit;
 
 use aftereffects_sys as ae_sys;
+use std::ops::Add;
 
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
 
@@ -57,8 +58,74 @@ pub mod pr;
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
 pub struct Time {
-    value: ae_sys::A_long,
-    scale: ae_sys::A_u_long,
+    pub value: ae_sys::A_long,
+    pub scale: ae_sys::A_u_long,
+}
+
+// Next bit ported from aeutility.cpp
+
+// Euclid's two-thousand-year-old algorithm for finding the
+// greatest common divisor.
+fn greatest_common_divisor(x: u32, y: u32) -> u32 {
+    let mut x = x;
+    let mut y = y;
+    while y != 0 {
+        let t = y;
+        y = x % y;
+        x = t;
+    }
+    x
+}
+
+fn add_time_lossless(time1: &Time, time2: &Time) -> Option<Time> {
+    if (time1.scale == 0) || (time2.scale == 0) {
+        return None;
+    }
+
+    let gcd = {
+        if time1.scale == time2.scale {
+            time1.scale
+        } else {
+            greatest_common_divisor(time1.scale, time2.scale)
+        }
+    };
+
+    let value1 = time1
+        .value
+        .checked_mul(time2.scale.checked_div(gcd)? as i32)?;
+    let value2 = time2
+        .value
+        .checked_mul(time1.scale.checked_div(gcd)? as i32)?;
+
+    Some(Time {
+        value: value1.checked_add(value2)?,
+        scale: time2
+            .scale
+            .checked_mul(time1.scale.checked_div(gcd)?)?,
+    })
+}
+
+fn add_time_lossy(time1: &Time, time2: &Time) -> Time {
+    let time = (time1.value as f64 / time1.scale as f64)
+        + (time2.value as f64 / time2.scale as f64);
+
+    let num_bits = time.log2() as usize;
+    let scale: u32 = 1u32 << (30 - num_bits);
+
+    Time {
+        value: (time * scale as f64) as i32,
+        scale,
+    }
+}
+
+impl Add<Time> for Time {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self {
+        match add_time_lossless(&self, &rhs) {
+            Some(time) => time,
+            None => add_time_lossy(&self, &rhs),
+        }
+    }
 }
 
 impl From<Time> for ae_sys::A_Time {
@@ -66,6 +133,22 @@ impl From<Time> for ae_sys::A_Time {
         Self {
             value: time.value,
             scale: time.scale,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Hash)]
+#[repr(C)]
+pub struct Ratio {
+    pub num: ae_sys::A_long,
+    pub den: ae_sys::A_u_long,
+}
+
+impl From<Ratio> for ae_sys::A_Ratio {
+    fn from(ratio: Ratio) -> Self {
+        Self {
+            num: ratio.num,
+            den: ratio.den,
         }
     }
 }

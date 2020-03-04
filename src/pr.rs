@@ -43,9 +43,15 @@ define_handle_wrapper!(
 );
 
 define_handle_wrapper!(
-    InstanceData,
+    InstanceDataHandle,
     PR_InstanceDataH,
-    instance_data_pt
+    instance_data_ptr
+);
+
+define_handle_wrapper!(
+    GlobalContextHandle,
+    PR_GlobalContextH,
+    global_context_ptr
 );
 
 /*

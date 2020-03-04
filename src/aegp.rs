@@ -163,10 +163,7 @@ impl<T> Drop for MemHandle<T> {
 
 // FIXME: wrap this nicely or combine WorldHandle & WorldSuite into
 // single World
-#[derive(Copy, Clone, Debug, Hash)]
-pub struct WorldHandle {
-    world_ptr: ae_sys::AEGP_WorldH,
-}
+define_handle_wrapper!(WorldHandle, AEGP_WorldH, world_ptr);
 
 define_suite!(
     WorldSuite,
@@ -186,7 +183,7 @@ impl WorldSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_FillOutPFEffectWorld,
-            world.world_ptr,
+            world.as_ptr(),
             effect_world_boxed.as_mut_ptr()
         ) {
             Ok(()) => Ok(EffectWorld {
