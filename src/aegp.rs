@@ -200,6 +200,76 @@ define_handle_wrapper!(CompHandle, AEGP_CompH, comp_ptr);
 
 define_handle_wrapper!(ItemHandle, AEGP_ItemH, item_ptr);
 
+define_suite!(
+    CompSuite,
+    AEGP_CompSuite11,
+    kAEGPCompSuite,
+    kAEGPCompSuiteVersion11
+);
+
+use crate::*;
+
+impl CompSuite {
+    pub fn get_comp_shutter_angle_phase(
+        &self,
+        comp_handle: &CompHandle,
+    ) -> Result<(Ratio, Ratio), Error> {
+        let mut angle = std::mem::MaybeUninit::<Ratio>::uninit();
+        let mut phase = std::mem::MaybeUninit::<Ratio>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetCompShutterAnglePhase,
+            comp_handle.as_ptr(),
+            angle.as_mut_ptr() as *mut ae_sys::A_Ratio,
+            phase.as_mut_ptr() as *mut ae_sys::A_Ratio,
+        ) {
+            Ok(()) => Ok(unsafe {
+                (angle.assume_init(), phase.assume_init())
+            }),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+pub struct Comp {
+    // We need to store this pointer to be able to
+    // drop resources at the end of our lifetime
+    // using release_suite()
+    pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
+    suite_ptr: *const ae_sys::AEGP_CompSuite11,
+    comp_ptr: *const ae_sys::AEGP_CompH,
+}
+
+impl Comp {
+    pub fn from_item(
+        pica_basic_suite_handle: &crate::PicaBasicSuiteHandle,
+        item_handle: &ItemHandle,
+    ) -> Result<Self, crate::Error> {
+        let pica_basic_suite_ptr = pica_basic_suite_handle.as_ptr();
+        let suite_ptr = ae_acquire_suite_ptr!(
+            pica_basic_suite_ptr,
+            AEGP_CompSuite11,
+            kAEGPCompSuite,
+            kAEGPCompSuiteVersion11
+        )?;
+
+        let comp_ptr: *mut ae_sys::AEGP_CompH = std::ptr::null_mut();
+        ae_call_suite_fn!(
+            suite_ptr,
+            AEGP_GetCompFromItem,
+            item_handle.as_ptr(),
+            comp_ptr,
+        )?;
+
+        Ok(Self {
+            pica_basic_suite_ptr,
+            suite_ptr,
+            comp_ptr,
+        })
+    }
+}
+
 #[derive(Copy, Clone, Debug, Hash)]
 pub struct StreamReferenceHandle {
     stream_reference_ptr: ae_sys::AEGP_StreamRefH,
@@ -425,14 +495,15 @@ pub struct Scene3D {
 
 impl Scene3D {
     pub fn new(
-        pica_basic_suite_handle: &crate::PicaBasicSuiteHandle,
-
         in_data_handle: crate::pr::InDataHandle,
         render_context: crate::pr::RenderContextHandle,
         global_texture_cache_handle: crate::aegp::Scene3DTextureCacheHandle,
     ) -> Result<Scene3D, crate::Error> {
+        let pica_basic_suite_ptr =
+            in_data_handle.pica_basic_handle().as_ptr();
+
         let suite_ptr = ae_acquire_suite_ptr!(
-            pica_basic_suite_handle.as_ptr(),
+            pica_basic_suite_ptr,
             AEGP_Scene3DSuite2,
             kAEGPScene3DSuite,
             kAEGPScene3DSuiteVersion2
@@ -459,9 +530,9 @@ impl Scene3D {
             &mut texture_context_ptr
         ) {
             Ok(()) => Ok(Scene3D {
-                pica_basic_suite_ptr: pica_basic_suite_handle.as_ptr(),
-                suite_ptr: suite_ptr,
-                scene3d_ptr: scene3d_ptr,
+                pica_basic_suite_ptr,
+                suite_ptr,
+                scene3d_ptr,
                 texture_context_ptr: texture_context_ptr,
                 in_data_ptr: in_data_handle.as_ptr(),
                 render_context_ptr: render_context.as_ptr(),
@@ -821,17 +892,18 @@ impl Scene3DMeshSuite {
         mesh_handle: &Scene3DMeshHandle,
         group_index: usize,
     ) -> Result<ae_sys::AEGP_Scene3DMaterialSide, crate::Error> {
-        let mut material_side: ae_sys::AEGP_Scene3DMaterialSide =
-            ae_sys::AEGP_Scene3DMaterialSide_SCENE3D_MATERIAL_FRONT;
+        let mut material_side = std::mem::MaybeUninit::<
+            ae_sys::AEGP_Scene3DMaterialSide,
+        >::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetMaterialSideForFaceGroup,
             mesh_handle.mesh_ptr,
             group_index as i32,
-            &mut material_side
+            material_side.as_mut_ptr()
         ) {
-            Ok(()) => Ok(material_side),
+            Ok(()) => Ok(unsafe { material_side.assume_init() }),
             Err(e) => Err(e),
         }
     }
@@ -840,25 +912,23 @@ impl Scene3DMeshSuite {
         &self,
         mesh_handle: &Scene3DMeshHandle,
     ) -> Result<(usize, usize), crate::Error> {
-        let mut num_vertex = 0;
-        //std::mem::MaybeUninit::<&usize>::uninit();
-        let mut num_face = 0;
-        //std::mem::MaybeUninit::<&usize>::uninit();
+        let mut num_vertex = std::mem::MaybeUninit::<usize>::uninit();
+        let mut num_face = std::mem::MaybeUninit::<usize>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_MeshGetInfo,
             mesh_handle.mesh_ptr,
-            &mut num_vertex as *mut _ as *mut i32,
-            &mut num_face as *mut _ as *mut i32,
-            /* num_vertex.as_mut_ptr() as *mut i32,
-             * num_face.as_mut_ptr() as *mut i32, */
+            //&mut num_vertex as *mut _ as *mut i32,
+            //&mut num_face as *mut _ as *mut i32,
+            num_vertex.as_mut_ptr() as *mut i32,
+            num_face.as_mut_ptr() as *mut i32,
         ) {
             Ok(()) => {
-                /*unsafe {
-                    (*num_vertex.assume_init(), *num_face.assume_init())
-                }*/
-                Ok((num_vertex, num_face))
+                Ok(unsafe {
+                    (num_vertex.assume_init(), num_face.assume_init())
+                })
+                //Ok((num_vertex, num_face))
             }
             Err(e) => Err(e),
         }
