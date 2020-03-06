@@ -245,7 +245,6 @@ impl From<Ratio> for ae_sys::A_Ratio {
 // with a 'H' (for handle).
 // When the struct misses the trailing 'H', Ae does expect us to
 // manage the memory. We then use a Box<T>.
-
 pub struct PicaBasicSuiteHandle {
     pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
 }

@@ -399,6 +399,84 @@ impl StreamSuite {
 }
 
 define_suite!(
+    CanvasSuite,
+    AEGP_CanvasSuite8,
+    kAEGPCanvasSuite,
+    kAEGPCanvasSuiteVersion8
+);
+
+impl CanvasSuite {
+    pub fn get_comp_to_render(
+        &self,
+        render_context_handle: crate::pr::RenderContextHandle,
+    ) -> Result<CompHandle, Error> {
+        let mut comp_ptr =
+            std::mem::MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetCompToRender,
+            render_context_handle.as_ptr(),
+            comp_ptr.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(CompHandle::from_raw(unsafe {
+                comp_ptr.assume_init()
+            })),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_comp_render_time(
+        &self,
+        render_context_handle: crate::pr::RenderContextHandle,
+    ) -> Result<(Time, Time), Error> {
+        let mut shutter_frame_start =
+            std::mem::MaybeUninit::<Time>::uninit();
+
+        let mut shutter_frame_duration =
+            std::mem::MaybeUninit::<Time>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetCompRenderTime,
+            render_context_handle.as_ptr(),
+            shutter_frame_start.as_mut_ptr() as *mut ae_sys::A_Time,
+            shutter_frame_duration.as_mut_ptr() as *mut ae_sys::A_Time
+        ) {
+            Ok(()) => Ok(unsafe {
+                (
+                    shutter_frame_start.assume_init(),
+                    shutter_frame_duration.assume_init(),
+                )
+            }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_destination_buffer(
+        &self,
+        render_context_handle: crate::pr::RenderContextHandle,
+        comp_handle: CompHandle,
+    ) -> Result<WorldHandle, Error> {
+        let mut world_ptr =
+            std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetCompDestinationBuffer,
+            render_context_handle.as_ptr(),
+            comp_handle.as_ptr(),
+            world_ptr.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok(WorldHandle::from_raw(unsafe {
+                world_ptr.assume_init()
+            })),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+define_suite!(
     CameraSuite,
     AEGP_CameraSuite2,
     kAEGPCameraSuite,
