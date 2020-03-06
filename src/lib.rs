@@ -267,9 +267,13 @@ impl PicaBasicSuiteHandle {
 }
 
 pub trait Suite: Drop {
-    fn new(pica_basic_suite: &crate::PicaBasicSuiteHandle) -> Self;
+    fn new() -> Result<Self, Error>
+    where
+        Self: Sized;
 
     fn from_raw(
         pica_basic_suite_raw_ptr: *const crate::ae_sys::SPBasicSuite,
-    ) -> Self;
+    ) -> Result<Self, Error>
+    where
+        Self: Sized;
 }

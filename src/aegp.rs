@@ -4,7 +4,7 @@ use aftereffects_sys as ae_sys;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
 use std::ffi::CString; //, mem::transmute};
 
-pub type PluginID = ae_sys::A_long;
+pub type PluginID = aftereffects_sys::AEGP_PluginID;
 
 pub type CompFlags = u32;
 
@@ -63,7 +63,7 @@ pub enum FilmSizeUnits {
 #[repr(i32)]
 pub enum CameraType {
     None = ae_sys::AEGP_CameraType_NONE as i32,
-    Persepctive = ae_sys::AEGP_CameraType_PERSPECTIVE as i32,
+    Perspective = ae_sys::AEGP_CameraType_PERSPECTIVE as i32,
     Orthographic = ae_sys::AEGP_CameraType_ORTHOGRAPHIC as i32,
     NumTypes = ae_sys::AEGP_CameraType_NUM_TYPES as i32,
 }
@@ -285,7 +285,7 @@ define_suite!(
 );
 
 impl LayerSuite {
-    pub fn get_layer_to_worl_xform(
+    pub fn get_layer_to_world_xform(
         &self,
         layer_handle: &LayerHandle,
         time: &crate::Time,
@@ -347,7 +347,7 @@ define_suite!(
 impl StreamSuite {
     pub fn get_new_layer_stream(
         &self,
-        plugin_id: u32,
+        plugin_id: PluginID,
         layer_handle: &LayerHandle,
         stream_name: ae_sys::AEGP_LayerStream, // FIXME
     ) -> Result<StreamReferenceHandle, crate::Error> {
@@ -357,7 +357,7 @@ impl StreamSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetNewLayerStream,
-            plugin_id as i32,
+            plugin_id,
             layer_handle.layer_ptr,
             stream_name,
             &mut stream_reference_ptr
@@ -371,7 +371,7 @@ impl StreamSuite {
 
     pub fn get_new_stream_value(
         &self,
-        plugin_id: u32,
+        plugin_id: PluginID,
         stream_reference_handle: &StreamReferenceHandle,
         time_mode: ae_sys::AEGP_LTimeMode, // FIXME
         time: &crate::Time,                // FIXME
@@ -383,7 +383,7 @@ impl StreamSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetNewStreamValue,
-            plugin_id as i32,
+            plugin_id,
             stream_reference_handle.stream_reference_ptr,
             time_mode,
             &(*time) as *const _ as *const ae_sys::A_Time,
@@ -408,7 +408,7 @@ define_suite!(
 impl CanvasSuite {
     pub fn get_comp_to_render(
         &self,
-        render_context_handle: crate::pr::RenderContextHandle,
+        render_context_handle: &crate::pr::RenderContextHandle,
     ) -> Result<CompHandle, Error> {
         let mut comp_ptr =
             std::mem::MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
@@ -428,7 +428,7 @@ impl CanvasSuite {
 
     pub fn get_comp_render_time(
         &self,
-        render_context_handle: crate::pr::RenderContextHandle,
+        render_context_handle: &crate::pr::RenderContextHandle,
     ) -> Result<(Time, Time), Error> {
         let mut shutter_frame_start =
             std::mem::MaybeUninit::<Time>::uninit();
@@ -453,9 +453,9 @@ impl CanvasSuite {
         }
     }
 
-    pub fn get_destination_buffer(
+    pub fn get_comp_destination_buffer(
         &self,
-        render_context_handle: crate::pr::RenderContextHandle,
+        render_context_handle: &crate::pr::RenderContextHandle,
         comp_handle: CompHandle,
     ) -> Result<WorldHandle, Error> {
         let mut world_ptr =

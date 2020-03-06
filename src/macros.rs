@@ -148,36 +148,37 @@ macro_rules! define_suite{
         }
 
         impl Suite for $suite_pretty_name {
-            fn new(
-                pica_basic_suite: &$crate::PicaBasicSuiteHandle,
-            ) -> $suite_pretty_name {
-                $suite_pretty_name {
-                    pica_basic_suite_ptr: pica_basic_suite.as_ptr(),
-                    suite_ptr: {
-                        let suite_ptr = pica_basic_suite.as_ptr();
-                        ae_acquire_suite_ptr!(
+            fn new() -> Result<Self, Error> {
+                let pica_basic_suite_ptr = borrow_pica_basic_as_ptr();
+
+                match ae_acquire_suite_ptr!(
+                    pica_basic_suite_ptr,
+                    $suite_name,
+                    $suite_name_string,
+                    $suite_version
+                ) {
+                    Ok(suite_ptr) => Ok(Self{
+                            pica_basic_suite_ptr,
                             suite_ptr,
-                            $suite_name,
-                            $suite_name_string,
-                            $suite_version
-                        )
-                        .expect(concat!("Could not aquire ", stringify!($suite_name), "."))
-                    },
+                        }),
+                    Err(e) => Err(e),
                 }
             }
 
             fn from_raw(
-                pica_basic_suite_raw_ptr: *const $crate::ae_sys::SPBasicSuite,
-            ) -> $suite_pretty_name {
-                $suite_pretty_name {
-                    pica_basic_suite_ptr: pica_basic_suite_raw_ptr,
-                    suite_ptr: ae_acquire_suite_ptr!(
-                        pica_basic_suite_raw_ptr,
-                        $suite_name,
-                        $suite_name_string,
-                        $suite_version
-                    )
-                    .expect(concat!("Could not aquire ", stringify!($suite_name), "."))
+                pica_basic_suite_ptr: *const $crate::ae_sys::SPBasicSuite,
+            ) -> Result<Self, Error> {
+                match ae_acquire_suite_ptr!(
+                    pica_basic_suite_ptr,
+                    $suite_name,
+                    $suite_name_string,
+                    $suite_version
+                ) {
+                    Ok(suite_ptr) => Ok(Self{
+                            pica_basic_suite_ptr,
+                            suite_ptr,
+                        }),
+                    Err(e) => Err(e),
                 }
             }
         }
