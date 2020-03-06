@@ -62,6 +62,15 @@ impl PicaBasicSuite {
         }
     }
 
+    pub fn from_pr_in_data(in_data_handle: &pr::InDataHandle) -> Self {
+        Self {
+            previous_pica_basic_suite_ptr: set(unsafe {
+                *in_data_handle.as_ptr()
+            }
+            .pica_basicP),
+        }
+    }
+
     pub fn from_pf_in_data_raw(
         in_data_ptr: *const ae_sys::PF_InData,
     ) -> Self {
