@@ -2,7 +2,7 @@ use crate::{pf::EffectWorld, Suite};
 use aftereffects_sys as ae_sys;
 //use nalgebra::Matrix4;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
-use std::ffi::CString; //, mem::transmute};
+use std::{ffi::CString, mem::MaybeUninit}; //, mem::transmute};
 
 pub type PluginID = aftereffects_sys::AEGP_PluginID;
 
@@ -85,14 +85,13 @@ pub struct MemHandle<T> {
 
 impl<T> MemHandle<T> {
     pub fn new(
-        pica_basic_suite_handle: &crate::PicaBasicSuiteHandle,
         plugin_id: PluginID,
         name: &str,
         flags: MemFlag,
     ) -> Result<Self, crate::Error> {
         let mut mem_handle: ae_sys::AEGP_MemHandle =
             std::ptr::null_mut();
-        let pica_basic_suite_ptr = pica_basic_suite_handle.as_ptr();
+        let pica_basic_suite_ptr = borrow_pica_basic_as_ptr();
 
         match ae_acquire_suite_and_call_suite_fn!(
             pica_basic_suite_ptr,
@@ -118,12 +117,11 @@ impl<T> MemHandle<T> {
     }
 
     pub fn as_ptr(&self) -> *mut T {
+        assert!(self.ptr != std::ptr::null_mut());
         self.ptr
     }
 
     pub fn lock(&mut self) -> Result<*mut T, crate::Error> {
-        //let mut ptr: *mut T = std::ptr::null_mut();
-
         match ae_acquire_suite_and_call_suite_fn!(
             (self.pica_basic_suite_ptr),
             AEGP_MemorySuite1,
@@ -489,16 +487,19 @@ impl CameraSuite {
         render_context_handle: &crate::pr::RenderContextHandle,
         time: &crate::Time,
     ) -> Result<LayerHandle, crate::Error> {
-        let mut layer_ptr: ae_sys::AEGP_LayerH = std::ptr::null_mut();
+        let mut layer_ptr =
+            std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetCamera,
             render_context_handle.as_ptr(),
             &(*time) as *const _ as *const ae_sys::A_Time,
-            &mut layer_ptr,
+            layer_ptr.as_mut_ptr(),
         ) {
-            Ok(()) => Ok(LayerHandle::from_raw(layer_ptr)),
+            Ok(()) => Ok(LayerHandle::from_raw(unsafe {
+                layer_ptr.assume_init()
+            })),
             Err(e) => Err(e),
         }
     }
