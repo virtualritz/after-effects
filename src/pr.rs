@@ -72,6 +72,8 @@ define_handle_wrapper!(
     render_data_ptr
 );
 
+
+//EffectWorld
 /*
 // FIXME: wrap this nicely
 #[derive(Copy, Clone, Debug, Hash)]

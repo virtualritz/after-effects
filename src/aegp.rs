@@ -1,10 +1,11 @@
-use crate::{pf::EffectWorld, Suite};
+use crate::{pf::EffectWorld, Suite, *};
 use aftereffects_sys as ae_sys;
-//use nalgebra::Matrix4;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
-use std::{ffi::CString, mem::MaybeUninit}; //, mem::transmute};
+use std::ffi::CString; //, mem::transmute};
 
 pub type PluginID = aftereffects_sys::AEGP_PluginID;
+
+pub type ItemID = i32;
 
 pub type CompFlags = u32;
 
@@ -196,16 +197,12 @@ impl WorldSuite {
 
 define_handle_wrapper!(CompHandle, AEGP_CompH, comp_ptr);
 
-define_handle_wrapper!(ItemHandle, AEGP_ItemH, item_ptr);
-
 define_suite!(
     CompSuite,
     AEGP_CompSuite11,
     kAEGPCompSuite,
     kAEGPCompSuiteVersion11
 );
-
-use crate::*;
 
 impl CompSuite {
     pub fn get_comp_shutter_angle_phase(
@@ -225,6 +222,60 @@ impl CompSuite {
             Ok(()) => Ok(unsafe {
                 (angle.assume_init(), phase.assume_init())
             }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_item_from_comp(
+        &self,
+        comp_handle: &CompHandle,
+    ) -> Result<ItemHandle, Error> {
+        let mut item_handle_ptr =
+            std::mem::MaybeUninit::<ae_sys::AEGP_ItemH>::uninit();
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetItemFromComp,
+            comp_handle.as_ptr(),
+            item_handle_ptr.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(ItemHandle::from_raw(unsafe {
+                item_handle_ptr.assume_init()
+            })),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_comp_flags(
+        &self,
+        comp_handle: &CompHandle,
+    ) -> Result<CompFlags, Error> {
+        let mut comp_flags =
+            std::mem::MaybeUninit::<CompFlags>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetCompFlags,
+            comp_handle.as_ptr(),
+            comp_flags.as_mut_ptr() as *mut ae_sys::A_long
+        ) {
+            Ok(()) => Ok(unsafe { comp_flags.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_comp_framerate(
+        &self,
+        comp_handle: &CompHandle,
+    ) -> Result<f64, Error> {
+        let mut framerate = std::mem::MaybeUninit::<f64>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetCompFramerate,
+            comp_handle.as_ptr(),
+            framerate.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(unsafe { framerate.assume_init() }),
             Err(e) => Err(e),
         }
     }
@@ -287,8 +338,8 @@ impl LayerSuite {
         &self,
         layer_handle: &LayerHandle,
         time: &crate::Time,
-    ) -> Result<nalgebra::Matrix4<f64>, crate::Error> {
-        let mut matrix = Box::<ae_sys::A_Matrix4>::new_uninit();
+    ) -> Result<Matrix4, crate::Error> {
+        let mut matrix = Box::<Matrix4>::new_uninit();
 
         //let mut matrix = nalgebra::Matrix4::<f64>::zeros();
 
@@ -297,34 +348,13 @@ impl LayerSuite {
             AEGP_GetLayerToWorldXform,
             layer_handle.as_ptr(),
             &(*time) as *const _ as *const ae_sys::A_Time,
-            matrix.as_mut_ptr(),
+            matrix.as_mut_ptr() as *mut ae_sys::A_Matrix4,
             /*transmute::<
                 *mut nalgebra::Matrix4<f64>,
                 *mut ae_sys::A_Matrix4,
             >(&mut matrix)*/
         ) {
-            Ok(()) => {
-                let m = &mut unsafe { *matrix.assume_init() };
-                Ok(nalgebra::Matrix4::<f64>::new(
-                    m.mat[0][0],
-                    m.mat[0][1],
-                    m.mat[0][2],
-                    m.mat[0][3],
-                    m.mat[1][0],
-                    m.mat[1][1],
-                    m.mat[1][2],
-                    m.mat[1][3],
-                    m.mat[2][0],
-                    m.mat[2][1],
-                    m.mat[2][2],
-                    m.mat[2][3],
-                    m.mat[3][0],
-                    m.mat[3][1],
-                    m.mat[3][2],
-                    m.mat[3][3],
-                ))
-                //Ok(matrix)
-            }
+            Ok(()) => Ok(unsafe { *matrix.assume_init() } ),
             Err(e) => Err(e),
         }
     }
@@ -454,7 +484,7 @@ impl CanvasSuite {
     pub fn get_comp_destination_buffer(
         &self,
         render_context_handle: &crate::pr::RenderContextHandle,
-        comp_handle: CompHandle,
+        comp_handle: &CompHandle,
     ) -> Result<WorldHandle, Error> {
         let mut world_ptr =
             std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
@@ -469,6 +499,55 @@ impl CanvasSuite {
             Ok(()) => Ok(WorldHandle::from_raw(unsafe {
                 world_ptr.assume_init()
             })),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+define_handle_wrapper!(ItemHandle, AEGP_ItemH, item_ptr);
+
+define_suite!(
+    ItemSuite,
+    AEGP_ItemSuite9,
+    kAEGPItemSuite,
+    kAEGPItemSuiteVersion9
+);
+
+impl ItemSuite {
+    pub fn get_item_id(
+        &self,
+        item_handle: &ItemHandle,
+    ) -> Result<ItemID, Error> {
+        let mut item_id = std::mem::MaybeUninit::<ItemID>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetItemID,
+            item_handle.as_ptr(),
+            item_id.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(unsafe { item_id.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_item_dimensions(
+        &self,
+        item_handle: &ItemHandle,
+    ) -> Result<(u32, u32), Error> {
+        let mut width = std::mem::MaybeUninit::<u32>::uninit();
+        let mut height = std::mem::MaybeUninit::<u32>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetItemDimensions,
+            item_handle.as_ptr(),
+            width.as_mut_ptr() as *mut i32,
+            height.as_mut_ptr() as *mut i32
+        ) {
+            Ok(()) => Ok(unsafe {
+                (width.assume_init(), height.assume_init())
+            }),
             Err(e) => Err(e),
         }
     }

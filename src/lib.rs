@@ -142,11 +142,54 @@ pub mod aegp;
 pub mod pf;
 pub mod pr;
 
+
+pub struct Matrix4([[f64; 4]; 4]);
+
+impl Matrix4 {
+    fn as_slice(&self) -> &[f64] {
+        unsafe {
+            std::slice::from_raw_parts(self.0.as_ptr() as _, 16)
+        }
+    }
+}
+
+#[cfg(feature="algebra-nalgebra")]
+impl From<Matrix4> for nalgebra::Matrix4<f64> {
+    fn from(m: Matrix4) -> Self {
+        nalgebra::Matrix4::<f64>::from_row_slice(m.as_slice())
+    }
+}
+
+
+#[cfg(feature="algebra-nalgebra")]
+#[test]
+fn test_from() {
+    let m = Matrix4 { 0: [
+        [0., 0., 0., 0.,],
+        [0., 0., 0., 0.,],
+        [0., 0., 0., 0.,],
+        [0., 0., 0., 0.,],],
+    };
+    let _matrix = nalgebra::Matrix4::<f64>::from(m);
+}
+
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
 pub struct Time {
     pub value: ae_sys::A_long,
     pub scale: ae_sys::A_u_long,
+}
+
+impl From<Time> for f64 {
+    fn from(time: Time) -> Self {
+        time.value as f64 / time.scale as f64
+    }
+}
+
+impl From<Time> for f32 {
+    fn from(time: Time) -> Self {
+        time.value as f32 / time.scale as f32
+    }
 }
 
 // Next bit (std::ops::Add) ported from aeutility.cpp
