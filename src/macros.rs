@@ -127,8 +127,8 @@ macro_rules! define_handle_wrapper {
         impl $wrapper_pretty_name {
             pub fn from_raw(
                 $data_name: ae_sys::$data_type,
-            ) -> $wrapper_pretty_name {
-                $wrapper_pretty_name { $data_name }
+            ) -> Self {
+                Self { $data_name }
             }
 
             pub fn as_ptr(&self) -> ae_sys::$data_type {

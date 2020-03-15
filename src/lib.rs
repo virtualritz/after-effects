@@ -1,6 +1,7 @@
 // FIXME: make ALL the functions below return Result-wrapped values
-#![feature(proc_macro_hygiene)]
 #![feature(new_uninit)]
+#![feature(proc_macro_hygiene)]
+//#![feature(try_reserve)]
 
 //#[macro_use]
 //extern crate casey;
@@ -26,13 +27,16 @@ pub fn borrow_pica_basic_as_ptr() -> *const ae_sys::SPBasicSuite {
     pica_basic_ptr
 }
 
-// This lets us access a thread-local version of the PicaBasic
-// Suite. Whenever we gen a new SPBasic_Suite from Ae somehow,
-// we create a PicaBasicSuite::new from it and use that to initialize
-// access to any suites.
-// When we leave scope, drop() ic alled automatically and restores the
-// previous value to our thread local storage so we th caller has
-// can continue using their.
+/// This lets us access a thread-local version of the PicaBasic
+/// Suite. Whenever we gen a new SPBasic_Suite from Ae somehow,
+/// we create a PicaBasicSuite::new from it and use that to initialize
+/// access to any suites.
+/// When we leave scope, drop() ic alled automatically and restores the
+/// previous value to our thread local storage so the caller has
+/// can continue using their pointer to the suite.
+///
+/// FIXME: Is this really neccessary? Check if the pointer is always the
+///        same and if so, confirm with Adobe we can get rid of it.
 pub struct PicaBasicSuite {
     previous_pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
 }
@@ -118,6 +122,13 @@ pub enum Error {
     MissingSuite = ae_sys::A_Err_MISSING_SUITE as i32,
 }
 
+/* FIXME uncomment this once TryReserve() becomes stable in nightly
+impl From<std::collections::TryReserveError> for Error {
+    fn from(try_reserve_err: std::collections::TryReserveError) -> Self {
+        Error::Alloc
+    }
+}*/
+
 struct AeError(pub i32);
 
 impl From<Result<(), Error>> for AeError {
@@ -188,7 +199,7 @@ impl From<Time> for f64 {
 
 impl From<Time> for f32 {
     fn from(time: Time) -> Self {
-        time.value as f32 / time.scale as f32
+        ( time.value as f64 / time.scale as f64 ) as f32
     }
 }
 

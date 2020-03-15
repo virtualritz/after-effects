@@ -1,9 +1,10 @@
 use crate::{pf::EffectWorld, Suite, *};
 use aftereffects_sys as ae_sys;
+pub use ae_sys::*;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
 use std::ffi::CString; //, mem::transmute};
 
-pub type PluginID = aftereffects_sys::AEGP_PluginID;
+pub type PluginID = ae_sys::AEGP_PluginID;
 
 pub type ItemID = i32;
 
@@ -637,6 +638,22 @@ impl CameraSuite {
     }
 }
 
+pub struct Scene3DLayerHandle {
+    scene3d_layer_ptr: *const ae_sys::AEGP_Scene3DLayer,
+}
+
+impl Scene3DLayerHandle {
+    pub fn from_raw(
+        scene3d_layer_ptr: *const ae_sys::AEGP_Scene3DLayer,
+    ) -> Self {
+        Self { scene3d_layer_ptr }
+    }
+
+    pub fn as_ptr(&self) -> *const ae_sys::AEGP_Scene3DLayer {
+        self.scene3d_layer_ptr
+    }
+}
+
 pub struct Scene3D {
     // We need to store this pointer to be able to
     // drop resources at the end of our lifetime
@@ -719,9 +736,10 @@ impl Scene3D {
             AEGP_Scene3D_SetupMotionBlurSamples,
             self.in_data_ptr,
             self.render_context_ptr,
-            self.scene3d_ptr,      /* the empty scene,
-                                    * modified */
-            motion_samples as i32, // how many motion samples
+            // the empty scene, modified
+            self.scene3d_ptr,
+            // how many motion samples
+            motion_samples as i32,
             sample_method
         )
     }
@@ -775,6 +793,34 @@ impl Scene3D {
         )
         //.expect( "3Delight/Ae – ae_scene_to_final_frame(): Could
         //.expect( not traverse the scene." );
+    }
+
+    pub fn layer_num_post_xform(&self, scene3d_layer_handle: &Scene3DLayerHandle
+    ) -> Result<usize, Error> {
+        let mut num_xform = std::mem::MaybeUninit::<i32>::uninit();
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_Scene3DLayerNumPostXform,
+            scene3d_layer_handle.as_ptr(),
+            num_xform.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok( unsafe { num_xform.assume_init() } as usize ),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn num_sub_frame_times(&self,
+    ) -> Result<usize, Error> {
+        let mut num_motion_samples = std::mem::MaybeUninit::<i32>::uninit();
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_Scene3DNumSubFrameTimes,
+            self.scene3d_ptr,
+            num_motion_samples.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok( unsafe { num_motion_samples.assume_init() } as usize ),
+            Err(e) => Err(e),
+        }
     }
 }
 
@@ -1070,8 +1116,8 @@ impl Scene3DMeshSuite {
         &self,
         mesh_handle: &Scene3DMeshHandle,
     ) -> Result<(usize, usize), crate::Error> {
-        let mut num_vertex = std::mem::MaybeUninit::<usize>::uninit();
-        let mut num_face = std::mem::MaybeUninit::<usize>::uninit();
+        let mut num_vertex = std::mem::MaybeUninit::<i32>::uninit();
+        let mut num_face = std::mem::MaybeUninit::<i32>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1084,7 +1130,7 @@ impl Scene3DMeshSuite {
         ) {
             Ok(()) => {
                 Ok(unsafe {
-                    (num_vertex.assume_init(), num_face.assume_init())
+                    (num_vertex.assume_init() as usize, num_face.assume_init() as usize)
                 })
                 //Ok((num_vertex, num_face))
             }
@@ -1141,16 +1187,19 @@ impl Scene3DMeshSuite {
     > {
         let (num_vertex, num_face) = self.mesh_get_info(mesh_handle)?;
 
+        // Points (3-tuples) of f64
         let vertex_buffer_size: usize = num_vertex * 3;
         let mut vertex_buffer =
             Vec::<ae_sys::A_FpLong>::with_capacity(vertex_buffer_size);
 
+        // quad meshes
         let face_index_buffer_size: usize = num_face * 4;
         let mut face_index_buffer =
             Vec::<ae_sys::A_long>::with_capacity(
                 face_index_buffer_size,
             );
 
+        // 2 uvs per vertex per face
         let uv_per_face_buffer_size: usize = num_face * 4 * 2;
         let mut uv_per_face_buffer =
             Vec::<ae_sys::A_FpLong>::with_capacity(
