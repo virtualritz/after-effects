@@ -791,13 +791,12 @@ impl Scene3D {
             reference_context,
             flags
         )
-        //.expect( "3Delight/Ae – ae_scene_to_final_frame(): Could
-        //.expect( not traverse the scene." );
     }
 
     pub fn layer_num_post_xform(&self, scene3d_layer_handle: &Scene3DLayerHandle
     ) -> Result<usize, Error> {
         let mut num_xform = std::mem::MaybeUninit::<i32>::uninit();
+
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_Scene3DLayerNumPostXform,
@@ -812,6 +811,7 @@ impl Scene3D {
     pub fn num_sub_frame_times(&self,
     ) -> Result<usize, Error> {
         let mut num_motion_samples = std::mem::MaybeUninit::<i32>::uninit();
+
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_Scene3DNumSubFrameTimes,
@@ -819,6 +819,46 @@ impl Scene3D {
             num_motion_samples.as_mut_ptr(),
         ) {
             Ok(()) => Ok( unsafe { num_motion_samples.assume_init() } as usize ),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn layer_get_post_xform(&self,
+        layer_handle: &Scene3DLayerHandle,
+        index: usize
+    ) -> Result<Matrix4, Error> {
+        let mut matrix_ptr = std::mem::MaybeUninit::<*const Matrix4>::uninit();
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_Scene3DLayerGetPostXform,
+            layer_handle.as_ptr(),
+            index as i32,
+            matrix_ptr.as_mut_ptr() as *mut *const _
+        ) {
+            Ok(()) => Ok( {
+                let mut matrix = std::mem::MaybeUninit::<Matrix4>::uninit();
+                unsafe {
+                    std::ptr::copy( matrix_ptr.assume_init(), matrix.as_mut_ptr(), 1 );
+                    matrix.assume_init()
+                }
+            } ),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_sub_frame_time(&self,
+        index: usize
+    ) -> Result<Time, Error> {
+        let mut time = std::mem::MaybeUninit::<Time>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_Scene3DGetSubFrameTime,
+            self.scene3d_ptr,
+            index as i32,
+            time.as_mut_ptr() as *mut _,
+        ) {
+            Ok(()) => Ok( unsafe { time.assume_init() } ),
             Err(e) => Err(e),
         }
     }
@@ -894,6 +934,10 @@ impl Scene3DNodeHandle {
         node_ptr: ae_sys::AEGP_Scene3DNodeP,
     ) -> Scene3DNodeHandle {
         Scene3DNodeHandle { node_ptr: node_ptr }
+    }
+
+    pub fn as_ptr(&self) -> ae_sys::AEGP_Scene3DNodeP {
+        self.node_ptr
     }
 }
 
@@ -1010,6 +1054,30 @@ impl Scene3DNodeSuite {
             &mut mesh_handle.mesh_ptr
         ) {
             Ok(()) => Ok(mesh_handle),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn node_post_xform_get(
+        &self,
+        scene3d_node_handle: &Scene3DNodeHandle,
+        index: usize
+    ) -> Result<Matrix4, crate::Error> {
+        let mut matrix = std::mem::MaybeUninit::<Matrix4>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_NodePostXformGet,
+            scene3d_node_handle.as_ptr(),
+            index as i32,
+            matrix.as_mut_ptr() as *mut _,
+        ) {
+            Ok(()) => {
+                Ok(unsafe {
+                    (matrix.assume_init())
+                })
+                //Ok((num_vertex, num_face))
+            }
             Err(e) => Err(e),
         }
     }
