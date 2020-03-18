@@ -1,8 +1,9 @@
-use crate::{pf::EffectWorld, Suite, *};
-use aftereffects_sys as ae_sys;
+pub use crate::*;
 pub use ae_sys::*;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
-use std::ffi::CString; //, mem::transmute};
+use std::{ffi::CString, mem::MaybeUninit};
+
+use widestring::U16CString;
 
 pub type PluginID = ae_sys::AEGP_PluginID;
 
@@ -10,20 +11,14 @@ pub type ItemID = i32;
 
 pub type CompFlags = u32;
 
-pub const COMP_FLAG_SHOW_ALL_SHY: u32 =
-    ae_sys::AEGP_CompFlag_SHOW_ALL_SHY;
+pub const COMP_FLAG_SHOW_ALL_SHY: u32 = ae_sys::AEGP_CompFlag_SHOW_ALL_SHY;
 pub const COMP_FLAG_RESERVED_1: u32 = ae_sys::AEGP_CompFlag_RESERVED_1;
 pub const COMP_FLAG_RESERVED_2: u32 = ae_sys::AEGP_CompFlag_RESERVED_2;
-pub const COMP_FLAG_ENABLE_MOTION_BLUR: u32 =
-    ae_sys::AEGP_CompFlag_ENABLE_MOTION_BLUR;
-pub const COMP_FLAG_ENABLE_TIME_FILTER: u32 =
-    ae_sys::AEGP_CompFlag_ENABLE_TIME_FILTER;
-pub const COMP_FLAG_GRID_TO_FRAMES: u32 =
-    ae_sys::AEGP_CompFlag_GRID_TO_FRAMES;
-pub const COMP_FLAG_GRID_TO_FIELDS: u32 =
-    ae_sys::AEGP_CompFlag_GRID_TO_FIELDS;
-pub const COMP_FLAG_USE_LOCAL_DSF: u32 =
-    ae_sys::AEGP_CompFlag_USE_LOCAL_DSF;
+pub const COMP_FLAG_ENABLE_MOTION_BLUR: u32 = ae_sys::AEGP_CompFlag_ENABLE_MOTION_BLUR;
+pub const COMP_FLAG_ENABLE_TIME_FILTER: u32 = ae_sys::AEGP_CompFlag_ENABLE_TIME_FILTER;
+pub const COMP_FLAG_GRID_TO_FRAMES: u32 = ae_sys::AEGP_CompFlag_GRID_TO_FRAMES;
+pub const COMP_FLAG_GRID_TO_FIELDS: u32 = ae_sys::AEGP_CompFlag_GRID_TO_FIELDS;
+pub const COMP_FLAG_USE_LOCAL_DSF: u32 = ae_sys::AEGP_CompFlag_USE_LOCAL_DSF;
 pub const COMP_FLAG_DRAFT_3D: u32 = ae_sys::AEGP_CompFlag_DRAFT_3D;
 pub const COMP_FLAG_SHOW_GRAPH: u32 = ae_sys::AEGP_CompFlag_SHOW_GRAPH;
 pub const COMP_FLAG_RESERVED_3: u32 = ae_sys::AEGP_CompFlag_RESERVED_3;
@@ -34,16 +29,50 @@ pub const MEM_FLAG_NONE: u32 = ae_sys::AEGP_MemFlag_NONE;
 pub const MEM_FLAG_CLEAR: u32 = ae_sys::AEGP_MemFlag_CLEAR;
 pub const MEM_FLAG_QUIET: u32 = ae_sys::AEGP_MemFlag_QUIET;
 
+pub type LayerStream = u32;
+
+#[repr(u32)]
+pub enum TimeMode {
+    LayerTime = ae_sys::AEGP_LTimeMode_LayerTime,
+    CompTime = ae_sys::AEGP_LTimeMode_CompTime,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[repr(u32)]
+pub enum StreamType {
+    pubNone = AEGP_StreamType_NO_DATA,
+    ThreeDSpatial = AEGP_StreamType_ThreeD_SPATIAL,
+    ThreeD = AEGP_StreamType_ThreeD,
+    TwoDSpatial = AEGP_StreamType_TwoD_SPATIAL,
+    TwoD = AEGP_StreamType_TwoD,
+    OneD = AEGP_StreamType_OneD,
+    Color = AEGP_StreamType_COLOR,
+    Arb = AEGP_StreamType_ARB,
+    Marker = AEGP_StreamType_MARKER,
+    LayerID = AEGP_StreamType_LAYER_ID,
+    MaskID = AEGP_StreamType_MASK_ID,
+    Mask = AEGP_StreamType_MASK,
+    TextDocument = AEGP_StreamType_TEXT_DOCUMENT,
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub union StreamValue {
+    pub four_d: AEGP_FourDVal,
+    pub three_d: AEGP_ThreeDVal,
+    pub two_d: AEGP_TwoDVal,
+    pub one_d: AEGP_OneDVal,
+    pub color: AEGP_ColorVal,
+    pub arb_handle: AEGP_ArbBlockVal,
+    pub marker_ptr: AEGP_MarkerValP,
+    pub layer_id: AEGP_LayerIDVal,
+    pub mask_id: AEGP_MaskIDVal,
+    pub mask: AEGP_MaskOutlineValH,
+    pub text_document_handle: AEGP_TextDocumentH,
+}
+
 #[allow(dead_code)]
-#[derive(
-    Copy,
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    IntoPrimitive,
-    UnsafeFromPrimitive,
-)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
 #[repr(i32)]
 pub enum FilmSizeUnits {
     None = ae_sys::AEGP_FilmSizeUnits_NONE as i32,
@@ -53,15 +82,7 @@ pub enum FilmSizeUnits {
 }
 
 #[allow(dead_code)]
-#[derive(
-    Copy,
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    IntoPrimitive,
-    UnsafeFromPrimitive,
-)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
 #[repr(i32)]
 pub enum CameraType {
     None = ae_sys::AEGP_CameraType_NONE as i32,
@@ -79,22 +100,19 @@ define_suite!(
     kAEGPMemorySuiteVersion1
 );
 
-pub struct MemHandle<T> {
+pub struct MemHandle<T: Copy> {
     ptr: *mut T,
     pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
     mem_handle: ae_sys::AEGP_MemHandle,
 }
 
-impl<T> MemHandle<T> {
-    pub fn new(
-        plugin_id: PluginID,
-        name: &str,
-        flags: MemFlag,
-    ) -> Result<Self, crate::Error> {
-        let mut mem_handle: ae_sys::AEGP_MemHandle =
-            std::ptr::null_mut();
+impl<T: Copy> MemHandle<T> {
+    pub fn new(plugin_id: PluginID, name: &str, flags: MemFlag) -> Result<Self, Error> {
+        let mut mem_handle: ae_sys::AEGP_MemHandle = std::ptr::null_mut();
         let pica_basic_suite_ptr = borrow_pica_basic_as_ptr();
 
+        // The CString we construct here will be copied by Ae.
+        #[allow(clippy::temporary_cstring_as_ptr)]
         match ae_acquire_suite_and_call_suite_fn!(
             pica_basic_suite_ptr,
             AEGP_MemorySuite1,
@@ -118,12 +136,30 @@ impl<T> MemHandle<T> {
         }
     }
 
-    pub fn as_ptr(&self) -> *mut T {
-        assert!(self.ptr != std::ptr::null_mut());
-        self.ptr
+    pub fn from_raw(mem_handle: ae_sys::AEGP_MemHandle) -> Self {
+        Self {
+            ptr: std::ptr::null_mut(),
+            pica_basic_suite_ptr: borrow_pica_basic_as_ptr(),
+            mem_handle,
+        }
     }
 
-    pub fn lock(&mut self) -> Result<*mut T, crate::Error> {
+    pub fn as_mut_ptr(&self) -> *mut T {
+        assert!(!self.ptr.is_null());
+        self.ptr as *mut T
+    }
+
+    pub fn as_ptr(&self) -> *const T {
+        assert!(!self.ptr.is_null());
+        self.ptr as *const T
+    }
+
+    pub fn get(&self) -> T {
+        assert!(!self.ptr.is_null());
+        unsafe { *(self.ptr) }
+    }
+
+    pub fn lock(&mut self) -> Result<&Self, Error> {
         match ae_acquire_suite_and_call_suite_fn!(
             (self.pica_basic_suite_ptr),
             AEGP_MemorySuite1,
@@ -135,12 +171,12 @@ impl<T> MemHandle<T> {
             self.mem_handle,
             self.ptr as *mut _
         ) {
-            Ok(()) => Ok(self.ptr),
+            Ok(()) => Ok(self),
             Err(e) => Err(e),
         }
     }
 
-    pub fn unlock(&mut self) -> Result<(), crate::Error> {
+    pub fn unlock(&mut self) -> Result<(), Error> {
         ae_acquire_suite_and_call_suite_fn!(
             self.pica_basic_suite_ptr,
             AEGP_MemorySuite1,
@@ -154,7 +190,7 @@ impl<T> MemHandle<T> {
     }
 }
 
-impl<T> Drop for MemHandle<T> {
+impl<T: Copy> Drop for MemHandle<T> {
     #[allow(unused_must_use)]
     fn drop(&mut self) {
         self.unlock();
@@ -165,20 +201,11 @@ impl<T> Drop for MemHandle<T> {
 // single World
 define_handle_wrapper!(WorldHandle, AEGP_WorldH, world_ptr);
 
-define_suite!(
-    WorldSuite,
-    AEGP_WorldSuite3,
-    kAEGPWorldSuite,
-    kAEGPWorldSuiteVersion3
-);
+define_suite!(WorldSuite, AEGP_WorldSuite3, kAEGPWorldSuite, kAEGPWorldSuiteVersion3);
 
 impl WorldSuite {
-    pub fn fill_out_pf_effect_world(
-        &self,
-        world: &WorldHandle,
-    ) -> Result<EffectWorld, crate::Error> {
-        let mut effect_world_boxed =
-            Box::<ae_sys::PF_EffectWorld>::new_uninit();
+    pub fn fill_out_pf_effect_world(&self, world: WorldHandle) -> Result<EffectWorld, Error> {
+        let mut effect_world_boxed = Box::<ae_sys::PF_EffectWorld>::new_uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -187,9 +214,7 @@ impl WorldSuite {
             effect_world_boxed.as_mut_ptr()
         ) {
             Ok(()) => Ok(EffectWorld {
-                effect_world_boxed: unsafe {
-                    effect_world_boxed.assume_init()
-                },
+                effect_world_boxed: unsafe { effect_world_boxed.assume_init() },
             }),
             Err(e) => Err(e),
         }
@@ -198,18 +223,10 @@ impl WorldSuite {
 
 define_handle_wrapper!(CompHandle, AEGP_CompH, comp_ptr);
 
-define_suite!(
-    CompSuite,
-    AEGP_CompSuite11,
-    kAEGPCompSuite,
-    kAEGPCompSuiteVersion11
-);
+define_suite!(CompSuite, AEGP_CompSuite11, kAEGPCompSuite, kAEGPCompSuiteVersion11);
 
 impl CompSuite {
-    pub fn get_comp_shutter_angle_phase(
-        &self,
-        comp_handle: &CompHandle,
-    ) -> Result<(Ratio, Ratio), Error> {
+    pub fn get_comp_shutter_angle_phase(&self, comp_handle: CompHandle) -> Result<(Ratio, Ratio), Error> {
         let mut angle = std::mem::MaybeUninit::<Ratio>::uninit();
         let mut phase = std::mem::MaybeUninit::<Ratio>::uninit();
 
@@ -220,38 +237,26 @@ impl CompSuite {
             angle.as_mut_ptr() as *mut ae_sys::A_Ratio,
             phase.as_mut_ptr() as *mut ae_sys::A_Ratio,
         ) {
-            Ok(()) => Ok(unsafe {
-                (angle.assume_init(), phase.assume_init())
-            }),
+            Ok(()) => Ok(unsafe { (angle.assume_init(), phase.assume_init()) }),
             Err(e) => Err(e),
         }
     }
 
-    pub fn get_item_from_comp(
-        &self,
-        comp_handle: &CompHandle,
-    ) -> Result<ItemHandle, Error> {
-        let mut item_handle_ptr =
-            std::mem::MaybeUninit::<ae_sys::AEGP_ItemH>::uninit();
+    pub fn get_item_from_comp(&self, comp_handle: CompHandle) -> Result<ItemHandle, Error> {
+        let mut item_handle_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_ItemH>::uninit();
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetItemFromComp,
             comp_handle.as_ptr(),
             item_handle_ptr.as_mut_ptr()
         ) {
-            Ok(()) => Ok(ItemHandle::from_raw(unsafe {
-                item_handle_ptr.assume_init()
-            })),
+            Ok(()) => Ok(ItemHandle::from_raw(unsafe { item_handle_ptr.assume_init() })),
             Err(e) => Err(e),
         }
     }
 
-    pub fn get_comp_flags(
-        &self,
-        comp_handle: &CompHandle,
-    ) -> Result<CompFlags, Error> {
-        let mut comp_flags =
-            std::mem::MaybeUninit::<CompFlags>::uninit();
+    pub fn get_comp_flags(&self, comp_handle: CompHandle) -> Result<CompFlags, Error> {
+        let mut comp_flags = std::mem::MaybeUninit::<CompFlags>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -264,10 +269,7 @@ impl CompSuite {
         }
     }
 
-    pub fn get_comp_framerate(
-        &self,
-        comp_handle: &CompHandle,
-    ) -> Result<f64, Error> {
+    pub fn get_comp_framerate(&self, comp_handle: CompHandle) -> Result<f64, Error> {
         let mut framerate = std::mem::MaybeUninit::<f64>::uninit();
 
         match ae_call_suite_fn!(
@@ -292,10 +294,7 @@ pub struct Comp {
 }
 
 impl Comp {
-    pub fn from_item(
-        pica_basic_suite_handle: &crate::PicaBasicSuiteHandle,
-        item_handle: &ItemHandle,
-    ) -> Result<Self, crate::Error> {
+    pub fn from_item(pica_basic_suite_handle: &PicaBasicSuiteHandle, item_handle: ItemHandle) -> Result<Self, Error> {
         let pica_basic_suite_ptr = pica_basic_suite_handle.as_ptr();
         let suite_ptr = ae_acquire_suite_ptr!(
             pica_basic_suite_ptr,
@@ -305,18 +304,21 @@ impl Comp {
         )?;
 
         let comp_ptr: *mut ae_sys::AEGP_CompH = std::ptr::null_mut();
-        ae_call_suite_fn!(
-            suite_ptr,
-            AEGP_GetCompFromItem,
-            item_handle.as_ptr(),
-            comp_ptr,
-        )?;
+        ae_call_suite_fn!(suite_ptr, AEGP_GetCompFromItem, item_handle.as_ptr(), comp_ptr,)?;
 
         Ok(Self {
             pica_basic_suite_ptr,
             suite_ptr,
             comp_ptr,
         })
+    }
+}
+
+impl Drop for Comp {
+    #[allow(unused_must_use)]
+    fn drop(&mut self) {
+        // release suite
+        ae_release_suite_ptr!(self.pica_basic_suite_ptr, kAEGPCompSuite, kAEGPCompSuiteVersion11);
     }
 }
 
@@ -327,43 +329,64 @@ pub struct StreamReferenceHandle {
 
 define_handle_wrapper!(LayerHandle, AEGP_LayerH, layer_ptr);
 
-define_suite!(
-    LayerSuite,
-    AEGP_LayerSuite5,
-    kAEGPLayerSuite,
-    kAEGPLayerSuiteVersion5
-);
+define_suite!(LayerSuite, AEGP_LayerSuite8, kAEGPLayerSuite, kAEGPLayerSuiteVersion8);
 
 impl LayerSuite {
-    pub fn get_layer_to_world_xform(
-        &self,
-        layer_handle: &LayerHandle,
-        time: &crate::Time,
-    ) -> Result<Matrix4, crate::Error> {
-        let mut matrix = Box::<Matrix4>::new_uninit();
+    pub fn get_layer_name(&self, plugin_id: PluginID, layer_handle: LayerHandle) -> Result<(String, String), Error> {
+        let mut layer_name_mem_handle = MaybeUninit::<ae_sys::AEGP_MemHandle>::uninit();
+        let mut source_name_mem_handle = MaybeUninit::<ae_sys::AEGP_MemHandle>::uninit();
 
-        //let mut matrix = nalgebra::Matrix4::<f64>::zeros();
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetLayerName,
+            plugin_id,
+            layer_handle.as_ptr(),
+            layer_name_mem_handle.as_mut_ptr(),
+            source_name_mem_handle.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok((
+                unsafe {
+                    U16CString::from_ptr_str(
+                        MemHandle::<u16>::from_raw(layer_name_mem_handle.assume_init())
+                            .lock()?
+                            .as_ptr(),
+                    )
+                    .to_string_lossy()
+                },
+                unsafe {
+                    U16CString::from_ptr_str(
+                        MemHandle::<u16>::from_raw(source_name_mem_handle.assume_init())
+                            .lock()?
+                            .as_ptr(),
+                    )
+                    .to_string_lossy()
+                },
+            )),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_layer_to_world_xform(&self, layer_handle: LayerHandle, time: Time) -> Result<Matrix4, Error> {
+        let mut matrix = Box::<Matrix4>::new_uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetLayerToWorldXform,
             layer_handle.as_ptr(),
-            &(*time) as *const _ as *const ae_sys::A_Time,
+            &time as *const _ as *const ae_sys::A_Time,
             matrix.as_mut_ptr() as *mut ae_sys::A_Matrix4,
-            /*transmute::<
-                *mut nalgebra::Matrix4<f64>,
-                *mut ae_sys::A_Matrix4,
-            >(&mut matrix)*/
         ) {
-            Ok(()) => Ok(unsafe { *matrix.assume_init() } ),
+            Ok(()) => Ok(unsafe { *matrix.assume_init() }),
             Err(e) => Err(e),
         }
     }
 }
 
 #[derive(Clone)]
-pub struct StreamValue {
-    pub stream_value: Box<ae_sys::AEGP_StreamValue2>,
+#[repr(C)]
+struct StreamValue2 {
+    stream_ref_handle: AEGP_StreamRefH,
+    value: StreamValue,
 }
 
 define_suite!(
@@ -377,11 +400,10 @@ impl StreamSuite {
     pub fn get_new_layer_stream(
         &self,
         plugin_id: PluginID,
-        layer_handle: &LayerHandle,
+        layer_handle: LayerHandle,
         stream_name: ae_sys::AEGP_LayerStream, // FIXME
-    ) -> Result<StreamReferenceHandle, crate::Error> {
-        let mut stream_reference_ptr: ae_sys::AEGP_StreamRefH =
-            std::ptr::null_mut();
+    ) -> Result<StreamReferenceHandle, Error> {
+        let mut stream_reference_ptr: ae_sys::AEGP_StreamRefH = std::ptr::null_mut();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -391,9 +413,7 @@ impl StreamSuite {
             stream_name,
             &mut stream_reference_ptr
         ) {
-            Ok(()) => Ok(StreamReferenceHandle {
-                stream_reference_ptr,
-            }),
+            Ok(()) => Ok(StreamReferenceHandle { stream_reference_ptr }),
             Err(e) => Err(e),
         }
     }
@@ -401,27 +421,51 @@ impl StreamSuite {
     pub fn get_new_stream_value(
         &self,
         plugin_id: PluginID,
-        stream_reference_handle: &StreamReferenceHandle,
-        time_mode: ae_sys::AEGP_LTimeMode, // FIXME
-        time: &crate::Time,                // FIXME
+        stream_reference_handle: StreamReferenceHandle,
+        time_mode: TimeMode, // FIXME
+        time: Time,
         sample_stream_pre_expression: bool,
-    ) -> Result<StreamValue, crate::Error> {
-        let mut stream_value =
-            Box::<ae_sys::AEGP_StreamValue2>::new_uninit();
+    ) -> Result<StreamValue, Error> {
+        let mut stream_value = std::mem::MaybeUninit::<StreamValue2>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetNewStreamValue,
             plugin_id,
             stream_reference_handle.stream_reference_ptr,
-            time_mode,
-            &(*time) as *const _ as *const ae_sys::A_Time,
+            time_mode as ae_sys::AEGP_LTimeMode,
+            &time as *const _ as *const ae_sys::A_Time,
             sample_stream_pre_expression as u8,
-            stream_value.as_mut_ptr(),
+            stream_value.as_mut_ptr() as *mut _ as *mut ae_sys::AEGP_StreamValue2,
         ) {
-            Ok(()) => Ok(StreamValue {
-                stream_value: unsafe { stream_value.assume_init() },
-            }),
+            Ok(()) => Ok(unsafe { stream_value.assume_init().value }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_layer_stream_value(
+        &self,
+        layer_handle: LayerHandle,
+        stream: StreamType,
+        time_mode: TimeMode,
+        time: Time,
+        pre_expression: bool,
+    ) -> Result<(StreamValue, StreamType), Error> {
+        let mut stream_value = std::mem::MaybeUninit::<StreamValue2>::uninit();
+        let mut stream_type = std::mem::MaybeUninit::<StreamType>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetLayerStreamValue,
+            layer_handle.as_ptr(),
+            stream as i32,
+            time_mode as ae_sys::AEGP_LTimeMode,
+            &time as *const _ as *const ae_sys::A_Time,
+            pre_expression as u8,
+            stream_value.as_mut_ptr() as *mut _ as *mut ae_sys::AEGP_StreamVal2,
+            stream_type.as_mut_ptr() as *mut i32,
+        ) {
+            Ok(()) => Ok(unsafe { (stream_value.assume_init().value, stream_type.assume_init()) }),
             Err(e) => Err(e),
         }
     }
@@ -435,12 +479,8 @@ define_suite!(
 );
 
 impl CanvasSuite {
-    pub fn get_comp_to_render(
-        &self,
-        render_context_handle: &crate::pr::RenderContextHandle,
-    ) -> Result<CompHandle, Error> {
-        let mut comp_ptr =
-            std::mem::MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
+    pub fn get_comp_to_render(&self, render_context_handle: pr::RenderContextHandle) -> Result<CompHandle, Error> {
+        let mut comp_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -448,22 +488,15 @@ impl CanvasSuite {
             render_context_handle.as_ptr(),
             comp_ptr.as_mut_ptr()
         ) {
-            Ok(()) => Ok(CompHandle::from_raw(unsafe {
-                comp_ptr.assume_init()
-            })),
+            Ok(()) => Ok(CompHandle::from_raw(unsafe { comp_ptr.assume_init() })),
             Err(e) => Err(e),
         }
     }
 
-    pub fn get_comp_render_time(
-        &self,
-        render_context_handle: &crate::pr::RenderContextHandle,
-    ) -> Result<(Time, Time), Error> {
-        let mut shutter_frame_start =
-            std::mem::MaybeUninit::<Time>::uninit();
+    pub fn get_comp_render_time(&self, render_context_handle: pr::RenderContextHandle) -> Result<(Time, Time), Error> {
+        let mut shutter_frame_start = std::mem::MaybeUninit::<Time>::uninit();
 
-        let mut shutter_frame_duration =
-            std::mem::MaybeUninit::<Time>::uninit();
+        let mut shutter_frame_duration = std::mem::MaybeUninit::<Time>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -472,23 +505,17 @@ impl CanvasSuite {
             shutter_frame_start.as_mut_ptr() as *mut ae_sys::A_Time,
             shutter_frame_duration.as_mut_ptr() as *mut ae_sys::A_Time
         ) {
-            Ok(()) => Ok(unsafe {
-                (
-                    shutter_frame_start.assume_init(),
-                    shutter_frame_duration.assume_init(),
-                )
-            }),
+            Ok(()) => Ok(unsafe { (shutter_frame_start.assume_init(), shutter_frame_duration.assume_init()) }),
             Err(e) => Err(e),
         }
     }
 
     pub fn get_comp_destination_buffer(
         &self,
-        render_context_handle: &crate::pr::RenderContextHandle,
-        comp_handle: &CompHandle,
+        render_context_handle: pr::RenderContextHandle,
+        comp_handle: CompHandle,
     ) -> Result<WorldHandle, Error> {
-        let mut world_ptr =
-            std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
+        let mut world_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -497,28 +524,20 @@ impl CanvasSuite {
             comp_handle.as_ptr(),
             world_ptr.as_mut_ptr(),
         ) {
-            Ok(()) => Ok(WorldHandle::from_raw(unsafe {
-                world_ptr.assume_init()
-            })),
+            Ok(()) => Ok(WorldHandle::from_raw(unsafe { world_ptr.assume_init() })),
             Err(e) => Err(e),
         }
     }
 }
 
+define_suite!(LightSuite, AEGP_LightSuite2, kAEGPLightSuite, kAEGPLightSuiteVersion2);
+
 define_handle_wrapper!(ItemHandle, AEGP_ItemH, item_ptr);
 
-define_suite!(
-    ItemSuite,
-    AEGP_ItemSuite9,
-    kAEGPItemSuite,
-    kAEGPItemSuiteVersion9
-);
+define_suite!(ItemSuite, AEGP_ItemSuite9, kAEGPItemSuite, kAEGPItemSuiteVersion9);
 
 impl ItemSuite {
-    pub fn get_item_id(
-        &self,
-        item_handle: &ItemHandle,
-    ) -> Result<ItemID, Error> {
+    pub fn get_item_id(&self, item_handle: ItemHandle) -> Result<ItemID, Error> {
         let mut item_id = std::mem::MaybeUninit::<ItemID>::uninit();
 
         match ae_call_suite_fn!(
@@ -532,10 +551,7 @@ impl ItemSuite {
         }
     }
 
-    pub fn get_item_dimensions(
-        &self,
-        item_handle: &ItemHandle,
-    ) -> Result<(u32, u32), Error> {
+    pub fn get_item_dimensions(&self, item_handle: ItemHandle) -> Result<(u32, u32), Error> {
         let mut width = std::mem::MaybeUninit::<u32>::uninit();
         let mut height = std::mem::MaybeUninit::<u32>::uninit();
 
@@ -546,9 +562,7 @@ impl ItemSuite {
             width.as_mut_ptr() as *mut i32,
             height.as_mut_ptr() as *mut i32
         ) {
-            Ok(()) => Ok(unsafe {
-                (width.assume_init(), height.assume_init())
-            }),
+            Ok(()) => Ok(unsafe { (width.assume_init(), height.assume_init()) }),
             Err(e) => Err(e),
         }
     }
@@ -562,32 +576,22 @@ define_suite!(
 );
 
 impl CameraSuite {
-    pub fn get_camera(
-        &self,
-        render_context_handle: &crate::pr::RenderContextHandle,
-        time: &crate::Time,
-    ) -> Result<LayerHandle, crate::Error> {
-        let mut layer_ptr =
-            std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
+    pub fn get_camera(&self, render_context_handle: pr::RenderContextHandle, time: Time) -> Result<LayerHandle, Error> {
+        let mut layer_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetCamera,
             render_context_handle.as_ptr(),
-            &(*time) as *const _ as *const ae_sys::A_Time,
+            &time as *const _ as *const ae_sys::A_Time,
             layer_ptr.as_mut_ptr(),
         ) {
-            Ok(()) => Ok(LayerHandle::from_raw(unsafe {
-                layer_ptr.assume_init()
-            })),
+            Ok(()) => Ok(LayerHandle::from_raw(unsafe { layer_ptr.assume_init() })),
             Err(e) => Err(e),
         }
     }
 
-    pub fn get_camera_film_size(
-        &self,
-        camera_layer_handle: &LayerHandle,
-    ) -> Result<(FilmSizeUnits, f64), crate::Error> {
+    pub fn get_camera_film_size(&self, camera_layer_handle: LayerHandle) -> Result<(FilmSizeUnits, f64), Error> {
         let mut film_size_units: FilmSizeUnits = FilmSizeUnits::None;
         let mut film_size: ae_sys::A_FpLong = 0.0;
 
@@ -603,10 +607,7 @@ impl CameraSuite {
         }
     }
 
-    pub fn get_default_camera_distance_to_image_plane(
-        &self,
-        comp_handle: &CompHandle,
-    ) -> Result<f64, crate::Error> {
+    pub fn get_default_camera_distance_to_image_plane(&self, comp_handle: CompHandle) -> Result<f64, Error> {
         let mut distance: f64 = 0.0;
 
         match ae_call_suite_fn!(
@@ -620,10 +621,7 @@ impl CameraSuite {
         }
     }
 
-    pub fn get_camera_type(
-        &self,
-        camera_layer_handle: &LayerHandle,
-    ) -> Result<CameraType, crate::Error> {
+    pub fn get_camera_type(&self, camera_layer_handle: LayerHandle) -> Result<CameraType, Error> {
         let mut camera_type: CameraType = CameraType::None;
 
         match ae_call_suite_fn!(
@@ -643,9 +641,7 @@ pub struct Scene3DLayerHandle {
 }
 
 impl Scene3DLayerHandle {
-    pub fn from_raw(
-        scene3d_layer_ptr: *const ae_sys::AEGP_Scene3DLayer,
-    ) -> Self {
+    pub fn from_raw(scene3d_layer_ptr: *const ae_sys::AEGP_Scene3DLayer) -> Self {
         Self { scene3d_layer_ptr }
     }
 
@@ -670,12 +666,11 @@ pub struct Scene3D {
 
 impl Scene3D {
     pub fn new(
-        in_data_handle: crate::pr::InDataHandle,
-        render_context: crate::pr::RenderContextHandle,
-        global_texture_cache_handle: crate::aegp::Scene3DTextureCacheHandle,
-    ) -> Result<Scene3D, crate::Error> {
-        let pica_basic_suite_ptr =
-            in_data_handle.pica_basic_handle().as_ptr();
+        in_data_handle: pr::InDataHandle,
+        render_context: pr::RenderContextHandle,
+        global_texture_cache_handle: aegp::Scene3DTextureCacheHandle,
+    ) -> Result<Scene3D, Error> {
+        let pica_basic_suite_ptr = in_data_handle.pica_basic_handle().as_ptr();
 
         let suite_ptr = ae_acquire_suite_ptr!(
             pica_basic_suite_ptr,
@@ -684,14 +679,9 @@ impl Scene3D {
             kAEGPScene3DSuiteVersion2
         )?;
 
-        let mut scene3d_ptr: *mut ae_sys::AEGP_Scene3D =
-            std::ptr::null_mut();
+        let mut scene3d_ptr: *mut ae_sys::AEGP_Scene3D = std::ptr::null_mut();
 
-        ae_call_suite_fn!(
-            suite_ptr,
-            AEGP_Scene3DAlloc,
-            &mut scene3d_ptr,
-        )?;
+        ae_call_suite_fn!(suite_ptr, AEGP_Scene3DAlloc, &mut scene3d_ptr,)?;
 
         let mut texture_context_ptr: *mut ae_sys::AEGP_Scene3DTextureContext = std::ptr::null_mut();
 
@@ -708,7 +698,7 @@ impl Scene3D {
                 pica_basic_suite_ptr,
                 suite_ptr,
                 scene3d_ptr,
-                texture_context_ptr: texture_context_ptr,
+                texture_context_ptr,
                 in_data_ptr: in_data_handle.as_ptr(),
                 render_context_ptr: render_context.as_ptr(),
             }),
@@ -720,9 +710,7 @@ impl Scene3D {
         self.scene3d_ptr
     }
 
-    pub fn get_scene3d_suite_ptr(
-        &self,
-    ) -> *const ae_sys::AEGP_Scene3DSuite2 {
+    pub fn get_scene3d_suite_ptr(&self) -> *const ae_sys::AEGP_Scene3DSuite2 {
         self.suite_ptr
     }
 
@@ -730,7 +718,7 @@ impl Scene3D {
         &self,
         motion_samples: usize,
         sample_method: ae_sys::Scene3DMotionSampleMethod,
-    ) -> Result<(), crate::Error> {
+    ) -> Result<(), Error> {
         ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_Scene3D_SetupMotionBlurSamples,
@@ -744,10 +732,7 @@ impl Scene3D {
         )
     }
 
-    pub fn build(
-        &self,
-        progress_abort_callback_ptr: *mut ae_sys::AEGP_Scene3DProgressAbort,
-    ) -> Result<(), crate::Error> {
+    pub fn build(&self, progress_abort_callback_ptr: *mut ae_sys::AEGP_Scene3DProgressAbort) -> Result<(), Error> {
         ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_Scene3D_Build,
@@ -759,7 +744,7 @@ impl Scene3D {
         )
     }
 
-    pub fn scene_num_lights(&self) -> Result<usize, crate::Error> {
+    pub fn scene_num_lights(&self) -> Result<usize, Error> {
         let mut num_lights: i32 = 0;
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -782,7 +767,7 @@ impl Scene3D {
                                                        * mut
                                                        * ::std::os::raw::c_void> */
         flags: ae_sys::Scene3DTraverseFlags,
-    ) -> Result<(), crate::Error> {
+    ) -> Result<(), Error> {
         ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_Scene3DNodeTraverser,
@@ -793,8 +778,7 @@ impl Scene3D {
         )
     }
 
-    pub fn layer_num_post_xform(&self, scene3d_layer_handle: &Scene3DLayerHandle
-    ) -> Result<usize, Error> {
+    pub fn layer_num_post_xform(&self, scene3d_layer_handle: &Scene3DLayerHandle) -> Result<usize, Error> {
         let mut num_xform = std::mem::MaybeUninit::<i32>::uninit();
 
         match ae_call_suite_fn!(
@@ -803,13 +787,12 @@ impl Scene3D {
             scene3d_layer_handle.as_ptr(),
             num_xform.as_mut_ptr(),
         ) {
-            Ok(()) => Ok( unsafe { num_xform.assume_init() } as usize ),
+            Ok(()) => Ok(unsafe { num_xform.assume_init() } as usize),
             Err(e) => Err(e),
         }
     }
 
-    pub fn num_sub_frame_times(&self,
-    ) -> Result<usize, Error> {
+    pub fn num_sub_frame_times(&self) -> Result<usize, Error> {
         let mut num_motion_samples = std::mem::MaybeUninit::<i32>::uninit();
 
         match ae_call_suite_fn!(
@@ -818,15 +801,12 @@ impl Scene3D {
             self.scene3d_ptr,
             num_motion_samples.as_mut_ptr(),
         ) {
-            Ok(()) => Ok( unsafe { num_motion_samples.assume_init() } as usize ),
+            Ok(()) => Ok(unsafe { num_motion_samples.assume_init() } as usize),
             Err(e) => Err(e),
         }
     }
 
-    pub fn layer_get_post_xform(&self,
-        layer_handle: &Scene3DLayerHandle,
-        index: usize
-    ) -> Result<Matrix4, Error> {
+    pub fn layer_get_post_xform(&self, layer_handle: &Scene3DLayerHandle, index: usize) -> Result<Matrix4, Error> {
         let mut matrix_ptr = std::mem::MaybeUninit::<*const Matrix4>::uninit();
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -835,20 +815,18 @@ impl Scene3D {
             index as i32,
             matrix_ptr.as_mut_ptr() as *mut *const _
         ) {
-            Ok(()) => Ok( {
+            Ok(()) => Ok({
                 let mut matrix = std::mem::MaybeUninit::<Matrix4>::uninit();
                 unsafe {
-                    std::ptr::copy( matrix_ptr.assume_init(), matrix.as_mut_ptr(), 1 );
+                    std::ptr::copy(matrix_ptr.assume_init(), matrix.as_mut_ptr(), 1);
                     matrix.assume_init()
                 }
-            } ),
+            }),
             Err(e) => Err(e),
         }
     }
 
-    pub fn get_sub_frame_time(&self,
-        index: usize
-    ) -> Result<Time, Error> {
+    pub fn get_sub_frame_time(&self, index: usize) -> Result<Time, Error> {
         let mut time = std::mem::MaybeUninit::<Time>::uninit();
 
         match ae_call_suite_fn!(
@@ -858,7 +836,7 @@ impl Scene3D {
             index as i32,
             time.as_mut_ptr() as *mut _,
         ) {
-            Ok(()) => Ok( unsafe { time.assume_init() } ),
+            Ok(()) => Ok(unsafe { time.assume_init() }),
             Err(e) => Err(e),
         }
     }
@@ -875,18 +853,10 @@ impl Drop for Scene3D {
         );
 
         // dispose scene
-        ae_call_suite_fn!(
-            self.suite_ptr,
-            AEGP_Scene3DDispose,
-            self.scene3d_ptr
-        );
+        ae_call_suite_fn!(self.suite_ptr, AEGP_Scene3DDispose, self.scene3d_ptr);
 
         // release suite
-        ae_release_suite_ptr!(
-            self.pica_basic_suite_ptr,
-            kAEGPScene3DSuite,
-            kAEGPScene3DSuiteVersion2
-        );
+        ae_release_suite_ptr!(self.pica_basic_suite_ptr, kAEGPScene3DSuite, kAEGPScene3DSuiteVersion2);
     }
 }
 
@@ -895,26 +865,16 @@ pub struct Scene3DTextureCacheHandle {
 }
 
 impl Scene3DTextureCacheHandle {
-    pub fn new(
-        scene3d: Scene3D,
-    ) -> Result<Scene3DTextureCacheHandle, crate::Error> {
+    pub fn new(scene3d: Scene3D) -> Result<Scene3DTextureCacheHandle, Error> {
         let mut texture_cache_ptr: *mut ae_sys::AEGP_Scene3DTextureCache = std::ptr::null_mut();
 
-        match ae_call_suite_fn!(
-            scene3d.suite_ptr,
-            AEGP_Scene3DTextureCacheAlloc,
-            &mut texture_cache_ptr,
-        ) {
-            Ok(()) => {
-                Ok(Scene3DTextureCacheHandle { texture_cache_ptr })
-            }
+        match ae_call_suite_fn!(scene3d.suite_ptr, AEGP_Scene3DTextureCacheAlloc, &mut texture_cache_ptr,) {
+            Ok(()) => Ok(Scene3DTextureCacheHandle { texture_cache_ptr }),
             Err(e) => Err(e),
         }
     }
 
-    pub fn from_raw(
-        texture_cache_ptr: *mut ae_sys::AEGP_Scene3DTextureCache,
-    ) -> Scene3DTextureCacheHandle {
+    pub fn from_raw(texture_cache_ptr: *mut ae_sys::AEGP_Scene3DTextureCache) -> Scene3DTextureCacheHandle {
         Scene3DTextureCacheHandle { texture_cache_ptr }
     }
 }
@@ -930,13 +890,11 @@ pub struct Scene3DNodeHandle {
 }
 
 impl Scene3DNodeHandle {
-    pub fn new(
-        node_ptr: ae_sys::AEGP_Scene3DNodeP,
-    ) -> Scene3DNodeHandle {
-        Scene3DNodeHandle { node_ptr: node_ptr }
+    pub fn new(node_ptr: ae_sys::AEGP_Scene3DNodeP) -> Scene3DNodeHandle {
+        Scene3DNodeHandle { node_ptr }
     }
 
-    pub fn as_ptr(&self) -> ae_sys::AEGP_Scene3DNodeP {
+    pub fn as_ptr(self) -> ae_sys::AEGP_Scene3DNodeP {
         self.node_ptr
     }
 }
@@ -954,10 +912,7 @@ define_suite!(
 );
 
 impl Scene3DMaterialSuite {
-    pub fn has_uv_color_texture(
-        &self,
-        material_handle: &Scene3DMaterialHandle,
-    ) -> Result<bool, crate::Error> {
+    pub fn has_uv_color_texture(&self, material_handle: Scene3DMaterialHandle) -> Result<bool, Error> {
         let mut has_uv_color_texture: u8 = 0;
 
         match ae_call_suite_fn!(
@@ -971,10 +926,7 @@ impl Scene3DMaterialSuite {
         }
     }
 
-    pub fn get_uv_color_texture(
-        &self,
-        material: &Scene3DMaterialHandle,
-    ) -> Result<WorldHandle, crate::Error> {
+    pub fn get_uv_color_texture(&self, material: Scene3DMaterialHandle) -> Result<WorldHandle, Error> {
         let mut world_handle = WorldHandle {
             world_ptr: std::ptr::null_mut(),
         };
@@ -991,10 +943,9 @@ impl Scene3DMaterialSuite {
 
     pub fn get_basic_coeffs(
         &self,
-        material: &Scene3DMaterialHandle,
-    ) -> Result<Box<ae_sys::AEGP_MaterialBasic_v1>, crate::Error> {
-        let mut basic_material_coefficients =
-            Box::<ae_sys::AEGP_MaterialBasic_v1>::new_uninit();
+        material: Scene3DMaterialHandle,
+    ) -> Result<Box<ae_sys::AEGP_MaterialBasic_v1>, Error> {
+        let mut basic_material_coefficients = Box::<ae_sys::AEGP_MaterialBasic_v1>::new_uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1002,9 +953,7 @@ impl Scene3DMaterialSuite {
             material.material_ptr,
             basic_material_coefficients.as_mut_ptr()
         ) {
-            Ok(()) => {
-                Ok(unsafe { basic_material_coefficients.assume_init() })
-            }
+            Ok(()) => Ok(unsafe { basic_material_coefficients.assume_init() }),
             Err(e) => Err(e),
         }
     }
@@ -1020,9 +969,9 @@ define_suite!(
 impl Scene3DNodeSuite {
     pub fn get_material_for_side(
         &self,
-        node_handle: &Scene3DNodeHandle,
+        node_handle: Scene3DNodeHandle,
         side: ae_sys::AEGP_Scene3DMaterialSide,
-    ) -> Result<Scene3DMaterialHandle, crate::Error> {
+    ) -> Result<Scene3DMaterialHandle, Error> {
         let mut material_handle = Scene3DMaterialHandle {
             material_ptr: std::ptr::null_mut(),
         };
@@ -1039,10 +988,7 @@ impl Scene3DNodeSuite {
         }
     }
 
-    pub fn node_mesh_get(
-        &self,
-        node_handle: &Scene3DNodeHandle,
-    ) -> Result<Scene3DMeshHandle, crate::Error> {
+    pub fn node_mesh_get(&self, node_handle: Scene3DNodeHandle) -> Result<Scene3DMeshHandle, Error> {
         let mut mesh_handle = Scene3DMeshHandle {
             mesh_ptr: std::ptr::null_mut(),
         };
@@ -1058,11 +1004,7 @@ impl Scene3DNodeSuite {
         }
     }
 
-    pub fn node_post_xform_get(
-        &self,
-        scene3d_node_handle: &Scene3DNodeHandle,
-        index: usize
-    ) -> Result<Matrix4, crate::Error> {
+    pub fn node_post_xform_get(&self, scene3d_node_handle: Scene3DNodeHandle, index: usize) -> Result<Matrix4, Error> {
         let mut matrix = std::mem::MaybeUninit::<Matrix4>::uninit();
 
         match ae_call_suite_fn!(
@@ -1073,9 +1015,7 @@ impl Scene3DNodeSuite {
             matrix.as_mut_ptr() as *mut _,
         ) {
             Ok(()) => {
-                Ok(unsafe {
-                    (matrix.assume_init())
-                })
+                Ok(unsafe { matrix.assume_init() })
                 //Ok((num_vertex, num_face))
             }
             Err(e) => Err(e),
@@ -1091,10 +1031,7 @@ define_suite!(
 );
 
 impl Scene3DMeshSuite {
-    pub fn face_group_buffer_count(
-        &self,
-        mesh_handle: &Scene3DMeshHandle,
-    ) -> Result<usize, crate::Error> {
+    pub fn face_group_buffer_count(&self, mesh_handle: Scene3DMeshHandle) -> Result<usize, Error> {
         let mut face_groups: ae_sys::A_long = 0;
 
         match ae_call_suite_fn!(
@@ -1108,11 +1045,7 @@ impl Scene3DMeshSuite {
         }
     }
 
-    pub fn face_group_buffer_size(
-        &self,
-        mesh_handle: &Scene3DMeshHandle,
-        group_index: usize,
-    ) -> Result<usize, crate::Error> {
+    pub fn face_group_buffer_size(&self, mesh_handle: Scene3DMeshHandle, group_index: usize) -> Result<usize, Error> {
         let mut face_count: ae_sys::A_long = 0;
 
         match ae_call_suite_fn!(
@@ -1129,14 +1062,12 @@ impl Scene3DMeshSuite {
 
     pub fn face_group_buffer_fill(
         &self,
-        mesh_handle: &Scene3DMeshHandle,
+        mesh_handle: Scene3DMeshHandle,
         group_index: usize,
-    ) -> Result<Vec<ae_sys::A_long>, crate::Error> {
-        let face_count =
-            self.face_group_buffer_size(mesh_handle, group_index)?;
+    ) -> Result<Vec<ae_sys::A_long>, Error> {
+        let face_count = self.face_group_buffer_size(mesh_handle, group_index)?;
 
-        let mut face_index_buffer =
-            Vec::<ae_sys::A_long>::with_capacity(face_count as usize);
+        let mut face_index_buffer = Vec::<ae_sys::A_long>::with_capacity(face_count as usize);
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1161,12 +1092,10 @@ impl Scene3DMeshSuite {
 
     pub fn get_material_side_for_face_group(
         &self,
-        mesh_handle: &Scene3DMeshHandle,
+        mesh_handle: Scene3DMeshHandle,
         group_index: usize,
-    ) -> Result<ae_sys::AEGP_Scene3DMaterialSide, crate::Error> {
-        let mut material_side = std::mem::MaybeUninit::<
-            ae_sys::AEGP_Scene3DMaterialSide,
-        >::uninit();
+    ) -> Result<ae_sys::AEGP_Scene3DMaterialSide, Error> {
+        let mut material_side = std::mem::MaybeUninit::<ae_sys::AEGP_Scene3DMaterialSide>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1180,10 +1109,7 @@ impl Scene3DMeshSuite {
         }
     }
 
-    pub fn mesh_get_info(
-        &self,
-        mesh_handle: &Scene3DMeshHandle,
-    ) -> Result<(usize, usize), crate::Error> {
+    pub fn mesh_get_info(&self, mesh_handle: Scene3DMeshHandle) -> Result<(usize, usize), Error> {
         let mut num_vertex = std::mem::MaybeUninit::<i32>::uninit();
         let mut num_face = std::mem::MaybeUninit::<i32>::uninit();
 
@@ -1197,82 +1123,45 @@ impl Scene3DMeshSuite {
             num_face.as_mut_ptr() as *mut i32,
         ) {
             Ok(()) => {
-                Ok(unsafe {
-                    (num_vertex.assume_init() as usize, num_face.assume_init() as usize)
-                })
+                Ok(unsafe { (num_vertex.assume_init() as usize, num_face.assume_init() as usize) })
                 //Ok((num_vertex, num_face))
             }
             Err(e) => Err(e),
         }
     }
 
-    pub fn vertex_buffer_element_size(
-        &self,
-        vertex_type: ae_sys::Scene3DVertexBufferType,
-    ) -> usize {
-        ae_call_suite_fn_no_err!(
-            self.suite_ptr,
-            AEGP_VertexBufferElementSize,
-            vertex_type
-        ) as usize
+    pub fn vertex_buffer_element_size(&self, vertex_type: ae_sys::Scene3DVertexBufferType) -> usize {
+        ae_call_suite_fn_no_err!(self.suite_ptr, AEGP_VertexBufferElementSize, vertex_type) as usize
     }
 
-    pub fn face_index_element_size(
-        &self,
-        face_type: ae_sys::Scene3DFaceBufferType,
-    ) -> usize {
-        ae_call_suite_fn_no_err!(
-            self.suite_ptr,
-            AEGP_FaceBufferElementSize,
-            face_type
-        ) as usize
+    pub fn face_index_element_size(&self, face_type: ae_sys::Scene3DFaceBufferType) -> usize {
+        ae_call_suite_fn_no_err!(self.suite_ptr, AEGP_FaceBufferElementSize, face_type) as usize
     }
 
-    pub fn uv_buffer_element_size(
-        &self,
-        uv_type: ae_sys::Scene3DUVBufferType,
-    ) -> usize {
-        ae_call_suite_fn_no_err!(
-            self.suite_ptr,
-            AEGP_UVBufferElementSize,
-            uv_type
-        ) as usize
+    pub fn uv_buffer_element_size(&self, uv_type: ae_sys::Scene3DUVBufferType) -> usize {
+        ae_call_suite_fn_no_err!(self.suite_ptr, AEGP_UVBufferElementSize, uv_type) as usize
     }
 
     pub fn mesh_fill_buffers(
         &self,
-        mesh_handle: &Scene3DMeshHandle,
+        mesh_handle: Scene3DMeshHandle,
         vertex_type: ae_sys::Scene3DVertexBufferType,
         face_type: ae_sys::Scene3DFaceBufferType,
         uv_type: ae_sys::Scene3DUVBufferType,
-    ) -> Result<
-        (
-            Vec<ae_sys::A_FpLong>,
-            Vec<ae_sys::A_long>,
-            Vec<ae_sys::A_FpLong>,
-        ),
-        crate::Error,
-    > {
+    ) -> Result<(Vec<ae_sys::A_FpLong>, Vec<ae_sys::A_long>, Vec<ae_sys::A_FpLong>), Error> {
         let (num_vertex, num_face) = self.mesh_get_info(mesh_handle)?;
 
         // Points (3-tuples) of f64
         let vertex_buffer_size: usize = num_vertex * 3;
-        let mut vertex_buffer =
-            Vec::<ae_sys::A_FpLong>::with_capacity(vertex_buffer_size);
+        let mut vertex_buffer = Vec::<ae_sys::A_FpLong>::with_capacity(vertex_buffer_size);
 
         // quad meshes
         let face_index_buffer_size: usize = num_face * 4;
-        let mut face_index_buffer =
-            Vec::<ae_sys::A_long>::with_capacity(
-                face_index_buffer_size,
-            );
+        let mut face_index_buffer = Vec::<ae_sys::A_long>::with_capacity(face_index_buffer_size);
 
         // 2 uvs per vertex per face
         let uv_per_face_buffer_size: usize = num_face * 4 * 2;
-        let mut uv_per_face_buffer =
-            Vec::<ae_sys::A_FpLong>::with_capacity(
-                uv_per_face_buffer_size,
-            );
+        let mut uv_per_face_buffer = Vec::<ae_sys::A_FpLong>::with_capacity(uv_per_face_buffer_size);
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1292,11 +1181,7 @@ impl Scene3DMeshSuite {
                     uv_per_face_buffer.set_len(uv_per_face_buffer_size);
                 }
 
-                Ok((
-                    vertex_buffer,
-                    face_index_buffer,
-                    uv_per_face_buffer,
-                ))
+                Ok((vertex_buffer, face_index_buffer, uv_per_face_buffer))
             }
             Err(e) => Err(e),
         }

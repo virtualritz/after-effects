@@ -3,14 +3,10 @@ macro_rules! ae_acquire_suite_ptr {
     ($pica:expr, $type:ident, $name:ident, $version:ident) => {{
         #[allow(deprecated)]
         unsafe {
-            let mut suite_ptr: *const aftereffects_sys::$type =
-                std::mem::uninitialized();
-            let suite_ptr_ptr: *mut *const aftereffects_sys::$type =
-                &mut suite_ptr;
+            let mut suite_ptr: *const aftereffects_sys::$type = std::mem::uninitialized();
+            let suite_ptr_ptr: *mut *const aftereffects_sys::$type = &mut suite_ptr;
 
-            let aquire_suite_func = (*($pica))
-                .AcquireSuite
-                .unwrap_or_else(|| unreachable!());
+            let aquire_suite_func = (*($pica)).AcquireSuite.unwrap_or_else(|| unreachable!());
             aquire_suite_func(
                 aftereffects_sys::$name.as_ptr() as *const i8,
                 aftereffects_sys::$version as i32,
@@ -20,7 +16,7 @@ macro_rules! ae_acquire_suite_ptr {
 
             //suite_ptr
 
-            if std::ptr::null() == suite_ptr {
+            if suite_ptr.is_null() {
                 Err($crate::Error::MissingSuite)
             } else {
                 Ok(suite_ptr)
@@ -34,9 +30,7 @@ macro_rules! ae_release_suite_ptr {
     ($pica:expr, $name:ident, $version:ident) => {{
         #[allow(deprecated)]
         unsafe {
-            let release_suite_func = (*($pica))
-                .ReleaseSuite
-                .unwrap_or_else(|| unreachable!());
+            let release_suite_func = (*($pica)).ReleaseSuite.unwrap_or_else(|| unreachable!());
             release_suite_func(
                 aftereffects_sys::$name.as_ptr() as *const i8,
                 aftereffects_sys::$version as i32,
@@ -125,9 +119,7 @@ macro_rules! define_handle_wrapper {
         }
 
         impl $wrapper_pretty_name {
-            pub fn from_raw(
-                $data_name: ae_sys::$data_type,
-            ) -> Self {
+            pub fn from_raw($data_name: ae_sys::$data_type) -> Self {
                 Self { $data_name }
             }
 
@@ -138,7 +130,7 @@ macro_rules! define_handle_wrapper {
     };
 }
 
-macro_rules! define_suite{
+macro_rules! define_suite {
     ($suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
         #[allow(deprecated)]
         #[derive(Clone, Debug, Hash)]
@@ -157,27 +149,25 @@ macro_rules! define_suite{
                     $suite_name_string,
                     $suite_version
                 ) {
-                    Ok(suite_ptr) => Ok(Self{
-                            pica_basic_suite_ptr,
-                            suite_ptr,
-                        }),
+                    Ok(suite_ptr) => Ok(Self {
+                        pica_basic_suite_ptr,
+                        suite_ptr,
+                    }),
                     Err(e) => Err(e),
                 }
             }
 
-            fn from_raw(
-                pica_basic_suite_ptr: *const $crate::ae_sys::SPBasicSuite,
-            ) -> Result<Self, Error> {
+            fn from_raw(pica_basic_suite_ptr: *const $crate::ae_sys::SPBasicSuite) -> Result<Self, Error> {
                 match ae_acquire_suite_ptr!(
                     pica_basic_suite_ptr,
                     $suite_name,
                     $suite_name_string,
                     $suite_version
                 ) {
-                    Ok(suite_ptr) => Ok(Self{
-                            pica_basic_suite_ptr,
-                            suite_ptr,
-                        }),
+                    Ok(suite_ptr) => Ok(Self {
+                        pica_basic_suite_ptr,
+                        suite_ptr,
+                    }),
                     Err(e) => Err(e),
                 }
             }
@@ -185,11 +175,7 @@ macro_rules! define_suite{
 
         impl Drop for $suite_pretty_name {
             fn drop(&mut self) {
-                ae_release_suite_ptr!(
-                    self.pica_basic_suite_ptr,
-                    $suite_name_string,
-                    $suite_version
-                );
+                ae_release_suite_ptr!(self.pica_basic_suite_ptr, $suite_name_string, $suite_version);
             }
         }
     };

@@ -6,72 +6,39 @@ pub struct InDataHandle {
 }
 
 impl InDataHandle {
-    pub fn from_raw(
-        in_data_ptr: *const ae_sys::PR_InData,
-    ) -> InDataHandle {
+    pub fn from_raw(in_data_ptr: *const ae_sys::PR_InData) -> InDataHandle {
         InDataHandle { in_data_ptr }
     }
 
-    pub fn as_ptr(&self) -> *const ae_sys::PR_InData {
+    pub fn as_ptr(self) -> *const ae_sys::PR_InData {
         self.in_data_ptr
     }
 
-    pub fn pica_basic_handle(&self) -> crate::PicaBasicSuiteHandle {
-        crate::PicaBasicSuiteHandle::from_raw(unsafe {
-            (*self.in_data_ptr).pica_basicP
-        })
+    pub fn pica_basic_handle(self) -> crate::PicaBasicSuiteHandle {
+        crate::PicaBasicSuiteHandle::from_raw(unsafe { (*self.in_data_ptr).pica_basicP })
     }
 
-    pub fn plugin_id(&self) -> i32 {
+    pub fn plugin_id(self) -> i32 {
         unsafe { (*self.in_data_ptr).aegp_plug_id }
     }
 
     // Fixme: do we own this memory???!
-    pub fn reference_context_ptr(&self) -> Box<std::os::raw::c_void> {
-        unsafe {
-            Box::<std::os::raw::c_void>::from_raw(
-                (*self.in_data_ptr).aegp_refconPV,
-            )
-        }
+    pub fn reference_context_ptr(self) -> Box<std::os::raw::c_void> {
+        unsafe { Box::<std::os::raw::c_void>::from_raw((*self.in_data_ptr).aegp_refconPV) }
     }
 }
 
-define_handle_wrapper!(
-    RenderContextHandle,
-    PR_RenderContextH,
-    render_context_ptr
-);
+define_handle_wrapper!(RenderContextHandle, PR_RenderContextH, render_context_ptr);
 
-define_handle_wrapper!(
-    InstanceDataHandle,
-    PR_InstanceDataH,
-    instance_data_ptr
-);
+define_handle_wrapper!(InstanceDataHandle, PR_InstanceDataH, instance_data_ptr);
 
-define_handle_wrapper!(
-    InstanceContextHandle,
-    PR_InstanceContextH,
-    instance_context_ptr
-);
+define_handle_wrapper!(InstanceContextHandle, PR_InstanceContextH, instance_context_ptr);
 
-define_handle_wrapper!(
-    GlobalContextHandle,
-    PR_GlobalContextH,
-    global_context_ptr
-);
+define_handle_wrapper!(GlobalContextHandle, PR_GlobalContextH, global_context_ptr);
 
-define_handle_wrapper!(
-    GlobalDataHandle,
-    PR_GlobalDataH,
-    global_data_ptr
-);
+define_handle_wrapper!(GlobalDataHandle, PR_GlobalDataH, global_data_ptr);
 
-define_handle_wrapper!(
-    RenderDataHandle,
-    PR_RenderDataH,
-    render_data_ptr
-);
-
+define_handle_wrapper!(RenderDataHandle, PR_RenderDataH, render_data_ptr);
 
 //EffectWorld
 /*
