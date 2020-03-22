@@ -187,7 +187,9 @@ fn test_from() {
     let _matrix = nalgebra::Matrix4::<f64>::from(m);
 }
 
-#[derive(Debug, Copy, Clone, Hash)]
+pub type Color = ae_sys::A_Color;
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
 #[repr(C)]
 pub struct Time {
     pub value: ae_sys::A_long,
@@ -272,11 +274,10 @@ fn add_time_lossy(time1: Time, time2: Time) -> Time {
 impl Add<Time> for Time {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
-        add_time_lossy(self, rhs)
-        /*match add_time_lossless(self, rhs) {
+        match add_time_lossless(self, rhs) {
             Some(time) => time,
             None => add_time_lossy(self, rhs),
-        }*/
+        }
     }
 }
 

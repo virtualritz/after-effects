@@ -6,6 +6,8 @@ use widestring::U16CString;
 
 pub type PluginID = ae_sys::AEGP_PluginID;
 
+pub type MaterialBasic = ae_sys::AEGP_MaterialBasic_v1;
+
 pub type ItemID = i32;
 
 pub type CompFlags = u32;
@@ -987,9 +989,17 @@ impl CameraSuite {
             &time as *const _ as *const ae_sys::A_Time,
             layer_ptr.as_mut_ptr(),
         ) {
-            Ok(()) => Ok(LayerHandle::from_raw(unsafe {
-                layer_ptr.assume_init()
-            })),
+            Ok(()) => {
+                // If the comp has no camera Ae will return a NULL
+                // ptr instead of an error! We need to handle this
+                // ourselves.
+                let layer_ptr = unsafe { layer_ptr.assume_init() };
+                if layer_ptr.is_null() {
+                    Err(Error::Generic)
+                } else {
+                    Ok(LayerHandle::from_raw(layer_ptr))
+                }
+            }
             Err(e) => Err(e),
         }
     }
