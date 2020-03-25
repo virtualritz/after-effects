@@ -76,7 +76,7 @@ pub enum LayerStream {
     SpecularIntensity = AEGP_LayerStream_SPECULAR_INTENSITY as isize,
     SpecularShininess = AEGP_LayerStream_SPECULAR_SHININESS as isize,
 
-    CastsShadows = AEGP_LayerStream_CASTS_SHADOWS as isize, /* LIGHT as isize, and AV only, no CAMERA */
+    CastsShadows = AEGP_LayerStream_CASTS_SHADOWS as isize, /* LIGHT and AV only, no CAMERA */
     LightTransmission = AEGP_LayerStream_LIGHT_TRANSMISSION as isize, /* AV Layer only */
     Metal = AEGP_LayerStream_METAL as isize, // AV layer only
 
@@ -886,6 +886,24 @@ impl CanvasSuite {
                 world_ptr.assume_init()
             })),
             Err(e) => Err(e),
+        }
+    }
+
+    pub fn report_artisan_progress(
+        &self,
+        render_context_handle: pr::RenderContextHandle,
+        count: u16,
+        total: u16,
+    ) -> Option<Error> {
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_ReportArtisanProgress,
+            render_context_handle.as_ptr(),
+            count as i32,
+            total as i32,
+        ) {
+            Ok(()) => None,
+            Err(e) => Some(e),
         }
     }
 }

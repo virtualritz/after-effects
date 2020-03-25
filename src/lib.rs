@@ -104,7 +104,15 @@ impl Drop for PicaBasicSuite {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    IntoPrimitive,
+    UnsafeFromPrimitive,
+)]
 #[repr(i32)]
 pub enum Error {
     Generic = ae_sys::A_Err_GENERIC as i32,
