@@ -300,6 +300,15 @@ impl From<Time> for ae_sys::A_Time {
 
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
+pub struct LegacyRect {
+    top: i16,
+    left: i16,
+    bottom: i16,
+    right: i16,
+}
+
+#[derive(Debug, Copy, Clone, Hash)]
+#[repr(C)]
 pub struct Ratio {
     pub num: ae_sys::A_long,
     pub den: ae_sys::A_u_long,

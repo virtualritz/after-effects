@@ -17,10 +17,21 @@ impl EffectWorld {
         &(*self.effect_world_boxed)
     }
 
-    /*
-    pub fn as_mut_ptr(&self) -> *mut ae_sys::PF_EffectWorld {
-        self.effect_world_boxed.as_mut_ptr();
-    }*/
+    pub fn borrow_mut(&mut self) -> &ae_sys::PF_EffectWorld {
+        &mut (*self.effect_world_boxed)
+    }
+
+    pub fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
+        &(*self.effect_world_boxed) as *const ae_sys::PF_EffectWorld
+    }
+
+    pub fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
+        &mut (*self.effect_world_boxed) as *mut ae_sys::PF_EffectWorld
+    }
+
+    pub fn data(&mut self) -> &mut ae_sys::PF_PixelPtr {
+        &mut (*self.effect_world_boxed).data
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]

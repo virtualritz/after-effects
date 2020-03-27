@@ -157,6 +157,13 @@ pub type LayerID = u32;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
+pub struct DownsampleFactor {
+    xs: u8,
+    ys: u8,
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(C)]
 pub enum TimeMode {
     LayerTime = ae_sys::AEGP_LTimeMode_LayerTime as isize,
     CompTime = ae_sys::AEGP_LTimeMode_CompTime as isize,
@@ -904,6 +911,41 @@ impl CanvasSuite {
         ) {
             Ok(()) => None,
             Err(e) => Some(e),
+        }
+    }
+
+    pub fn get_roi(
+        &self,
+        render_context_handle: pr::RenderContextHandle,
+    ) -> Result<LegacyRect, Error> {
+        let mut roi = std::mem::MaybeUninit::<LegacyRect>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetROI,
+            render_context_handle.as_ptr(),
+            roi.as_mut_ptr() as _,
+        ) {
+            Ok(()) => Ok(unsafe { roi.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_render_downsample_factor(
+        &self,
+        render_context_handle: pr::RenderContextHandle,
+    ) -> Result<DownsampleFactor, Error> {
+        let mut dsf =
+            std::mem::MaybeUninit::<DownsampleFactor>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetROI,
+            render_context_handle.as_ptr(),
+            dsf.as_mut_ptr() as _,
+        ) {
+            Ok(()) => Ok(unsafe { dsf.assume_init() }),
+            Err(e) => Err(e),
         }
     }
 }
