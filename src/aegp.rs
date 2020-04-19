@@ -37,90 +37,83 @@ pub const MEM_FLAG_CLEAR: u32 = ae_sys::AEGP_MemFlag_CLEAR;
 pub const MEM_FLAG_QUIET: u32 = ae_sys::AEGP_MemFlag_QUIET;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(isize)]
+#[repr(i32)]
 pub enum LayerStream {
-    None = AEGP_LayerStream_NONE as isize,
-    AnchorPoint = AEGP_LayerStream_ANCHORPOINT as isize,
-    Position = AEGP_LayerStream_POSITION as isize,
-    Scale = AEGP_LayerStream_SCALE as isize,
+    None = AEGP_LayerStream_NONE,
+    AnchorPoint = AEGP_LayerStream_ANCHORPOINT,
+    Position = AEGP_LayerStream_POSITION,
+    Scale = AEGP_LayerStream_SCALE,
     // This is the layer's rotation for a 2D layer
-    RotateZ = AEGP_LayerStream_ROTATION as isize,
-    Opcaity = AEGP_LayerStream_OPACITY as isize,
-    Audio = AEGP_LayerStream_AUDIO as isize,
-    Marker = AEGP_LayerStream_MARKER as isize,
-    TimeRemap = AEGP_LayerStream_TIME_REMAP as isize,
-    RotateX = AEGP_LayerStream_ROTATE_X as isize,
-    RotateY = AEGP_LayerStream_ROTATE_Y as isize,
-    Orientation = AEGP_LayerStream_ORIENTATION as isize,
+    RotateZ = AEGP_LayerStream_ROTATION,
+    Opcaity = AEGP_LayerStream_OPACITY,
+    Audio = AEGP_LayerStream_AUDIO,
+    Marker = AEGP_LayerStream_MARKER,
+    TimeRemap = AEGP_LayerStream_TIME_REMAP,
+    RotateX = AEGP_LayerStream_ROTATE_X,
+    RotateY = AEGP_LayerStream_ROTATE_Y,
+    Orientation = AEGP_LayerStream_ORIENTATION,
 
     // only valid for AEGP_ObjectType == AEGP_ObjectType_CAMERA
-    Zoom = AEGP_LayerStream_ZOOM as isize,
-    DepthOfField = AEGP_LayerStream_DEPTH_OF_FIELD as isize,
-    FocusDistance = AEGP_LayerStream_FOCUS_DISTANCE as isize,
-    Aperture = AEGP_LayerStream_APERTURE as isize,
-    BlurLevel = AEGP_LayerStream_BLUR_LEVEL as isize,
+    Zoom = AEGP_LayerStream_ZOOM,
+    DepthOfField = AEGP_LayerStream_DEPTH_OF_FIELD,
+    FocusDistance = AEGP_LayerStream_FOCUS_DISTANCE,
+    Aperture = AEGP_LayerStream_APERTURE,
+    BlurLevel = AEGP_LayerStream_BLUR_LEVEL,
 
     // only valid for AEGP_ObjectType == AEGP_ObjectType_LIGHT
-    Intensity = AEGP_LayerStream_INTENSITY as isize,
-    Color = AEGP_LayerStream_COLOR as isize,
-    ConeAngle = AEGP_LayerStream_CONE_ANGLE as isize,
-    ConeFeather = AEGP_LayerStream_CONE_FEATHER as isize,
-    ShadowDarkness = AEGP_LayerStream_SHADOW_DARKNESS as isize,
-    ShadowDiffusion = AEGP_LayerStream_SHADOW_DIFFUSION as isize,
+    Intensity = AEGP_LayerStream_INTENSITY,
+    Color = AEGP_LayerStream_COLOR,
+    ConeAngle = AEGP_LayerStream_CONE_ANGLE,
+    ConeFeather = AEGP_LayerStream_CONE_FEATHER,
+    ShadowDarkness = AEGP_LayerStream_SHADOW_DARKNESS,
+    ShadowDiffusion = AEGP_LayerStream_SHADOW_DIFFUSION,
 
     // only valid for AEGP_ObjectType == AEGP_ObjectType_AV
-    AcceptsShadows = AEGP_LayerStream_ACCEPTS_SHADOWS as isize,
-    AcceptsLights = AEGP_LayerStream_ACCEPTS_LIGHTS as isize,
-    AmbientCoeff = AEGP_LayerStream_AMBIENT_COEFF as isize,
-    DiffuseCoeff = AEGP_LayerStream_DIFFUSE_COEFF as isize,
-    SpecularIntensity = AEGP_LayerStream_SPECULAR_INTENSITY as isize,
-    SpecularShininess = AEGP_LayerStream_SPECULAR_SHININESS as isize,
+    AcceptsShadows = AEGP_LayerStream_ACCEPTS_SHADOWS,
+    AcceptsLights = AEGP_LayerStream_ACCEPTS_LIGHTS,
+    AmbientCoeff = AEGP_LayerStream_AMBIENT_COEFF,
+    DiffuseCoeff = AEGP_LayerStream_DIFFUSE_COEFF,
+    SpecularIntensity = AEGP_LayerStream_SPECULAR_INTENSITY,
+    SpecularShininess = AEGP_LayerStream_SPECULAR_SHININESS,
 
-    CastsShadows = AEGP_LayerStream_CASTS_SHADOWS as isize, /* LIGHT and AV only, no CAMERA */
-    LightTransmission = AEGP_LayerStream_LIGHT_TRANSMISSION as isize, /* AV Layer only */
-    Metal = AEGP_LayerStream_METAL as isize, // AV layer only
+    CastsShadows = AEGP_LayerStream_CASTS_SHADOWS, /* LIGHT and AV only, no CAMERA */
+    LightTransmission = AEGP_LayerStream_LIGHT_TRANSMISSION, /* AV Layer only */
+    Metal = AEGP_LayerStream_METAL, // AV layer only
 
-    SourceText = AEGP_LayerStream_SOURCE_TEXT as isize,
+    SourceText = AEGP_LayerStream_SOURCE_TEXT,
 
     // only valid for AEGP_ObjectType == AEGP_ObjectType_CAMERA
-    IrisShape = AEGP_LayerStream_IRIS_SHAPE as isize,
-    IrisRotation = AEGP_LayerStream_IRIS_ROTATION as isize,
-    IrisRoundness = AEGP_LayerStream_IRIS_ROUNDNESS as isize,
-    IrisAspectRatio = AEGP_LayerStream_IRIS_ASPECT_RATIO as isize,
-    IrisDiffractionFringe =
-        AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE as isize,
-    IrisHighlightGain = AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN as isize,
-    IrisHighlightThreshold =
-        AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD as isize,
+    IrisShape = AEGP_LayerStream_IRIS_SHAPE,
+    IrisRotation = AEGP_LayerStream_IRIS_ROTATION,
+    IrisRoundness = AEGP_LayerStream_IRIS_ROUNDNESS,
+    IrisAspectRatio = AEGP_LayerStream_IRIS_ASPECT_RATIO,
+    IrisDiffractionFringe = AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE,
+    IrisHighlightGain = AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN,
+    IrisHighlightThreshold = AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD,
     IrisHighlightSaturation =
-        AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION as isize,
+        AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION,
 
     // only valid for AEGP_ObjectType == AEGP_ObjectTyp_LIGHT
-    LightFalloffType = AEGP_LayerStream_LIGHT_FALLOFF_TYPE as isize,
-    LightFalloffStart = AEGP_LayerStream_LIGHT_FALLOFF_START as isize,
-    LightFalloffDistance =
-        AEGP_LayerStream_LIGHT_FALLOFF_DISTANCE as isize,
+    LightFalloffType = AEGP_LayerStream_LIGHT_FALLOFF_TYPE,
+    LightFalloffStart = AEGP_LayerStream_LIGHT_FALLOFF_START,
+    LightFalloffDistance = AEGP_LayerStream_LIGHT_FALLOFF_DISTANCE,
 
     // only valid for AEGP_ObjectType == AEGP_ObjectType_AV
-    ReflactionIntensity =
-        AEGP_LayerStream_REFLECTION_INTENSITY as isize,
-    ReflactionSharpness =
-        AEGP_LayerStream_REFLECTION_SHARPNESS as isize,
-    ReflactionRolloff = AEGP_LayerStream_REFLECTION_ROLLOFF as isize,
-    TransparencyCoeff = AEGP_LayerStream_TRANSPARENCY_COEFF as isize,
-    TransparencyRolloff =
-        AEGP_LayerStream_TRANSPARENCY_ROLLOFF as isize,
-    IndexOfRefraction = AEGP_LayerStream_INDEX_OF_REFRACTION as isize,
+    ReflactionIntensity = AEGP_LayerStream_REFLECTION_INTENSITY,
+    ReflactionSharpness = AEGP_LayerStream_REFLECTION_SHARPNESS,
+    ReflactionRolloff = AEGP_LayerStream_REFLECTION_ROLLOFF,
+    TransparencyCoeff = AEGP_LayerStream_TRANSPARENCY_COEFF,
+    TransparencyRolloff = AEGP_LayerStream_TRANSPARENCY_ROLLOFF,
+    IndexOfRefraction = AEGP_LayerStream_INDEX_OF_REFRACTION,
 
-    BevelStyle = AEGP_LayerStream_EXTRUSION_BEVEL_STYLE as isize,
-    BevelDirection =
-        AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION as isize,
-    BevelDepth = AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH as isize,
+    BevelStyle = AEGP_LayerStream_EXTRUSION_BEVEL_STYLE,
+    BevelDirection = AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION,
+    BevelDepth = AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH,
     ExtrusionHoleBeveDepth =
-        AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH as isize,
-    ExtrusionDepth = AEGP_LayerStream_EXTRUSION_DEPTH as isize,
-    PlaneCurvature = AEGP_LayerStream_PLANE_CURVATURE as isize,
-    PlaneSubdivision = AEGP_LayerStream_PLANE_SUBDIVISION as isize,
+        AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH,
+    ExtrusionDepth = AEGP_LayerStream_EXTRUSION_DEPTH,
+    PlaneCurvature = AEGP_LayerStream_PLANE_CURVATURE,
+    PlaneSubdivision = AEGP_LayerStream_PLANE_SUBDIVISION,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -156,6 +149,15 @@ pub type LayerFlags = u32;
 pub type LayerID = u32;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[repr(u32)]
+pub enum WorldType {
+    None = ae_sys::AEGP_WorldType_NONE,
+    Byte = ae_sys::AEGP_WorldType_8,
+    Half = ae_sys::AEGP_WorldType_16,
+    Float = ae_sys::AEGP_WorldType_32,
+}
+
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
 pub struct DownsampleFactor {
     xs: u8,
@@ -163,28 +165,28 @@ pub struct DownsampleFactor {
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-#[repr(C)]
+#[repr(u32)]
 pub enum TimeMode {
-    LayerTime = ae_sys::AEGP_LTimeMode_LayerTime as isize,
-    CompTime = ae_sys::AEGP_LTimeMode_CompTime as isize,
+    LayerTime = ae_sys::AEGP_LTimeMode_LayerTime,
+    CompTime = ae_sys::AEGP_LTimeMode_CompTime,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-#[repr(C)]
+#[repr(u32)]
 pub enum StreamType {
-    NoData = AEGP_StreamType_NO_DATA as isize,
-    ThreeDSpatial = AEGP_StreamType_ThreeD_SPATIAL as isize,
-    ThreeD = AEGP_StreamType_ThreeD as isize,
-    TwoDSpatial = AEGP_StreamType_TwoD_SPATIAL as isize,
-    TwoD = AEGP_StreamType_TwoD as isize,
-    OneD = AEGP_StreamType_OneD as isize,
-    Color = AEGP_StreamType_COLOR as isize,
-    Arb = AEGP_StreamType_ARB as isize,
-    Marker = AEGP_StreamType_MARKER as isize,
-    LayerID = AEGP_StreamType_LAYER_ID as isize,
-    MaskID = AEGP_StreamType_MASK_ID as isize,
-    Mask = AEGP_StreamType_MASK as isize,
-    TextDocument = AEGP_StreamType_TEXT_DOCUMENT as isize,
+    NoData = AEGP_StreamType_NO_DATA,
+    ThreeDSpatial = AEGP_StreamType_ThreeD_SPATIAL,
+    ThreeD = AEGP_StreamType_ThreeD,
+    TwoDSpatial = AEGP_StreamType_TwoD_SPATIAL,
+    TwoD = AEGP_StreamType_TwoD,
+    OneD = AEGP_StreamType_OneD,
+    Color = AEGP_StreamType_COLOR,
+    Arb = AEGP_StreamType_ARB,
+    Marker = AEGP_StreamType_MARKER,
+    LayerID = AEGP_StreamType_LAYER_ID,
+    MaskID = AEGP_StreamType_MASK_ID,
+    Mask = AEGP_StreamType_MASK,
+    TextDocument = AEGP_StreamType_TEXT_DOCUMENT,
 }
 
 #[derive(Copy, Clone)]
@@ -204,13 +206,13 @@ pub union StreamValue {
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-#[repr(C)]
+#[repr(i32)]
 pub enum LightType {
-    None = AEGP_LightType_NONE as isize,
-    Parallel = AEGP_LightType_PARALLEL as isize,
-    Spot = AEGP_LightType_SPOT as isize,
-    Point = AEGP_LightType_POINT as isize,
-    Ambient = AEGP_LightType_AMBIENT as isize,
+    None = AEGP_LightType_NONE,
+    Parallel = AEGP_LightType_PARALLEL,
+    Spot = AEGP_LightType_SPOT,
+    Point = AEGP_LightType_POINT,
+    Ambient = AEGP_LightType_AMBIENT,
 }
 
 #[derive(
@@ -245,12 +247,12 @@ pub enum ObjectType {
     IntoPrimitive,
     UnsafeFromPrimitive,
 )]
-#[repr(i32)]
+#[repr(u32)]
 pub enum FilmSizeUnits {
-    None = ae_sys::AEGP_FilmSizeUnits_NONE as i32,
-    Horizontal = ae_sys::AEGP_FilmSizeUnits_HORIZONTAL as i32,
-    Vertical = ae_sys::AEGP_FilmSizeUnits_VERTICAL as i32,
-    Diagonal = ae_sys::AEGP_FilmSizeUnits_DIAGONAL as i32,
+    None = ae_sys::AEGP_FilmSizeUnits_NONE,
+    Horizontal = ae_sys::AEGP_FilmSizeUnits_HORIZONTAL,
+    Vertical = ae_sys::AEGP_FilmSizeUnits_VERTICAL,
+    Diagonal = ae_sys::AEGP_FilmSizeUnits_DIAGONAL,
 }
 
 #[allow(dead_code)]
@@ -265,10 +267,10 @@ pub enum FilmSizeUnits {
 )]
 #[repr(i32)]
 pub enum CameraType {
-    None = ae_sys::AEGP_CameraType_NONE as i32,
-    Perspective = ae_sys::AEGP_CameraType_PERSPECTIVE as i32,
-    Orthographic = ae_sys::AEGP_CameraType_ORTHOGRAPHIC as i32,
-    NumTypes = ae_sys::AEGP_CameraType_NUM_TYPES as i32,
+    None = ae_sys::AEGP_CameraType_NONE,
+    Perspective = ae_sys::AEGP_CameraType_PERSPECTIVE,
+    Orthographic = ae_sys::AEGP_CameraType_ORTHOGRAPHIC,
+    NumTypes = ae_sys::AEGP_CameraType_NUM_TYPES,
 }
 
 //define_handle_wrapper!(MemHandle, AEGP_MemHandle, mem_ptr);
@@ -398,19 +400,48 @@ impl WorldSuite {
         &self,
         world: WorldHandle,
     ) -> Result<EffectWorld, Error> {
-        let mut effect_world_boxed =
-            Box::<ae_sys::PF_EffectWorld>::new_uninit();
+        //let mut effect_world_boxed =
+        //    Box::<ae_sys::PF_EffectWorld>::new_uninit();
+        let mut effect_world = std::mem::MaybeUninit::<
+            ae_sys::PF_EffectWorld,
+        >::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_FillOutPFEffectWorld,
             world.as_ptr(),
-            effect_world_boxed.as_mut_ptr()
+            effect_world.as_mut_ptr() as _
         ) {
             Ok(()) => Ok(EffectWorld {
-                effect_world_boxed: unsafe {
-                    effect_world_boxed.assume_init()
+                effect_world: unsafe {
+                    effect_world.assume_init()
                 },
+            }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn new_world_handle_from(
+        &self,
+        plugin_id: PluginID,
+        world_type: WorldType,
+        width: u32,
+        height: u32,
+    ) -> Result<WorldHandle, Error> {
+        let mut world_handle =
+            std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_New,
+            plugin_id,
+            world_type as ae_sys::AEGP_WorldType,
+            width as i32,
+            height as i32,
+            world_handle.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(WorldHandle {
+                world_ptr: unsafe { world_handle.assume_init() },
             }),
             Err(e) => Err(e),
         }
@@ -438,8 +469,8 @@ impl CompSuite {
             self.suite_ptr,
             AEGP_GetCompShutterAnglePhase,
             comp_handle.as_ptr(),
-            angle.as_mut_ptr() as *mut ae_sys::A_Ratio,
-            phase.as_mut_ptr() as *mut ae_sys::A_Ratio,
+            angle.as_mut_ptr() as _,
+            phase.as_mut_ptr() as _,
         ) {
             Ok(()) => Ok(unsafe {
                 (angle.assume_init(), phase.assume_init())
@@ -508,8 +539,8 @@ pub struct Comp {
     // drop resources at the end of our lifetime
     // using release_suite()
     pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
-    suite_ptr: *const ae_sys::AEGP_CompSuite11,
-    comp_ptr: *const ae_sys::AEGP_CompH,
+    //suite_ptr: *const ae_sys::AEGP_CompSuite11,
+    //comp_ptr: *const ae_sys::AEGP_CompH,
 }
 
 impl Comp {
@@ -535,8 +566,8 @@ impl Comp {
 
         Ok(Self {
             pica_basic_suite_ptr,
-            suite_ptr,
-            comp_ptr,
+            //suite_ptr,
+            //comp_ptr,
         })
     }
 }
@@ -820,6 +851,58 @@ impl StreamSuite {
 }
 
 define_suite!(
+    CompositeSuite,
+    AEGP_CompositeSuite2,
+    kAEGPCompositeSuite,
+    kAEGPCompositeSuiteVersion2
+);
+
+impl CompositeSuite {
+    pub fn transfer_rect(
+        &self,
+        quality: pf::Quality,
+        alpha: pf::ModeFlags,
+        field: pf::Field,
+        src_rect: &crate::Rect,
+        src_world: &EffectWorld,
+        comp_mode: &pf::CompositeMode,
+        blending_tables: Option<&EffectBlendingTables>,
+        mask_world: Option<pf::MaskWorld>,
+        dst_x: u32,
+        dst_y: u32,
+        dst_world: &mut EffectWorld,
+    ) -> Result<(), Error> {
+        let mask_world = match mask_world {
+            None => None,
+            Some(m) => Some(ae_sys::PF_MaskWorld {
+                mask: m.mask.effect_world.clone(),
+                offset: ae_sys::PF_Point {
+                    v: m.offset.v,
+                    h: m.offset.h,
+                },
+                what_is_mask: m.what_is_mask as i32,
+            }),
+        };
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_TransferRect,
+            quality as i32,
+            alpha as i32,
+            field as i32,
+            src_rect as *const _ as *const ae_sys::A_LRect,
+            src_world.as_ptr(),
+            comp_mode as *const _ as *const ae_sys::PF_CompositeMode,
+            blending_tables.map_or(std::ptr::null(), |b| b.as_ptr())
+                as _,
+            mask_world.map_or(std::ptr::null(), |m| &m) as _,
+            dst_x as i32,
+            dst_y as i32,
+            dst_world.as_mut_ptr()
+        )
+    }
+}
+
+define_suite!(
     CanvasSuite,
     AEGP_CanvasSuite8,
     kAEGPCanvasSuite,
@@ -1015,12 +1098,29 @@ impl ItemSuite {
             self.suite_ptr,
             AEGP_GetItemDimensions,
             item_handle.as_ptr(),
-            width.as_mut_ptr() as *mut i32,
-            height.as_mut_ptr() as *mut i32
+            width.as_mut_ptr() as _,
+            height.as_mut_ptr() as _
         ) {
             Ok(()) => Ok(unsafe {
                 (width.assume_init(), height.assume_init())
             }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_item_pixel_ratio(
+        &self,
+        item_handle: ItemHandle,
+    ) -> Result<Ratio, Error> {
+        let mut ratio = std::mem::MaybeUninit::<Ratio>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetItemPixelAspectRatio,
+            item_handle.as_ptr(),
+            ratio.as_mut_ptr() as _,
+        ) {
+            Ok(()) => Ok(unsafe { ratio.assume_init() }),
             Err(e) => Err(e),
         }
     }

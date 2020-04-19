@@ -1,10 +1,126 @@
 pub use crate::*;
 use aftereffects_sys as ae_sys;
 
-// FIXME: wrap this nicely
-pub struct EffectWorld {
-    pub effect_world_boxed: Box<ae_sys::PF_EffectWorld>,
+#[derive(Debug, Copy, Clone, Hash)]
+#[repr(i32)]
+pub enum TransferMode {
+    None = ae_sys::PF_Xfer_NONE,
+    Copy = ae_sys::PF_Xfer_COPY,
+    Behind = ae_sys::PF_Xfer_BEHIND,
+    InFront = ae_sys::PF_Xfer_IN_FRONT,
+    Dissolve = ae_sys::PF_Xfer_DISSOLVE,
+    Add = ae_sys::PF_Xfer_ADD,
+    Mulitply = ae_sys::PF_Xfer_MULTIPLY,
+    Screen = ae_sys::PF_Xfer_SCREEN,
+    Overlay = ae_sys::PF_Xfer_OVERLAY,
+    SoftLight = ae_sys::PF_Xfer_SOFT_LIGHT,
+    HardLight = ae_sys::PF_Xfer_HARD_LIGHT,
+    Darken = ae_sys::PF_Xfer_DARKEN,
+    Lighten = ae_sys::PF_Xfer_LIGHTEN,
+    Difference = ae_sys::PF_Xfer_DIFFERENCE,
+    Hue = ae_sys::PF_Xfer_HUE,
+    Saturation = ae_sys::PF_Xfer_SATURATION,
+    Color = ae_sys::PF_Xfer_COLOR,
+    Luminosity = ae_sys::PF_Xfer_LUMINOSITY,
+    MultiplyAlpha = ae_sys::PF_Xfer_MULTIPLY_ALPHA,
+    MultiplyAlphaLuma = ae_sys::PF_Xfer_MULTIPLY_ALPHA_LUMA,
+    MultiplyNotAlpha = ae_sys::PF_Xfer_MULTIPLY_NOT_ALPHA,
+    MultiplyNotAlphaLuma = ae_sys::PF_Xfer_MULTIPLY_NOT_ALPHA_LUMA,
+    AddiditivePremul = ae_sys::PF_Xfer_ADDITIVE_PREMUL,
+    AlphaAdd = ae_sys::PF_Xfer_ALPHA_ADD,
+    ColorDodge = ae_sys::PF_Xfer_COLOR_DODGE,
+    ColorBurn = ae_sys::PF_Xfer_COLOR_BURN,
+    Exclusion = ae_sys::PF_Xfer_EXCLUSION,
+
+    Difference2 = ae_sys::PF_Xfer_DIFFERENCE2,
+    ColorDodge2 = ae_sys::PF_Xfer_COLOR_DODGE2,
+    ColorBurn2 = PF_Xfer_COLOR_BURN2,
+
+    LinearDodge = ae_sys::PF_Xfer_LINEAR_DODGE,
+    LinearBurn = ae_sys::PF_Xfer_LINEAR_BURN,
+    LinearLight = ae_sys::PF_Xfer_LINEAR_LIGHT,
+    VividLight = ae_sys::PF_Xfer_VIVID_LIGHT,
+    PinLight = ae_sys::PF_Xfer_PIN_LIGHT,
+
+    HardMix = ae_sys::PF_Xfer_HARD_MIX,
+
+    LighterColor = ae_sys::PF_Xfer_LIGHTER_COLOR,
+    DarkerColor = ae_sys::PF_Xfer_DARKER_COLOR,
+
+    Subtract = ae_sys::PF_Xfer_SUBTRACT,
+    Divide = ae_sys::PF_Xfer_DIVIDE,
+
+    Reserved0 = ae_sys::PF_Xfer_RESERVED0,
+    Reserved1 = ae_sys::PF_Xfer_RESERVED1,
+
+    NumModes = ae_sys::PF_Xfer_NUM_MODES,
 }
+
+pub type XferMode = TransferMode;
+
+#[derive(Debug, Copy, Clone, Hash)]
+#[repr(C)]
+pub struct CompositeMode {
+    pub xfer: TransferMode,
+    // For TransferMode::DissolveRandomized.
+    pub rand_seed: i32,
+    // 0–255.
+    pub opacity: u8,
+    // Ignored TransferMode::MutiplyAlpha* modes.
+    pub rgb_only: u8,
+    // For deep color only.
+    pub opacity_su: u16,
+}
+
+#[derive(Debug, Copy, Clone, Hash)]
+#[repr(C)]
+pub struct Point {
+    pub h: i32,
+    pub v: i32,
+}
+
+pub type MaskFlags = u32;
+
+#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct MaskWorld {
+    pub mask: EffectWorld,
+    pub offset: Point,
+    pub what_is_mask: MaskFlags,
+}
+
+#[derive(Copy, Clone, Debug, Hash)]
+#[repr(i32)]
+pub enum Quality {
+    DrawingAudio = ae_sys::PF_Quality_DRAWING_AUDIO,
+    Lo = ae_sys::PF_Quality_LO,
+    Hi = ae_sys::PF_Quality_HI,
+}
+
+#[repr(u32)]
+pub enum ModeFlags {
+    AlphaPremul = ae_sys::PF_MF_Alpha_PREMUL,
+    AlphaStraight = ae_sys::PF_MF_Alpha_STRAIGHT,
+}
+
+#[repr(u32)]
+pub enum Field {
+    Frame = ae_sys::PF_Field_FRAME,
+    Upper = ae_sys::PF_Field_UPPER,
+    Lower = ae_sys::PF_Field_LOWER,
+}
+
+// FIXME: wrap this nicely
+#[derive(Debug, Copy, Clone)]
+pub struct EffectWorld {
+    pub effect_world: ae_sys::PF_EffectWorld,
+}
+
+define_handle_wrapper!(
+    EffectBlendingTables,
+    PF_EffectBlendingTables,
+    blending_tabpe_ptr
+);
 
 impl EffectWorld {
     pub fn new(
@@ -13,24 +129,23 @@ impl EffectWorld {
         WorldSuite::new()?.fill_out_pf_effect_world(world_handle)
     }
 
-    pub fn borrow(&self) -> &ae_sys::PF_EffectWorld {
-        &(*self.effect_world_boxed)
-    }
-
-    pub fn borrow_mut(&mut self) -> &ae_sys::PF_EffectWorld {
-        &mut (*self.effect_world_boxed)
-    }
-
     pub fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
-        &(*self.effect_world_boxed) as *const ae_sys::PF_EffectWorld
+        &self.effect_world as *const ae_sys::PF_EffectWorld
     }
 
     pub fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
-        &mut (*self.effect_world_boxed) as *mut ae_sys::PF_EffectWorld
+        &mut self.effect_world as *mut ae_sys::PF_EffectWorld
     }
 
-    pub fn data(&mut self) -> &mut ae_sys::PF_PixelPtr {
-        &mut (*self.effect_world_boxed).data
+    pub fn depth(&self) -> WorldType {
+        let flags = self.effect_world.world_flags;
+        if ae_sys::PF_WorldFlag_RESERVED1 & flags as u32 != 0 {
+            WorldType::Float
+        } else if ae_sys::PF_WorldFlag_DEEP & flags as u32 != 0 {
+            WorldType::Half
+        } else {
+            WorldType::Byte
+        }
     }
 }
 
