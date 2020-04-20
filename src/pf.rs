@@ -1,6 +1,33 @@
 pub use crate::*;
 use aftereffects_sys as ae_sys;
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Pixel8 {
+    pub alpha: ae_sys::A_u_char,
+    pub red: ae_sys::A_u_char,
+    pub green: ae_sys::A_u_char,
+    pub blue: ae_sys::A_u_char,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Pixel16 {
+    pub alpha: ae_sys::A_u_short,
+    pub red: ae_sys::A_u_short,
+    pub green: ae_sys::A_u_short,
+    pub blue: ae_sys::A_u_short,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Pixel32 {
+    pub alpha: ae_sys::PF_FpShort,
+    pub red: ae_sys::PF_FpShort,
+    pub green: ae_sys::PF_FpShort,
+    pub blue: ae_sys::PF_FpShort,
+}
+
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(i32)]
 pub enum TransferMode {
@@ -81,7 +108,7 @@ pub struct Point {
 
 pub type MaskFlags = u32;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Debug)]
 #[repr(C)]
 pub struct MaskWorld {
     pub mask: EffectWorld,
@@ -111,7 +138,8 @@ pub enum Field {
 }
 
 // FIXME: wrap this nicely
-#[derive(Debug, Copy, Clone)]
+//#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct EffectWorld {
     pub effect_world: ae_sys::PF_EffectWorld,
 }

@@ -402,20 +402,17 @@ impl WorldSuite {
     ) -> Result<EffectWorld, Error> {
         //let mut effect_world_boxed =
         //    Box::<ae_sys::PF_EffectWorld>::new_uninit();
-        let mut effect_world = std::mem::MaybeUninit::<
-            ae_sys::PF_EffectWorld,
-        >::uninit();
+        let mut effect_world =
+            std::mem::MaybeUninit::<ae_sys::PF_EffectWorld>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_FillOutPFEffectWorld,
             world.as_ptr(),
-            effect_world.as_mut_ptr() as _
+            effect_world.as_mut_ptr()
         ) {
             Ok(()) => Ok(EffectWorld {
-                effect_world: unsafe {
-                    effect_world.assume_init()
-                },
+                effect_world: unsafe { effect_world.assume_init() },
             }),
             Err(e) => Err(e),
         }
@@ -443,6 +440,60 @@ impl WorldSuite {
             Ok(()) => Ok(WorldHandle {
                 world_ptr: unsafe { world_handle.assume_init() },
             }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_base_addr8(
+        &self,
+        world: WorldHandle,
+    ) -> Result<*mut pf::Pixel8, Error> {
+        let mut base_addr =
+            std::mem::MaybeUninit::<*mut pf::Pixel8>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetBaseAddr8,
+            world.as_ptr(),
+            base_addr.as_mut_ptr() as _
+        ) {
+            Ok(()) => Ok(unsafe { base_addr.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_base_addr16(
+        &self,
+        world: WorldHandle,
+    ) -> Result<*mut pf::Pixel16, Error> {
+        let mut base_addr =
+            std::mem::MaybeUninit::<*mut pf::Pixel16>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetBaseAddr16,
+            world.as_ptr(),
+            base_addr.as_mut_ptr() as _
+        ) {
+            Ok(()) => Ok(unsafe { base_addr.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_base_addr32(
+        &self,
+        world: WorldHandle,
+    ) -> Result<*mut pf::Pixel32, Error> {
+        let mut base_addr =
+            std::mem::MaybeUninit::<*mut pf::Pixel32>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetBaseAddr32,
+            world.as_ptr(),
+            base_addr.as_mut_ptr() as _
+        ) {
+            Ok(()) => Ok(unsafe { base_addr.assume_init() }),
             Err(e) => Err(e),
         }
     }
@@ -539,8 +590,8 @@ pub struct Comp {
     // drop resources at the end of our lifetime
     // using release_suite()
     pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
-    //suite_ptr: *const ae_sys::AEGP_CompSuite11,
-    //comp_ptr: *const ae_sys::AEGP_CompH,
+    /*suite_ptr: *const ae_sys::AEGP_CompSuite11,
+     *comp_ptr: *const ae_sys::AEGP_CompH, */
 }
 
 impl Comp {
@@ -566,8 +617,8 @@ impl Comp {
 
         Ok(Self {
             pica_basic_suite_ptr,
-            //suite_ptr,
-            //comp_ptr,
+            /*suite_ptr,
+             *comp_ptr, */
         })
     }
 }
