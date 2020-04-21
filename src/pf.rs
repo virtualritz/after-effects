@@ -165,12 +165,12 @@ impl EffectWorld {
         &mut self.effect_world as *mut ae_sys::PF_EffectWorld
     }
 
-    pub fn depth(&self) -> WorldType {
+    pub fn world_type(&self) -> WorldType {
         let flags = self.effect_world.world_flags;
         if ae_sys::PF_WorldFlag_RESERVED1 & flags as u32 != 0 {
             WorldType::Float
         } else if ae_sys::PF_WorldFlag_DEEP & flags as u32 != 0 {
-            WorldType::Half
+            WorldType::Integer
         } else {
             WorldType::Byte
         }

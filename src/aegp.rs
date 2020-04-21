@@ -153,15 +153,15 @@ pub type LayerID = u32;
 pub enum WorldType {
     None = ae_sys::AEGP_WorldType_NONE,
     Byte = ae_sys::AEGP_WorldType_8,
-    Half = ae_sys::AEGP_WorldType_16,
+    Integer = ae_sys::AEGP_WorldType_16,
     Float = ae_sys::AEGP_WorldType_32,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
 pub struct DownsampleFactor {
-    xs: u8,
-    ys: u8,
+    pub xs: u8,
+    pub ys: u8,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -418,7 +418,7 @@ impl WorldSuite {
         }
     }
 
-    pub fn new_world_handle_from(
+    pub fn new_with_allocation(
         &self,
         plugin_id: PluginID,
         world_type: WorldType,
@@ -444,9 +444,23 @@ impl WorldSuite {
         }
     }
 
+    pub fn dispose(
+        &self,
+        world_handle: WorldHandle,
+    ) -> Result<(), Error> {
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_Dispose,
+            world_handle.world_ptr
+        ) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn get_base_addr8(
         &self,
-        world: WorldHandle,
+        world_handle: WorldHandle,
     ) -> Result<*mut pf::Pixel8, Error> {
         let mut base_addr =
             std::mem::MaybeUninit::<*mut pf::Pixel8>::uninit();
@@ -454,7 +468,7 @@ impl WorldSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetBaseAddr8,
-            world.as_ptr(),
+            world_handle.as_ptr(),
             base_addr.as_mut_ptr() as _
         ) {
             Ok(()) => Ok(unsafe { base_addr.assume_init() }),
@@ -464,7 +478,7 @@ impl WorldSuite {
 
     pub fn get_base_addr16(
         &self,
-        world: WorldHandle,
+        world_handle: WorldHandle,
     ) -> Result<*mut pf::Pixel16, Error> {
         let mut base_addr =
             std::mem::MaybeUninit::<*mut pf::Pixel16>::uninit();
@@ -472,7 +486,7 @@ impl WorldSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetBaseAddr16,
-            world.as_ptr(),
+            world_handle.as_ptr(),
             base_addr.as_mut_ptr() as _
         ) {
             Ok(()) => Ok(unsafe { base_addr.assume_init() }),
@@ -482,7 +496,7 @@ impl WorldSuite {
 
     pub fn get_base_addr32(
         &self,
-        world: WorldHandle,
+        world_handle: WorldHandle,
     ) -> Result<*mut pf::Pixel32, Error> {
         let mut base_addr =
             std::mem::MaybeUninit::<*mut pf::Pixel32>::uninit();
@@ -490,10 +504,66 @@ impl WorldSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetBaseAddr32,
-            world.as_ptr(),
+            world_handle.as_ptr(),
             base_addr.as_mut_ptr() as _
         ) {
             Ok(()) => Ok(unsafe { base_addr.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_type(
+        &self,
+        world: WorldHandle,
+    ) -> Result<WorldType, Error> {
+        let mut world_type =
+            std::mem::MaybeUninit::<WorldType>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetType,
+            world.as_ptr(),
+            world_type.as_mut_ptr() as _
+        ) {
+            Ok(()) => Ok(unsafe { world_type.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_size(
+        &self,
+        world: WorldHandle,
+    ) -> Result<(u32, u32), Error> {
+        let mut width = std::mem::MaybeUninit::<u32>::uninit();
+        let mut height = std::mem::MaybeUninit::<u32>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetSize,
+            world.as_ptr(),
+            width.as_mut_ptr() as _,
+            height.as_mut_ptr() as _,
+        ) {
+            Ok(()) => Ok(unsafe {
+                (width.assume_init(), height.assume_init())
+            }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_row_bytes(
+        &self,
+        world: WorldHandle,
+    ) -> Result<usize, Error> {
+        let mut row_bytes = std::mem::MaybeUninit::<usize>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetRowBytes,
+            world.as_ptr(),
+            row_bytes.as_mut_ptr() as _,
+        ) {
+            Ok(()) => Ok(unsafe { row_bytes.assume_init() }),
             Err(e) => Err(e),
         }
     }
@@ -940,9 +1010,9 @@ impl CompositeSuite {
             quality as i32,
             alpha as i32,
             field as i32,
-            src_rect as *const _ as *const ae_sys::A_LRect,
+            src_rect as *const _ as _,
             src_world.as_ptr(),
-            comp_mode as *const _ as *const ae_sys::PF_CompositeMode,
+            comp_mode as *const _ as _,
             blending_tables.map_or(std::ptr::null(), |b| b.as_ptr())
                 as _,
             mask_world.map_or(std::ptr::null(), |m| &m) as _,
@@ -1159,7 +1229,7 @@ impl ItemSuite {
         }
     }
 
-    pub fn get_item_pixel_ratio(
+    pub fn get_item_pixel_aspect_ratio(
         &self,
         item_handle: ItemHandle,
     ) -> Result<Ratio, Error> {
