@@ -160,8 +160,8 @@ pub enum WorldType {
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(C)]
 pub struct DownsampleFactor {
-    pub xs: u8,
-    pub ys: u8,
+    pub xs: ae_sys::A_short,
+    pub ys: ae_sys::A_short,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -1144,7 +1144,7 @@ impl CanvasSuite {
 
         match ae_call_suite_fn!(
             self.suite_ptr,
-            AEGP_GetROI,
+            AEGP_GetRenderDownsampleFactor,
             render_context_handle.as_ptr(),
             dsf.as_mut_ptr() as _,
         ) {

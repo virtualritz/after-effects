@@ -298,6 +298,8 @@ impl From<Time> for ae_sys::A_Time {
     }
 }
 
+// Note that this has a different ordering
+// of values than Legacy_Rect!!!
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
 pub struct Rect {
@@ -307,13 +309,15 @@ pub struct Rect {
     pub bottom: i32,
 }
 
+// Note that this has a different ordering
+// of values than Rect!!!
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
 pub struct LegacyRect {
-    pub left: i16,
     pub top: i16,
-    pub right: i16,
+    pub left: i16,
     pub bottom: i16,
+    pub right: i16,
 }
 
 #[derive(Debug, Copy, Clone, Hash)]

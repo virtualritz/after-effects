@@ -1,8 +1,8 @@
 pub use crate::*;
 use aftereffects_sys as ae_sys;
 
-#[repr(C)]
 #[derive(Debug, Copy, Clone)]
+#[repr(C)]
 pub struct Pixel8 {
     pub alpha: ae_sys::A_u_char,
     pub red: ae_sys::A_u_char,
@@ -10,8 +10,8 @@ pub struct Pixel8 {
     pub blue: ae_sys::A_u_char,
 }
 
-#[repr(C)]
 #[derive(Debug, Copy, Clone)]
+#[repr(C)]
 pub struct Pixel16 {
     pub alpha: ae_sys::A_u_short,
     pub red: ae_sys::A_u_short,
@@ -19,8 +19,8 @@ pub struct Pixel16 {
     pub blue: ae_sys::A_u_short,
 }
 
-#[repr(C)]
 #[derive(Debug, Copy, Clone)]
+#[repr(C)]
 pub struct Pixel32 {
     pub alpha: ae_sys::PF_FpShort,
     pub red: ae_sys::PF_FpShort,
@@ -138,8 +138,7 @@ pub enum Field {
 }
 
 // FIXME: wrap this nicely
-//#[derive(Debug, Copy, Clone)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct EffectWorld {
     pub effect_world: ae_sys::PF_EffectWorld,
 }
@@ -157,12 +156,24 @@ impl EffectWorld {
         WorldSuite::new()?.fill_out_pf_effect_world(world_handle)
     }
 
-    pub fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
-        &self.effect_world as *const ae_sys::PF_EffectWorld
+    pub fn width(&self) -> usize {
+        self.effect_world.width as usize
     }
 
-    pub fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
-        &mut self.effect_world as *mut ae_sys::PF_EffectWorld
+    pub fn height(&self) -> usize {
+        self.effect_world.height as usize
+    }
+
+    pub fn row_bytes(&self) -> usize {
+        self.effect_world.rowbytes as usize
+    }
+
+    pub fn raw_data(&self) -> *const u8 {
+        self.effect_world.data as *const u8
+    }
+
+    pub fn raw_data_mut(&self) -> *mut u8 {
+        self.effect_world.data as *mut u8
     }
 
     pub fn world_type(&self) -> WorldType {
@@ -174,6 +185,14 @@ impl EffectWorld {
         } else {
             WorldType::Byte
         }
+    }
+
+    pub fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
+        &self.effect_world as *const ae_sys::PF_EffectWorld
+    }
+
+    pub fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
+        &mut self.effect_world as *mut ae_sys::PF_EffectWorld
     }
 }
 
