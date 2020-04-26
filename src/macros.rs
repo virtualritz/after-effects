@@ -130,6 +130,29 @@ macro_rules! define_handle_wrapper {
     };
 }
 
+macro_rules! define_owned_handle_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident) => {
+        #[derive(Clone, Debug, Hash)]
+        pub struct $wrapper_pretty_name {
+            $data_name: ae_sys::$data_type,
+            is_owned: bool,
+        }
+
+        impl $wrapper_pretty_name {
+            pub fn from_raw($data_name: ae_sys::$data_type) -> Self {
+                Self {
+                    $data_name,
+                    is_owned: false,
+                }
+            }
+
+            pub fn as_ptr(&self) -> ae_sys::$data_type {
+                self.$data_name
+            }
+        }
+    };
+}
+
 macro_rules! define_suite {
     ($suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
         #[allow(deprecated)]

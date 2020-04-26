@@ -6,23 +6,28 @@ pub struct InDataHandle {
 }
 
 impl InDataHandle {
+    #[inline]
     pub fn from_raw(in_data_ptr: *const ae_sys::PR_InData) -> InDataHandle {
         InDataHandle { in_data_ptr }
     }
 
+    #[inline]
     pub fn as_ptr(self) -> *const ae_sys::PR_InData {
         self.in_data_ptr
     }
 
+    #[inline]
     pub fn pica_basic_handle(self) -> crate::PicaBasicSuiteHandle {
         crate::PicaBasicSuiteHandle::from_raw(unsafe { (*self.in_data_ptr).pica_basicP })
     }
 
+    #[inline]
     pub fn plugin_id(self) -> i32 {
         unsafe { (*self.in_data_ptr).aegp_plug_id }
     }
 
     // Fixme: do we own this memory???!
+    #[inline]
     pub fn reference_context_ptr(self) -> Box<std::os::raw::c_void> {
         unsafe { Box::<std::os::raw::c_void>::from_raw((*self.in_data_ptr).aegp_refconPV) }
     }

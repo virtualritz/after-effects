@@ -1,4 +1,5 @@
 pub use crate::*;
+use ::function_name::named;
 use aftereffects_sys as ae_sys;
 
 #[derive(Debug, Copy, Clone)]
@@ -143,54 +144,114 @@ pub struct EffectWorld {
     pub effect_world: ae_sys::PF_EffectWorld,
 }
 
-define_handle_wrapper!(
-    EffectBlendingTables,
-    PF_EffectBlendingTables,
-    blending_tabpe_ptr
-);
+pub struct EffectWorldConst {
+    pub effect_world: ae_sys::PF_EffectWorld,
+}
+
+unsafe impl Send for EffectWorldConst {}
+unsafe impl Sync for EffectWorldConst {}
+
+
+define_handle_wrapper!(EffectBlendingTables, PF_EffectBlendingTables, blending_tabpe_ptr);
 
 impl EffectWorld {
-    pub fn new(
-        world_handle: WorldHandle,
-    ) -> Result<Self, crate::Error> {
+    #[inline]
+    pub fn new(world_handle: WorldHandle) -> Result<Self, crate::Error> {
         WorldSuite::new()?.fill_out_pf_effect_world(world_handle)
     }
 
+    #[inline]
     pub fn width(&self) -> usize {
         self.effect_world.width as usize
     }
 
+    #[inline]
     pub fn height(&self) -> usize {
         self.effect_world.height as usize
     }
 
+    #[inline]
     pub fn row_bytes(&self) -> usize {
         self.effect_world.rowbytes as usize
     }
 
+    #[inline]
     pub fn raw_data(&self) -> *const u8 {
         self.effect_world.data as *const u8
     }
 
+    #[inline]
     pub fn raw_data_mut(&self) -> *mut u8 {
         self.effect_world.data as *mut u8
     }
 
+    #[inline]
+    pub fn raw_data_len(&self) -> usize {
+        self.height() * self.row_bytes()
+    }
+
+    pub fn row_padding_bytes(&self) -> usize {
+        self.row_bytes() - self.width() * match self.world_type() {
+            Integer =>
+                2,
+            Byte =>
+                1,
+            Float =>
+                4,
+        }
+    }
+
+    #[inline]
+    pub fn get_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
+        unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel8).add(x) }
+    }
+
+    #[inline]
+    pub fn get_pixel8(&self, x: usize, y: usize) -> &Pixel8 {
+        debug_assert!(x < self.width() && y < self.height());
+        self.get_pixel8_mut(x, y)
+    }
+
+    #[inline]
+    pub fn get_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
+        unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel16).add(x) }
+    }
+
+    #[inline]
+    pub fn get_pixel16(&self, x: usize, y: usize) -> &Pixel16 {
+        self.get_pixel16_mut(x, y)
+    }
+
+    #[inline]
+    pub fn get_pixel32_mut(&self, x: usize, y: usize) -> &mut Pixel32 {
+        unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel32).add(x) }
+    }
+
+    #[inline]
+    pub fn get_pixel32(&self, x: usize, y: usize) -> &Pixel32 {
+        debug_assert!(x < self.width() && y < self.height());
+        unsafe { &*((self.effect_world.data as *const u8).add(y * self.row_bytes()) as *const Pixel32).add(x) }
+    }
+
+    #[inline]
     pub fn world_type(&self) -> WorldType {
         let flags = self.effect_world.world_flags;
-        if ae_sys::PF_WorldFlag_RESERVED1 & flags as u32 != 0 {
-            WorldType::Float
-        } else if ae_sys::PF_WorldFlag_DEEP & flags as u32 != 0 {
+        // Most frequent case is 16bit integer.
+        if ae_sys::PF_WorldFlag_DEEP & flags as u32 != 0 {
             WorldType::Integer
+        } else if ae_sys::PF_WorldFlag_RESERVED1 & flags as u32 != 0 {
+            WorldType::Float
         } else {
             WorldType::Byte
         }
     }
 
+    #[inline]
     pub fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
         &self.effect_world as *const ae_sys::PF_EffectWorld
     }
 
+    #[inline]
     pub fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
         &mut self.effect_world as *mut ae_sys::PF_EffectWorld
     }
@@ -200,18 +261,15 @@ impl EffectWorld {
 pub enum Err {
     None = ae_sys::PF_Err_NONE as isize,
     OutOfMemory = ae_sys::PF_Err_OUT_OF_MEMORY as isize,
-    InternalStructDamaged =
-        ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as isize,
+    InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as isize,
     // Out of range, or action not allowed on this index.
     InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as isize,
-    UnrecogizedParamType =
-        ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as isize,
+    UnrecogizedParamType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as isize,
     InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as isize,
     BadCallbackParam = ae_sys::PF_Err_BAD_CALLBACK_PARAM as isize,
     // Returned when user interrupts rendering.
     InterruptCancel = ae_sys::PF_Interrupt_CANCEL as isize,
     // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
     // arbitrary data from text
-    CannonParseKeyframeText =
-        ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as isize,
+    CannonParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as isize,
 }
