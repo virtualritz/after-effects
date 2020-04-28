@@ -201,6 +201,7 @@ impl EffectWorld {
     pub fn row_padding_bytes(&self) -> usize {
         self.row_bytes()
             - self.width()
+                * 4
                 * match self.world_type() {
                     WorldType::Integer => 2,
                     WorldType::Byte => 1,
