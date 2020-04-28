@@ -33,7 +33,7 @@ pub fn borrow_pica_basic_as_ptr() -> *const ae_sys::SPBasicSuite {
 /// we create a PicaBasicSuite::new from it and use that to initialize
 /// access to any suites.
 /// When we leave scope, drop() ic alled automatically and restores the
-/// previous value to our thread local storage so the caller has
+/// previous value to our thread local storage so the caller
 /// can continue using their pointer to the suite.
 ///
 /// FIXME: Is this really neccessary? Check if the pointer is always the
@@ -42,42 +42,42 @@ pub struct PicaBasicSuite {
     previous_pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
 }
 
-fn set(pica_basic_suite_ptr: *const ae_sys::SPBasicSuite) -> *const ae_sys::SPBasicSuite {
-    let mut previous_pica_basic_suite_ptr: *const ae_sys::SPBasicSuite = std::ptr::null();
-
-    PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
-        previous_pica_basic_suite_ptr = pica_basic_ptr_cell.replace(pica_basic_suite_ptr);
-    });
-
-    previous_pica_basic_suite_ptr
-}
-
 impl PicaBasicSuite {
+    fn set(pica_basic_suite_ptr: *const ae_sys::SPBasicSuite) -> *const ae_sys::SPBasicSuite {
+        let mut previous_pica_basic_suite_ptr: *const ae_sys::SPBasicSuite = std::ptr::null();
+
+        PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
+            previous_pica_basic_suite_ptr = pica_basic_ptr_cell.replace(pica_basic_suite_ptr);
+        });
+
+        previous_pica_basic_suite_ptr
+    }
+
     #[inline]
     pub fn from_pr_in_data_raw(in_data_ptr: *const ae_sys::PR_InData) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: set(unsafe { *in_data_ptr }.pica_basicP),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_ptr }.pica_basicP),
         }
     }
 
     #[inline]
     pub fn from_pr_in_data(in_data_handle: pr::InDataHandle) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: set(unsafe { *in_data_handle.as_ptr() }.pica_basicP),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_handle.as_ptr() }.pica_basicP),
         }
     }
 
     #[inline]
     pub fn from_pf_in_data_raw(in_data_ptr: *const ae_sys::PF_InData) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: set(unsafe { *in_data_ptr }.pica_basicP),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_ptr }.pica_basicP),
         }
     }
 
     #[inline]
     pub fn from_sp_basic_suite_raw(pica_basic_suite_ptr: *const ae_sys::SPBasicSuite) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: set(pica_basic_suite_ptr),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(pica_basic_suite_ptr),
         }
     }
 }

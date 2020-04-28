@@ -250,13 +250,14 @@ define_suite!(
     kAEGPMemorySuiteVersion1
 );
 
-pub struct MemHandle<T: Copy> {
+pub struct MemHandle<T: Clone> {
     ptr: *mut T,
     pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
     mem_handle: ae_sys::AEGP_MemHandle,
+    is_owned: bool,
 }
 
-impl<T: Copy> MemHandle<T> {
+impl<T: Clone> MemHandle<T> {
     #[inline]
     pub fn new(plugin_id: PluginID, name: &str, flags: MemFlag) -> Result<Self, Error> {
         let mut mem_handle: ae_sys::AEGP_MemHandle = std::ptr::null_mut();
@@ -282,6 +283,7 @@ impl<T: Copy> MemHandle<T> {
                 ptr: std::ptr::null_mut(),
                 pica_basic_suite_ptr,
                 mem_handle,
+                is_owned: true,
             }),
             Err(e) => Err(e),
         }
@@ -289,33 +291,61 @@ impl<T: Copy> MemHandle<T> {
 
     #[inline]
     pub fn from_raw(mem_handle: ae_sys::AEGP_MemHandle) -> Self {
+        //debug_assert!(!mem_handle.is_null());
         Self {
             ptr: std::ptr::null_mut(),
             pica_basic_suite_ptr: borrow_pica_basic_as_ptr(),
             mem_handle,
+            is_owned: false,
         }
     }
 
+    pub fn into_raw(mem_handle: MemHandle<T>) -> ae_sys::AEGP_MemHandle {
+        mem_handle.mem_handle
+    }
+
     #[inline]
-    pub fn as_mut_ptr(&self) -> *mut T {
-        debug_assert!(!self.ptr.is_null());
+    pub fn as_ptr_mut(&self) -> *mut T {
         self.ptr as *mut T
     }
 
     #[inline]
     pub fn as_ptr(&self) -> *const T {
-        debug_assert!(!self.ptr.is_null());
         self.ptr as *const T
     }
 
     #[inline]
-    pub fn get(&self) -> T {
+    pub fn get(&self) -> &T {
         debug_assert!(!self.ptr.is_null());
-        unsafe { *(self.ptr) }
+        unsafe { &*(self.ptr) }
     }
 
     #[inline]
-    pub fn lock(&mut self) -> Result<&Self, Error> {
+    pub fn get_mut(&mut self) -> &mut T {
+        debug_assert!(!self.ptr.is_null());
+        unsafe { &mut *(self.ptr) }
+    }
+
+    #[inline]
+    pub fn set(&mut self, value: T) -> Result<(), Error> {
+        match self.ptr.is_null() {
+            false => {
+                unsafe {
+                    *(self.ptr) = value;
+                }
+                Ok(())
+            }
+            true => Err(Error::Alloc),
+        }
+    }
+
+    pub fn is_valid(&self) -> bool {
+        !self.ptr.is_null()
+    }
+
+    /// Only call this if you know what you're doing.
+    #[inline]
+    pub(crate) fn lock(&mut self) -> Result<&mut Self, Error> {
         match ae_acquire_suite_and_call_suite_fn!(
             (self.pica_basic_suite_ptr),
             AEGP_MemorySuite1,
@@ -325,15 +355,16 @@ impl<T: Copy> MemHandle<T> {
             AEGP_LockMemHandle,
             // Arguments ----------
             self.mem_handle,
-            &mut self.ptr as *mut *mut _ as *mut *mut std::ffi::c_void
+            &mut self.ptr as *mut *mut _ as _
         ) {
             Ok(()) => Ok(self),
             Err(e) => Err(e),
         }
     }
 
+    /// Only call this if you know what you're doing.
     #[inline]
-    pub fn unlock(&mut self) -> Result<(), Error> {
+    pub(crate) fn unlock(&self) -> Result<(), Error> {
         ae_acquire_suite_and_call_suite_fn!(
             self.pica_basic_suite_ptr,
             AEGP_MemorySuite1,
@@ -347,10 +378,49 @@ impl<T: Copy> MemHandle<T> {
     }
 }
 
-impl<T: Copy> Drop for MemHandle<T> {
+impl<T: Clone> Drop for MemHandle<T> {
     #[allow(unused_must_use)]
     fn drop(&mut self) {
-        self.unlock();
+        //self.unlock();
+        if self.is_owned {
+            ae_acquire_suite_and_call_suite_fn!(
+                self.pica_basic_suite_ptr,
+                AEGP_MemorySuite1,
+                kAEGPMemorySuite,
+                kAEGPMemorySuiteVersion1,
+                AEGP_FreeMemHandle,
+                self.mem_handle
+            );
+        }
+    }
+}
+
+pub struct MemLock<'a, T: Clone> {
+    mem_handle: &'a mut MemHandle<T>,
+}
+
+impl<'a, T: Clone> MemLock<'a, T> {
+    pub fn new(mem_handle: &'a mut MemHandle<T>) -> Result<Self, Error> {
+        match (*mem_handle).lock() {
+            Ok(mem_handle) => Ok(Self { mem_handle }),
+            Err(e) => Err(e),
+        }
+    }
+
+    #[inline]
+    pub fn get_handle(&self) -> &MemHandle<T> {
+        self.mem_handle
+    }
+
+    #[inline]
+    pub fn get_handle_mut(&mut self) -> &mut MemHandle<T> {
+        self.mem_handle
+    }
+}
+
+impl<T: Clone> Drop for MemLock<'_, T> {
+    fn drop(&mut self) {
+        (*self.mem_handle).unlock().expect("Unlocking mem handle failed");
     }
 }
 
@@ -361,7 +431,6 @@ define_handle_wrapper!(WorldHandle, AEGP_WorldH, world_ptr);
 define_suite!(WorldSuite, AEGP_WorldSuite3, kAEGPWorldSuite, kAEGPWorldSuiteVersion3);
 
 impl WorldSuite {
-
     #[inline]
     pub fn fill_out_pf_effect_world(&self, world: WorldHandle) -> Result<EffectWorld, Error> {
         let mut effect_world = std::mem::MaybeUninit::<ae_sys::PF_EffectWorld>::uninit();
@@ -470,8 +539,6 @@ impl WorldSuite {
             Err(e) => Err(e),
         }
     }
-
-
 }
 
 pub struct World {
@@ -480,7 +547,6 @@ pub struct World {
 }
 
 impl World {
-
     pub fn from_raw(world_handle: ae_sys::AEGP_WorldH) -> Self {
         Self {
             world_handle,
@@ -497,16 +563,8 @@ impl World {
     }
 
     #[inline]
-    pub fn new(
-        plugin_id: PluginID,
-        world_type: WorldType,
-        width: u32,
-        height: u32,
-    ) -> Result<World, Error> {
+    pub fn new(plugin_id: PluginID, world_type: WorldType, width: u32, height: u32) -> Result<World, Error> {
         let mut world_handle = std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
-
-        let pica_basic_suite_ptr = borrow_pica_basic_as_ptr();
-
         let world_suite = WorldSuite::new()?;
 
         match ae_call_suite_fn!(
@@ -526,7 +584,7 @@ impl World {
         }
     }
 
-    pub fn handle(&self) -> WorldHandle{
+    pub fn handle(&self) -> WorldHandle {
         WorldHandle::from_raw(self.world_handle)
     }
 }
@@ -537,7 +595,8 @@ impl Drop for World {
         if self.is_owned {
             let world_suite = WorldSuite::new().unwrap();
             // Dispose memory we allocated
-            ae_call_suite_fn!(world_suite.suite_ptr, AEGP_Dispose, self.world_handle);
+            ae_call_suite_fn!(world_suite.suite_ptr, AEGP_Dispose, self.world_handle)
+                .expect("Failed to dispose world handle.");
         }
     }
 }

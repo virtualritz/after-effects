@@ -1,5 +1,4 @@
 pub use crate::*;
-use ::function_name::named;
 use aftereffects_sys as ae_sys;
 
 #[derive(Debug, Copy, Clone)]
@@ -151,13 +150,22 @@ pub struct EffectWorldConst {
 unsafe impl Send for EffectWorldConst {}
 unsafe impl Sync for EffectWorldConst {}
 
-
 define_handle_wrapper!(EffectBlendingTables, PF_EffectBlendingTables, blending_tabpe_ptr);
 
 impl EffectWorld {
     #[inline]
     pub fn new(world_handle: WorldHandle) -> Result<Self, crate::Error> {
         WorldSuite::new()?.fill_out_pf_effect_world(world_handle)
+    }
+
+    pub fn from_raw(effect_world_ptr: *const ae_sys::PF_EffectWorld) -> Result<Self, crate::Error> {
+        if std::ptr::null() == effect_world_ptr {
+            Err(crate::Error::Generic)
+        } else {
+            Ok(EffectWorld {
+                effect_world: unsafe { *effect_world_ptr },
+            })
+        }
     }
 
     #[inline]
@@ -191,14 +199,14 @@ impl EffectWorld {
     }
 
     pub fn row_padding_bytes(&self) -> usize {
-        self.row_bytes() - self.width() * match self.world_type() {
-            Integer =>
-                2,
-            Byte =>
-                1,
-            Float =>
-                4,
-        }
+        self.row_bytes()
+            - self.width()
+                * match self.world_type() {
+                    WorldType::Integer => 2,
+                    WorldType::Byte => 1,
+                    WorldType::Float => 4,
+                    WorldType::None => panic!(),
+                }
     }
 
     #[inline]
