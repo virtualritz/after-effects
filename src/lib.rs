@@ -141,6 +141,8 @@ pub use macros::*;
 
 pub mod aegp;
 pub use aegp::*;
+pub mod aeio;
+pub use aeio::*;
 pub mod pf;
 pub use pf::*;
 pub mod pr;

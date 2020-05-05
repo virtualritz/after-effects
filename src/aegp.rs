@@ -300,6 +300,10 @@ impl<T: Clone> MemHandle<T> {
         }
     }
 
+    pub fn to_owned(&mut self) {
+        self.is_owned = true;
+    }
+
     pub fn into_raw(mem_handle: MemHandle<T>) -> ae_sys::AEGP_MemHandle {
         mem_handle.mem_handle
     }
@@ -421,6 +425,68 @@ impl<'a, T: Clone> MemLock<'a, T> {
 impl<T: Clone> Drop for MemLock<'_, T> {
     fn drop(&mut self) {
         (*self.mem_handle).unlock().expect("Unlocking mem handle failed");
+    }
+}
+
+define_suite!(IOInSuite, AEGP_IOInSuite4, kAEGPIOInSuite, kAEGPIOInSuiteVersion4);
+
+impl IOInSuite {
+    pub fn get_in_spec_options_handle(&self, in_spec_handle: aeio::InSpecHandle) -> Result<aeio::Handle, Error> {
+        let mut in_spec_options_handle = std::mem::MaybeUninit::<ae_sys::AEIO_Handle>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetInSpecOptionsHandle,
+            in_spec_handle.as_ptr(),
+            in_spec_options_handle.as_mut_ptr() as _
+        ) {
+            Ok(()) => Ok(aeio::Handle {
+                handle_ptr: unsafe { in_spec_options_handle.assume_init() },
+            }),
+            Err(e) => Err(e),
+        }
+    }
+
+    /*
+    pub fn set_in_spec_options_handle(&self, in_spec_handle: aeio::InSpecHandle) -> Result<aeio::Handle, Error> {
+        let mut in_spec_options_handle = std::mem::MaybeUninit::<ae_sys::AEIO_Handle>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_SetInSpecOptionsHandle,
+            in_spec_handle.as_ptr(),
+            in_spec_options_handle.as_mut_ptr() as _
+        ) {
+            Ok(()) => Ok(aeio::Handle {
+                handle_ptr: unsafe { in_spec_options_handle.assume_init() },
+            }),
+            Err(e) => Err(e),
+        }
+    }*/
+}
+
+define_suite!(
+    PFInterfaceSuite,
+    AEGP_PFInterfaceSuite1,
+    kAEGPPFInterfaceSuite,
+    kAEGPPFInterfaceSuiteVersion1
+);
+
+impl PFInterfaceSuite {
+    pub fn get_effect_layer(&self, effect_ref: pf::ProgPtr) -> Result<LayerHandle, Error> {
+        let mut layer_handle = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetEffectLayer,
+            effect_ref as _,
+            layer_handle.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(LayerHandle {
+                layer_ptr: unsafe { layer_handle.assume_init() },
+            }),
+            Err(e) => Err(e),
+        }
     }
 }
 

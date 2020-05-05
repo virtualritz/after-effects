@@ -115,7 +115,7 @@ macro_rules! define_handle_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident) => {
         #[derive(Copy, Clone, Debug, Hash)]
         pub struct $wrapper_pretty_name {
-            $data_name: ae_sys::$data_type,
+            pub(crate) $data_name: ae_sys::$data_type,
         }
 
         impl $wrapper_pretty_name {
@@ -125,6 +125,10 @@ macro_rules! define_handle_wrapper {
 
             pub fn as_ptr(&self) -> ae_sys::$data_type {
                 self.$data_name
+            }
+
+            pub fn is_null(&self) -> bool {
+                self.$data_name.is_null()
             }
         }
     };

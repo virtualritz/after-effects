@@ -1,5 +1,6 @@
 pub use crate::*;
 use aftereffects_sys as ae_sys;
+use std::{convert::TryInto, ffi::{CString, CStr}};
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -99,6 +100,8 @@ pub struct CompositeMode {
     pub opacity_su: u16,
 }
 
+pub type ProgPtr = ae_sys::PF_ProgPtr;
+
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
 pub struct Point {
@@ -184,17 +187,17 @@ impl EffectWorld {
     }
 
     #[inline]
-    pub fn raw_data(&self) -> *const u8 {
+    pub fn data_as_ptr(&self) -> *const u8 {
         self.effect_world.data as *const u8
     }
 
     #[inline]
-    pub fn raw_data_mut(&self) -> *mut u8 {
+    pub fn data_as_ptr_mut(&self) -> *mut u8 {
         self.effect_world.data as *mut u8
     }
 
     #[inline]
-    pub fn raw_data_len(&self) -> usize {
+    pub fn data_len(&self) -> usize {
         self.height() * self.row_bytes()
     }
 
@@ -212,6 +215,7 @@ impl EffectWorld {
 
     #[inline]
     pub fn get_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
+        debug_assert!(x < self.width() && y < self.height());
         unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel8).add(x) }
     }
 
@@ -223,16 +227,19 @@ impl EffectWorld {
 
     #[inline]
     pub fn get_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
+        debug_assert!(x < self.width() && y < self.height());
         unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel16).add(x) }
     }
 
     #[inline]
     pub fn get_pixel16(&self, x: usize, y: usize) -> &Pixel16 {
+        debug_assert!(x < self.width() && y < self.height());
         self.get_pixel16_mut(x, y)
     }
 
     #[inline]
     pub fn get_pixel32_mut(&self, x: usize, y: usize) -> &mut Pixel32 {
+        debug_assert!(x < self.width() && y < self.height());
         unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel32).add(x) }
     }
 
@@ -281,4 +288,222 @@ pub enum Err {
     // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
     // arbitrary data from text
     CannonParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as isize,
+}
+
+#[macro_export]
+macro_rules! add_param {
+    (in_data: expr,
+    index: expr,
+    def: expr) => {
+        in_data.inter.add_param.unwrap()(in_data.effect_ref, (index), &(def))
+    };
+}
+
+#[repr(i32)]
+pub enum ParamType {
+    Reserved = ae_sys::PF_Param_RESERVED,
+    Layer = ae_sys::PF_Param_LAYER,
+    Slider = ae_sys::PF_Param_SLIDER,
+    FixSlider = ae_sys::PF_Param_FIX_SLIDER,
+    Angle = ae_sys::PF_Param_ANGLE,
+    CheckBox = ae_sys::PF_Param_CHECKBOX,
+    Color = ae_sys::PF_Param_COLOR,
+    Point = ae_sys::PF_Param_POINT,
+    PopUp = ae_sys::PF_Param_POPUP,
+    Custom = ae_sys::PF_Param_CUSTOM,
+    NoData = ae_sys::PF_Param_NO_DATA,
+    FloatSlider = ae_sys::PF_Param_FLOAT_SLIDER,
+    ArbitraryData = ae_sys::PF_Param_ARBITRARY_DATA,
+    Path = ae_sys::PF_Param_PATH,
+    GroupStart = ae_sys::PF_Param_GROUP_START,
+    GroupEnd = ae_sys::PF_Param_GROUP_END,
+    Button = ae_sys::PF_Param_BUTTON,
+    Reserved2 = ae_sys::PF_Param_RESERVED2,
+    Reserved3 = ae_sys::PF_Param_RESERVED3,
+    Point3D = ae_sys::PF_Param_POINT_3D,
+}
+
+pub const PARAM_FLAG_RESERVED1: u32 = ae_sys::PF_ParamFlag_RESERVED1;
+pub const PARAM_FLAG_CANNOT_TIME_VARY: u32 = ae_sys::PF_ParamFlag_CANNOT_TIME_VARY;
+pub const PARAM_FLAG_CANNOT_INTERP: u32 = ae_sys::PF_ParamFlag_CANNOT_INTERP;
+pub const PARAM_FLAG_RESERVED2: u32 = ae_sys::PF_ParamFlag_RESERVED2;
+pub const PARAM_FLAG_RESERVED3: u32 = ae_sys::PF_ParamFlag_RESERVED3;
+pub const PARAM_FLAG_TWIRLY: u32 = ae_sys::PF_ParamFlag_COLLAPSE_TWIRLY;
+pub const PARAM_FLAG_SUPERVIDE: u32 = ae_sys::PF_ParamFlag_SUPERVISE;
+pub const PARAM_FLAG_START_COLLAPSED: u32 = ae_sys::PF_ParamFlag_START_COLLAPSED;
+pub const PARAM_FLAG_USE_VALUE_FOR_OLD_PROJECTS: u32 = ae_sys::PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS;
+pub const PARAM_FLAG_LAYER_PARAM_IS_TRACKMATTE: u32 = ae_sys::PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE;
+pub const PARAM_FLAG_EXCLUDE_FROM_HAVE_INPUTS_CHANGED: u32 = ae_sys::PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED;
+pub const PARAM_FLAG_SKIP_REVEAL_WHEN_UNHIDDEN: u32 = ae_sys::PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN;
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct PopupDef {
+    popup_def: ae_sys::PF_PopupDef,
+    names: CString,
+}
+
+impl PopupDef {
+    pub fn new() -> Self {
+        Self {
+            popup_def: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+            names: CString::new("").unwrap()
+        }
+    }
+
+    pub fn value<'a>(&'a mut self, value: u16) -> &'a mut PopupDef {
+        self.popup_def.value = value as i32;
+        self
+    }
+
+    pub fn default<'a>(&'a mut self, default: u16) -> &'a mut PopupDef {
+        self.popup_def.dephault = default as i16;
+        self
+    }
+
+    pub fn num_choices<'a>(&'a mut self, num_choices: u16) -> &'a mut PopupDef {
+        self.popup_def.num_choices = num_choices as i16;
+        self
+    }
+
+    pub fn names<'a>(&'a mut self, names: Vec<&str>) -> &'a mut PopupDef {
+        let mut names_tmp = String::new();
+        names.iter().map(|s| names_tmp += format!("{}|", *s).as_str());
+        self.names = CString::new(names_tmp).unwrap();
+        self.popup_def.u.namesptr = self.names.as_c_str().as_ptr();
+        self.popup_def.num_choices = names.len().try_into().unwrap();
+        //(names.to_string_lossy().matches("|").count() + 1).try_into().unwrap();
+        self
+    }
+
+    pub fn into_raw(pd: PopupDef) -> PF_PopupDef {
+        pd.popup_def
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AngleDef {
+    angle_def: PF_AngleDef,
+}
+
+impl AngleDef {
+    pub fn new() -> Self {
+        Self {
+            angle_def: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+        }
+    }
+
+    pub fn value<'a>(&'a mut self, value: i32) -> &'a mut AngleDef {
+        self.angle_def.value = value;
+        self
+    }
+
+    pub fn default<'a>(&'a mut self, default: i32) -> &'a mut AngleDef {
+        self.angle_def.dephault = default;
+        self
+    }
+
+    pub fn valid_min<'a>(&'a mut self, valid_min: i32) -> &'a mut AngleDef {
+        self.angle_def.valid_min = valid_min;
+        self
+    }
+
+    pub fn valid_max<'a>(&'a mut self, valid_max: i32) -> &'a mut AngleDef {
+        self.angle_def.valid_max = valid_max;
+        self
+    }
+
+    pub fn into_raw(ad: AngleDef) -> PF_AngleDef {
+        ad.angle_def
+    }
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub enum ParamDefUnion {
+    PopupDef(PopupDef),
+    AngleDef(AngleDef),
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct ParamDef {
+    param_def: ae_sys::PF_ParamDef,
+}
+
+impl ParamDef {
+    pub fn new() -> Self {
+        Self {
+            param_def: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+        }
+    }
+
+    pub fn param<'a>(&'a mut self, param: ParamDefUnion) -> &'a mut ParamDef {
+        match param {
+            ParamDefUnion::PopupDef(pd) => {
+                self.param_def.u.pd = PopupDef::into_raw(pd);
+                self.param_def.param_type = ae_sys::PF_Param_POPUP;
+            }
+            ParamDefUnion::AngleDef(ad) => {
+                self.param_def.u.ad = AngleDef::into_raw(ad);
+                self.param_def.param_type = ae_sys::PF_Param_ANGLE;
+            }
+        }
+        self
+    }
+
+    /*
+    ae_sys::PF_ParamDef {
+            uu: PF_ParamDef__bindgen_ty_1 { id: 0 },
+            ui_flags: 0,
+            ui_width: 0,
+            ui_height: 0,
+            /* PARAMETER DESCRIPTION */
+            param_type: 0,
+            name: [0i8; 32],
+            flags: 0,
+            unused: 0,
+            u: ae_sys::PF_ParamDefUnion {
+                _bindgen_union_align: [0u64; 15usize],
+            },
+        },
+    }*/
+
+    pub fn param_type<'a>(&'a mut self, param_type: ParamType) -> &'a mut ParamDef {
+        self.param_def.param_type = param_type as i32;
+        self
+    }
+
+    pub fn name<'a>(&'a mut self, name: &CStr) -> &'a mut ParamDef {
+        let name_slice = name.to_bytes_with_nul();
+        self.param_def.name[0..name_slice.len()].copy_from_slice(unsafe { std::mem::transmute(name_slice) });
+        self
+    }
+
+    pub fn ui_flags<'a>(&'a mut self, flags: i32) -> &'a mut ParamDef {
+        self.param_def.ui_flags = flags;
+        self
+    }
+
+    pub fn ui_width<'a>(&'a mut self, width: u16) -> &'a mut ParamDef {
+        self.param_def.ui_width = width as i16;
+        self
+    }
+
+    pub fn ui_height<'a>(&'a mut self, height: u16) -> &'a mut ParamDef {
+        self.param_def.ui_height = height as i16;
+        self
+    }
+
+    pub fn flags<'a>(&'a mut self, flags: i32) -> &'a mut ParamDef {
+        self.param_def.flags = flags;
+        self
+    }
+
+    pub fn add(&mut self, in_data: &ae_sys::PF_InData) {
+        unsafe {
+            in_data.inter.add_param.unwrap()(in_data.effect_ref, -1, &mut self.param_def);
+        }
+    }
 }
