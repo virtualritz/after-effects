@@ -1,6 +1,27 @@
 pub use crate::*;
 use aftereffects_sys as ae_sys;
-use std::{convert::TryInto, ffi::{CString, CStr}};
+use std::{
+    convert::TryInto,
+    ffi::{CStr, CString},
+};
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
+#[repr(i32)]
+pub enum Err {
+    None = ae_sys::PF_Err_NONE as i32,
+    OutOfMemory = ae_sys::PF_Err_OUT_OF_MEMORY as i32,
+    InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as i32,
+    // Out of range, or action not allowed on this index.
+    InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as i32,
+    UnrecogizedParamType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as i32,
+    InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as i32,
+    BadCallbackParam = ae_sys::PF_Err_BAD_CALLBACK_PARAM as i32,
+    // Returned when user interrupts rendering.
+    InterruptCancel = ae_sys::PF_Interrupt_CANCEL as i32,
+    // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
+    // arbitrary data from text
+    CannonParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as i32,
+}
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -99,8 +120,6 @@ pub struct CompositeMode {
     // For deep color only.
     pub opacity_su: u16,
 }
-
-pub type ProgPtr = ae_sys::PF_ProgPtr;
 
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
@@ -273,23 +292,6 @@ impl EffectWorld {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
-pub enum Err {
-    None = ae_sys::PF_Err_NONE as isize,
-    OutOfMemory = ae_sys::PF_Err_OUT_OF_MEMORY as isize,
-    InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as isize,
-    // Out of range, or action not allowed on this index.
-    InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as isize,
-    UnrecogizedParamType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as isize,
-    InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as isize,
-    BadCallbackParam = ae_sys::PF_Err_BAD_CALLBACK_PARAM as isize,
-    // Returned when user interrupts rendering.
-    InterruptCancel = ae_sys::PF_Interrupt_CANCEL as isize,
-    // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
-    // arbitrary data from text
-    CannonParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as isize,
-}
-
 #[macro_export]
 macro_rules! add_param {
     (in_data: expr,
@@ -297,6 +299,66 @@ macro_rules! add_param {
     def: expr) => {
         in_data.inter.add_param.unwrap()(in_data.effect_ref, (index), &(def))
     };
+}
+
+define_handle_wrapper!(ProgPtr, PF_ProgPtr, prog_ptr);
+
+#[derive(Copy, Clone, Debug)]
+pub struct SmartRenderCallbacks {
+    pub(crate) rc_ptr: ae_sys::PF_SmartRenderCallbacks,
+}
+
+impl SmartRenderCallbacks {
+    pub fn from_raw(rc_ptr: ae_sys::PF_SmartRenderCallbacks) -> Self {
+        Self { rc_ptr }
+    }
+
+    pub fn as_ptr(&self) -> ae_sys::PF_SmartRenderCallbacks {
+        self.rc_ptr
+    }
+
+    pub fn checkout_layer_pixels(&self, effect_ref: ProgPtr, checkout_id: i32) -> Result<EffectWorld, Err> {
+        if let Some(checkout_layer_pixels) = self.rc_ptr.checkout_layer_pixels {
+            let mut effect_world = std::mem::MaybeUninit::<ae_sys::PF_EffectWorld>::uninit();
+
+            match unsafe { checkout_layer_pixels(effect_ref.as_ptr(), checkout_id, &mut effect_world.as_mut_ptr()) }
+                as u32
+            {
+                ae_sys::PF_Err_NONE => Ok(EffectWorld {
+                    effect_world: unsafe { effect_world.assume_init() },
+                }),
+                e => Err(unsafe { Err::from_unchecked(e as i32) }),
+            }
+        } else {
+            Err(Err::InvalidCallback)
+        }
+    }
+
+    pub fn checkin_layer_pixels(&self, effect_ref: ProgPtr, checkout_id: i32) -> Result<(), Err> {
+        if let Some(checkin_layer_pixels) = self.rc_ptr.checkin_layer_pixels {
+            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id) } as u32 {
+                ae_sys::PF_Err_NONE => Ok(()),
+                e => Err(unsafe { Err::from_unchecked(e as i32) }),
+            }
+        } else {
+            Err(Err::InvalidCallback)
+        }
+    }
+
+    pub fn checkout_output(&self, effect_ref: ProgPtr) -> Result<EffectWorld, Err> {
+        if let Some(checkout_output) = self.rc_ptr.checkout_output {
+            let mut effect_world = std::mem::MaybeUninit::<ae_sys::PF_EffectWorld>::uninit();
+
+            match unsafe { checkout_output(effect_ref.as_ptr(), &mut effect_world.as_mut_ptr()) } as u32 {
+                ae_sys::PF_Err_NONE => Ok(EffectWorld {
+                    effect_world: unsafe { effect_world.assume_init() },
+                }),
+                e => Err(unsafe { Err::from_unchecked(e as i32) }),
+            }
+        } else {
+            Err(Err::InvalidCallback)
+        }
+    }
 }
 
 #[repr(i32)]
@@ -347,7 +409,7 @@ impl PopupDef {
     pub fn new() -> Self {
         Self {
             popup_def: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
-            names: CString::new("").unwrap()
+            names: CString::new("").unwrap(),
         }
     }
 
@@ -368,7 +430,7 @@ impl PopupDef {
 
     pub fn names<'a>(&'a mut self, names: Vec<&str>) -> &'a mut PopupDef {
         let mut names_tmp = String::new();
-        names.iter().map(|s| names_tmp += format!("{}|", *s).as_str());
+        names.iter().for_each(|s| names_tmp += format!("{}|", *s).as_str());
         self.names = CString::new(names_tmp).unwrap();
         self.popup_def.u.namesptr = self.names.as_c_str().as_ptr();
         self.popup_def.num_choices = names.len().try_into().unwrap();

@@ -479,7 +479,7 @@ impl PFInterfaceSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetEffectLayer,
-            effect_ref as _,
+            effect_ref.as_ptr() as _,
             layer_handle.as_mut_ptr()
         ) {
             Ok(()) => Ok(LayerHandle {
