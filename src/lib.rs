@@ -6,7 +6,8 @@
 //#[macro_use]
 //extern crate casey;
 
-//use std::mem; //::MaybeUninit;
+#[macro_use]
+extern crate bitflags;
 
 use aftereffects_sys as ae_sys;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};

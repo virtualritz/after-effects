@@ -1,9 +1,6 @@
 pub use crate::*;
 use aftereffects_sys as ae_sys;
-use std::{
-    convert::TryInto,
-    ffi::{CStr, CString},
-};
+use std::{convert::TryInto, ffi::CString};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
 #[repr(i32)]
@@ -234,37 +231,37 @@ impl EffectWorld {
     }
 
     #[inline]
-    pub fn get_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
+    pub fn as_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
         debug_assert!(x < self.width() && y < self.height());
         unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel8).add(x) }
     }
 
     #[inline]
-    pub fn get_pixel8(&self, x: usize, y: usize) -> &Pixel8 {
+    pub fn as_pixel8(&self, x: usize, y: usize) -> &Pixel8 {
         debug_assert!(x < self.width() && y < self.height());
-        self.get_pixel8_mut(x, y)
+        self.as_pixel8_mut(x, y)
     }
 
     #[inline]
-    pub fn get_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
+    pub fn as_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
         debug_assert!(x < self.width() && y < self.height());
         unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel16).add(x) }
     }
 
     #[inline]
-    pub fn get_pixel16(&self, x: usize, y: usize) -> &Pixel16 {
+    pub fn as_pixel16(&self, x: usize, y: usize) -> &Pixel16 {
         debug_assert!(x < self.width() && y < self.height());
-        self.get_pixel16_mut(x, y)
+        self.as_pixel16_mut(x, y)
     }
 
     #[inline]
-    pub fn get_pixel32_mut(&self, x: usize, y: usize) -> &mut Pixel32 {
+    pub fn as_pixel32_mut(&self, x: usize, y: usize) -> &mut Pixel32 {
         debug_assert!(x < self.width() && y < self.height());
         unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel32).add(x) }
     }
 
     #[inline]
-    pub fn get_pixel32(&self, x: usize, y: usize) -> &Pixel32 {
+    pub fn as_pixel32(&self, x: usize, y: usize) -> &Pixel32 {
         debug_assert!(x < self.width() && y < self.height());
         unsafe { &*((self.effect_world.data as *const u8).add(y * self.row_bytes()) as *const Pixel32).add(x) }
     }
@@ -516,18 +513,32 @@ pub enum ParamType {
     Point3D = ae_sys::PF_Param_POINT_3D,
 }
 
-pub const PARAM_FLAG_RESERVED1: u32 = ae_sys::PF_ParamFlag_RESERVED1;
-pub const PARAM_FLAG_CANNOT_TIME_VARY: u32 = ae_sys::PF_ParamFlag_CANNOT_TIME_VARY;
-pub const PARAM_FLAG_CANNOT_INTERP: u32 = ae_sys::PF_ParamFlag_CANNOT_INTERP;
-pub const PARAM_FLAG_RESERVED2: u32 = ae_sys::PF_ParamFlag_RESERVED2;
-pub const PARAM_FLAG_RESERVED3: u32 = ae_sys::PF_ParamFlag_RESERVED3;
-pub const PARAM_FLAG_TWIRLY: u32 = ae_sys::PF_ParamFlag_COLLAPSE_TWIRLY;
-pub const PARAM_FLAG_SUPERVIDE: u32 = ae_sys::PF_ParamFlag_SUPERVISE;
-pub const PARAM_FLAG_START_COLLAPSED: u32 = ae_sys::PF_ParamFlag_START_COLLAPSED;
-pub const PARAM_FLAG_USE_VALUE_FOR_OLD_PROJECTS: u32 = ae_sys::PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS;
-pub const PARAM_FLAG_LAYER_PARAM_IS_TRACKMATTE: u32 = ae_sys::PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE;
-pub const PARAM_FLAG_EXCLUDE_FROM_HAVE_INPUTS_CHANGED: u32 = ae_sys::PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED;
-pub const PARAM_FLAG_SKIP_REVEAL_WHEN_UNHIDDEN: u32 = ae_sys::PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN;
+bitflags! {
+    pub struct ParamFlag: u32 {
+        const RESERVED1 = ae_sys::PF_ParamFlag_RESERVED1;
+        const CANNOT_TIME_VARY = ae_sys::PF_ParamFlag_CANNOT_TIME_VARY;
+        const CANNOT_INTERP= ae_sys::PF_ParamFlag_CANNOT_INTERP;
+        const RESERVED2= ae_sys::PF_ParamFlag_RESERVED2;
+        const RESERVED3 = ae_sys::PF_ParamFlag_RESERVED3;
+        const TWIRLY = ae_sys::PF_ParamFlag_COLLAPSE_TWIRLY;
+        const SUPERVISE = ae_sys::PF_ParamFlag_SUPERVISE;
+        const START_COLLAPSED = ae_sys::PF_ParamFlag_START_COLLAPSED;
+        const USE_VALUE_FOR_OLD_PROJECTS = ae_sys::PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS;
+        const LAYER_PARAM_IS_TRACKMATTE = ae_sys::PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE;
+        const EXCLUDE_FROM_HAVE_INPUTS_CHANGED = ae_sys::PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED;
+        const SKIP_REVEAL_WHEN_UNHIDDEN = ae_sys::PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN;
+    }
+}
+
+bitflags! {
+    pub struct ValueDisplayFlag: u16 {
+        const NONE = ae_sys::PF_ValueDisplayFlag_NONE as u16;
+        const PERCENT = ae_sys::PF_ValueDisplayFlag_PERCENT as u16;
+        const PIXEL = ae_sys::PF_ValueDisplayFlag_PIXEL as u16;
+        const RESERVED = ae_sys::PF_ValueDisplayFlag_RESERVED1 as u16;
+        const REVERSE = ae_sys::PF_ValueDisplayFlag_REVERSE as u16;
+    }
+}
 
 #[repr(C)]
 #[derive(Clone)]
@@ -554,18 +565,12 @@ impl PopupDef {
         self
     }
 
-    pub fn num_choices<'a>(&'a mut self, num_choices: u16) -> &'a mut PopupDef {
-        self.popup_def.num_choices = num_choices as i16;
-        self
-    }
-
     pub fn names<'a>(&'a mut self, names: Vec<&str>) -> &'a mut PopupDef {
         let mut names_tmp = String::new();
         names.iter().for_each(|s| names_tmp += format!("{}|", *s).as_str());
         self.names = CString::new(names_tmp).unwrap();
         self.popup_def.u.namesptr = self.names.as_c_str().as_ptr();
         self.popup_def.num_choices = names.len().try_into().unwrap();
-        //(names.to_string_lossy().matches("|").count() + 1).try_into().unwrap();
         self
     }
 
@@ -574,49 +579,81 @@ impl PopupDef {
     }
 }
 
-#[repr(C)]
+define_param_wrapper!(AngleDef, PF_AngleDef, angle_def, i32, i32);
+
+define_param_wrapper!(SliderDef, PF_SliderDef, slider_def, i32, i32);
+define_param_slider_min_max_wrapper!(SliderDef, PF_SliderDef, slider_def, i32);
+define_param_slider_value_str_wrapper!(SliderDef, slider_def);
+define_param_slider_value_desc_wrapper!(SliderDef, slider_def);
+
+define_param_wrapper!(FixedSliderDef, PF_FixedSliderDef, slider_def, i32, i32);
+define_param_slider_min_max_wrapper!(FixedSliderDef, PF_FixedSliderDef, slider_def, i32);
+define_param_slider_value_str_wrapper!(FixedSliderDef, slider_def);
+define_param_slider_value_desc_wrapper!(FixedSliderDef, slider_def);
+
+impl FixedSliderDef {
+    pub fn precision<'a>(&'a mut self, precision: u16) -> &'a mut FixedSliderDef {
+        self.slider_def.precision = precision as i16;
+        self
+    }
+
+    pub fn display_flags<'a>(&'a mut self, display_flags: ValueDisplayFlag) -> &'a mut FixedSliderDef {
+        self.slider_def.display_flags = display_flags.bits() as i16;
+        self
+    }
+}
+
+define_param_wrapper!(FloatSliderDef, PF_FloatSliderDef, slider_def, f64, f32);
+define_param_slider_min_max_wrapper!(FloatSliderDef, PF_FloatSliderDef, slider_def, f32);
+define_param_slider_value_desc_wrapper!(FloatSliderDef, slider_def);
+
+/*
+c#[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct AngleDef {
-    angle_def: PF_AngleDef,
+    def: PF_AngleDef,
 }
 
 impl AngleDef {
     pub fn new() -> Self {
         Self {
-            angle_def: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+            def: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
         }
     }
 
     pub fn value<'a>(&'a mut self, value: i32) -> &'a mut AngleDef {
-        self.angle_def.value = value;
+        self.def.value = value;
         self
     }
 
     pub fn default<'a>(&'a mut self, default: i32) -> &'a mut AngleDef {
-        self.angle_def.dephault = default;
+        self.def.dephault = default;
         self
     }
 
     pub fn valid_min<'a>(&'a mut self, valid_min: i32) -> &'a mut AngleDef {
-        self.angle_def.valid_min = valid_min;
+        self.def.valid_min = valid_min;
         self
     }
 
     pub fn valid_max<'a>(&'a mut self, valid_max: i32) -> &'a mut AngleDef {
-        self.angle_def.valid_max = valid_max;
+        self.def.valid_max = valid_max;
         self
     }
 
     pub fn into_raw(ad: AngleDef) -> PF_AngleDef {
-        ad.angle_def
+        ad.def
     }
-}
+}*/
 
 #[repr(C)]
 #[derive(Clone)]
 pub enum ParamDefUnion {
     PopupDef(PopupDef),
     AngleDef(AngleDef),
+    SliderDef(SliderDef),
+    FixedSliderDef(FixedSliderDef),
+    FloatSliderDef(FloatSliderDef),
 }
 
 #[repr(C)]
@@ -641,6 +678,18 @@ impl ParamDef {
             ParamDefUnion::AngleDef(ad) => {
                 self.param_def.u.ad = AngleDef::into_raw(ad);
                 self.param_def.param_type = ae_sys::PF_Param_ANGLE;
+            }
+            ParamDefUnion::SliderDef(sd) => {
+                self.param_def.u.sd = SliderDef::into_raw(sd);
+                self.param_def.param_type = ae_sys::PF_Param_SLIDER;
+            }
+            ParamDefUnion::FixedSliderDef(sd) => {
+                self.param_def.u.fd = FixedSliderDef::into_raw(sd);
+                self.param_def.param_type = ae_sys::PF_Param_FIX_SLIDER;
+            }
+            ParamDefUnion::FloatSliderDef(fs_d) => {
+                self.param_def.u.fs_d = FloatSliderDef::into_raw(fs_d);
+                self.param_def.param_type = ae_sys::PF_Param_FLOAT_SLIDER;
             }
         }
         self
@@ -668,8 +717,10 @@ impl ParamDef {
         self
     }
 
-    pub fn name<'a>(&'a mut self, name: &CStr) -> &'a mut ParamDef {
-        let name_slice = name.to_bytes_with_nul();
+    pub fn name<'a>(&'a mut self, name: &str) -> &'a mut ParamDef {
+        assert!(name.len() < 32);
+        let name_cstr = CString::new(name).unwrap();
+        let name_slice = name_cstr.to_bytes_with_nul();
         self.param_def.name[0..name_slice.len()].copy_from_slice(unsafe { std::mem::transmute(name_slice) });
         self
     }
@@ -689,8 +740,8 @@ impl ParamDef {
         self
     }
 
-    pub fn flags<'a>(&'a mut self, flags: i32) -> &'a mut ParamDef {
-        self.param_def.flags = flags;
+    pub fn flags<'a>(&'a mut self, flags: ParamFlag) -> &'a mut ParamDef {
+        self.param_def.flags = flags.bits() as i32;
         self
     }
 

@@ -134,7 +134,7 @@ macro_rules! define_handle_wrapper {
     };
 }
 
-macro_rules! define_owned_handle_wrapper {
+macro_rules! _define_owned_handle_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident) => {
         #[derive(Clone, Debug, Hash)]
         pub struct $wrapper_pretty_name {
@@ -152,6 +152,94 @@ macro_rules! define_owned_handle_wrapper {
 
             pub fn as_ptr(&self) -> ae_sys::$data_type {
                 self.$data_name
+            }
+        }
+    };
+}
+
+macro_rules! define_param_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident, $value_type:ident, $value_type_ui:ident) => {
+        #[derive(Copy, Clone, Debug)]
+        #[repr(C)]
+        pub struct $wrapper_pretty_name {
+            pub(crate) $data_name: ae_sys::$data_type,
+        }
+
+        impl $wrapper_pretty_name {
+            pub fn new() -> Self {
+                Self {
+                    $data_name: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+                }
+            }
+
+            pub fn value<'a>(&'a mut self, value: $value_type) -> &'a mut $wrapper_pretty_name {
+                self.$data_name.value = value;
+                self
+            }
+
+            pub fn default<'a>(&'a mut self, default: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+                self.$data_name.dephault = default;
+                self
+            }
+
+            pub fn valid_min<'a>(&'a mut self, valid_min: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+                self.$data_name.valid_min = valid_min;
+                self
+            }
+
+            pub fn valid_max<'a>(&'a mut self, valid_max: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+                self.$data_name.valid_max = valid_max;
+                self
+            }
+
+            pub fn into_raw(def: $wrapper_pretty_name) -> $data_type {
+                def.$data_name
+            }
+        }
+    };
+}
+
+macro_rules! define_param_slider_min_max_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident, $value_type_ui:ident) => {
+        impl $wrapper_pretty_name {
+            pub fn slider_min<'a>(&'a mut self, slider_min: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+                self.$data_name.slider_min = slider_min;
+                self
+            }
+
+            pub fn slider_max<'a>(&'a mut self, slider_max: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+                self.$data_name.slider_max = slider_max;
+                self
+            }
+        }
+    };
+}
+
+macro_rules! define_param_slider_value_str_wrapper {
+    ($wrapper_pretty_name:ident, $data_name:ident) => {
+        impl $wrapper_pretty_name {
+            pub fn value_str<'a>(&'a mut self, value_str: &str) -> &'a mut $wrapper_pretty_name {
+                assert!(value_str.len() < 32);
+                let value_cstr = CString::new(value_str).unwrap();
+                let value_slice = value_cstr.to_bytes_with_nul();
+                self.$data_name.value_str[0..value_slice.len()]
+                    .copy_from_slice(unsafe { std::mem::transmute(value_slice) });
+                self
+            }
+        }
+    };
+}
+
+macro_rules! define_param_slider_value_desc_wrapper {
+    ($wrapper_pretty_name:ident, $data_name:ident) => {
+        impl $wrapper_pretty_name {
+            pub fn value_desc<'a>(&'a mut self, value_desc: &str) -> &'a mut $wrapper_pretty_name {
+                assert!(value_desc.len() < 32);
+                let value_desc_cstr = CString::new(value_desc).unwrap();
+                let value_desc_slice = value_desc_cstr.to_bytes_with_nul();
+                self.$data_name.value_desc[0..value_desc_slice.len()]
+                    .copy_from_slice(unsafe { std::mem::transmute(value_desc_slice) });
+                self
             }
         }
     };
