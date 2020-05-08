@@ -473,7 +473,7 @@ define_suite!(
 );
 
 impl PFInterfaceSuite {
-    pub fn get_effect_layer(&self, effect_ref: pf::ProgPtr) -> Result<LayerHandle, Error> {
+    pub fn get_effect_layer(&self, effect_ref: pf::ProgressInfo) -> Result<LayerHandle, Error> {
         let mut layer_handle = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
 
         match ae_call_suite_fn!(

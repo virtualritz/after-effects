@@ -160,6 +160,7 @@ pub enum Field {
 }
 
 // FIXME: wrap this nicely
+/// An EffectWorld is a view on a WorldHandle that can be used to write to.
 #[derive(Debug, Copy, Clone)]
 pub struct EffectWorld {
     pub effect_world: ae_sys::PF_EffectWorld,
@@ -301,31 +302,95 @@ macro_rules! add_param {
     };
 }
 
-define_handle_wrapper!(ProgPtr, PF_ProgPtr, prog_ptr);
+#[derive(Copy, Clone, Debug)]
+#[repr(C)]
+pub struct Rect {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+impl From<ae_sys::PF_LRect> for Rect {
+    fn from(rect: ae_sys::PF_LRect) -> Self {
+        Rect {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+        }
+    }
+}
+
+impl From<Rect> for ae_sys::PF_LRect {
+    fn from(rect: Rect) -> Self {
+        ae_sys::PF_LRect {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+        }
+    }
+}
+
+impl Rect {
+    pub fn is_empty(&self) -> bool {
+        (self.left >= self.right) || (self.top >= self.bottom)
+    }
+
+    pub fn union<'a>(&'a mut self, other: &Rect) -> &'a mut Rect {
+        if other.is_empty() {
+            *self = *other;
+        } else if !other.is_empty() {
+            self.left = std::cmp::min(self.left, other.left);
+            self.top = std::cmp::min(self.top, other.top);
+            self.right = std::cmp::max(self.right, other.right);
+            self.bottom = std::cmp::max(self.bottom, other.bottom);
+        }
+        self
+    }
+
+    pub fn is_edge_pixel(&self, x: i32, y: i32) -> bool {
+        let mut x_hit = (x == self.left) || (x == self.right);
+        let mut y_hit = (y == self.top) || (y == self.bottom);
+
+        if x_hit {
+            y_hit = (y >= self.top) && (y <= self.bottom);
+        } else {
+            if y_hit {
+                x_hit = (x >= self.left) && (x <= self.right);
+            }
+        }
+        x_hit && y_hit
+    }
+}
+
+define_handle_wrapper!(ProgressInfo, PF_ProgPtr, prog_ptr);
 
 #[derive(Copy, Clone, Debug)]
 pub struct SmartRenderCallbacks {
-    pub(crate) rc_ptr: ae_sys::PF_SmartRenderCallbacks,
+    pub(crate) rc_ptr: *const ae_sys::PF_SmartRenderCallbacks,
 }
 
 impl SmartRenderCallbacks {
-    pub fn from_raw(rc_ptr: ae_sys::PF_SmartRenderCallbacks) -> Self {
+    pub fn from_raw(rc_ptr: *const ae_sys::PF_SmartRenderCallbacks) -> Self {
         Self { rc_ptr }
     }
 
-    pub fn as_ptr(&self) -> ae_sys::PF_SmartRenderCallbacks {
+    pub fn as_ptr(&self) -> *const ae_sys::PF_SmartRenderCallbacks {
         self.rc_ptr
     }
 
-    pub fn checkout_layer_pixels(&self, effect_ref: ProgPtr, checkout_id: i32) -> Result<EffectWorld, Err> {
-        if let Some(checkout_layer_pixels) = self.rc_ptr.checkout_layer_pixels {
-            let mut effect_world = std::mem::MaybeUninit::<ae_sys::PF_EffectWorld>::uninit();
+    pub fn checkout_layer_pixels(&self, effect_ref: ProgressInfo, checkout_id: u32) -> Result<EffectWorld, Err> {
+        if let Some(checkout_layer_pixels) = unsafe { *self.rc_ptr }.checkout_layer_pixels {
+            let mut effect_world_ptr = std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
-            match unsafe { checkout_layer_pixels(effect_ref.as_ptr(), checkout_id, &mut effect_world.as_mut_ptr()) }
-                as u32
+            match unsafe {
+                checkout_layer_pixels(effect_ref.as_ptr(), checkout_id as i32, effect_world_ptr.as_mut_ptr())
+            } as u32
             {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
-                    effect_world: unsafe { effect_world.assume_init() },
+                    effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
                 e => Err(unsafe { Err::from_unchecked(e as i32) }),
             }
@@ -334,9 +399,9 @@ impl SmartRenderCallbacks {
         }
     }
 
-    pub fn checkin_layer_pixels(&self, effect_ref: ProgPtr, checkout_id: i32) -> Result<(), Err> {
-        if let Some(checkin_layer_pixels) = self.rc_ptr.checkin_layer_pixels {
-            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id) } as u32 {
+    pub fn checkin_layer_pixels(&self, effect_ref: ProgressInfo, checkout_id: u32) -> Result<(), Err> {
+        if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
+            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) } as u32 {
                 ae_sys::PF_Err_NONE => Ok(()),
                 e => Err(unsafe { Err::from_unchecked(e as i32) }),
             }
@@ -345,13 +410,13 @@ impl SmartRenderCallbacks {
         }
     }
 
-    pub fn checkout_output(&self, effect_ref: ProgPtr) -> Result<EffectWorld, Err> {
-        if let Some(checkout_output) = self.rc_ptr.checkout_output {
-            let mut effect_world = std::mem::MaybeUninit::<ae_sys::PF_EffectWorld>::uninit();
+    pub fn checkout_output(&self, effect_ref: ProgressInfo) -> Result<EffectWorld, Err> {
+        if let Some(checkout_output) = unsafe { *self.rc_ptr }.checkout_output {
+            let mut effect_world_ptr = std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
-            match unsafe { checkout_output(effect_ref.as_ptr(), &mut effect_world.as_mut_ptr()) } as u32 {
+            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) } as u32 {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
-                    effect_world: unsafe { effect_world.assume_init() },
+                    effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
                 e => Err(unsafe { Err::from_unchecked(e as i32) }),
             }
@@ -359,6 +424,72 @@ impl SmartRenderCallbacks {
             Err(Err::InvalidCallback)
         }
     }
+}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(i32)]
+pub enum ParamIndex {
+    None = ae_sys::PF_ParamIndex_NONE,
+    CheckAll = ae_sys::PF_ParamIndex_CHECK_ALL,
+    CheckAllExceptLayerParams = ae_sys::PF_ParamIndex_CHECK_ALL_EXCEPT_LAYER_PARAMS,
+    CheckAllHonorExclude = ae_sys::PF_ParamIndex_CHECK_ALL_HONOR_EXCLUDE,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct PreRenderCallbacks {
+    pub(crate) rc_ptr: *const ae_sys::PF_PreRenderCallbacks,
+}
+
+impl PreRenderCallbacks {
+    pub fn from_raw(rc_ptr: *const ae_sys::PF_PreRenderCallbacks) -> Self {
+        Self { rc_ptr }
+    }
+
+    pub fn as_ptr(&self) -> *const ae_sys::PF_PreRenderCallbacks {
+        self.rc_ptr
+    }
+
+    pub fn checkout_layer(
+        &self,
+        effect_ref: ProgressInfo,
+        index: i32,
+        checkout_id: i32,
+        // FIXME: warp this struct
+        req: &PF_RenderRequest,
+        what_time: i32,
+        time_step: i32,
+        time_scale: u32,
+    ) -> Result<PF_CheckoutResult, Err> {
+        if let Some(checkout_layer) = unsafe { *self.rc_ptr }.checkout_layer {
+            let mut checkout_result = std::mem::MaybeUninit::<PF_CheckoutResult>::uninit();
+
+            match unsafe {
+                checkout_layer(
+                    effect_ref.as_ptr(),
+                    index as i32,
+                    checkout_id as i32,
+                    req,
+                    what_time,
+                    time_step,
+                    time_scale,
+                    checkout_result.as_mut_ptr(),
+                )
+            } as u32
+            {
+                ae_sys::PF_Err_NONE => Ok(unsafe { checkout_result.assume_init() }),
+                e => Err(unsafe { Err::from_unchecked(e as i32) }),
+            }
+        } else {
+            Err(Err::InvalidCallback)
+        }
+    }
+
+    /* FIXME
+    pub fn guid_mix_in_ptr(
+            effect_ref: ProgressInfo,
+            buf: [u8],
+        ) -> PF_Err,
+    >,*/
 }
 
 #[repr(i32)]
