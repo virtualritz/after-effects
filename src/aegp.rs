@@ -213,7 +213,7 @@ pub enum ObjectType {
     None = AEGP_ObjectType_NONE,
     /// Includes all pre-AE 5.0 layer types (audio or video source,
     /// including adjustment layers).
-    Av = AEGP_ObjectType_AV,
+    AudioVideo = AEGP_ObjectType_AV,
     Light = AEGP_ObjectType_LIGHT,
     Camera = AEGP_ObjectType_CAMERA,
     Text = AEGP_ObjectType_TEXT,
@@ -250,14 +250,14 @@ define_suite!(
     kAEGPMemorySuiteVersion1
 );
 
-pub struct MemHandle<T: Clone> {
+pub struct MemHandle<T> {
     ptr: *mut T,
     pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
     mem_handle: ae_sys::AEGP_MemHandle,
     is_owned: bool,
 }
 
-impl<T: Clone> MemHandle<T> {
+impl<T> MemHandle<T> {
     #[inline]
     pub fn new(plugin_id: PluginID, name: &str, flags: MemFlag) -> Result<Self, Error> {
         let mut mem_handle: ae_sys::AEGP_MemHandle = std::ptr::null_mut();
@@ -382,7 +382,7 @@ impl<T: Clone> MemHandle<T> {
     }
 }
 
-impl<T: Clone> Drop for MemHandle<T> {
+impl<T> Drop for MemHandle<T> {
     #[allow(unused_must_use)]
     fn drop(&mut self) {
         //self.unlock();
@@ -399,11 +399,11 @@ impl<T: Clone> Drop for MemHandle<T> {
     }
 }
 
-pub struct MemLock<'a, T: Clone> {
+pub struct MemLock<'a, T> {
     mem_handle: &'a mut MemHandle<T>,
 }
 
-impl<'a, T: Clone> MemLock<'a, T> {
+impl<'a, T> MemLock<'a, T> {
     pub fn new(mem_handle: &'a mut MemHandle<T>) -> Result<Self, Error> {
         match (*mem_handle).lock() {
             Ok(mem_handle) => Ok(Self { mem_handle }),
@@ -420,9 +420,19 @@ impl<'a, T: Clone> MemLock<'a, T> {
     pub fn get_handle_mut(&mut self) -> &mut MemHandle<T> {
         self.mem_handle
     }
+
+    #[inline]
+    pub fn get(&self) -> &T {
+        self.mem_handle.get()
+    }
+
+    #[inline]
+    pub fn get_mut(&mut self) -> &mut T {
+        self.mem_handle.get_mut()
+    }
 }
 
-impl<T: Clone> Drop for MemLock<'_, T> {
+impl<T> Drop for MemLock<'_, T> {
     fn drop(&mut self) {
         (*self.mem_handle).unlock().expect("Unlocking mem handle failed");
     }
@@ -465,6 +475,43 @@ impl IOInSuite {
     }*/
 }
 
+define_handle_wrapper!(EffectRefHandle, AEGP_EffectRefH, effect_ref_ptr);
+
+define_suite!(
+    EffectSuite,
+    AEGP_EffectSuite4,
+    kAEGPEffectSuite,
+    kAEGPEffectSuiteVersion4
+);
+
+impl EffectSuite {
+    pub fn effect_call_generic<T: Sized>(
+        &self,
+        plugin_id: PluginID,
+        effect_ref: EffectRefHandle,
+        time: Time,
+        command: pf::Command,
+        extra_payload: Option<&T>,
+    ) -> Result<(), Error> {
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_EffectCallGeneric,
+            plugin_id,
+            effect_ref.as_ptr(),
+            &time as *const _ as *const ae_sys::A_Time,
+            command as ae_sys::PF_Cmd,
+            // T is Sized so it can never be a fat pointer
+            // which means we are safe to transmute here.
+            // Alternatively we could write
+            // extra_payload.map(|p| p as *const _).unwrap_or(core::ptr::null())
+            std::mem::transmute(extra_payload)
+        ) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+}
+
 define_suite!(
     PFInterfaceSuite,
     AEGP_PFInterfaceSuite1,
@@ -473,17 +520,34 @@ define_suite!(
 );
 
 impl PFInterfaceSuite {
-    pub fn get_effect_layer(&self, effect_ref: pf::ProgressInfo) -> Result<LayerHandle, Error> {
+    pub fn get_effect_layer(&self, effect_ref: pf::ProgPtr) -> Result<LayerHandle, Error> {
         let mut layer_handle = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetEffectLayer,
-            effect_ref.as_ptr() as _,
+            effect_ref,
             layer_handle.as_mut_ptr()
         ) {
             Ok(()) => Ok(LayerHandle {
                 layer_ptr: unsafe { layer_handle.assume_init() },
+            }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_effect_camera(&self, effect_ref: pf::ProgPtr, time: Time) -> Result<LayerHandle, Error> {
+        let mut camera_layer_handle = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetEffectCamera,
+            effect_ref,
+            &time as *const _ as *const ae_sys::A_Time,
+            camera_layer_handle.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(LayerHandle {
+                layer_ptr: unsafe { camera_layer_handle.assume_init() },
             }),
             Err(e) => Err(e),
         }
@@ -690,6 +754,21 @@ impl CompSuite {
     }
 
     #[inline]
+    pub fn get_comp_suggested_motion_blur_samples(&self, comp_handle: CompHandle) -> Result<u32, Error> {
+        let mut samples = std::mem::MaybeUninit::<A_long>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetCompSuggestedMotionBlurSamples,
+            comp_handle.as_ptr(),
+            samples.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(unsafe { samples.assume_init() as u32 }),
+            Err(e) => Err(e),
+        }
+    }
+
+    #[inline]
     pub fn get_item_from_comp(&self, comp_handle: CompHandle) -> Result<ItemHandle, Error> {
         let mut item_handle_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_ItemH>::uninit();
         match ae_call_suite_fn!(
@@ -783,6 +862,20 @@ define_handle_wrapper!(LayerHandle, AEGP_LayerH, layer_ptr);
 define_suite!(LayerSuite, AEGP_LayerSuite8, kAEGPLayerSuite, kAEGPLayerSuiteVersion8);
 
 impl LayerSuite {
+    #[inline]
+    pub fn get_layer_parent_comp(&self, layer_handle: LayerHandle) -> Result<CompHandle, Error> {
+        let mut parent_comp_handle = MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetLayerParentComp,
+            layer_handle.as_ptr(),
+            parent_comp_handle.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok(unsafe { CompHandle::from_raw(parent_comp_handle.assume_init()) }),
+            Err(e) => Err(e),
+        }
+    }
+
     #[inline]
     pub fn get_comp_num_layers(&self, comp_handle: CompHandle) -> Result<usize, Error> {
         let mut num_layers = MaybeUninit::<i32>::uninit();
@@ -1001,6 +1094,52 @@ impl StreamSuite {
             Err(e) => Err(e),
         }
     }
+}
+
+define_suite!(
+    UtilitySuite,
+    AEGP_UtilitySuite6,
+    kAEGPUtilitySuite,
+    kAEGPUtilitySuiteVersion6
+);
+
+impl UtilitySuite {
+    #[inline]
+    pub fn register_with_aegp(
+        &self,
+        //global_refcon:,
+        plug_in_name: impl Into<Vec<u8>>,
+    ) -> Result<PluginID, Error> {
+        let mut plugin_id = std::mem::MaybeUninit::<ae_sys::AEGP_PluginID>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_RegisterWithAEGP,
+            std::ptr::null_mut() as _,
+            CString::new(plug_in_name).unwrap().as_ptr(),
+            plugin_id.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(unsafe { plugin_id.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    /*
+    #[inline]
+    pub fn get_plugin_paths(
+        &self,
+    ) -> Result<Path, Error>
+    {
+        let mut path = std::mem::MaybeUninit::<ae_sys::AEGP_PluginID>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetPluginPaths
+        ) {
+            Ok(()) => Ok(unsafe { plugin_id.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }*/
 }
 
 define_suite!(

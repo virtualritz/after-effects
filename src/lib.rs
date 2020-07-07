@@ -117,8 +117,14 @@ impl From<std::collections::TryReserveError> for Error {
     }
 }*/
 
-struct AeError(pub i32);
+/*
+impl From<Error> for ae_sys::A_Err {
+    fn from(err: Error) -> ae_sys::A_Err {
+        err as ae_sys::A_Err
+    }
+}*/
 
+/*
 impl From<Result<(), Error>> for AeError {
     #[inline]
     fn from(result: Result<(), Error>) -> Self {
@@ -134,7 +140,7 @@ impl From<AeError> for i32 {
     fn from(ae_error: AeError) -> Self {
         ae_error.0
     }
-}
+}*/
 
 #[macro_use]
 pub mod macros;
