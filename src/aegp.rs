@@ -1,7 +1,7 @@
 pub use crate::*;
 pub use ae_sys::*;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
-use std::{ffi::CString, mem::MaybeUninit};
+use std::{ffi::CString, marker::PhantomData, mem::MaybeUninit};
 use widestring::U16CString;
 
 pub type PluginID = ae_sys::AEGP_PluginID;
@@ -250,14 +250,15 @@ define_suite!(
     kAEGPMemorySuiteVersion1
 );
 
-pub struct MemHandle<T> {
+pub struct MemHandle<'a, T> {
     ptr: *mut T,
     pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
     mem_handle: ae_sys::AEGP_MemHandle,
     is_owned: bool,
+    _marker: PhantomData<*mut &'a ()>,
 }
 
-impl<T> MemHandle<T> {
+impl<'a, T> MemHandle<'a, T> {
     #[inline]
     pub fn new(plugin_id: PluginID, name: &str, flags: MemFlag) -> Result<Self, Error> {
         let mut mem_handle: ae_sys::AEGP_MemHandle = std::ptr::null_mut();
@@ -284,6 +285,7 @@ impl<T> MemHandle<T> {
                 pica_basic_suite_ptr,
                 mem_handle,
                 is_owned: true,
+                _marker: PhantomData,
             }),
             Err(e) => Err(e),
         }
@@ -297,6 +299,7 @@ impl<T> MemHandle<T> {
             pica_basic_suite_ptr: borrow_pica_basic_as_ptr(),
             mem_handle,
             is_owned: false,
+            _marker: PhantomData,
         }
     }
 
@@ -319,13 +322,13 @@ impl<T> MemHandle<T> {
     }
 
     #[inline]
-    pub fn get(&self) -> &T {
+    pub fn get(&self) -> &'a T {
         debug_assert!(!self.ptr.is_null());
         unsafe { &*(self.ptr) }
     }
 
     #[inline]
-    pub fn get_mut(&mut self) -> &mut T {
+    pub fn get_mut(&mut self) -> &'a mut T {
         debug_assert!(!self.ptr.is_null());
         unsafe { &mut *(self.ptr) }
     }
@@ -382,7 +385,7 @@ impl<T> MemHandle<T> {
     }
 }
 
-impl<T> Drop for MemHandle<T> {
+impl<'a, T> Drop for MemHandle<'a, T> {
     #[allow(unused_must_use)]
     fn drop(&mut self) {
         //self.unlock();
@@ -400,11 +403,11 @@ impl<T> Drop for MemHandle<T> {
 }
 
 pub struct MemLock<'a, T> {
-    mem_handle: &'a mut MemHandle<T>,
+    mem_handle: &'a mut MemHandle<'a, T>,
 }
 
 impl<'a, T> MemLock<'a, T> {
-    pub fn new(mem_handle: &'a mut MemHandle<T>) -> Result<Self, Error> {
+    pub fn new(mem_handle: &'a mut MemHandle<'a, T>) -> Result<Self, Error> {
         match (*mem_handle).lock() {
             Ok(mem_handle) => Ok(Self { mem_handle }),
             Err(e) => Err(e),
@@ -412,22 +415,22 @@ impl<'a, T> MemLock<'a, T> {
     }
 
     #[inline]
-    pub fn get_handle(&self) -> &MemHandle<T> {
+    pub fn get_handle(&self) -> &MemHandle<'a, T> {
         self.mem_handle
     }
 
     #[inline]
-    pub fn get_handle_mut(&mut self) -> &mut MemHandle<T> {
+    pub fn get_handle_mut(&mut self) -> &mut MemHandle<'a, T> {
         self.mem_handle
     }
 
     #[inline]
-    pub fn get(&self) -> &T {
+    pub fn get(&self) -> &'a T {
         self.mem_handle.get()
     }
 
     #[inline]
-    pub fn get_mut(&mut self) -> &mut T {
+    pub fn get_mut(&mut self) -> &'a mut T {
         self.mem_handle.get_mut()
     }
 }
