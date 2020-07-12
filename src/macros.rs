@@ -1,25 +1,18 @@
 #[macro_export]
 macro_rules! ae_acquire_suite_ptr {
     ($pica:expr, $type:ident, $name:ident, $version:ident) => {{
-        #[allow(deprecated)]
         unsafe {
-            let mut suite_ptr: *const aftereffects_sys::$type = std::mem::uninitialized();
-            let suite_ptr_ptr: *mut *const aftereffects_sys::$type = &mut suite_ptr;
+            let mut suite_ptr = std::mem::MaybeUninit::<*const aftereffects_sys::$type>::uninit();
 
             let aquire_suite_func = (*($pica)).AcquireSuite.unwrap_or_else(|| unreachable!());
-            aquire_suite_func(
+            match aquire_suite_func(
                 aftereffects_sys::$name.as_ptr() as *const i8,
                 aftereffects_sys::$version as i32,
-                suite_ptr_ptr as *mut *const _, /* as *mut *const
-                                                 * libc::c_void, */
-            );
-
-            //suite_ptr
-
-            if suite_ptr.is_null() {
-                Err($crate::Error::MissingSuite)
-            } else {
-                Ok(suite_ptr)
+                suite_ptr.as_mut_ptr() as *mut *const _ as _,
+            ) as u32
+            {
+                ae_sys::kSPNoError => Ok(suite_ptr.assume_init()),
+                _ => Err($crate::Error::MissingSuite),
             }
         }
     }};
@@ -28,7 +21,6 @@ macro_rules! ae_acquire_suite_ptr {
 #[macro_export]
 macro_rules! ae_release_suite_ptr {
     ($pica:expr, $name:ident, $version:ident) => {{
-        #[allow(deprecated)]
         unsafe {
             let release_suite_func = (*($pica)).ReleaseSuite.unwrap_or_else(|| unreachable!());
             release_suite_func(
@@ -42,8 +34,8 @@ macro_rules! ae_release_suite_ptr {
 #[macro_export]
 macro_rules! ae_get_suite_fn {
     ($suite_ptr:expr, $function:ident ) => {{
-        // return an invocable function
-        (*($suite_ptr)).$function.unwrap_or_else(|| unreachable!()) //expect("Could not call function!") //unwrap_or_else(|| unreachable!())
+        // Return an invocable function
+        (*($suite_ptr)).$function.unwrap_or_else(|| unreachable!())
     }};
 }
 
@@ -75,9 +67,6 @@ macro_rules! ae_call_suite_fn_no_err {
 #[macro_export]
 macro_rules! ae_acquire_suite_and_call_suite_fn {
     ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
-        #[allow(deprecated)]
-
-        //let suite_ptr: *mut *const aftereffects_sys::$type =
         match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
             Ok(suite_ptr) =>
                 ae_call_suite_fn!(suite_ptr, $function, $($arg)*),
@@ -258,7 +247,6 @@ macro_rules! define_param_value_desc_wrapper {
 
 macro_rules! define_suite {
     ($suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
-        #[allow(deprecated)]
         #[derive(Clone, Debug, Hash)]
         pub struct $suite_pretty_name {
             pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
