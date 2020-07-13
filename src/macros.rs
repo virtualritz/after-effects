@@ -65,6 +65,19 @@ macro_rules! ae_call_suite_fn_no_err {
 }
 
 #[macro_export]
+macro_rules! ae_acquire_suite_and_call_suite_fn_no_err {
+    ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
+        match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
+            Ok(suite_ptr) =>
+                ae_call_suite_fn_no_err!(suite_ptr, $function, $($arg)*),
+            Err(e) => {
+                Err(e)
+            },
+        }
+    }};
+}
+
+#[macro_export]
 macro_rules! ae_acquire_suite_and_call_suite_fn {
     ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
         match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {

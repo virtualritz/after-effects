@@ -1143,6 +1143,18 @@ impl UtilitySuite {
             Err(e) => Err(e),
         }
     }*/
+    #[inline]
+    pub fn write_to_os_console(
+        &self,
+        //global_refcon:,
+        message: impl Into<Vec<u8>>,
+    ) -> Result<(), Error> {
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_WriteToOSConsole,
+            CString::new(message).unwrap().as_ptr(),
+        )
+    }
 }
 
 define_suite!(

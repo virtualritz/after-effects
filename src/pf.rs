@@ -1,7 +1,6 @@
 pub use crate::*;
 use aftereffects_sys as ae_sys;
-use std::{convert::TryInto, ffi::CString, marker::PhantomData};
-
+use std::{convert::TryInto, ffi::CString, fmt::Debug, marker::PhantomData};
 #[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
 #[repr(i32)]
 pub enum Err {
@@ -19,6 +18,13 @@ pub enum Err {
     // arbitrary data from text
     CannonParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as i32,
 }
+
+/*
+impl From<Err> for i32 {
+    fn from(e: Err) -> Self {
+        e as i32
+    }
+}*/
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -325,18 +331,51 @@ macro_rules! add_param {
     };
 }
 #[derive(Debug)]
-pub struct Handle<'a, T> {
-    handle: ae_sys::PF_Handle,
+pub struct Handle<'a, T: 'a> {
     suite_ptr: *const ae_sys::PF_HandleSuite1,
-    _marker: PhantomData<*mut &'a T>,
+    handle: ae_sys::PF_Handle,
+    _marker: PhantomData<&'a T>,
 }
 
-impl<'a, T> Handle<'a, T> {
-    pub fn new(value: T) -> Result<Handle<'a, T>, Error> {
-        let pica_basic_suite_ptr = borrow_pica_basic_as_ptr();
+/*
+pub struct HandleLock<'a, T> {
+    parent_handle: &'a Handle<T>,
+    ptr: *mut T,
+    _marker: PhantomData<*mut &'a ()>,
+}
 
+impl<'a, T> HandleLock<'a, T> {
+    pub fn get(&self) -> Result<&'a T, Err> {
+        if self.ptr.is_null() {
+            Err(Err::InvalidIndex)
+        } else {
+            Ok(unsafe { &*self.ptr })
+        }
+    }
+
+    pub fn get_mut(&self) -> Result<&'a mut T, Err> {
+        if self.ptr.is_null() {
+            Err(Err::InvalidIndex)
+        } else {
+            Ok(unsafe { &mut *self.ptr })
+        }
+    }
+}
+
+impl<'a, T> Drop for HandleLock<'a, T> {
+    fn drop(&mut self) {
+        ae_call_suite_fn_no_err!(
+            self.parent_handle.suite_ptr,
+            host_unlock_handle,
+            self.parent_handle.handle
+        );
+    }
+}*/
+
+impl<'a, T: 'a> Handle<'a, T> {
+    pub fn new(value: T) -> Result<Handle<'a, T>, Err> {
         match ae_acquire_suite_ptr!(
-            pica_basic_suite_ptr,
+            borrow_pica_basic_as_ptr(),
             PF_HandleSuite1,
             kPFHandleSuite,
             kPFHandleSuiteVersion1
@@ -344,73 +383,63 @@ impl<'a, T> Handle<'a, T> {
             Ok(suite_ptr) => {
                 let handle: ae_sys::PF_Handle =
                     ae_call_suite_fn_no_err!(suite_ptr, host_new_handle, std::mem::size_of::<T>() as u64);
+                if handle.is_null() {
+                    return Err(Err::OutOfMemory);
+                }
                 let ptr = ae_call_suite_fn_no_err!(suite_ptr, host_lock_handle, handle) as *mut T;
-                unsafe { ptr.write_unaligned(value) };
+                if ptr.is_null() {
+                    return Err(Err::InvalidIndex);
+                }
+                unsafe { ptr.write(value) };
                 ae_call_suite_fn_no_err!(suite_ptr, host_unlock_handle, handle);
                 Ok(Handle {
                     suite_ptr,
                     handle,
+                    //dispose: true,
                     _marker: PhantomData,
                 })
             }
-            Err(e) => Err(e),
-        }
-    }
-
-    pub fn from_slice(slice: impl Into<Vec<u8>>) -> Result<Handle<'a, Vec<u8>>, Error> {
-        let pica_basic_suite_ptr = borrow_pica_basic_as_ptr();
-
-        match ae_acquire_suite_ptr!(
-            pica_basic_suite_ptr,
-            PF_HandleSuite1,
-            kPFHandleSuite,
-            kPFHandleSuiteVersion1
-        ) {
-            Ok(suite_ptr) => {
-                let vector = slice.into();
-                let handle: ae_sys::PF_Handle =
-                    ae_call_suite_fn_no_err!(suite_ptr, host_new_handle, vector.len() as u64);
-                let ptr = ae_call_suite_fn_no_err!(suite_ptr, host_lock_handle, handle) as *mut Vec<u8>;
-                unsafe { ptr.write_unaligned(vector) };
-                ae_call_suite_fn_no_err!(suite_ptr, host_unlock_handle, handle);
-                Ok(Handle {
-                    suite_ptr,
-                    handle,
-                    _marker: PhantomData,
-                })
-            }
-            Err(e) => Err(e),
+            Err(e) => Err(Err::InvalidCallback),
         }
     }
 
     pub fn set(&mut self, value: T) {
         let ptr = ae_call_suite_fn_no_err!(self.suite_ptr, host_lock_handle, self.handle) as *mut T;
-        debug_assert!(!ptr.is_null());
-        unsafe {
-            // Run destructors, if any
-            ptr.drop_in_place();
-            ptr.write_unaligned(value);
+        if !ptr.is_null() {
+            unsafe {
+                // Run destructors, if any
+                ptr.read()
+            };
         }
+        unsafe { ptr.write(value) };
         ae_call_suite_fn_no_err!(self.suite_ptr, host_unlock_handle, self.handle);
     }
 
-    pub fn get(&mut self) -> Result<&'a T, Error> {
-        let ptr = ae_call_suite_fn_no_err!(self.suite_ptr, host_lock_handle, self.handle) as *const T;
-        ae_call_suite_fn_no_err!(self.suite_ptr, host_unlock_handle, self.handle);
-        if ptr.is_null() {
-            Err(Error::Alloc)
-        } else {
-            Ok(unsafe { &*ptr })
+    /*
+    pub fn lock(&mut self) -> Result<HandleLock<T>, Err> {
+        if self.locked {
+            return Err(Err::InvalidIndex);
         }
-    }
 
-    pub fn get_mut(&mut self) -> Result<&'a mut T, Error> {
         let ptr = ae_call_suite_fn_no_err!(self.suite_ptr, host_lock_handle, self.handle) as *mut T;
-        ae_call_suite_fn_no_err!(self.suite_ptr, host_unlock_handle, self.handle);
         if ptr.is_null() {
-            Err(Error::Alloc)
+            Err(Err::InvalidIndex)
         } else {
-            Ok(unsafe { &mut *ptr })
+            self.locked = true;
+            Ok(HandleLock {
+                parent_handle: self,
+                ptr,
+                _marker: PhantomData,
+            })
+        }
+    }*/
+
+    pub fn get(&self) -> Result<&'a T, Err> {
+        let ptr = unsafe { *(self.handle as *const *const T) };
+        if ptr.is_null() {
+            Err(Err::InvalidIndex)
+        } else {
+            Ok(unsafe { &(*ptr) })
         }
     }
 
@@ -423,7 +452,66 @@ impl<'a, T> Handle<'a, T> {
         ae_call_suite_fn!(self.suite_ptr, host_resize_handle, size as u64, &mut self.handle)
     }*/
 
-    pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<Handle<'a, T>, Error> {
+    pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<Handle<'a, T>, Err> {
+        match ae_acquire_suite_ptr!(
+            borrow_pica_basic_as_ptr(),
+            PF_HandleSuite1,
+            kPFHandleSuite,
+            kPFHandleSuiteVersion1
+        ) {
+            Ok(suite_ptr) => Ok(Handle {
+                suite_ptr,
+                handle,
+                //dispose: true,
+                _marker: PhantomData,
+            }),
+            Err(e) => Err(Err::InvalidCallback),
+        }
+    }
+
+    /// Consumes the handle.
+    pub fn into_raw(handle: Handle<T>) -> ae_sys::PF_Handle {
+        //let us = crate::aegp::UtilitySuite::new().unwrap();
+        //us.write_to_os_console("Handle::into_raw()").unwrap();
+
+        let return_handle = handle.handle;
+        // Handle is just on the stack so
+        // we're not leaking anything here
+        std::mem::forget(handle);
+        // Make sure drop(Handle) does *not*
+        // actually drop anything since we're
+        // passing ownership.
+        //handle.dispose = false;
+        return_handle
+        // drop(handle) gets called.
+    }
+
+    /// Returns the raw handle.
+    pub fn as_raw(&self) -> ae_sys::PF_Handle {
+        self.handle
+    }
+}
+
+impl<'a, T: 'a> Drop for Handle<'a, T> {
+    fn drop(&mut self) {
+        let ptr = unsafe { *(self.handle as *const *const T) };
+        if !ptr.is_null() {
+            unsafe { ptr.read() };
+        }
+
+        ae_call_suite_fn_no_err!(self.suite_ptr, host_dispose_handle, self.handle);
+    }
+}
+
+#[derive(Debug)]
+pub struct FlatHandle<'a> {
+    suite_ptr: *const ae_sys::PF_HandleSuite1,
+    handle: ae_sys::PF_Handle,
+    _marker: PhantomData<&'a ()>,
+}
+
+impl<'a> FlatHandle<'a> {
+    pub fn new(slice: impl Into<Vec<u8>>) -> Result<FlatHandle<'a>, Error> {
         let pica_basic_suite_ptr = borrow_pica_basic_as_ptr();
 
         match ae_acquire_suite_ptr!(
@@ -432,29 +520,86 @@ impl<'a, T> Handle<'a, T> {
             kPFHandleSuite,
             kPFHandleSuiteVersion1
         ) {
-            Ok(suite_ptr) => Ok(Handle {
-                suite_ptr,
-                handle,
-                _marker: PhantomData,
-            }),
+            Ok(suite_ptr) => {
+                let vector = slice.into();
+
+                let handle: ae_sys::PF_Handle =
+                    ae_call_suite_fn_no_err!(suite_ptr, host_new_handle, vector.len() as u64);
+
+                let ptr = ae_call_suite_fn_no_err!(suite_ptr, host_lock_handle, handle) as *mut u8;
+                debug_assert!(!ptr.is_null());
+
+                let dest = std::ptr::slice_from_raw_parts_mut(ptr, vector.len());
+                unsafe {
+                    (*dest).copy_from_slice(vector.as_slice());
+                }
+                ae_call_suite_fn_no_err!(suite_ptr, host_unlock_handle, handle);
+                Ok(FlatHandle {
+                    suite_ptr,
+                    handle,
+                    _marker: PhantomData,
+                })
+            }
             Err(e) => Err(e),
         }
     }
 
-    /// Consumes the Handle.
-    pub fn into_raw(handle: Handle<T>) -> ae_sys::PF_Handle {
-        let inner_handle = handle.handle;
+    pub fn get(&self) -> &'a [u8] {
+        let ptr = unsafe { *(self.handle as *const *const u8) };
+        debug_assert!(!ptr.is_null());
+        unsafe { &*std::ptr::slice_from_raw_parts(ptr, self.size()) }
+    }
+
+    /*
+    pub fn is_empty(&self) -> bool {
+        let ptr = unsafe { *(self.handle as *const *const u8) };
+        ptr.is_null()
+    }*/
+
+    pub fn size(&self) -> usize {
+        ae_call_suite_fn_no_err!(self.suite_ptr, host_get_handle_size, self.handle) as usize
+    }
+
+    pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<FlatHandle<'a>, Err> {
+        match ae_acquire_suite_ptr!(
+            borrow_pica_basic_as_ptr(),
+            PF_HandleSuite1,
+            kPFHandleSuite,
+            kPFHandleSuiteVersion1
+        ) {
+            Ok(suite_ptr) => {
+                let ptr = unsafe { *(handle as *const *const u8) };
+                if ptr.is_null() {
+                    Err(Err::InternalStructDamaged)
+                } else {
+                    Ok(FlatHandle {
+                        suite_ptr,
+                        handle,
+                        //dispose: true,
+                        _marker: PhantomData,
+                    })
+                }
+            }
+            Err(e) => Err(Err::InvalidCallback),
+        }
+    }
+
+    /// Consumes the handle.
+    pub fn into_raw(handle: FlatHandle) -> ae_sys::PF_Handle {
+        let return_handle = handle.handle;
+        // Handle is just on the stack so
+        // we're not leaking anything here.
+        // We need to call forget() or else
+        // drop() will be called on handle
+        // which will dispose the memory.
         std::mem::forget(handle);
-        inner_handle
+
+        return_handle
     }
 }
 
-impl<'a, T> Drop for Handle<'a, T> {
+impl<'a> Drop for FlatHandle<'a> {
     fn drop(&mut self) {
-        let ptr = ae_call_suite_fn_no_err!(self.suite_ptr, host_lock_handle, self.handle) as *mut T;
-        debug_assert!(ptr.is_null());
-        unsafe { ptr.drop_in_place() };
-        ae_call_suite_fn_no_err!(self.suite_ptr, host_unlock_handle, self.handle);
         ae_call_suite_fn_no_err!(self.suite_ptr, host_dispose_handle, self.handle);
     }
 }
