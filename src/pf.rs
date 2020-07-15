@@ -337,11 +337,9 @@ pub struct Handle<'a, T: 'a> {
     _marker: PhantomData<&'a T>,
 }
 
-/*
 pub struct HandleLock<'a, T> {
-    parent_handle: &'a Handle<T>,
+    parent_handle: &'a Handle<'a, T>,
     ptr: *mut T,
-    _marker: PhantomData<*mut &'a ()>,
 }
 
 impl<'a, T> HandleLock<'a, T> {
@@ -370,7 +368,7 @@ impl<'a, T> Drop for HandleLock<'a, T> {
             self.parent_handle.handle
         );
     }
-}*/
+}
 
 impl<'a, T: 'a> Handle<'a, T> {
     pub fn new(value: T) -> Result<Handle<'a, T>, Err> {
@@ -415,24 +413,17 @@ impl<'a, T: 'a> Handle<'a, T> {
         ae_call_suite_fn_no_err!(self.suite_ptr, host_unlock_handle, self.handle);
     }
 
-    /*
     pub fn lock(&mut self) -> Result<HandleLock<T>, Err> {
-        if self.locked {
-            return Err(Err::InvalidIndex);
-        }
-
         let ptr = ae_call_suite_fn_no_err!(self.suite_ptr, host_lock_handle, self.handle) as *mut T;
         if ptr.is_null() {
             Err(Err::InvalidIndex)
         } else {
-            self.locked = true;
             Ok(HandleLock {
                 parent_handle: self,
                 ptr,
-                _marker: PhantomData,
             })
         }
-    }*/
+    }
 
     pub fn get(&self) -> Result<&'a T, Err> {
         let ptr = unsafe { *(self.handle as *const *const T) };

@@ -10,6 +10,7 @@ pub type MaterialBasic = ae_sys::AEGP_MaterialBasic_v1;
 
 pub type ItemID = i32;
 
+// FIXME: make this an enum
 pub type CompFlags = u32;
 
 pub const COMP_FLAG_SHOW_ALL_SHY: u32 = ae_sys::AEGP_CompFlag_SHOW_ALL_SHY;
@@ -24,11 +25,12 @@ pub const COMP_FLAG_DRAFT_3D: u32 = ae_sys::AEGP_CompFlag_DRAFT_3D;
 pub const COMP_FLAG_SHOW_GRAPH: u32 = ae_sys::AEGP_CompFlag_SHOW_GRAPH;
 pub const COMP_FLAG_RESERVED_3: u32 = ae_sys::AEGP_CompFlag_RESERVED_3;
 
-pub type MemFlag = u32;
-
-pub const MEM_FLAG_NONE: u32 = ae_sys::AEGP_MemFlag_NONE;
-pub const MEM_FLAG_CLEAR: u32 = ae_sys::AEGP_MemFlag_CLEAR;
-pub const MEM_FLAG_QUIET: u32 = ae_sys::AEGP_MemFlag_QUIET;
+#[repr(u32)]
+pub enum MemFlag {
+    None = ae_sys::AEGP_MemFlag_NONE,
+    Clear = ae_sys::AEGP_MemFlag_CLEAR,
+    Quiet = ae_sys::AEGP_MemFlag_QUIET,
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 #[repr(i32)]
@@ -241,8 +243,6 @@ pub enum CameraType {
     NumTypes = ae_sys::AEGP_CameraType_NUM_TYPES,
 }
 
-//define_handle_wrapper!(MemHandle, AEGP_MemHandle, mem_ptr);
-
 define_suite!(
     MemorySuite,
     AEGP_MemorySuite1,
@@ -250,121 +250,64 @@ define_suite!(
     kAEGPMemorySuiteVersion1
 );
 
-pub struct MemHandle<'a, T> {
-    ptr: *mut T,
-    pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
-    mem_handle: ae_sys::AEGP_MemHandle,
-    is_owned: bool,
-    _marker: PhantomData<*mut &'a ()>,
+#[derive(Debug)]
+pub struct MemHandle<'a, T: 'a> {
+    suite_ptr: *const ae_sys::AEGP_MemorySuite1,
+    handle: ae_sys::AEGP_MemHandle,
+    _marker: PhantomData<&'a T>,
 }
 
-impl<'a, T> MemHandle<'a, T> {
-    #[inline]
-    pub fn new(plugin_id: PluginID, name: &str, flags: MemFlag) -> Result<Self, Error> {
-        let mut mem_handle: ae_sys::AEGP_MemHandle = std::ptr::null_mut();
-        let pica_basic_suite_ptr = borrow_pica_basic_as_ptr();
-
-        // The CString we construct here will be copied by Ae.
-        #[allow(clippy::temporary_cstring_as_ptr)]
-        match ae_acquire_suite_and_call_suite_fn!(
-            pica_basic_suite_ptr,
+impl<'a, T: 'a> MemHandle<'a, T> {
+    pub fn new(plugin_id: PluginID, name: &str, value: T) -> Result<MemHandle<'a, T>, Error> {
+        match ae_acquire_suite_ptr!(
+            borrow_pica_basic_as_ptr(),
             AEGP_MemorySuite1,
             kAEGPMemorySuite,
-            kAEGPMemorySuiteVersion1,
-            // Function -----------
-            AEGP_NewMemHandle,
-            // Arguments ----------
-            plugin_id,
-            CString::new(name).unwrap().as_ptr(),
-            std::mem::size_of::<T>() as u32,
-            flags as i32,
-            &mut mem_handle,
+            kAEGPMemorySuiteVersion1
         ) {
-            Ok(()) => Ok(Self {
-                ptr: std::ptr::null_mut(),
-                pica_basic_suite_ptr,
-                mem_handle,
-                is_owned: true,
-                _marker: PhantomData,
-            }),
+            Ok(suite_ptr) => {
+                let mut handle: ae_sys::AEGP_MemHandle = std::ptr::null_mut();
+
+                match ae_call_suite_fn!(
+                    suite_ptr,
+                    AEGP_NewMemHandle,
+                    plugin_id,
+                    CString::new(name).unwrap().as_ptr(),
+                    std::mem::size_of::<T>() as u32,
+                    0,
+                    &mut handle,
+                ) {
+                    Ok(()) => {
+                        let handle = Self {
+                            suite_ptr,
+                            handle,
+                            _marker: PhantomData,
+                        };
+
+                        *handle.lock()?.get_mut()? = value;
+
+                        Ok(handle)
+                    }
+                    Err(e) => Err(e),
+                }
+            }
             Err(e) => Err(e),
         }
     }
 
     #[inline]
-    pub fn from_raw(mem_handle: ae_sys::AEGP_MemHandle) -> Self {
-        //debug_assert!(!mem_handle.is_null());
-        Self {
-            ptr: std::ptr::null_mut(),
-            pica_basic_suite_ptr: borrow_pica_basic_as_ptr(),
-            mem_handle,
-            is_owned: false,
-            _marker: PhantomData,
-        }
-    }
-
-    pub fn to_owned(&mut self) {
-        self.is_owned = true;
-    }
-
-    pub fn into_raw(mem_handle: MemHandle<T>) -> ae_sys::AEGP_MemHandle {
-        mem_handle.mem_handle
-    }
-
-    #[inline]
-    pub fn as_ptr_mut(&self) -> *mut T {
-        self.ptr as *mut T
-    }
-
-    #[inline]
-    pub fn as_ptr(&self) -> *const T {
-        self.ptr as *const T
-    }
-
-    #[inline]
-    pub fn get(&self) -> &'a T {
-        debug_assert!(!self.ptr.is_null());
-        unsafe { &*(self.ptr) }
-    }
-
-    #[inline]
-    pub fn get_mut(&mut self) -> &'a mut T {
-        debug_assert!(!self.ptr.is_null());
-        unsafe { &mut *(self.ptr) }
-    }
-
-    #[inline]
-    pub fn set(&mut self, value: T) -> Result<(), Error> {
-        match self.ptr.is_null() {
-            false => {
-                unsafe {
-                    *(self.ptr) = value;
-                }
-                Ok(())
-            }
-            true => Err(Error::Alloc),
-        }
-    }
-
-    pub fn is_valid(&self) -> bool {
-        !self.ptr.is_null()
-    }
-
-    /// Only call this if you know what you're doing.
-    #[inline]
-    pub(crate) fn lock(&mut self) -> Result<&mut Self, Error> {
-        match ae_acquire_suite_and_call_suite_fn!(
-            (self.pica_basic_suite_ptr),
-            AEGP_MemorySuite1,
-            kAEGPMemorySuite,
-            kAEGPMemorySuiteVersion1,
-            // Function -----------
+    pub fn lock(&self) -> Result<MemHandleLock<T>, Error> {
+        let mut ptr = std::mem::MaybeUninit::<*mut T>::uninit();
+        match ae_call_suite_fn!(
+            self.suite_ptr,
             AEGP_LockMemHandle,
-            // Arguments ----------
-            self.mem_handle,
-            &mut self.ptr as *mut *mut _ as _
+            self.handle,
+            ptr.as_mut_ptr() as *mut *mut _ as _
         ) {
-            Ok(()) => Ok(self),
+            Ok(()) => Ok(MemHandleLock {
+                parent_handle: self,
+                ptr: unsafe { ptr.assume_init() },
+            }),
             Err(e) => Err(e),
         }
     }
@@ -372,72 +315,85 @@ impl<'a, T> MemHandle<'a, T> {
     /// Only call this if you know what you're doing.
     #[inline]
     pub(crate) fn unlock(&self) -> Result<(), Error> {
-        ae_acquire_suite_and_call_suite_fn!(
-            self.pica_basic_suite_ptr,
+        ae_call_suite_fn!(self.suite_ptr, AEGP_UnlockMemHandle, self.handle)
+    }
+
+    pub fn from_raw(handle: ae_sys::AEGP_MemHandle) -> Result<MemHandle<'a, T>, Error> {
+        match ae_acquire_suite_ptr!(
+            borrow_pica_basic_as_ptr(),
             AEGP_MemorySuite1,
             kAEGPMemorySuite,
-            kAEGPMemorySuiteVersion1,
-            // Function -----------
-            AEGP_UnlockMemHandle,
-            // Arguments ----------
-            self.mem_handle
-        )
-    }
-}
-
-impl<'a, T> Drop for MemHandle<'a, T> {
-    #[allow(unused_must_use)]
-    fn drop(&mut self) {
-        //self.unlock();
-        if self.is_owned {
-            ae_acquire_suite_and_call_suite_fn!(
-                self.pica_basic_suite_ptr,
-                AEGP_MemorySuite1,
-                kAEGPMemorySuite,
-                kAEGPMemorySuiteVersion1,
-                AEGP_FreeMemHandle,
-                self.mem_handle
-            );
-        }
-    }
-}
-
-pub struct MemLock<'a, T> {
-    mem_handle: &'a mut MemHandle<'a, T>,
-}
-
-impl<'a, T> MemLock<'a, T> {
-    pub fn new(mem_handle: &'a mut MemHandle<'a, T>) -> Result<Self, Error> {
-        match (*mem_handle).lock() {
-            Ok(mem_handle) => Ok(Self { mem_handle }),
+            kAEGPMemorySuiteVersion1
+        ) {
+            Ok(suite_ptr) => Ok(Self {
+                suite_ptr,
+                handle,
+                _marker: PhantomData,
+            }),
             Err(e) => Err(e),
         }
     }
 
-    #[inline]
-    pub fn get_handle(&self) -> &MemHandle<'a, T> {
-        self.mem_handle
+    /// Consumes the handle.
+    pub fn into_raw(handle: Self) -> ae_sys::AEGP_MemHandle {
+        let return_handle = handle.handle;
+        // Handle is just on the stack so
+        // we're not leaking anything here.
+        std::mem::forget(handle);
+        // Make sure drop(Handle) does *not*
+        // actually drop anything since we're
+        // passing ownership.
+        return_handle
     }
 
-    #[inline]
-    pub fn get_handle_mut(&mut self) -> &mut MemHandle<'a, T> {
-        self.mem_handle
-    }
-
-    #[inline]
-    pub fn get(&self) -> &'a T {
-        self.mem_handle.get()
-    }
-
-    #[inline]
-    pub fn get_mut(&mut self) -> &'a mut T {
-        self.mem_handle.get_mut()
+    /// Returns the raw handle.
+    pub fn as_raw(&self) -> ae_sys::AEGP_MemHandle {
+        self.handle
     }
 }
 
-impl<T> Drop for MemLock<'_, T> {
+impl<'a, T: 'a> Drop for MemHandle<'a, T> {
     fn drop(&mut self) {
-        (*self.mem_handle).unlock().expect("Unlocking mem handle failed");
+        if let Ok(lock) = self.lock() {
+            // Call destructors for data
+            // owned by MemHandle
+            unsafe { lock.ptr.read() };
+        }
+
+        ae_call_suite_fn_no_err!(self.suite_ptr, AEGP_FreeMemHandle, self.handle);
+    }
+}
+
+pub struct MemHandleLock<'a, T> {
+    parent_handle: &'a MemHandle<'a, T>,
+    ptr: *mut T,
+}
+
+impl<'a, T> MemHandleLock<'a, T> {
+    pub fn get(&self) -> Result<&'a T, Error> {
+        if self.ptr.is_null() {
+            Err(Error::Generic)
+        } else {
+            Ok(unsafe { &*self.ptr })
+        }
+    }
+
+    pub fn get_mut(&self) -> Result<&'a mut T, Error> {
+        if self.ptr.is_null() {
+            Err(Error::Generic)
+        } else {
+            Ok(unsafe { &mut *self.ptr })
+        }
+    }
+
+    pub fn as_ptr(&self) -> *mut T {
+        self.ptr
+    }
+}
+
+impl<'a, T> Drop for MemHandleLock<'a, T> {
+    fn drop(&mut self) {
+        self.parent_handle.unlock();
     }
 }
 
@@ -926,7 +882,7 @@ impl LayerSuite {
             Ok(()) => Ok((
                 unsafe {
                     U16CString::from_ptr_str(
-                        MemHandle::<u16>::from_raw(layer_name_mem_handle.assume_init())
+                        MemHandle::<u16>::from_raw(layer_name_mem_handle.assume_init())?
                             .lock()?
                             .as_ptr(),
                     )
@@ -934,7 +890,7 @@ impl LayerSuite {
                 },
                 unsafe {
                     U16CString::from_ptr_str(
-                        MemHandle::<u16>::from_raw(source_name_mem_handle.assume_init())
+                        MemHandle::<u16>::from_raw(source_name_mem_handle.assume_init())?
                             .lock()?
                             .as_ptr(),
                     )
