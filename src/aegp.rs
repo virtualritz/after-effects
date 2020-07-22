@@ -393,7 +393,7 @@ impl<'a, T> MemHandleLock<'a, T> {
 
 impl<'a, T> Drop for MemHandleLock<'a, T> {
     fn drop(&mut self) {
-        self.parent_handle.unlock();
+        self.parent_handle.unlock().unwrap();
     }
 }
 
@@ -502,12 +502,17 @@ impl PFInterfaceSuite {
             self.suite_ptr,
             AEGP_GetEffectCamera,
             effect_ref,
-            &time as *const _ as *const ae_sys::A_Time,
+            &time as *const _ as _, // as *const ae_sys::A_Time,
             camera_layer_handle.as_mut_ptr()
         ) {
-            Ok(()) => Ok(LayerHandle {
-                layer_ptr: unsafe { camera_layer_handle.assume_init() },
-            }),
+            Ok(()) => {
+                let camera_layer_handle = unsafe { camera_layer_handle.assume_init() };
+                if camera_layer_handle.is_null() {
+                    Err(Error::Generic)
+                } else {
+                    Ok(LayerHandle::from_raw(camera_layer_handle))
+                }
+            }
             Err(e) => Err(e),
         }
     }
@@ -1361,24 +1366,24 @@ define_suite!(
 impl CameraSuite {
     #[inline]
     pub fn get_camera(&self, render_context_handle: pr::RenderContextHandle, time: Time) -> Result<LayerHandle, Error> {
-        let mut layer_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
+        let mut camera_layer_handle = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetCamera,
             render_context_handle.as_ptr(),
             &time as *const _ as *const ae_sys::A_Time,
-            layer_ptr.as_mut_ptr(),
+            camera_layer_handle.as_mut_ptr(),
         ) {
             Ok(()) => {
                 // If the comp has no camera Ae will return a NULL
                 // ptr instead of an error! We need to handle this
                 // ourselves.
-                let layer_ptr = unsafe { layer_ptr.assume_init() };
-                if layer_ptr.is_null() {
+                let camera_layer_handle = unsafe { camera_layer_handle.assume_init() };
+                if camera_layer_handle.is_null() {
                     Err(Error::Generic)
                 } else {
-                    Ok(LayerHandle::from_raw(layer_ptr))
+                    Ok(LayerHandle::from_raw(camera_layer_handle))
                 }
             }
             Err(e) => Err(e),
@@ -1977,7 +1982,7 @@ impl Scene3DMeshSuite {
         vertex_type: ae_sys::Scene3DVertexBufferType,
         face_type: ae_sys::Scene3DFaceBufferType,
         uv_type: ae_sys::Scene3DUVBufferType,
-    ) -> Result<(Vec<ae_sys::A_FpLong>, Vec<ae_sys::A_long>, Vec<ae_sys::A_FpLong>), Error> {
+    ) -> Result<(Vec<ae_sys::A_FpLong>, Vec<ae_sys::A_long>, Vec<ae_sys::A_FpShort>), Error> {
         let (num_vertex, num_face) = self.mesh_get_info(mesh_handle)?;
 
         // Points (3-tuples) of f64
@@ -1989,8 +1994,11 @@ impl Scene3DMeshSuite {
         let mut face_index_buffer = Vec::<ae_sys::A_long>::with_capacity(face_index_buffer_size);
 
         // 2 uvs per vertex per face
-        let uv_per_face_buffer_size: usize = num_face * 4 * 2;
-        let mut uv_per_face_buffer = Vec::<ae_sys::A_FpLong>::with_capacity(uv_per_face_buffer_size);
+        let uv_per_face_buffer_size: usize = match uv_type {
+            ae_sys::Scene3DUVBufferType_SCENE3D_UVPERFACEBUFFER_QUAD_FpShort2 => num_face * 4 * 2,
+            _ => 0,
+        };
+        let mut uv_per_face_buffer = Vec::<ae_sys::A_FpShort>::with_capacity(uv_per_face_buffer_size);
 
         match ae_call_suite_fn!(
             self.suite_ptr,

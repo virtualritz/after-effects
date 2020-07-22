@@ -194,14 +194,26 @@ pub struct Time {
 impl From<Time> for f64 {
     #[inline]
     fn from(time: Time) -> Self {
-        time.value as f64 / time.scale as f64
+        debug_assert!(time.scale != 0);
+        time.value as Self / time.scale as Self
     }
 }
 
 impl From<Time> for f32 {
     #[inline]
     fn from(time: Time) -> Self {
-        (time.value as f64 / time.scale as f64) as f32
+        debug_assert!(time.scale != 0);
+        time.value as Self / time.scale as Self
+    }
+}
+
+impl From<Time> for ae_sys::A_Time {
+    #[inline]
+    fn from(time: Time) -> Self {
+        Self {
+            value: time.value,
+            scale: time.scale,
+        }
     }
 }
 
@@ -275,16 +287,6 @@ impl Add<Time> for Time {
     }
 }
 
-impl From<Time> for ae_sys::A_Time {
-    #[inline]
-    fn from(time: Time) -> Self {
-        Self {
-            value: time.value,
-            scale: time.scale,
-        }
-    }
-}
-
 // Note that this has a different ordering
 // of values than Legacy_Rect!!!
 #[derive(Debug, Copy, Clone, Hash)]
@@ -321,6 +323,22 @@ impl From<Ratio> for ae_sys::A_Ratio {
             num: ratio.num,
             den: ratio.den,
         }
+    }
+}
+
+impl From<Ratio> for f64 {
+    #[inline]
+    fn from(ratio: Ratio) -> Self {
+        debug_assert!(ratio.den != 0);
+        ratio.num as Self / ratio.den as Self
+    }
+}
+
+impl From<Ratio> for f32 {
+    #[inline]
+    fn from(ratio: Ratio) -> Self {
+        debug_assert!(ratio.den != 0);
+        ratio.num as Self / ratio.den as Self
     }
 }
 
