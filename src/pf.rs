@@ -155,6 +155,49 @@ pub struct Point {
     pub v: i32,
 }
 
+#[derive(Debug, Copy, Clone, Hash)]
+#[repr(C)]
+pub struct RationalScale {
+    pub num: ae_sys::A_long,
+    pub den: ae_sys::A_u_long,
+}
+
+impl From<RationalScale> for ae_sys::PF_RationalScale {
+    #[inline]
+    fn from(ratio: RationalScale) -> Self {
+        Self {
+            num: ratio.num,
+            den: ratio.den,
+        }
+    }
+}
+
+impl From<ae_sys::PF_RationalScale> for RationalScale {
+    #[inline]
+    fn from(ratio: ae_sys::PF_RationalScale) -> Self {
+        Self {
+            num: ratio.num,
+            den: ratio.den,
+        }
+    }
+}
+
+impl From<RationalScale> for f64 {
+    #[inline]
+    fn from(ratio: RationalScale) -> Self {
+        debug_assert!(ratio.den != 0);
+        ratio.num as Self / ratio.den as Self
+    }
+}
+
+impl From<RationalScale> for f32 {
+    #[inline]
+    fn from(ratio: RationalScale) -> Self {
+        debug_assert!(ratio.den != 0);
+        ratio.num as Self / ratio.den as Self
+    }
+}
+
 pub type MaskFlags = u32;
 
 #[derive(Debug)]
@@ -330,6 +373,11 @@ macro_rules! add_param {
         in_data.inter.add_param.unwrap()(in_data.effect_ref, (index), &(def))
     };
 }
+
+pub fn progress(in_data: InDataHandle, count: u16, total: u16) -> i32 {
+    unsafe { (*in_data.as_ptr()).inter.progress.unwrap()((*in_data.as_ptr()).effect_ref, count as i32, total as i32) }
+}
+
 #[derive(Debug)]
 pub struct Handle<'a, T: 'a> {
     suite_ptr: *const ae_sys::PF_HandleSuite1,
