@@ -970,8 +970,8 @@ impl LayerSuite {
 
 #[derive(Clone)]
 #[repr(C)]
-struct StreamValue2 {
-    stream_ref_handle: AEGP_StreamRefH,
+pub struct StreamValue2 {
+    stream_reference_handle: AEGP_StreamRefH,
     value: StreamValue,
 }
 
@@ -990,7 +990,7 @@ impl StreamSuite {
         layer_handle: LayerHandle,
         stream_name: LayerStream,
     ) -> Result<StreamReferenceHandle, Error> {
-        let mut stream_reference_ptr: ae_sys::AEGP_StreamRefH = std::ptr::null_mut();
+        let mut stream_reference_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_StreamRefH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -998,9 +998,11 @@ impl StreamSuite {
             plugin_id,
             layer_handle.layer_ptr,
             stream_name as i32,
-            &mut stream_reference_ptr
+            stream_reference_ptr.as_mut_ptr(),
         ) {
-            Ok(()) => Ok(StreamReferenceHandle { stream_reference_ptr }),
+            Ok(()) => Ok(StreamReferenceHandle {
+                stream_reference_ptr: unsafe { stream_reference_ptr.assume_init() },
+            }),
             Err(e) => Err(e),
         }
     }
@@ -1013,7 +1015,7 @@ impl StreamSuite {
         time_mode: TimeMode,
         time: Time,
         sample_stream_pre_expression: bool,
-    ) -> Result<StreamValue, Error> {
+    ) -> Result<StreamValue2, Error> {
         let mut stream_value = std::mem::MaybeUninit::<StreamValue2>::uninit();
 
         match ae_call_suite_fn!(
@@ -1026,7 +1028,19 @@ impl StreamSuite {
             sample_stream_pre_expression as u8,
             stream_value.as_mut_ptr() as *mut _,
         ) {
-            Ok(()) => Ok(unsafe { stream_value.assume_init().value }),
+            Ok(()) => Ok(unsafe { stream_value.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    #[inline]
+    pub fn dispose_stream_value(&self, mut stream_value: StreamValue2) -> Result<(), Error> {
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_DisposeStreamValue,
+            &mut stream_value as *mut _ as _
+        ) {
+            Ok(()) => Ok(()),
             Err(e) => Err(e),
         }
     }
@@ -1055,6 +1069,69 @@ impl StreamSuite {
             stream_type.as_mut_ptr() as *mut i32,
         ) {
             Ok(()) => Ok(unsafe { (stream_value.assume_init(), stream_type.assume_init()) }),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+define_suite!(
+    DynamicStreamSuite,
+    AEGP_DynamicStreamSuite4,
+    kAEGPDynamicStreamSuite,
+    kAEGPDynamicStreamSuiteVersion4
+);
+
+impl DynamicStreamSuite {
+    #[inline]
+    pub fn get_new_stream_ref_for_layer(
+        &self,
+        plugin_id: PluginID,
+        layer_handle: LayerHandle,
+    ) -> Result<StreamReferenceHandle, Error> {
+        let mut stream_reference_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_StreamRefH>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetNewStreamRefForLayer,
+            plugin_id,
+            layer_handle.layer_ptr,
+            stream_reference_ptr.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok(StreamReferenceHandle {
+                stream_reference_ptr: unsafe { stream_reference_ptr.assume_init() },
+            }),
+            Err(e) => Err(e),
+        }
+    }
+
+    #[inline]
+    pub fn get_num_streams_in_group(&self, stream_reference_handle: StreamReferenceHandle) -> Result<usize, Error> {
+        let mut num_streams = std::mem::MaybeUninit::<ae_sys::A_long>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetNumStreamsInGroup,
+            stream_reference_handle.stream_reference_ptr,
+            num_streams.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok(unsafe { num_streams.assume_init() } as usize),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_match_name(&self, stream_reference_handle: StreamReferenceHandle) -> Result<String, Error> {
+        let mut stream_value =
+            std::mem::MaybeUninit::<[i8; ae_sys::AEGP_MAX_STREAM_MATCH_NAME_SIZE as usize]>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetMatchName,
+            stream_reference_handle.stream_reference_ptr,
+            stream_value.as_mut_ptr() as *mut _
+        ) {
+            Ok(()) => Ok(unsafe { CString::from_raw(stream_value.as_mut_ptr() as *mut _) }
+                .into_string()
+                .unwrap()),
             Err(e) => Err(e),
         }
     }
