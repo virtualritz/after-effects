@@ -972,7 +972,7 @@ impl LayerSuite {
 #[repr(C)]
 pub struct StreamValue2 {
     stream_reference_handle: AEGP_StreamRefH,
-    value: StreamValue,
+    pub value: StreamValue,
 }
 
 define_suite!(

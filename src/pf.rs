@@ -445,7 +445,7 @@ impl<'a, T: 'a> Handle<'a, T> {
                     _marker: PhantomData,
                 })
             }
-            Err(e) => Err(Err::InvalidCallback),
+            Err(_) => Err(Err::InvalidCallback),
         }
     }
 
@@ -504,7 +504,7 @@ impl<'a, T: 'a> Handle<'a, T> {
                 //dispose: true,
                 _marker: PhantomData,
             }),
-            Err(e) => Err(Err::InvalidCallback),
+            Err(_) => Err(Err::InvalidCallback),
         }
     }
 
@@ -619,7 +619,7 @@ impl<'a> FlatHandle<'a> {
                     })
                 }
             }
-            Err(e) => Err(Err::InvalidCallback),
+            Err(_) => Err(Err::InvalidCallback),
         }
     }
 
