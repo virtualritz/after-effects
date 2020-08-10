@@ -2,9 +2,12 @@
 macro_rules! ae_acquire_suite_ptr {
     ($pica:expr, $type:ident, $name:ident, $version:ident) => {{
         unsafe {
-            let mut suite_ptr = std::mem::MaybeUninit::<*const aftereffects_sys::$type>::uninit();
+            let mut suite_ptr = std::mem::MaybeUninit::<
+                *const aftereffects_sys::$type,
+            >::uninit();
 
-            let aquire_suite_func = (*($pica)).AcquireSuite.unwrap_or_else(|| unreachable!());
+            let aquire_suite_func =
+                (*($pica)).AcquireSuite.unwrap_or_else(|| unreachable!());
             match aquire_suite_func(
                 aftereffects_sys::$name.as_ptr() as *const i8,
                 aftereffects_sys::$version as i32,
@@ -22,7 +25,8 @@ macro_rules! ae_acquire_suite_ptr {
 macro_rules! ae_release_suite_ptr {
     ($pica:expr, $name:ident, $version:ident) => {{
         unsafe {
-            let release_suite_func = (*($pica)).ReleaseSuite.unwrap_or_else(|| unreachable!());
+            let release_suite_func =
+                (*($pica)).ReleaseSuite.unwrap_or_else(|| unreachable!());
             release_suite_func(
                 aftereffects_sys::$name.as_ptr() as *const i8,
                 aftereffects_sys::$version as i32,
@@ -169,7 +173,9 @@ macro_rules! define_param_wrapper {
         impl $wrapper_pretty_name {
             pub fn new() -> Self {
                 Self {
-                    $data_name: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+                    $data_name: unsafe {
+                        std::mem::MaybeUninit::zeroed().assume_init()
+                    },
                 }
             }
         }
@@ -179,12 +185,18 @@ macro_rules! define_param_wrapper {
 macro_rules! define_param_basic_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident, $value_type:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn value<'a>(&'a mut self, value: $value_type) -> &'a mut $wrapper_pretty_name {
+            pub fn value<'a>(
+                &'a mut self,
+                value: $value_type,
+            ) -> &'a mut $wrapper_pretty_name {
                 self.$data_name.value = value;
                 self
             }
 
-            pub fn default<'a>(&'a mut self, default: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+            pub fn default<'a>(
+                &'a mut self,
+                default: $value_type_ui,
+            ) -> &'a mut $wrapper_pretty_name {
                 self.$data_name.dephault = default as _;
                 self
             }
@@ -199,12 +211,18 @@ macro_rules! define_param_basic_wrapper {
 macro_rules! define_param_valid_min_max_wrapper {
     ($wrapper_pretty_name:ident, $data_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn valid_min<'a>(&'a mut self, valid_min: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+            pub fn valid_min<'a>(
+                &'a mut self,
+                valid_min: $value_type_ui,
+            ) -> &'a mut $wrapper_pretty_name {
                 self.$data_name.valid_min = valid_min;
                 self
             }
 
-            pub fn valid_max<'a>(&'a mut self, valid_max: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+            pub fn valid_max<'a>(
+                &'a mut self,
+                valid_max: $value_type_ui,
+            ) -> &'a mut $wrapper_pretty_name {
                 self.$data_name.valid_max = valid_max;
                 self
             }
@@ -215,12 +233,18 @@ macro_rules! define_param_valid_min_max_wrapper {
 macro_rules! define_param_slider_min_max_wrapper {
     ($wrapper_pretty_name:ident, $data_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn slider_min<'a>(&'a mut self, slider_min: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+            pub fn slider_min<'a>(
+                &'a mut self,
+                slider_min: $value_type_ui,
+            ) -> &'a mut $wrapper_pretty_name {
                 self.$data_name.slider_min = slider_min;
                 self
             }
 
-            pub fn slider_max<'a>(&'a mut self, slider_max: $value_type_ui) -> &'a mut $wrapper_pretty_name {
+            pub fn slider_max<'a>(
+                &'a mut self,
+                slider_max: $value_type_ui,
+            ) -> &'a mut $wrapper_pretty_name {
                 self.$data_name.slider_max = slider_max;
                 self
             }
@@ -231,12 +255,17 @@ macro_rules! define_param_slider_min_max_wrapper {
 macro_rules! define_param_value_str_wrapper {
     ($wrapper_pretty_name:ident, $data_name:ident) => {
         impl $wrapper_pretty_name {
-            pub fn value_str<'a>(&'a mut self, value_str: &str) -> &'a mut $wrapper_pretty_name {
+            pub fn value_str<'a>(
+                &'a mut self,
+                value_str: &str,
+            ) -> &'a mut $wrapper_pretty_name {
                 assert!(value_str.len() < 32);
                 let value_cstr = CString::new(value_str).unwrap();
                 let value_slice = value_cstr.to_bytes_with_nul();
                 self.$data_name.value_str[0..value_slice.len()]
-                    .copy_from_slice(unsafe { std::mem::transmute(value_slice) });
+                    .copy_from_slice(unsafe {
+                        std::mem::transmute(value_slice)
+                    });
                 self
             }
         }
@@ -246,12 +275,17 @@ macro_rules! define_param_value_str_wrapper {
 macro_rules! define_param_value_desc_wrapper {
     ($wrapper_pretty_name:ident, $data_name:ident) => {
         impl $wrapper_pretty_name {
-            pub fn value_desc<'a>(&'a mut self, value_desc: &str) -> &'a mut $wrapper_pretty_name {
+            pub fn value_desc<'a>(
+                &'a mut self,
+                value_desc: &str,
+            ) -> &'a mut $wrapper_pretty_name {
                 assert!(value_desc.len() < 32);
                 let value_desc_cstr = CString::new(value_desc).unwrap();
                 let value_desc_slice = value_desc_cstr.to_bytes_with_nul();
                 self.$data_name.value_desc[0..value_desc_slice.len()]
-                    .copy_from_slice(unsafe { std::mem::transmute(value_desc_slice) });
+                    .copy_from_slice(unsafe {
+                        std::mem::transmute(value_desc_slice)
+                    });
                 self
             }
         }
@@ -284,7 +318,9 @@ macro_rules! define_suite {
                 }
             }
 
-            fn from_raw(pica_basic_suite_ptr: *const $crate::ae_sys::SPBasicSuite) -> Result<Self, Error> {
+            fn from_raw(
+                pica_basic_suite_ptr: *const $crate::ae_sys::SPBasicSuite,
+            ) -> Result<Self, Error> {
                 match ae_acquire_suite_ptr!(
                     pica_basic_suite_ptr,
                     $suite_name,
@@ -302,7 +338,11 @@ macro_rules! define_suite {
 
         impl Drop for $suite_pretty_name {
             fn drop(&mut self) {
-                ae_release_suite_ptr!(self.pica_basic_suite_ptr, $suite_name_string, $suite_version);
+                ae_release_suite_ptr!(
+                    self.pica_basic_suite_ptr,
+                    $suite_name_string,
+                    $suite_version
+                );
             }
         }
     };

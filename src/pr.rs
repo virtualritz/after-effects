@@ -18,7 +18,9 @@ impl InDataHandle {
 
     #[inline]
     pub fn pica_basic_handle(self) -> crate::PicaBasicSuiteHandle {
-        crate::PicaBasicSuiteHandle::from_raw(unsafe { (*self.in_data_ptr).pica_basicP })
+        crate::PicaBasicSuiteHandle::from_raw(unsafe {
+            (*self.in_data_ptr).pica_basicP
+        })
     }
 
     #[inline]
@@ -29,17 +31,33 @@ impl InDataHandle {
     // Fixme: do we own this memory???!
     #[inline]
     pub fn reference_context_ptr(self) -> Box<std::os::raw::c_void> {
-        unsafe { Box::<std::os::raw::c_void>::from_raw((*self.in_data_ptr).aegp_refconPV) }
+        unsafe {
+            Box::<std::os::raw::c_void>::from_raw(
+                (*self.in_data_ptr).aegp_refconPV,
+            )
+        }
     }
 }
 
-define_handle_wrapper!(RenderContextHandle, PR_RenderContextH, render_context_ptr);
+define_handle_wrapper!(
+    RenderContextHandle,
+    PR_RenderContextH,
+    render_context_ptr
+);
 
 define_handle_wrapper!(InstanceDataHandle, PR_InstanceDataH, instance_data_ptr);
 
-define_handle_wrapper!(InstanceContextHandle, PR_InstanceContextH, instance_context_ptr);
+define_handle_wrapper!(
+    InstanceContextHandle,
+    PR_InstanceContextH,
+    instance_context_ptr
+);
 
-define_handle_wrapper!(GlobalContextHandle, PR_GlobalContextH, global_context_ptr);
+define_handle_wrapper!(
+    GlobalContextHandle,
+    PR_GlobalContextH,
+    global_context_ptr
+);
 
 define_handle_wrapper!(GlobalDataHandle, PR_GlobalDataH, global_data_ptr);
 

@@ -44,11 +44,15 @@ pub struct PicaBasicSuite {
 }
 
 impl PicaBasicSuite {
-    fn set(pica_basic_suite_ptr: *const ae_sys::SPBasicSuite) -> *const ae_sys::SPBasicSuite {
-        let mut previous_pica_basic_suite_ptr: *const ae_sys::SPBasicSuite = std::ptr::null();
+    fn set(
+        pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
+    ) -> *const ae_sys::SPBasicSuite {
+        let mut previous_pica_basic_suite_ptr: *const ae_sys::SPBasicSuite =
+            std::ptr::null();
 
         PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
-            previous_pica_basic_suite_ptr = pica_basic_ptr_cell.replace(pica_basic_suite_ptr);
+            previous_pica_basic_suite_ptr =
+                pica_basic_ptr_cell.replace(pica_basic_suite_ptr);
         });
 
         previous_pica_basic_suite_ptr
@@ -57,28 +61,38 @@ impl PicaBasicSuite {
     #[inline]
     pub fn from_pr_in_data_raw(in_data_ptr: *const ae_sys::PR_InData) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_ptr }.pica_basicP),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(
+                unsafe { *in_data_ptr }.pica_basicP,
+            ),
         }
     }
 
     #[inline]
     pub fn from_pr_in_data(in_data_handle: pr::InDataHandle) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_handle.as_ptr() }.pica_basicP),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(
+                unsafe { *in_data_handle.as_ptr() }.pica_basicP,
+            ),
         }
     }
 
     #[inline]
     pub fn from_pf_in_data_raw(in_data_ptr: *const ae_sys::PF_InData) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_ptr }.pica_basicP),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(
+                unsafe { *in_data_ptr }.pica_basicP,
+            ),
         }
     }
 
     #[inline]
-    pub fn from_sp_basic_suite_raw(pica_basic_suite_ptr: *const ae_sys::SPBasicSuite) -> Self {
+    pub fn from_sp_basic_suite_raw(
+        pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
+    ) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: PicaBasicSuite::set(pica_basic_suite_ptr),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(
+                pica_basic_suite_ptr,
+            ),
         }
     }
 }
@@ -92,13 +106,16 @@ impl Drop for PicaBasicSuite {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
+#[derive(
+    Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive,
+)]
 #[repr(i32)]
 pub enum Error {
     Generic = ae_sys::A_Err_GENERIC as i32,
     Struct = ae_sys::A_Err_STRUCT as i32,
     Parameter = ae_sys::A_Err_PARAMETER as i32,
-    Alloc = ae_sys::A_Err_ALLOC as i32,
+    // Also called A_Err_ALLOC in Ae.
+    OutOfMemory = ae_sys::A_Err_ALLOC as i32,
     // Some calls can only be used on UI (Main) or Render threads.
     // Also, calls back to Ae can only be made from the same thread Ae
     // called you on.
@@ -108,6 +125,20 @@ pub enum Error {
     ConstProjectModification = ae_sys::A_Err_CONST_PROJECT_MODIFICATION as i32,
     // Acquire suite failed on a required suite.
     MissingSuite = ae_sys::A_Err_MISSING_SUITE as i32,
+
+    None = ae_sys::PF_Err_NONE as i32,
+
+    InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as i32,
+    // Out of range, or action not allowed on this index.
+    InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as i32,
+    UnrecogizedParamType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as i32,
+    InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as i32,
+    BadCallbackParam = ae_sys::PF_Err_BAD_CALLBACK_PARAM as i32,
+    // Returned when user interrupts rendering.
+    InterruptCancel = ae_sys::PF_Interrupt_CANCEL as i32,
+    // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
+    // arbitrary data from text
+    CannonParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as i32,
 }
 
 /* FIXME uncomment this once TryReserve() becomes stable in nightly
@@ -176,7 +207,12 @@ impl From<Matrix4> for nalgebra::Matrix4<f64> {
 #[test]
 fn test_from() {
     let m = Matrix4 {
-        0: [[0., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 0.]],
+        0: [
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+            [0., 0., 0., 0.],
+        ],
     };
     let _matrix = nalgebra::Matrix4::<f64>::from(m);
 }
@@ -251,8 +287,12 @@ fn add_time_lossless(time1: Time, time2: Time) -> Option<Time> {
         }
     };
 
-    let value1 = time1.value.checked_mul(time2.scale.checked_div(gcd)? as i32)?;
-    let value2 = time2.value.checked_mul(time1.scale.checked_div(gcd)? as i32)?;
+    let value1 = time1
+        .value
+        .checked_mul(time2.scale.checked_div(gcd)? as i32)?;
+    let value2 = time2
+        .value
+        .checked_mul(time1.scale.checked_div(gcd)? as i32)?;
 
     Some(Time {
         value: value1.checked_add(value2)?,
@@ -263,7 +303,8 @@ fn add_time_lossless(time1: Time, time2: Time) -> Option<Time> {
 // Calculates the sum of two Times using FP math.
 #[inline]
 fn add_time_lossy(time1: Time, time2: Time) -> Time {
-    let time = (time1.value as f64 / time1.scale as f64) + (time2.value as f64 / time2.scale as f64);
+    let time = (time1.value as f64 / time1.scale as f64)
+        + (time2.value as f64 / time2.scale as f64);
 
     let num_bits = time.log2() as usize;
     let scale: u32 = 1u32 << (30 - num_bits);
@@ -356,11 +397,15 @@ pub struct PicaBasicSuiteHandle {
 
 impl PicaBasicSuiteHandle {
     #[inline]
-    pub fn from_raw(pica_basic_suite_ptr: *const ae_sys::SPBasicSuite) -> PicaBasicSuiteHandle {
+    pub fn from_raw(
+        pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
+    ) -> PicaBasicSuiteHandle {
         /*if pica_basic_suite_ptr == ptr::null() {
             panic!()
         }*/
-        PicaBasicSuiteHandle { pica_basic_suite_ptr }
+        PicaBasicSuiteHandle {
+            pica_basic_suite_ptr,
+        }
     }
 
     #[inline]
@@ -374,7 +419,9 @@ pub trait Suite: Drop {
     where
         Self: Sized;
 
-    fn from_raw(pica_basic_suite_raw_ptr: *const crate::ae_sys::SPBasicSuite) -> Result<Self, Error>
+    fn from_raw(
+        pica_basic_suite_raw_ptr: *const crate::ae_sys::SPBasicSuite,
+    ) -> Result<Self, Error>
     where
         Self: Sized;
 }

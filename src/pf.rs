@@ -1,30 +1,6 @@
 pub use crate::*;
 use aftereffects_sys as ae_sys;
 use std::{convert::TryInto, ffi::CString, fmt::Debug, marker::PhantomData};
-#[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
-#[repr(i32)]
-pub enum Err {
-    None = ae_sys::PF_Err_NONE as i32,
-    OutOfMemory = ae_sys::PF_Err_OUT_OF_MEMORY as i32,
-    InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as i32,
-    // Out of range, or action not allowed on this index.
-    InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as i32,
-    UnrecogizedParamType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as i32,
-    InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as i32,
-    BadCallbackParam = ae_sys::PF_Err_BAD_CALLBACK_PARAM as i32,
-    // Returned when user interrupts rendering.
-    InterruptCancel = ae_sys::PF_Interrupt_CANCEL as i32,
-    // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
-    // arbitrary data from text
-    CannonParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as i32,
-}
-
-/*
-impl From<Err> for i32 {
-    fn from(e: Err) -> Self {
-        e as i32
-    }
-}*/
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -245,7 +221,11 @@ pub struct EffectWorldConst {
 unsafe impl Send for EffectWorldConst {}
 unsafe impl Sync for EffectWorldConst {}
 
-define_handle_wrapper!(EffectBlendingTables, PF_EffectBlendingTables, blending_tabpe_ptr);
+define_handle_wrapper!(
+    EffectBlendingTables,
+    PF_EffectBlendingTables,
+    blending_tabpe_ptr
+);
 
 impl EffectWorld {
     #[inline]
@@ -253,7 +233,9 @@ impl EffectWorld {
         WorldSuite::new()?.fill_out_pf_effect_world(world_handle)
     }
 
-    pub fn from_raw(effect_world_ptr: *const ae_sys::PF_EffectWorld) -> Result<Self, crate::Error> {
+    pub fn from_raw(
+        effect_world_ptr: *const ae_sys::PF_EffectWorld,
+    ) -> Result<Self, crate::Error> {
         if std::ptr::null() == effect_world_ptr {
             Err(crate::Error::Generic)
         } else {
@@ -308,7 +290,11 @@ impl EffectWorld {
     #[inline]
     pub fn as_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
         debug_assert!(x < self.width() && y < self.height());
-        unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel8).add(x) }
+        unsafe {
+            &mut *(self.effect_world.data.add(y * self.row_bytes())
+                as *mut Pixel8)
+                .add(x)
+        }
     }
 
     #[inline]
@@ -320,7 +306,11 @@ impl EffectWorld {
     #[inline]
     pub fn as_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
         debug_assert!(x < self.width() && y < self.height());
-        unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel16).add(x) }
+        unsafe {
+            &mut *(self.effect_world.data.add(y * self.row_bytes())
+                as *mut Pixel16)
+                .add(x)
+        }
     }
 
     #[inline]
@@ -332,13 +322,21 @@ impl EffectWorld {
     #[inline]
     pub fn as_pixel32_mut(&self, x: usize, y: usize) -> &mut Pixel32 {
         debug_assert!(x < self.width() && y < self.height());
-        unsafe { &mut *(self.effect_world.data.add(y * self.row_bytes()) as *mut Pixel32).add(x) }
+        unsafe {
+            &mut *(self.effect_world.data.add(y * self.row_bytes())
+                as *mut Pixel32)
+                .add(x)
+        }
     }
 
     #[inline]
     pub fn as_pixel32(&self, x: usize, y: usize) -> &Pixel32 {
         debug_assert!(x < self.width() && y < self.height());
-        unsafe { &*((self.effect_world.data as *const u8).add(y * self.row_bytes()) as *const Pixel32).add(x) }
+        unsafe {
+            &*((self.effect_world.data as *const u8).add(y * self.row_bytes())
+                as *const Pixel32)
+                .add(x)
+        }
     }
 
     #[inline]
@@ -375,7 +373,13 @@ macro_rules! add_param {
 }
 
 pub fn progress(in_data: InDataHandle, count: u16, total: u16) -> i32 {
-    unsafe { (*in_data.as_ptr()).inter.progress.unwrap()((*in_data.as_ptr()).effect_ref, count as i32, total as i32) }
+    unsafe {
+        (*in_data.as_ptr()).inter.progress.unwrap()(
+            (*in_data.as_ptr()).effect_ref,
+            count as i32,
+            total as i32,
+        )
+    }
 }
 
 #[derive(Debug)]
@@ -391,17 +395,17 @@ pub struct HandleLock<'a, T> {
 }
 
 impl<'a, T> HandleLock<'a, T> {
-    pub fn get(&self) -> Result<&'a T, Err> {
+    pub fn get(&self) -> Result<&'a T, Error> {
         if self.ptr.is_null() {
-            Err(Err::InvalidIndex)
+            Err(Error::InvalidIndex)
         } else {
             Ok(unsafe { &*self.ptr })
         }
     }
 
-    pub fn get_mut(&self) -> Result<&'a mut T, Err> {
+    pub fn get_mut(&self) -> Result<&'a mut T, Error> {
         if self.ptr.is_null() {
-            Err(Err::InvalidIndex)
+            Err(Error::InvalidIndex)
         } else {
             Ok(unsafe { &mut *self.ptr })
         }
@@ -419,7 +423,7 @@ impl<'a, T> Drop for HandleLock<'a, T> {
 }
 
 impl<'a, T: 'a> Handle<'a, T> {
-    pub fn new(value: T) -> Result<Handle<'a, T>, Err> {
+    pub fn new(value: T) -> Result<Handle<'a, T>, Error> {
         match ae_acquire_suite_ptr!(
             borrow_pica_basic_as_ptr(),
             PF_HandleSuite1,
@@ -427,14 +431,21 @@ impl<'a, T: 'a> Handle<'a, T> {
             kPFHandleSuiteVersion1
         ) {
             Ok(suite_ptr) => {
-                let handle: ae_sys::PF_Handle =
-                    ae_call_suite_fn_no_err!(suite_ptr, host_new_handle, std::mem::size_of::<T>() as u64);
+                let handle: ae_sys::PF_Handle = ae_call_suite_fn_no_err!(
+                    suite_ptr,
+                    host_new_handle,
+                    std::mem::size_of::<T>() as u64
+                );
                 if handle.is_null() {
-                    return Err(Err::OutOfMemory);
+                    return Err(Error::OutOfMemory);
                 }
-                let ptr = ae_call_suite_fn_no_err!(suite_ptr, host_lock_handle, handle) as *mut T;
+                let ptr = ae_call_suite_fn_no_err!(
+                    suite_ptr,
+                    host_lock_handle,
+                    handle
+                ) as *mut T;
                 if ptr.is_null() {
-                    return Err(Err::InvalidIndex);
+                    return Err(Error::InvalidIndex);
                 }
                 unsafe { ptr.write(value) };
                 ae_call_suite_fn_no_err!(suite_ptr, host_unlock_handle, handle);
@@ -445,12 +456,16 @@ impl<'a, T: 'a> Handle<'a, T> {
                     _marker: PhantomData,
                 })
             }
-            Err(_) => Err(Err::InvalidCallback),
+            Err(_) => Err(Error::InvalidCallback),
         }
     }
 
     pub fn set(&mut self, value: T) {
-        let ptr = ae_call_suite_fn_no_err!(self.suite_ptr, host_lock_handle, self.handle) as *mut T;
+        let ptr = ae_call_suite_fn_no_err!(
+            self.suite_ptr,
+            host_lock_handle,
+            self.handle
+        ) as *mut T;
         if !ptr.is_null() {
             unsafe {
                 // Run destructors, if any
@@ -458,13 +473,21 @@ impl<'a, T: 'a> Handle<'a, T> {
             };
         }
         unsafe { ptr.write(value) };
-        ae_call_suite_fn_no_err!(self.suite_ptr, host_unlock_handle, self.handle);
+        ae_call_suite_fn_no_err!(
+            self.suite_ptr,
+            host_unlock_handle,
+            self.handle
+        );
     }
 
-    pub fn lock(&mut self) -> Result<HandleLock<T>, Err> {
-        let ptr = ae_call_suite_fn_no_err!(self.suite_ptr, host_lock_handle, self.handle) as *mut T;
+    pub fn lock(&mut self) -> Result<HandleLock<T>, Error> {
+        let ptr = ae_call_suite_fn_no_err!(
+            self.suite_ptr,
+            host_lock_handle,
+            self.handle
+        ) as *mut T;
         if ptr.is_null() {
-            Err(Err::InvalidIndex)
+            Err(Error::InvalidIndex)
         } else {
             Ok(HandleLock {
                 parent_handle: self,
@@ -473,17 +496,21 @@ impl<'a, T: 'a> Handle<'a, T> {
         }
     }
 
-    pub fn get(&self) -> Result<&'a T, Err> {
+    pub fn get(&self) -> Result<&'a T, Error> {
         let ptr = unsafe { *(self.handle as *const *const T) };
         if ptr.is_null() {
-            Err(Err::InvalidIndex)
+            Err(Error::InvalidIndex)
         } else {
             Ok(unsafe { &(*ptr) })
         }
     }
 
     pub fn size(&self) -> usize {
-        ae_call_suite_fn_no_err!(self.suite_ptr, host_get_handle_size, self.handle) as usize
+        ae_call_suite_fn_no_err!(
+            self.suite_ptr,
+            host_get_handle_size,
+            self.handle
+        ) as usize
     }
 
     /*
@@ -491,7 +518,7 @@ impl<'a, T: 'a> Handle<'a, T> {
         ae_call_suite_fn!(self.suite_ptr, host_resize_handle, size as u64, &mut self.handle)
     }*/
 
-    pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<Handle<'a, T>, Err> {
+    pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<Handle<'a, T>, Error> {
         match ae_acquire_suite_ptr!(
             borrow_pica_basic_as_ptr(),
             PF_HandleSuite1,
@@ -504,7 +531,7 @@ impl<'a, T: 'a> Handle<'a, T> {
                 //dispose: true,
                 _marker: PhantomData,
             }),
-            Err(_) => Err(Err::InvalidCallback),
+            Err(_) => Err(Error::InvalidCallback),
         }
     }
 
@@ -538,7 +565,11 @@ impl<'a, T: 'a> Drop for Handle<'a, T> {
             unsafe { ptr.read() };
         }
 
-        ae_call_suite_fn_no_err!(self.suite_ptr, host_dispose_handle, self.handle);
+        ae_call_suite_fn_no_err!(
+            self.suite_ptr,
+            host_dispose_handle,
+            self.handle
+        );
     }
 }
 
@@ -562,13 +593,21 @@ impl<'a> FlatHandle<'a> {
             Ok(suite_ptr) => {
                 let vector = slice.into();
 
-                let handle: ae_sys::PF_Handle =
-                    ae_call_suite_fn_no_err!(suite_ptr, host_new_handle, vector.len() as u64);
+                let handle: ae_sys::PF_Handle = ae_call_suite_fn_no_err!(
+                    suite_ptr,
+                    host_new_handle,
+                    vector.len() as u64
+                );
 
-                let ptr = ae_call_suite_fn_no_err!(suite_ptr, host_lock_handle, handle) as *mut u8;
+                let ptr = ae_call_suite_fn_no_err!(
+                    suite_ptr,
+                    host_lock_handle,
+                    handle
+                ) as *mut u8;
                 debug_assert!(!ptr.is_null());
 
-                let dest = std::ptr::slice_from_raw_parts_mut(ptr, vector.len());
+                let dest =
+                    std::ptr::slice_from_raw_parts_mut(ptr, vector.len());
                 unsafe {
                     (*dest).copy_from_slice(vector.as_slice());
                 }
@@ -596,10 +635,16 @@ impl<'a> FlatHandle<'a> {
     }*/
 
     pub fn size(&self) -> usize {
-        ae_call_suite_fn_no_err!(self.suite_ptr, host_get_handle_size, self.handle) as usize
+        ae_call_suite_fn_no_err!(
+            self.suite_ptr,
+            host_get_handle_size,
+            self.handle
+        ) as usize
     }
 
-    pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<FlatHandle<'a>, Err> {
+    pub fn from_raw(
+        handle: ae_sys::PF_Handle,
+    ) -> Result<FlatHandle<'a>, Error> {
         match ae_acquire_suite_ptr!(
             borrow_pica_basic_as_ptr(),
             PF_HandleSuite1,
@@ -609,7 +654,7 @@ impl<'a> FlatHandle<'a> {
             Ok(suite_ptr) => {
                 let ptr = unsafe { *(handle as *const *const u8) };
                 if ptr.is_null() {
-                    Err(Err::InternalStructDamaged)
+                    Err(Error::InternalStructDamaged)
                 } else {
                     Ok(FlatHandle {
                         suite_ptr,
@@ -619,7 +664,7 @@ impl<'a> FlatHandle<'a> {
                     })
                 }
             }
-            Err(_) => Err(Err::InvalidCallback),
+            Err(_) => Err(Error::InvalidCallback),
         }
     }
 
@@ -639,7 +684,11 @@ impl<'a> FlatHandle<'a> {
 
 impl<'a> Drop for FlatHandle<'a> {
     fn drop(&mut self) {
-        ae_call_suite_fn_no_err!(self.suite_ptr, host_dispose_handle, self.handle);
+        ae_call_suite_fn_no_err!(
+            self.suite_ptr,
+            host_dispose_handle,
+            self.handle
+        );
     }
 }
 
@@ -722,47 +771,77 @@ impl SmartRenderCallbacks {
         self.rc_ptr
     }
 
-    pub fn checkout_layer_pixels(&self, effect_ref: ProgressInfo, checkout_id: u32) -> Result<EffectWorld, Err> {
-        if let Some(checkout_layer_pixels) = unsafe { *self.rc_ptr }.checkout_layer_pixels {
-            let mut effect_world_ptr = std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
+    pub fn checkout_layer_pixels(
+        &self,
+        effect_ref: ProgressInfo,
+        checkout_id: u32,
+    ) -> Result<EffectWorld, Error> {
+        if let Some(checkout_layer_pixels) =
+            unsafe { *self.rc_ptr }.checkout_layer_pixels
+        {
+            let mut effect_world_ptr =
+                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
             match unsafe {
-                checkout_layer_pixels(effect_ref.as_ptr(), checkout_id as i32, effect_world_ptr.as_mut_ptr())
+                checkout_layer_pixels(
+                    effect_ref.as_ptr(),
+                    checkout_id as i32,
+                    effect_world_ptr.as_mut_ptr(),
+                )
             } as u32
             {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
-                e => Err(unsafe { Err::from_unchecked(e as i32) }),
+                e => Err(unsafe { Error::from_unchecked(e as i32) }),
             }
         } else {
-            Err(Err::InvalidCallback)
+            Err(Error::InvalidCallback)
         }
     }
 
-    pub fn checkin_layer_pixels(&self, effect_ref: ProgressInfo, checkout_id: u32) -> Result<(), Err> {
-        if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
-            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) } as u32 {
+    pub fn checkin_layer_pixels(
+        &self,
+        effect_ref: ProgressInfo,
+        checkout_id: u32,
+    ) -> Result<(), Error> {
+        if let Some(checkin_layer_pixels) =
+            unsafe { *self.rc_ptr }.checkin_layer_pixels
+        {
+            match unsafe {
+                checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32)
+            } as u32
+            {
                 ae_sys::PF_Err_NONE => Ok(()),
-                e => Err(unsafe { Err::from_unchecked(e as i32) }),
+                e => Err(unsafe { Error::from_unchecked(e as i32) }),
             }
         } else {
-            Err(Err::InvalidCallback)
+            Err(Error::InvalidCallback)
         }
     }
 
-    pub fn checkout_output(&self, effect_ref: ProgressInfo) -> Result<EffectWorld, Err> {
+    pub fn checkout_output(
+        &self,
+        effect_ref: ProgressInfo,
+    ) -> Result<EffectWorld, Error> {
         if let Some(checkout_output) = unsafe { *self.rc_ptr }.checkout_output {
-            let mut effect_world_ptr = std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
+            let mut effect_world_ptr =
+                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
-            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) } as u32 {
+            match unsafe {
+                checkout_output(
+                    effect_ref.as_ptr(),
+                    effect_world_ptr.as_mut_ptr(),
+                )
+            } as u32
+            {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
-                e => Err(unsafe { Err::from_unchecked(e as i32) }),
+                e => Err(unsafe { Error::from_unchecked(e as i32) }),
             }
         } else {
-            Err(Err::InvalidCallback)
+            Err(Error::InvalidCallback)
         }
     }
 }
@@ -772,7 +851,8 @@ impl SmartRenderCallbacks {
 pub enum ParamIndex {
     None = ae_sys::PF_ParamIndex_NONE,
     CheckAll = ae_sys::PF_ParamIndex_CHECK_ALL,
-    CheckAllExceptLayerParams = ae_sys::PF_ParamIndex_CHECK_ALL_EXCEPT_LAYER_PARAMS,
+    CheckAllExceptLayerParams =
+        ae_sys::PF_ParamIndex_CHECK_ALL_EXCEPT_LAYER_PARAMS,
     CheckAllHonorExclude = ae_sys::PF_ParamIndex_CHECK_ALL_HONOR_EXCLUDE,
 }
 
@@ -800,9 +880,10 @@ impl PreRenderCallbacks {
         what_time: i32,
         time_step: i32,
         time_scale: u32,
-    ) -> Result<PF_CheckoutResult, Err> {
+    ) -> Result<PF_CheckoutResult, Error> {
         if let Some(checkout_layer) = unsafe { *self.rc_ptr }.checkout_layer {
-            let mut checkout_result = std::mem::MaybeUninit::<PF_CheckoutResult>::uninit();
+            let mut checkout_result =
+                std::mem::MaybeUninit::<PF_CheckoutResult>::uninit();
 
             match unsafe {
                 checkout_layer(
@@ -817,11 +898,13 @@ impl PreRenderCallbacks {
                 )
             } as u32
             {
-                ae_sys::PF_Err_NONE => Ok(unsafe { checkout_result.assume_init() }),
-                e => Err(unsafe { Err::from_unchecked(e as i32) }),
+                ae_sys::PF_Err_NONE => {
+                    Ok(unsafe { checkout_result.assume_init() })
+                }
+                e => Err(unsafe { Error::from_unchecked(e as i32) }),
             }
         } else {
-            Err(Err::InvalidCallback)
+            Err(Error::InvalidCallback)
         }
     }
 
@@ -918,7 +1001,9 @@ pub struct ButtonDef {
 impl ButtonDef {
     pub fn new() -> Self {
         Self {
-            button_def: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+            button_def: unsafe {
+                std::mem::MaybeUninit::zeroed().assume_init()
+            },
             label: CString::new("").unwrap(),
         }
     }
@@ -933,7 +1018,11 @@ impl ButtonDef {
         if ae_sys::PF_Param_BUTTON == param.param_def_boxed.param_type {
             Some(Self {
                 button_def: unsafe { param.param_def_boxed.u.button_d },
-                label: unsafe { CString::from_raw(param.param_def_boxed.u.button_d.u.namesptr as _) },
+                label: unsafe {
+                    CString::from_raw(
+                        param.param_def_boxed.u.button_d.u.namesptr as _,
+                    )
+                },
             })
         } else {
             None
@@ -966,7 +1055,9 @@ impl PopupDef {
         // Build a string in the format "list|of|choices|", the
         // format Ae expects. Ae ignores the trailing '|'.
         let mut names_tmp = String::new();
-        names.iter().for_each(|s| names_tmp += format!("{}|", *s).as_str());
+        names
+            .iter()
+            .for_each(|s| names_tmp += format!("{}|", *s).as_str());
         self.names = CString::new(names_tmp).unwrap();
         self.popup_def.u.namesptr = self.names.as_ptr();
         self.popup_def.num_choices = names.len().try_into().unwrap();
@@ -1089,13 +1180,22 @@ impl SliderDef {
 
 // Float Slider
 define_param_wrapper!(FloatSliderDef, PF_FloatSliderDef, slider_def);
-define_param_basic_wrapper!(FloatSliderDef, PF_FloatSliderDef, slider_def, f64, f32);
+define_param_basic_wrapper!(
+    FloatSliderDef,
+    PF_FloatSliderDef,
+    slider_def,
+    f64,
+    f32
+);
 define_param_valid_min_max_wrapper!(FloatSliderDef, slider_def, f32);
 define_param_slider_min_max_wrapper!(FloatSliderDef, slider_def, f32);
 define_param_value_desc_wrapper!(FloatSliderDef, slider_def);
 
 impl FloatSliderDef {
-    pub fn display_flags<'a>(&'a mut self, display_flags: ValueDisplayFlag) -> &'a mut Self {
+    pub fn display_flags<'a>(
+        &'a mut self,
+        display_flags: ValueDisplayFlag,
+    ) -> &'a mut Self {
         self.slider_def.display_flags = display_flags.bits() as i16;
         self
     }
@@ -1134,7 +1234,9 @@ pub struct CheckBoxDef {
 impl CheckBoxDef {
     pub fn new() -> Self {
         Self {
-            check_box_def: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+            check_box_def: unsafe {
+                std::mem::MaybeUninit::zeroed().assume_init()
+            },
             label: CString::new("").unwrap(),
         }
     }
@@ -1149,7 +1251,9 @@ impl CheckBoxDef {
         if ae_sys::PF_Param_CHECKBOX == param.param_def_boxed.param_type {
             Some(Self {
                 check_box_def: unsafe { param.param_def_boxed.u.bd },
-                label: unsafe { CString::from_raw(param.param_def_boxed.u.bd.u.nameptr as _) },
+                label: unsafe {
+                    CString::from_raw(param.param_def_boxed.u.bd.u.nameptr as _)
+                },
             })
         } else {
             None
@@ -1161,7 +1265,13 @@ impl CheckBoxDef {
     }
 }
 
-define_param_basic_wrapper!(CheckBoxDef, PF_CheckBoxDef, check_box_def, i32, bool);
+define_param_basic_wrapper!(
+    CheckBoxDef,
+    PF_CheckBoxDef,
+    check_box_def,
+    i32,
+    bool
+);
 
 #[repr(C)]
 #[derive(Clone)]
@@ -1187,15 +1297,22 @@ pub struct ParamDef {
 impl ParamDef {
     pub fn new(in_data_handle: InDataHandle) -> Self {
         Self {
-            param_def_boxed: std::mem::ManuallyDrop::new(unsafe { Box::new_zeroed().assume_init() }),
+            param_def_boxed: std::mem::ManuallyDrop::new(unsafe {
+                Box::new_zeroed().assume_init()
+            }),
             drop: true,
             in_data_ptr: in_data_handle.as_ptr(),
         }
     }
 
-    pub fn from_raw(in_data_ptr: *const PF_InData, param_def: *mut ae_sys::PF_ParamDef) -> Self {
+    pub fn from_raw(
+        in_data_ptr: *const PF_InData,
+        param_def: *mut ae_sys::PF_ParamDef,
+    ) -> Self {
         Self {
-            param_def_boxed: unsafe { std::mem::ManuallyDrop::new(Box::from_raw(param_def)) },
+            param_def_boxed: unsafe {
+                std::mem::ManuallyDrop::new(Box::from_raw(param_def))
+            },
             drop: false,
             in_data_ptr,
         }
@@ -1221,8 +1338,9 @@ impl ParamDef {
         time_step: i32,
         time_scale: u32,
     ) -> ParamDef {
-        let mut param_def_boxed =
-            std::mem::ManuallyDrop::new(unsafe { Box::<ae_sys::PF_ParamDef>::new_zeroed().assume_init() });
+        let mut param_def_boxed = std::mem::ManuallyDrop::new(unsafe {
+            Box::<ae_sys::PF_ParamDef>::new_zeroed().assume_init()
+        });
         let in_data_ptr = in_data_handle.as_ptr();
         unsafe {
             (*in_data_ptr).inter.checkout_param.unwrap()(
@@ -1282,7 +1400,10 @@ impl ParamDef {
         self
     }
 
-    pub fn param_type<'a>(&'a mut self, param_type: ParamType) -> &'a mut ParamDef {
+    pub fn param_type<'a>(
+        &'a mut self,
+        param_type: ParamType,
+    ) -> &'a mut ParamDef {
         self.param_def_boxed.param_type = param_type as i32;
         self
     }
@@ -1291,7 +1412,8 @@ impl ParamDef {
         assert!(name.len() < 32);
         let name_cstr = CString::new(name).unwrap();
         let name_slice = name_cstr.to_bytes_with_nul();
-        self.param_def_boxed.name[0..name_slice.len()].copy_from_slice(unsafe { std::mem::transmute(name_slice) });
+        self.param_def_boxed.name[0..name_slice.len()]
+            .copy_from_slice(unsafe { std::mem::transmute(name_slice) });
         self
     }
 
