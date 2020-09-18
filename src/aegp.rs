@@ -1,7 +1,9 @@
 pub use crate::*;
 pub use ae_sys::*;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
-use std::{ffi::CString, marker::PhantomData, mem::MaybeUninit};
+use std::{
+    convert::TryFrom, ffi::CString, marker::PhantomData, mem::MaybeUninit,
+};
 use widestring::U16CString;
 
 pub type PluginID = ae_sys::AEGP_PluginID;
@@ -177,28 +179,188 @@ pub enum StreamType {
     TwoD = AEGP_StreamType_TwoD,
     OneD = AEGP_StreamType_OneD,
     Color = AEGP_StreamType_COLOR,
-    Arb = AEGP_StreamType_ARB,
-    Marker = AEGP_StreamType_MARKER,
-    LayerID = AEGP_StreamType_LAYER_ID,
-    MaskID = AEGP_StreamType_MASK_ID,
-    Mask = AEGP_StreamType_MASK,
-    TextDocument = AEGP_StreamType_TEXT_DOCUMENT,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(C)]
-pub union StreamValue {
-    pub four_d: AEGP_FourDVal,
-    pub three_d: AEGP_ThreeDVal,
-    pub two_d: AEGP_TwoDVal,
-    pub one_d: AEGP_OneDVal,
-    pub color: AEGP_ColorVal,
-    pub arb_handle: AEGP_ArbBlockVal,
-    pub marker_ptr: AEGP_MarkerValP,
-    pub layer_id: AEGP_LayerIDVal,
-    pub mask_id: AEGP_MaskIDVal,
-    pub mask: AEGP_MaskOutlineValH,
-    pub text_document_handle: AEGP_TextDocumentH,
+pub enum StreamValue {
+    None,
+    FourD(A_FpLong, A_FpLong, A_FpLong, A_FpLong),
+    ThreeD {
+        x: ae_sys::A_FpLong,
+        y: ae_sys::A_FpLong,
+        z: ae_sys::A_FpLong,
+    },
+    ThreeDSpatial {
+        x: ae_sys::A_FpLong,
+        y: ae_sys::A_FpLong,
+        z: ae_sys::A_FpLong,
+    },
+    TwoD {
+        x: ae_sys::A_FpLong,
+        y: ae_sys::A_FpLong,
+    },
+    TwoDSpatial {
+        x: ae_sys::A_FpLong,
+        y: ae_sys::A_FpLong,
+    },
+    OneD(ae_sys::A_FpLong),
+    Color {
+        alpha: ae_sys::A_FpLong,
+        red: ae_sys::A_FpLong,
+        green: ae_sys::A_FpLong,
+        blue: ae_sys::A_FpLong,
+    },
+    Arb,          // FIXME
+    Marker,       // FIXME
+    LayerID,      // FIXME
+    MaskID,       // FIXME
+    Mask,         // FIXME
+    TextDocument, // FIXME
+}
+
+impl TryFrom<StreamValue> for f32 {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::OneD(v) => Ok(v as f32),
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for f64 {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::OneD(v) => Ok(v),
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for usize {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::OneD(v) => Ok(v as usize),
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for u32 {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::OneD(v) => Ok(v as u32),
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for bool {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::OneD(v) => Ok(v != 0.0f64),
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for [f32; 2] {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::TwoD { x, y } | StreamValue::TwoDSpatial { x, y } => {
+                Ok([x as f32, y as f32])
+            }
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for [f64; 2] {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::TwoD { x, y } | StreamValue::TwoDSpatial { x, y } => {
+                Ok([x, y])
+            }
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for [f32; 3] {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::ThreeD { x, y, z }
+            | StreamValue::ThreeDSpatial { x, y, z } => {
+                Ok([x as f32, y as f32, z as f32])
+            }
+            StreamValue::Color {
+                alpha: _,
+                red,
+                green,
+                blue,
+            } => Ok([red as f32, green as f32, blue as f32]),
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for [f64; 3] {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::ThreeD { x, y, z }
+            | StreamValue::ThreeDSpatial { x, y, z } => Ok([x, y, z]),
+            StreamValue::Color {
+                alpha: _,
+                red,
+                green,
+                blue,
+            } => Ok([red, green, blue]),
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for [f32; 4] {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::FourD(a, b, c, d) => {
+                Ok([a as f32, b as f32, c as f32, d as f32])
+            }
+            StreamValue::Color {
+                alpha,
+                red,
+                green,
+                blue,
+            } => Ok([alpha as f32, red as f32, green as f32, blue as f32]),
+            _ => Err(Error::Parameter),
+        }
+    }
+}
+
+impl TryFrom<StreamValue> for [f64; 4] {
+    type Error = Error;
+    fn try_from(value: StreamValue) -> Result<Self, Error> {
+        match value {
+            StreamValue::FourD(a, b, c, d) => Ok([a, b, c, d]),
+            StreamValue::Color {
+                alpha,
+                red,
+                green,
+                blue,
+            } => Ok([alpha, red, green, blue]),
+            _ => Err(Error::Parameter),
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -436,9 +598,9 @@ impl IOInSuite {
             in_spec_handle.as_ptr(),
             in_spec_options_handle.as_mut_ptr() as _
         ) {
-            Ok(()) => Ok(aeio::Handle {
-                handle_ptr: unsafe { in_spec_options_handle.assume_init() },
-            }),
+            Ok(()) => Ok(aeio::Handle::from_raw(unsafe {
+                in_spec_options_handle.assume_init()
+            })),
             Err(e) => Err(e),
         }
     }
@@ -461,7 +623,7 @@ impl IOInSuite {
     }*/
 }
 
-define_handle_wrapper!(EffectRefHandle, AEGP_EffectRefH, effect_ref_ptr);
+define_handle_wrapper!(EffectRefHandle, AEGP_EffectRefH);
 
 define_suite!(
     EffectSuite,
@@ -519,9 +681,7 @@ impl PFInterfaceSuite {
             effect_ref,
             layer_handle.as_mut_ptr()
         ) {
-            Ok(()) => Ok(LayerHandle {
-                layer_ptr: unsafe { layer_handle.assume_init() },
-            }),
+            Ok(()) => Ok(LayerHandle(unsafe { layer_handle.assume_init() })),
             Err(e) => Err(e),
         }
     }
@@ -547,7 +707,7 @@ impl PFInterfaceSuite {
                 if camera_layer_handle.is_null() {
                     Err(Error::Generic)
                 } else {
-                    Ok(LayerHandle::from_raw(camera_layer_handle))
+                    Ok(LayerHandle(camera_layer_handle))
                 }
             }
             Err(e) => Err(e),
@@ -557,7 +717,7 @@ impl PFInterfaceSuite {
 
 // FIXME: wrap this nicely or combine WorldHandle & WorldSuite into
 // single World
-define_handle_wrapper!(WorldHandle, AEGP_WorldH, world_ptr);
+define_handle_wrapper!(WorldHandle, AEGP_WorldH);
 
 define_suite!(
     WorldSuite,
@@ -762,7 +922,7 @@ impl Drop for World {
     }
 }
 
-define_handle_wrapper!(CompHandle, AEGP_CompH, comp_ptr);
+define_handle_wrapper!(CompHandle, AEGP_CompH);
 
 define_suite!(
     CompSuite,
@@ -918,12 +1078,7 @@ impl Drop for Comp {
     }
 }
 
-#[derive(Copy, Clone, Debug, Hash)]
-pub struct StreamReferenceHandle {
-    stream_reference_ptr: ae_sys::AEGP_StreamRefH,
-}
-
-define_handle_wrapper!(LayerHandle, AEGP_LayerH, layer_ptr);
+define_handle_wrapper!(LayerHandle, AEGP_LayerH);
 
 define_suite!(
     LayerSuite,
@@ -1013,6 +1168,10 @@ impl LayerSuite {
             source_name_mem_handle.as_mut_ptr(),
         ) {
             Ok(()) => Ok((
+                // Create a mem handle each and lock it.
+                // When the lock goes out of scope itr
+                // uinlocks and when the handle goes out
+                // of scope it gives the memory back to Ae.
                 unsafe {
                     U16CString::from_ptr_str(
                         MemHandle::<u16>::from_raw(
@@ -1098,16 +1257,38 @@ impl LayerSuite {
         layer_handle: LayerHandle,
         time: Time,
     ) -> Result<Matrix4, Error> {
-        let mut matrix = Box::<Matrix4>::new_uninit();
+        let mut matrix = MaybeUninit::<Matrix4>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetLayerToWorldXform,
             layer_handle.as_ptr(),
-            &time as *const _ as *const ae_sys::A_Time,
-            matrix.as_mut_ptr() as *mut ae_sys::A_Matrix4,
+            &time as *const _ as _,
+            matrix.as_mut_ptr() as *mut _,
         ) {
-            Ok(()) => Ok(unsafe { *matrix.assume_init() }),
+            Ok(()) => Ok(unsafe { matrix.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    #[inline]
+    pub fn get_layer_masked_bounds(
+        &self,
+        layer_handle: LayerHandle,
+        time_mode: TimeMode,
+        time: Time,
+    ) -> Result<FloatRect, Error> {
+        let mut rect = MaybeUninit::<FloatRect>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetLayerMaskedBounds,
+            layer_handle.as_ptr(),
+            time_mode as ae_sys::AEGP_LTimeMode,
+            &time as *const _ as _,
+            rect.as_mut_ptr() as *mut _,
+        ) {
+            Ok(()) => Ok(unsafe { rect.assume_init() }),
             Err(e) => Err(e),
         }
     }
@@ -1116,9 +1297,11 @@ impl LayerSuite {
 #[derive(Clone)]
 #[repr(C)]
 pub struct StreamValue2 {
-    stream_reference_handle: AEGP_StreamRefH,
+    stream_reference_handle: StreamReferenceHandle,
     pub value: StreamValue,
 }
+
+//impl Drop for StreamValue2 {}
 
 define_suite!(
     StreamSuite,
@@ -1126,6 +1309,16 @@ define_suite!(
     kAEGPStreamSuite,
     kAEGPStreamSuiteVersion5
 );
+
+define_owned_handle_wrapper!(StreamReferenceHandle, AEGP_StreamRefH);
+
+impl Drop for StreamReferenceHandle {
+    fn drop(&mut self) {
+        if self.is_owned() {
+            StreamSuite::new().unwrap().dispose_stream(self).unwrap();
+        }
+    }
+}
 
 impl StreamSuite {
     #[inline]
@@ -1142,19 +1335,36 @@ impl StreamSuite {
             self.suite_ptr,
             AEGP_GetNewLayerStream,
             plugin_id,
-            layer_handle.layer_ptr,
+            layer_handle.as_ptr(),
             stream_name as i32,
-            stream_reference_ptr.as_mut_ptr(),
+            stream_reference_ptr.as_mut_ptr()
         ) {
-            Ok(()) => Ok(StreamReferenceHandle {
-                stream_reference_ptr: unsafe {
-                    stream_reference_ptr.assume_init()
-                },
-            }),
+            Ok(()) => Ok(StreamReferenceHandle(
+                unsafe { stream_reference_ptr.assume_init() },
+                true, // is_owned
+            )),
             Err(e) => Err(e),
         }
     }
 
+    #[inline]
+    pub fn dispose_stream(
+        &self,
+        stream_reference_handle: &mut StreamReferenceHandle,
+    ) -> Result<(), Error> {
+        let result = ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_DisposeStream,
+            stream_reference_handle.as_ptr(),
+        );
+        stream_reference_handle.0 = std::ptr::null_mut();
+        result
+    }
+
+    // FIXME: should this handle memory owned by Ae properly?
+    // Currently we just copy and dispose immedately. Should be fine
+    // for what we're doing atm but for stream data like image buffers this
+    // is wasteful and potentially slow.
     #[inline]
     pub fn get_new_stream_value(
         &self,
@@ -1164,25 +1374,39 @@ impl StreamSuite {
         time: Time,
         sample_stream_pre_expression: bool,
     ) -> Result<StreamValue2, Error> {
-        let mut stream_value = std::mem::MaybeUninit::<StreamValue2>::uninit();
+        //let mut stream_value = std::mem::MaybeUninit::<StreamValue2>::uninit();
+        let stream_value_ptr: *const StreamValue = std::ptr::null();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetNewStreamValue,
             plugin_id,
-            stream_reference_handle.stream_reference_ptr,
+            stream_reference_handle.as_ptr(),
             time_mode as ae_sys::AEGP_LTimeMode,
             &time as *const _ as *const ae_sys::A_Time,
             sample_stream_pre_expression as u8,
-            stream_value.as_mut_ptr() as *mut _,
+            stream_value_ptr as *mut aftereffects_sys::AEGP_StreamValue2,
         ) {
-            Ok(()) => Ok(unsafe { stream_value.assume_init() }),
+            Ok(()) => {
+                let value = unsafe { *stream_value_ptr };
+                ae_call_suite_fn!(
+                    self.suite_ptr,
+                    AEGP_DisposeStreamValue,
+                    stream_value_ptr
+                        as *mut aftereffects_sys::AEGP_StreamValue2,
+                )
+                .unwrap();
+                Ok(StreamValue2 {
+                    stream_reference_handle,
+                    value,
+                })
+            }
             Err(e) => Err(e),
         }
     }
 
     #[inline]
-    pub fn dispose_stream_value(
+    fn _dispose_stream_value(
         &self,
         mut stream_value: StreamValue2,
     ) -> Result<(), Error> {
@@ -1204,9 +1428,11 @@ impl StreamSuite {
         time_mode: TimeMode,
         time: Time,
         pre_expression: bool,
-    ) -> Result<(StreamValue, StreamType), Error> {
-        let mut stream_value = std::mem::MaybeUninit::<StreamValue>::uninit();
-        let mut stream_type = std::mem::MaybeUninit::<StreamType>::uninit();
+    ) -> Result<StreamValue, Error> {
+        let mut stream_value =
+            std::mem::MaybeUninit::<ae_sys::AEGP_StreamVal2>::uninit();
+        let mut stream_type =
+            std::mem::MaybeUninit::<ae_sys::AEGP_StreamType>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1216,11 +1442,61 @@ impl StreamSuite {
             time_mode as ae_sys::AEGP_LTimeMode,
             &time as *const _ as *const ae_sys::A_Time,
             pre_expression as u8,
-            stream_value.as_mut_ptr() as *mut _, /* as *mut ae_sys::AEGP_StreamVal2, */
-            stream_type.as_mut_ptr() as *mut i32,
+            stream_value.as_mut_ptr() as *mut _,
+            stream_type.as_mut_ptr() as *mut _,
         ) {
-            Ok(()) => Ok(unsafe {
-                (stream_value.assume_init(), stream_type.assume_init())
+            Ok(()) => Ok(match unsafe { stream_type.assume_init() } as u32 {
+                ae_sys::AEGP_StreamType_NO_DATA => StreamValue::None,
+                ae_sys::AEGP_StreamType_ThreeD_SPATIAL => unsafe {
+                    let value = stream_value.assume_init().three_d;
+                    StreamValue::ThreeDSpatial {
+                        x: value.x,
+                        y: value.y,
+                        z: value.z,
+                    }
+                },
+                ae_sys::AEGP_StreamType_ThreeD => unsafe {
+                    let value = stream_value.assume_init().three_d;
+                    StreamValue::ThreeD {
+                        x: value.x,
+                        y: value.y,
+                        z: value.z,
+                    }
+                },
+                ae_sys::AEGP_StreamType_TwoD_SPATIAL => unsafe {
+                    let value = stream_value.assume_init().two_d;
+                    StreamValue::TwoDSpatial {
+                        x: value.x,
+                        y: value.y,
+                    }
+                },
+                ae_sys::AEGP_StreamType_TwoD => unsafe {
+                    let value = stream_value.assume_init().two_d;
+                    StreamValue::TwoD {
+                        x: value.x,
+                        y: value.y,
+                    }
+                },
+                ae_sys::AEGP_StreamType_OneD => unsafe {
+                    StreamValue::OneD(stream_value.assume_init().one_d)
+                },
+                ae_sys::AEGP_StreamType_COLOR => unsafe {
+                    let value = stream_value.assume_init().color;
+                    StreamValue::Color {
+                        alpha: value.alphaF,
+                        red: value.redF,
+                        green: value.greenF,
+                        blue: value.blueF,
+                    }
+                },
+                /*
+                Arb = AEGP_StreamType_ARB,
+                Marker = AEGP_StreamType_MARKER,
+                LayerID = AEGP_StreamType_LAYER_ID,
+                MaskID = AEGP_StreamType_MASK_ID,
+                Mask = AEGP_StreamType_MASK,
+                TextDocument = AEGP_StreamType_TEXT_DOCUMENT,*/
+                _ => StreamValue::None,
             }),
             Err(e) => Err(e),
         }
@@ -1248,14 +1524,13 @@ impl DynamicStreamSuite {
             self.suite_ptr,
             AEGP_GetNewStreamRefForLayer,
             plugin_id,
-            layer_handle.layer_ptr,
+            layer_handle.as_ptr(),
             stream_reference_ptr.as_mut_ptr(),
         ) {
-            Ok(()) => Ok(StreamReferenceHandle {
-                stream_reference_ptr: unsafe {
-                    stream_reference_ptr.assume_init()
-                },
-            }),
+            Ok(()) => Ok(StreamReferenceHandle(
+                unsafe { stream_reference_ptr.assume_init() },
+                true,
+            )),
             Err(e) => Err(e),
         }
     }
@@ -1270,7 +1545,7 @@ impl DynamicStreamSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetNumStreamsInGroup,
-            stream_reference_handle.stream_reference_ptr,
+            stream_reference_handle.as_ptr(),
             num_streams.as_mut_ptr(),
         ) {
             Ok(()) => Ok(unsafe { num_streams.assume_init() } as usize),
@@ -1289,7 +1564,7 @@ impl DynamicStreamSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetMatchName,
-            stream_reference_handle.stream_reference_ptr,
+            stream_reference_handle.as_ptr(),
             stream_value.as_mut_ptr() as *mut _
         ) {
             Ok(()) => Ok(unsafe {
@@ -1515,8 +1790,8 @@ impl CanvasSuite {
     pub fn get_roi(
         &self,
         render_context_handle: pr::RenderContextHandle,
-    ) -> Result<LegacyRect, Error> {
-        let mut roi = std::mem::MaybeUninit::<LegacyRect>::uninit();
+    ) -> Result<Rect, Error> {
+        let mut roi = std::mem::MaybeUninit::<ae_sys::A_LegacyRect>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1524,7 +1799,15 @@ impl CanvasSuite {
             render_context_handle.as_ptr(),
             roi.as_mut_ptr() as _,
         ) {
-            Ok(()) => Ok(unsafe { roi.assume_init() }),
+            Ok(()) => {
+                let rect = unsafe { roi.assume_init() };
+                Ok(Rect {
+                    left: rect.left as i32,
+                    top: rect.top as i32,
+                    right: rect.right as i32,
+                    bottom: rect.bottom as i32,
+                })
+            }
             Err(e) => Err(e),
         }
     }
@@ -1546,6 +1829,22 @@ impl CanvasSuite {
             Err(e) => Err(e),
         }
     }
+
+    /*
+    pub fn get_render_layer_bounds(
+        &self,
+        render_context_handle: pr::RenderContextHandle,
+    ) -> Result<FloatRect, Error> {
+
+        let mut roi = std::mem::MaybeUninit::<FloatRect>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            render_context_handle.as_ptr(),
+                                                                  layer.handle(),
+                                                                  &compTime,
+                                                                  &layerBounds ) );
+    return layerBounds;*/
 }
 
 define_suite!(
@@ -1575,7 +1874,7 @@ impl LightSuite {
     }
 }
 
-define_handle_wrapper!(ItemHandle, AEGP_ItemH, item_ptr);
+define_handle_wrapper!(ItemHandle, AEGP_ItemH);
 
 define_suite!(
     ItemSuite,
@@ -2031,32 +2330,9 @@ impl Scene3DTextureCacheHandle {
     }
 }
 
-#[derive(Copy, Clone, Debug, Hash)]
-pub struct Scene3DMaterialHandle {
-    material_ptr: *mut ae_sys::AEGP_Scene3DMaterial,
-}
-
-#[derive(Copy, Clone, Debug, Hash)]
-pub struct Scene3DNodeHandle {
-    node_ptr: ae_sys::AEGP_Scene3DNodeP,
-}
-
-impl Scene3DNodeHandle {
-    #[inline]
-    pub fn new(node_ptr: ae_sys::AEGP_Scene3DNodeP) -> Scene3DNodeHandle {
-        Scene3DNodeHandle { node_ptr }
-    }
-
-    #[inline]
-    pub fn as_ptr(self) -> ae_sys::AEGP_Scene3DNodeP {
-        self.node_ptr
-    }
-}
-
-#[derive(Copy, Clone, Debug, Hash)]
-pub struct Scene3DMeshHandle {
-    mesh_ptr: *mut ae_sys::AEGP_Scene3DMesh,
-}
+define_ptr_wrapper!(Scene3DMaterialHandle, AEGP_Scene3DMaterial);
+define_handle_wrapper!(Scene3DNodeHandle, AEGP_Scene3DNodeP);
+define_ptr_wrapper!(Scene3DMeshHandle, AEGP_Scene3DMesh);
 
 define_suite!(
     Scene3DMaterialSuite,
@@ -2076,7 +2352,7 @@ impl Scene3DMaterialSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_HasUVColorTexture,
-            material_handle.material_ptr,
+            material_handle.as_ptr(),
             &mut has_uv_color_texture
         ) {
             Ok(()) => Ok(has_uv_color_texture != 0),
@@ -2089,16 +2365,16 @@ impl Scene3DMaterialSuite {
         &self,
         material: Scene3DMaterialHandle,
     ) -> Result<WorldHandle, Error> {
-        let mut world_handle = WorldHandle {
-            world_ptr: std::ptr::null_mut(),
-        };
+        let mut world_handle =
+            std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
+
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetUVColorTexture,
-            material.material_ptr,
-            &mut world_handle.world_ptr
+            material.as_ptr(),
+            world_handle.as_mut_ptr()
         ) {
-            Ok(()) => Ok(world_handle),
+            Ok(()) => Ok(WorldHandle(unsafe { world_handle.assume_init() })),
             Err(e) => Err(e),
         }
     }
@@ -2114,7 +2390,7 @@ impl Scene3DMaterialSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetBasicCoeffs,
-            material.material_ptr,
+            material.as_ptr(),
             basic_material_coefficients.as_mut_ptr()
         ) {
             Ok(()) => Ok(unsafe { basic_material_coefficients.assume_init() }),
@@ -2137,18 +2413,20 @@ impl Scene3DNodeSuite {
         node_handle: Scene3DNodeHandle,
         side: ae_sys::AEGP_Scene3DMaterialSide,
     ) -> Result<Scene3DMaterialHandle, Error> {
-        let mut material_handle = Scene3DMaterialHandle {
-            material_ptr: std::ptr::null_mut(),
-        };
+        let mut material_handle = std::mem::MaybeUninit::<
+            *const ae_sys::AEGP_Scene3DMaterial,
+        >::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetMaterialForSide,
-            node_handle.node_ptr,
+            node_handle.as_ptr(),
             side,
-            &mut material_handle.material_ptr
+            material_handle.as_mut_ptr() as *mut *mut _
         ) {
-            Ok(()) => Ok(material_handle),
+            Ok(()) => Ok(Scene3DMaterialHandle(unsafe {
+                material_handle.assume_init()
+            })),
             Err(e) => Err(e),
         }
     }
@@ -2158,17 +2436,18 @@ impl Scene3DNodeSuite {
         &self,
         node_handle: Scene3DNodeHandle,
     ) -> Result<Scene3DMeshHandle, Error> {
-        let mut mesh_handle = Scene3DMeshHandle {
-            mesh_ptr: std::ptr::null_mut(),
-        };
+        let mut mesh_handle =
+            std::mem::MaybeUninit::<*const ae_sys::AEGP_Scene3DMesh>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_NodeMeshGet,
-            node_handle.node_ptr,
-            &mut mesh_handle.mesh_ptr
+            node_handle.as_ptr(),
+            mesh_handle.as_mut_ptr() as *mut *mut _
         ) {
-            Ok(()) => Ok(mesh_handle),
+            Ok(()) => {
+                Ok(Scene3DMeshHandle(unsafe { mesh_handle.assume_init() }))
+            }
             Err(e) => Err(e),
         }
     }
@@ -2215,7 +2494,7 @@ impl Scene3DMeshSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_FaceGroupBufferCount,
-            mesh_handle.mesh_ptr,
+            mesh_handle.as_ptr() as *mut _,
             &mut face_groups
         ) {
             Ok(()) => Ok(face_groups as usize),
@@ -2234,7 +2513,7 @@ impl Scene3DMeshSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_FaceGroupBufferSize,
-            mesh_handle.mesh_ptr,
+            mesh_handle.as_ptr(),
             group_index as i32,
             &mut face_count
         ) {
@@ -2258,7 +2537,7 @@ impl Scene3DMeshSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_FaceGroupBufferFill,
-            mesh_handle.mesh_ptr,
+            mesh_handle.as_ptr(),
             group_index as i32,
             face_count as i32,
             face_index_buffer.as_mut_ptr()
@@ -2288,7 +2567,7 @@ impl Scene3DMeshSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetMaterialSideForFaceGroup,
-            mesh_handle.mesh_ptr,
+            mesh_handle.as_ptr(),
             group_index as i32,
             material_side.as_mut_ptr()
         ) {
@@ -2308,7 +2587,7 @@ impl Scene3DMeshSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_MeshGetInfo,
-            mesh_handle.mesh_ptr,
+            mesh_handle.as_ptr(),
             //&mut num_vertex as *mut _ as *mut i32,
             //&mut num_face as *mut _ as *mut i32,
             num_vertex.as_mut_ptr() as *mut i32,
@@ -2401,7 +2680,7 @@ impl Scene3DMeshSuite {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_MeshFillBuffers,
-            mesh_handle.mesh_ptr,
+            mesh_handle.as_ptr() as *mut _,
             vertex_type,
             vertex_buffer.as_mut_ptr() as *mut _,
             face_type,

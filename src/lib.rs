@@ -181,11 +181,15 @@ pub mod aegp;
 pub use aegp::*;
 pub mod aeio;
 pub use aeio::*;
+pub mod drawbot;
+pub use drawbot::*;
 pub mod pf;
 pub use pf::*;
 pub mod pr;
 pub use pr::*;
 
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
 pub struct Matrix4([[f64; 4]; 4]);
 
 impl Matrix4 {
@@ -207,12 +211,7 @@ impl From<Matrix4> for nalgebra::Matrix4<f64> {
 #[test]
 fn test_from() {
     let m = Matrix4 {
-        0: [
-            [0., 0., 0., 0.],
-            [0., 0., 0., 0.],
-            [0., 0., 0., 0.],
-            [0., 0., 0., 0.],
-        ],
+        0: [[0.; 4], [0.; 4], [0.; 4], [0.; 4]],
     };
     let _matrix = nalgebra::Matrix4::<f64>::from(m);
 }
@@ -337,6 +336,15 @@ pub struct Rect {
     pub top: i32,
     pub right: i32,
     pub bottom: i32,
+}
+
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub struct FloatRect {
+    pub left: f64,
+    pub top: f64,
+    pub right: f64,
+    pub bottom: f64,
 }
 
 // Note that this has a different ordering

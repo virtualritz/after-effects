@@ -117,47 +117,86 @@ macro_rules! define_handle_wrapper_v2 {
     };
 }*/
 
-macro_rules! define_handle_wrapper {
-    ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident) => {
+macro_rules! define_ptr_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:ident) => {
         #[derive(Copy, Clone, Debug, Hash)]
-        pub struct $wrapper_pretty_name {
-            pub(crate) $data_name: ae_sys::$data_type,
-        }
+        pub struct $wrapper_pretty_name(*const ae_sys::$data_type);
 
         impl $wrapper_pretty_name {
-            pub fn from_raw($data_name: ae_sys::$data_type) -> Self {
-                Self { $data_name }
+            pub fn from_raw(raw_ptr: *const ae_sys::$data_type) -> Self {
+                Self(raw_ptr)
             }
 
-            pub fn as_ptr(&self) -> ae_sys::$data_type {
-                self.$data_name
+            pub fn as_ptr(&self) -> *const ae_sys::$data_type {
+                self.0
             }
 
             pub fn is_null(&self) -> bool {
-                self.$data_name.is_null()
+                self.0.is_null()
+            }
+        }
+
+        impl From<$wrapper_pretty_name> for *const ae_sys::$data_type {
+            fn from(ptr_wrapper: $wrapper_pretty_name) -> Self {
+                ptr_wrapper.as_ptr()
             }
         }
     };
 }
 
-macro_rules! _define_owned_handle_wrapper {
-    ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident) => {
-        #[derive(Clone, Debug, Hash)]
-        pub struct $wrapper_pretty_name {
-            $data_name: ae_sys::$data_type,
-            is_owned: bool,
-        }
+macro_rules! define_handle_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:ident) => {
+        #[derive(Copy, Clone, Debug, Hash)]
+        pub struct $wrapper_pretty_name(ae_sys::$data_type);
 
         impl $wrapper_pretty_name {
-            pub fn from_raw($data_name: ae_sys::$data_type) -> Self {
-                Self {
-                    $data_name,
-                    is_owned: false,
-                }
+            pub fn from_raw(raw_handle: ae_sys::$data_type) -> Self {
+                Self(raw_handle)
             }
 
             pub fn as_ptr(&self) -> ae_sys::$data_type {
-                self.$data_name
+                self.0
+            }
+
+            pub fn is_null(&self) -> bool {
+                self.0.is_null()
+            }
+        }
+
+        impl From<$wrapper_pretty_name> for ae_sys::$data_type {
+            fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
+                handle_wrapper.as_ptr()
+            }
+        }
+    };
+}
+
+macro_rules! define_owned_handle_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:ident) => {
+        #[derive(Clone, Debug, Hash)]
+        pub struct $wrapper_pretty_name(ae_sys::$data_type, bool);
+
+        impl $wrapper_pretty_name {
+            pub fn from_raw(raw_handle: ae_sys::$data_type) -> Self {
+                Self(raw_handle, false)
+            }
+
+            pub fn as_ptr(&self) -> ae_sys::$data_type {
+                self.0
+            }
+
+            pub fn owned(&mut self, is_owned: bool) {
+                self.1 = is_owned;
+            }
+
+            pub fn is_owned(&self) -> bool {
+                self.1
+            }
+        }
+
+        impl From<$wrapper_pretty_name> for ae_sys::$data_type {
+            fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
+                handle_wrapper.as_ptr()
             }
         }
     };

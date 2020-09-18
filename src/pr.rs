@@ -39,29 +39,12 @@ impl InDataHandle {
     }
 }
 
-define_handle_wrapper!(
-    RenderContextHandle,
-    PR_RenderContextH,
-    render_context_ptr
-);
-
-define_handle_wrapper!(InstanceDataHandle, PR_InstanceDataH, instance_data_ptr);
-
-define_handle_wrapper!(
-    InstanceContextHandle,
-    PR_InstanceContextH,
-    instance_context_ptr
-);
-
-define_handle_wrapper!(
-    GlobalContextHandle,
-    PR_GlobalContextH,
-    global_context_ptr
-);
-
-define_handle_wrapper!(GlobalDataHandle, PR_GlobalDataH, global_data_ptr);
-
-define_handle_wrapper!(RenderDataHandle, PR_RenderDataH, render_data_ptr);
+define_handle_wrapper!(RenderContextHandle, PR_RenderContextH);
+define_handle_wrapper!(InstanceDataHandle, PR_InstanceDataH);
+define_handle_wrapper!(InstanceContextHandle, PR_InstanceContextH);
+define_handle_wrapper!(GlobalContextHandle, PR_GlobalContextH);
+define_handle_wrapper!(GlobalDataHandle, PR_GlobalDataH);
+define_handle_wrapper!(RenderDataHandle, PR_RenderDataH);
 
 //EffectWorld
 /*

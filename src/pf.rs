@@ -221,11 +221,7 @@ pub struct EffectWorldConst {
 unsafe impl Send for EffectWorldConst {}
 unsafe impl Sync for EffectWorldConst {}
 
-define_handle_wrapper!(
-    EffectBlendingTables,
-    PF_EffectBlendingTables,
-    blending_tabpe_ptr
-);
+define_handle_wrapper!(EffectBlendingTables, PF_EffectBlendingTables);
 
 impl EffectWorld {
     #[inline]
@@ -755,7 +751,7 @@ impl Rect {
     }
 }
 
-define_handle_wrapper!(ProgressInfo, PF_ProgPtr, prog_ptr);
+define_handle_wrapper!(ProgressInfo, PF_ProgPtr);
 
 #[derive(Copy, Clone, Debug)]
 pub struct SmartRenderCallbacks {
@@ -998,6 +994,9 @@ pub struct ButtonDef {
     label: CString,
 }
 
+//define_param_value_str_wrapper!(ButtonDef, button_def);
+//define_param_value_desc_wrapper!(ButtonDef, button_def);
+
 impl ButtonDef {
     pub fn new() -> Self {
         Self {
@@ -1042,6 +1041,8 @@ pub struct PopupDef {
 }
 
 define_param_basic_wrapper!(PopupDef, PF_PopupDef, popup_def, i32, u16);
+//define_param_value_str_wrapper!(PopupDef, popup_def);
+//define_param_value_desc_wrapper!(PopupDef, popup_def);
 
 impl PopupDef {
     pub fn new() -> Self {
@@ -1084,6 +1085,8 @@ impl PopupDef {
 
 define_param_wrapper!(AngleDef, PF_AngleDef, angle_def);
 define_param_basic_wrapper!(AngleDef, PF_AngleDef, angle_def, i32, i32);
+//define_param_value_str_wrapper!(AngleDef, angle_def);
+//define_param_value_desc_wrapper!(AngleDef, angle_def);
 
 impl AngleDef {
     pub fn from(param: &ParamDef) -> Option<Self> {
@@ -1455,3 +1458,41 @@ impl Drop for ParamDef {
         }
     }
 }
+
+define_handle_wrapper!(ContextHandle, PF_ContextH);
+
+define_suite!(
+    EffectCustomUISuite,
+    PF_EffectCustomUISuite1,
+    kPFEffectCustomUISuite,
+    kPFEffectCustomUISuiteVersion1
+);
+
+impl EffectCustomUISuite {
+    pub fn get_drawing_reference(
+        &self,
+        context_handle: &ContextHandle,
+    ) -> Result<drawbot::DrawRef, Error> {
+        let mut draw_reference =
+            std::mem::MaybeUninit::<ae_sys::DRAWBOT_DrawRef>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            PF_GetDrawingReference,
+            context_handle.as_ptr(),
+            draw_reference.as_mut_ptr()
+        ) {
+            Ok(()) => Ok(drawbot::DrawRef::from_raw(unsafe {
+                draw_reference.assume_init()
+            })),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+define_suite!(
+    EffectCustomUIOverlayThemeSuite,
+    PF_EffectCustomUIOverlayThemeSuite1,
+    kPFEffectCustomUIOverlayThemeSuite,
+    kPFEffectCustomUIOverlayThemeSuiteVersion1
+);
