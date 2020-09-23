@@ -1,5 +1,3 @@
-use aftereffects_sys as ae_sys;
-
 #[macro_export]
 macro_rules! ae_acquire_suite_ptr {
     ($pica:expr, $type:ident, $name:ident, $version:ident) => {{
@@ -16,7 +14,7 @@ macro_rules! ae_acquire_suite_ptr {
                 suite_ptr.as_mut_ptr() as *mut *const _ as _,
             ) as u32
             {
-                ae_sys::kSPNoError => Ok(suite_ptr.assume_init()),
+                aftereffects_sys::kSPNoError => Ok(suite_ptr.assume_init()),
                 _ => Err($crate::Error::MissingSuite),
             }
         }
@@ -102,17 +100,17 @@ macro_rules! define_handle_wrapper_v2 {
 
         #[derive(Clone, Debug, Hash)]
         pub struct $wrapper_pretty_name {
-            snake!($wrapper_pretty_name): ae_sys::$data_type,
+            snake!($wrapper_pretty_name): aftereffects_sys::$data_type,
         }
 
         impl $wrapper_pretty_name {
-            pub fn from_raw(ptr: ae_sys::$data_type) -> $wrapper_pretty_name {
+            pub fn from_raw(ptr: aftereffects_sys::$data_type) -> $wrapper_pretty_name {
                 $wrapper_pretty_name {
                     snake!($wrapper_pretty_name): ptr,
                 }
             }
 
-            pub fn as_ptr(&self) -> ae_sys::$data_type {
+            pub fn as_ptr(&self) -> aftereffects_sys::$data_type {
                 &self.snake!($wrapper_pretty_name)
             }
         }
@@ -122,14 +120,14 @@ macro_rules! define_handle_wrapper_v2 {
 macro_rules! define_ptr_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident) => {
         #[derive(Copy, Clone, Debug, Hash)]
-        pub struct $wrapper_pretty_name(*const ae_sys::$data_type);
+        pub struct $wrapper_pretty_name(*const aftereffects_sys::$data_type);
 
         impl $wrapper_pretty_name {
-            pub fn from_raw(raw_ptr: *const ae_sys::$data_type) -> Self {
+            pub fn from_raw(raw_ptr: *const aftereffects_sys::$data_type) -> Self {
                 Self(raw_ptr)
             }
 
-            pub fn as_ptr(&self) -> *const ae_sys::$data_type {
+            pub fn as_ptr(&self) -> *const aftereffects_sys::$data_type {
                 self.0
             }
 
@@ -138,7 +136,7 @@ macro_rules! define_ptr_wrapper {
             }
         }
 
-        impl From<$wrapper_pretty_name> for *const ae_sys::$data_type {
+        impl From<$wrapper_pretty_name> for *const aftereffects_sys::$data_type {
             fn from(ptr_wrapper: $wrapper_pretty_name) -> Self {
                 ptr_wrapper.as_ptr()
             }
@@ -149,14 +147,14 @@ macro_rules! define_ptr_wrapper {
 macro_rules! define_handle_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident) => {
         #[derive(Copy, Clone, Debug, Hash)]
-        pub struct $wrapper_pretty_name(ae_sys::$data_type);
+        pub struct $wrapper_pretty_name(aftereffects_sys::$data_type);
 
         impl $wrapper_pretty_name {
-            pub fn from_raw(raw_handle: ae_sys::$data_type) -> Self {
+            pub fn from_raw(raw_handle: aftereffects_sys::$data_type) -> Self {
                 Self(raw_handle)
             }
 
-            pub fn as_ptr(&self) -> ae_sys::$data_type {
+            pub fn as_ptr(&self) -> aftereffects_sys::$data_type {
                 self.0
             }
 
@@ -165,7 +163,7 @@ macro_rules! define_handle_wrapper {
             }
         }
 
-        impl From<$wrapper_pretty_name> for ae_sys::$data_type {
+        impl From<$wrapper_pretty_name> for aftereffects_sys::$data_type {
             fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
                 handle_wrapper.as_ptr()
             }
@@ -176,14 +174,14 @@ macro_rules! define_handle_wrapper {
 macro_rules! define_owned_handle_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident) => {
         #[derive(Clone, Debug, Hash)]
-        pub struct $wrapper_pretty_name(ae_sys::$data_type, bool);
+        pub struct $wrapper_pretty_name(aftereffects_sys::$data_type, bool);
 
         impl $wrapper_pretty_name {
-            pub fn from_raw(raw_handle: ae_sys::$data_type) -> Self {
+            pub fn from_raw(raw_handle: aftereffects_sys::$data_type) -> Self {
                 Self(raw_handle, false)
             }
 
-            pub fn as_ptr(&self) -> ae_sys::$data_type {
+            pub fn as_ptr(&self) -> aftereffects_sys::$data_type {
                 self.0
             }
 
@@ -196,7 +194,7 @@ macro_rules! define_owned_handle_wrapper {
             }
         }
 
-        impl From<$wrapper_pretty_name> for ae_sys::$data_type {
+        impl From<$wrapper_pretty_name> for aftereffects_sys::$data_type {
             fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
                 handle_wrapper.as_ptr()
             }
@@ -209,7 +207,7 @@ macro_rules! define_param_wrapper {
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
         pub struct $wrapper_pretty_name {
-            pub(crate) $data_name: ae_sys::$data_type,
+            pub(crate) $data_name: aftereffects_sys::$data_type,
         }
         impl $wrapper_pretty_name {
             pub fn new() -> Self {
@@ -337,7 +335,7 @@ macro_rules! define_suite {
     ($suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
         #[derive(Clone, Debug, Hash)]
         pub struct $suite_pretty_name {
-            pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
+            pica_basic_suite_ptr: *const aftereffects_sys::SPBasicSuite,
             suite_ptr: *const aftereffects_sys::$suite_name,
         }
 
@@ -360,7 +358,7 @@ macro_rules! define_suite {
             }
 
             fn from_raw(
-                pica_basic_suite_ptr: *const $crate::ae_sys::SPBasicSuite,
+                pica_basic_suite_ptr: *const aftereffects_sys::SPBasicSuite,
             ) -> Result<Self, Error> {
                 match ae_acquire_suite_ptr!(
                     pica_basic_suite_ptr,

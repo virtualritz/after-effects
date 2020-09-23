@@ -1,5 +1,6 @@
-pub use crate::*;
-pub use ae_sys::*;
+use crate::*;
+use aftereffects_sys as ae_sys;
+
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
 use std::{
     convert::TryFrom, ffi::CString, marker::PhantomData, mem::MaybeUninit,
@@ -39,79 +40,79 @@ pub enum MemFlag {
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 #[repr(i32)]
 pub enum LayerStream {
-    None = AEGP_LayerStream_NONE,
-    AnchorPoint = AEGP_LayerStream_ANCHORPOINT,
-    Position = AEGP_LayerStream_POSITION,
-    Scale = AEGP_LayerStream_SCALE,
+    None = ae_sys::AEGP_LayerStream_NONE,
+    AnchorPoint = ae_sys::AEGP_LayerStream_ANCHORPOINT,
+    Position = ae_sys::AEGP_LayerStream_POSITION,
+    Scale = ae_sys::AEGP_LayerStream_SCALE,
     // This is the layer's rotation for a 2D layer
-    RotateZ = AEGP_LayerStream_ROTATION,
-    Opcaity = AEGP_LayerStream_OPACITY,
-    Audio = AEGP_LayerStream_AUDIO,
-    Marker = AEGP_LayerStream_MARKER,
-    TimeRemap = AEGP_LayerStream_TIME_REMAP,
-    RotateX = AEGP_LayerStream_ROTATE_X,
-    RotateY = AEGP_LayerStream_ROTATE_Y,
-    Orientation = AEGP_LayerStream_ORIENTATION,
+    RotateZ = ae_sys::AEGP_LayerStream_ROTATION,
+    Opcaity = ae_sys::AEGP_LayerStream_OPACITY,
+    Audio = ae_sys::AEGP_LayerStream_AUDIO,
+    Marker = ae_sys::AEGP_LayerStream_MARKER,
+    TimeRemap = ae_sys::AEGP_LayerStream_TIME_REMAP,
+    RotateX = ae_sys::AEGP_LayerStream_ROTATE_X,
+    RotateY = ae_sys::AEGP_LayerStream_ROTATE_Y,
+    Orientation = ae_sys::AEGP_LayerStream_ORIENTATION,
 
-    // only valid for AEGP_ObjectType == AEGP_ObjectType_CAMERA
-    Zoom = AEGP_LayerStream_ZOOM,
-    DepthOfField = AEGP_LayerStream_DEPTH_OF_FIELD,
-    FocusDistance = AEGP_LayerStream_FOCUS_DISTANCE,
-    Aperture = AEGP_LayerStream_APERTURE,
-    BlurLevel = AEGP_LayerStream_BLUR_LEVEL,
+    // only valid for AEGP_ObjectType == ae_sys::AEGP_ObjectType_CAMERA
+    Zoom = ae_sys::AEGP_LayerStream_ZOOM,
+    DepthOfField = ae_sys::AEGP_LayerStream_DEPTH_OF_FIELD,
+    FocusDistance = ae_sys::AEGP_LayerStream_FOCUS_DISTANCE,
+    Aperture = ae_sys::AEGP_LayerStream_APERTURE,
+    BlurLevel = ae_sys::AEGP_LayerStream_BLUR_LEVEL,
 
-    // only valid for AEGP_ObjectType == AEGP_ObjectType_LIGHT
-    Intensity = AEGP_LayerStream_INTENSITY,
-    Color = AEGP_LayerStream_COLOR,
-    ConeAngle = AEGP_LayerStream_CONE_ANGLE,
-    ConeFeather = AEGP_LayerStream_CONE_FEATHER,
-    ShadowDarkness = AEGP_LayerStream_SHADOW_DARKNESS,
-    ShadowDiffusion = AEGP_LayerStream_SHADOW_DIFFUSION,
+    // only valid for AEGP_ObjectType == ae_sys::AEGP_ObjectType_LIGHT
+    Intensity = ae_sys::AEGP_LayerStream_INTENSITY,
+    Color = ae_sys::AEGP_LayerStream_COLOR,
+    ConeAngle = ae_sys::AEGP_LayerStream_CONE_ANGLE,
+    ConeFeather = ae_sys::AEGP_LayerStream_CONE_FEATHER,
+    ShadowDarkness = ae_sys::AEGP_LayerStream_SHADOW_DARKNESS,
+    ShadowDiffusion = ae_sys::AEGP_LayerStream_SHADOW_DIFFUSION,
 
-    // only valid for AEGP_ObjectType == AEGP_ObjectType_AV
-    AcceptsShadows = AEGP_LayerStream_ACCEPTS_SHADOWS,
-    AcceptsLights = AEGP_LayerStream_ACCEPTS_LIGHTS,
-    AmbientCoeff = AEGP_LayerStream_AMBIENT_COEFF,
-    DiffuseCoeff = AEGP_LayerStream_DIFFUSE_COEFF,
-    SpecularIntensity = AEGP_LayerStream_SPECULAR_INTENSITY,
-    SpecularShininess = AEGP_LayerStream_SPECULAR_SHININESS,
+    // only valid for AEGP_ObjectType == ae_sys::AEGP_ObjectType_AV
+    AcceptsShadows = ae_sys::AEGP_LayerStream_ACCEPTS_SHADOWS,
+    AcceptsLights = ae_sys::AEGP_LayerStream_ACCEPTS_LIGHTS,
+    AmbientCoeff = ae_sys::AEGP_LayerStream_AMBIENT_COEFF,
+    DiffuseCoeff = ae_sys::AEGP_LayerStream_DIFFUSE_COEFF,
+    SpecularIntensity = ae_sys::AEGP_LayerStream_SPECULAR_INTENSITY,
+    SpecularShininess = ae_sys::AEGP_LayerStream_SPECULAR_SHININESS,
 
-    CastsShadows = AEGP_LayerStream_CASTS_SHADOWS, /* LIGHT and AV only, no CAMERA */
-    LightTransmission = AEGP_LayerStream_LIGHT_TRANSMISSION, /* AV Layer only */
-    Metal = AEGP_LayerStream_METAL,                // AV layer only
+    CastsShadows = ae_sys::AEGP_LayerStream_CASTS_SHADOWS, /* LIGHT and AV only, no CAMERA */
+    LightTransmission = ae_sys::AEGP_LayerStream_LIGHT_TRANSMISSION, /* AV Layer only */
+    Metal = ae_sys::AEGP_LayerStream_METAL,                // AV layer only
 
-    SourceText = AEGP_LayerStream_SOURCE_TEXT,
+    SourceText = ae_sys::AEGP_LayerStream_SOURCE_TEXT,
 
-    // only valid for AEGP_ObjectType == AEGP_ObjectType_CAMERA
-    IrisShape = AEGP_LayerStream_IRIS_SHAPE,
-    IrisRotation = AEGP_LayerStream_IRIS_ROTATION,
-    IrisRoundness = AEGP_LayerStream_IRIS_ROUNDNESS,
-    IrisAspectRatio = AEGP_LayerStream_IRIS_ASPECT_RATIO,
-    IrisDiffractionFringe = AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE,
-    IrisHighlightGain = AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN,
-    IrisHighlightThreshold = AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD,
-    IrisHighlightSaturation = AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION,
+    // only valid for AEGP_ObjectType == ae_sys::AEGP_ObjectType_CAMERA
+    IrisShape = ae_sys::AEGP_LayerStream_IRIS_SHAPE,
+    IrisRotation = ae_sys::AEGP_LayerStream_IRIS_ROTATION,
+    IrisRoundness = ae_sys::AEGP_LayerStream_IRIS_ROUNDNESS,
+    IrisAspectRatio = ae_sys::AEGP_LayerStream_IRIS_ASPECT_RATIO,
+    IrisDiffractionFringe = ae_sys::AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE,
+    IrisHighlightGain = ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN,
+    IrisHighlightThreshold = ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD,
+    IrisHighlightSaturation = ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION,
 
-    // only valid for AEGP_ObjectType == AEGP_ObjectTyp_LIGHT
-    LightFalloffType = AEGP_LayerStream_LIGHT_FALLOFF_TYPE,
-    LightFalloffStart = AEGP_LayerStream_LIGHT_FALLOFF_START,
-    LightFalloffDistance = AEGP_LayerStream_LIGHT_FALLOFF_DISTANCE,
+    // only valid for AEGP_ObjectType == ae_sys::AEGP_ObjectTyp_LIGHT
+    LightFalloffType = ae_sys::AEGP_LayerStream_LIGHT_FALLOFF_TYPE,
+    LightFalloffStart = ae_sys::AEGP_LayerStream_LIGHT_FALLOFF_START,
+    LightFalloffDistance = ae_sys::AEGP_LayerStream_LIGHT_FALLOFF_DISTANCE,
 
-    // only valid for AEGP_ObjectType == AEGP_ObjectType_AV
-    ReflactionIntensity = AEGP_LayerStream_REFLECTION_INTENSITY,
-    ReflactionSharpness = AEGP_LayerStream_REFLECTION_SHARPNESS,
-    ReflactionRolloff = AEGP_LayerStream_REFLECTION_ROLLOFF,
-    TransparencyCoeff = AEGP_LayerStream_TRANSPARENCY_COEFF,
-    TransparencyRolloff = AEGP_LayerStream_TRANSPARENCY_ROLLOFF,
-    IndexOfRefraction = AEGP_LayerStream_INDEX_OF_REFRACTION,
+    // only valid for AEGP_ObjectType == ae_sys::AEGP_ObjectType_AV
+    ReflactionIntensity = ae_sys::AEGP_LayerStream_REFLECTION_INTENSITY,
+    ReflactionSharpness = ae_sys::AEGP_LayerStream_REFLECTION_SHARPNESS,
+    ReflactionRolloff = ae_sys::AEGP_LayerStream_REFLECTION_ROLLOFF,
+    TransparencyCoeff = ae_sys::AEGP_LayerStream_TRANSPARENCY_COEFF,
+    TransparencyRolloff = ae_sys::AEGP_LayerStream_TRANSPARENCY_ROLLOFF,
+    IndexOfRefraction = ae_sys::AEGP_LayerStream_INDEX_OF_REFRACTION,
 
-    BevelStyle = AEGP_LayerStream_EXTRUSION_BEVEL_STYLE,
-    BevelDirection = AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION,
-    BevelDepth = AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH,
-    ExtrusionHoleBeveDepth = AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH,
-    ExtrusionDepth = AEGP_LayerStream_EXTRUSION_DEPTH,
-    PlaneCurvature = AEGP_LayerStream_PLANE_CURVATURE,
-    PlaneSubdivision = AEGP_LayerStream_PLANE_SUBDIVISION,
+    BevelStyle = ae_sys::AEGP_LayerStream_EXTRUSION_BEVEL_STYLE,
+    BevelDirection = ae_sys::AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION,
+    BevelDepth = ae_sys::AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH,
+    ExtrusionHoleBeveDepth = ae_sys::AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH,
+    ExtrusionDepth = ae_sys::AEGP_LayerStream_EXTRUSION_DEPTH,
+    PlaneCurvature = ae_sys::AEGP_LayerStream_PLANE_CURVATURE,
+    PlaneSubdivision = ae_sys::AEGP_LayerStream_PLANE_SUBDIVISION,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -172,20 +173,20 @@ pub enum TimeMode {
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(u32)]
 pub enum StreamType {
-    NoData = AEGP_StreamType_NO_DATA,
-    ThreeDSpatial = AEGP_StreamType_ThreeD_SPATIAL,
-    ThreeD = AEGP_StreamType_ThreeD,
-    TwoDSpatial = AEGP_StreamType_TwoD_SPATIAL,
-    TwoD = AEGP_StreamType_TwoD,
-    OneD = AEGP_StreamType_OneD,
-    Color = AEGP_StreamType_COLOR,
+    NoData = ae_sys::AEGP_StreamType_NO_DATA,
+    ThreeDSpatial = ae_sys::AEGP_StreamType_ThreeD_SPATIAL,
+    ThreeD = ae_sys::AEGP_StreamType_ThreeD,
+    TwoDSpatial = ae_sys::AEGP_StreamType_TwoD_SPATIAL,
+    TwoD = ae_sys::AEGP_StreamType_TwoD,
+    OneD = ae_sys::AEGP_StreamType_OneD,
+    Color = ae_sys::AEGP_StreamType_COLOR,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(C)]
 pub enum StreamValue {
     None,
-    FourD(A_FpLong, A_FpLong, A_FpLong, A_FpLong),
+    FourD(ae_sys::A_FpLong, ae_sys::A_FpLong, ae_sys::A_FpLong, ae_sys::A_FpLong),
     ThreeD {
         x: ae_sys::A_FpLong,
         y: ae_sys::A_FpLong,
@@ -366,11 +367,11 @@ impl TryFrom<StreamValue> for [f64; 4] {
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 #[repr(i32)]
 pub enum LightType {
-    None = AEGP_LightType_NONE,
-    Parallel = AEGP_LightType_PARALLEL,
-    Spot = AEGP_LightType_SPOT,
-    Point = AEGP_LightType_POINT,
-    Ambient = AEGP_LightType_AMBIENT,
+    None = ae_sys::AEGP_LightType_NONE,
+    Parallel = ae_sys::AEGP_LightType_PARALLEL,
+    Spot = ae_sys::AEGP_LightType_SPOT,
+    Point = ae_sys::AEGP_LightType_POINT,
+    Ambient = ae_sys::AEGP_LightType_AMBIENT,
 }
 
 #[derive(
@@ -378,15 +379,15 @@ pub enum LightType {
 )]
 #[repr(i32)]
 pub enum ObjectType {
-    None = AEGP_ObjectType_NONE,
+    None = ae_sys::AEGP_ObjectType_NONE,
     /// Includes all pre-AE 5.0 layer types (audio or video source,
     /// including adjustment layers).
-    AudioVideo = AEGP_ObjectType_AV,
-    Light = AEGP_ObjectType_LIGHT,
-    Camera = AEGP_ObjectType_CAMERA,
-    Text = AEGP_ObjectType_TEXT,
-    Vector = AEGP_ObjectType_VECTOR,
-    NumTypes = AEGP_ObjectType_NUM_TYPES,
+    AudioVideo = ae_sys::AEGP_ObjectType_AV,
+    Light = ae_sys::AEGP_ObjectType_LIGHT,
+    Camera = ae_sys::AEGP_ObjectType_CAMERA,
+    Text = ae_sys::AEGP_ObjectType_TEXT,
+    Vector = ae_sys::AEGP_ObjectType_VECTOR,
+    NumTypes = ae_sys::AEGP_ObjectType_NUM_TYPES,
 }
 
 #[allow(dead_code)]
@@ -853,7 +854,7 @@ impl WorldSuite {
 }
 
 pub struct World {
-    world_handle: AEGP_WorldH,
+    world_handle: ae_sys::AEGP_WorldH,
     is_owned: bool,
 }
 
@@ -957,7 +958,7 @@ impl CompSuite {
         &self,
         comp_handle: CompHandle,
     ) -> Result<u32, Error> {
-        let mut samples = std::mem::MaybeUninit::<A_long>::uninit();
+        let mut samples = std::mem::MaybeUninit::<ae_sys::A_long>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1490,12 +1491,12 @@ impl StreamSuite {
                     }
                 },
                 /*
-                Arb = AEGP_StreamType_ARB,
-                Marker = AEGP_StreamType_MARKER,
-                LayerID = AEGP_StreamType_LAYER_ID,
-                MaskID = AEGP_StreamType_MASK_ID,
-                Mask = AEGP_StreamType_MASK,
-                TextDocument = AEGP_StreamType_TEXT_DOCUMENT,*/
+                Arb = ae_sys::AEGP_StreamType_ARB,
+                Marker = ae_sys::AEGP_StreamType_MARKER,
+                LayerID = ae_sys::AEGP_StreamType_LAYER_ID,
+                MaskID = ae_sys::AEGP_StreamType_MASK_ID,
+                Mask = ae_sys::AEGP_StreamType_MASK,
+                TextDocument = ae_sys::AEGP_StreamType_TEXT_DOCUMENT,*/
                 _ => StreamValue::None,
             }),
             Err(e) => Err(e),

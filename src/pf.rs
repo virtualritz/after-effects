@@ -1,4 +1,6 @@
-pub use crate::*;
+use crate::*;
+use aftereffects_sys as ae_sys;
+
 use std::{convert::TryInto, ffi::CString, fmt::Debug, marker::PhantomData};
 
 #[derive(Debug, Copy, Clone)]
@@ -85,7 +87,7 @@ pub enum TransferMode {
 
     Difference2 = ae_sys::PF_Xfer_DIFFERENCE2,
     ColorDodge2 = ae_sys::PF_Xfer_COLOR_DODGE2,
-    ColorBurn2 = PF_Xfer_COLOR_BURN2,
+    ColorBurn2 = ae_sys::PF_Xfer_COLOR_BURN2,
 
     LinearDodge = ae_sys::PF_Xfer_LINEAR_DODGE,
     LinearBurn = ae_sys::PF_Xfer_LINEAR_BURN,
@@ -871,14 +873,14 @@ impl PreRenderCallbacks {
         index: i32,
         checkout_id: i32,
         // FIXME: warp this struct
-        req: &PF_RenderRequest,
+        req: &ae_sys::PF_RenderRequest,
         what_time: i32,
         time_step: i32,
         time_scale: u32,
-    ) -> Result<PF_CheckoutResult, Error> {
+    ) -> Result<ae_sys::PF_CheckoutResult, Error> {
         if let Some(checkout_layer) = unsafe { *self.rc_ptr }.checkout_layer {
             let mut checkout_result =
-                std::mem::MaybeUninit::<PF_CheckoutResult>::uninit();
+                std::mem::MaybeUninit::<ae_sys::PF_CheckoutResult>::uninit();
 
             match unsafe {
                 checkout_layer(
@@ -930,7 +932,7 @@ impl InDataHandle {
     }
 }
 
-pub type ProgPtr = PF_ProgPtr;
+pub type ProgPtr = ae_sys::PF_ProgPtr;
 
 #[derive(Clone, Copy, Debug)]
 #[repr(i32)]
@@ -1039,6 +1041,7 @@ pub struct PopupDef {
     names: CString,
 }
 
+use crate::ae_sys::PF_PopupDef;
 define_param_basic_wrapper!(PopupDef, PF_PopupDef, popup_def, i32, u16);
 //define_param_value_str_wrapper!(PopupDef, popup_def);
 //define_param_value_desc_wrapper!(PopupDef, popup_def);
@@ -1082,6 +1085,7 @@ impl PopupDef {
     }
 }
 
+use crate::ae_sys::PF_AngleDef;
 define_param_wrapper!(AngleDef, PF_AngleDef, angle_def);
 define_param_basic_wrapper!(AngleDef, PF_AngleDef, angle_def, i32, i32);
 //define_param_value_str_wrapper!(AngleDef, angle_def);
@@ -1135,6 +1139,7 @@ impl ColorDef {
     }
 }
 
+use crate::ae_sys::PF_SliderDef;
 define_param_wrapper!(SliderDef, PF_SliderDef, slider_def);
 define_param_basic_wrapper!(SliderDef, PF_SliderDef, slider_def, i32, i32);
 define_param_valid_min_max_wrapper!(SliderDef, slider_def, i32);
@@ -1181,6 +1186,7 @@ impl SliderDef {
 }*/
 
 // Float Slider
+use crate::ae_sys::PF_FloatSliderDef;
 define_param_wrapper!(FloatSliderDef, PF_FloatSliderDef, slider_def);
 define_param_basic_wrapper!(
     FloatSliderDef,
@@ -1267,6 +1273,7 @@ impl CheckBoxDef {
     }
 }
 
+use crate::ae_sys::PF_CheckBoxDef;
 define_param_basic_wrapper!(
     CheckBoxDef,
     PF_CheckBoxDef,
@@ -1293,7 +1300,7 @@ pub enum ParamDefUnion {
 pub struct ParamDef {
     param_def_boxed: std::mem::ManuallyDrop<Box<ae_sys::PF_ParamDef>>,
     drop: bool,
-    in_data_ptr: *const PF_InData,
+    in_data_ptr: *const ae_sys::PF_InData,
 }
 
 impl ParamDef {
@@ -1308,7 +1315,7 @@ impl ParamDef {
     }
 
     pub fn from_raw(
-        in_data_ptr: *const PF_InData,
+        in_data_ptr: *const ae_sys::PF_InData,
         param_def: *mut ae_sys::PF_ParamDef,
     ) -> Self {
         Self {
