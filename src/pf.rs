@@ -1,5 +1,4 @@
 pub use crate::*;
-use aftereffects_sys as ae_sys;
 use std::{convert::TryInto, ffi::CString, fmt::Debug, marker::PhantomData};
 
 #[derive(Debug, Copy, Clone)]

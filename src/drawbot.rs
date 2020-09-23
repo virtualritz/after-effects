@@ -1,5 +1,5 @@
-pub use crate::*;
-pub use ae_sys::*;
+use crate::*;
+use aftereffects_sys as ae_sys;
 
 define_handle_wrapper!(DrawRef, DRAWBOT_DrawRef);
 define_handle_wrapper!(SupplierRef, DRAWBOT_SupplierRef);

@@ -8,10 +8,26 @@
 
 #[macro_use]
 extern crate bitflags;
-
 use aftereffects_sys as ae_sys;
+
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
 use std::{cell::RefCell, ops::Add};
+
+#[macro_use]
+mod macros;
+pub use macros::*;
+
+pub mod aegp;
+pub use aegp::*;
+pub mod aeio;
+pub use aeio::*;
+pub mod drawbot;
+pub use drawbot::*;
+pub mod pf;
+pub use pf::*;
+pub mod pr;
+pub use pr::*;
+
 
 thread_local!(
     pub static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> =
@@ -173,20 +189,6 @@ impl From<AeError> for i32 {
     }
 }*/
 
-#[macro_use]
-pub mod macros;
-pub use macros::*;
-
-pub mod aegp;
-pub use aegp::*;
-pub mod aeio;
-pub use aeio::*;
-pub mod drawbot;
-pub use drawbot::*;
-pub mod pf;
-pub use pf::*;
-pub mod pr;
-pub use pr::*;
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]

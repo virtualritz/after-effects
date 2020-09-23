@@ -1,3 +1,4 @@
+pub use crate::*;
 use aftereffects_sys as ae_sys;
 
 #[derive(Copy, Clone, Debug, Hash)]

@@ -1,3 +1,5 @@
+use aftereffects_sys as ae_sys;
+
 #[macro_export]
 macro_rules! ae_acquire_suite_ptr {
     ($pica:expr, $type:ident, $name:ident, $version:ident) => {{

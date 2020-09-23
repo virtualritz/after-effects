@@ -1385,7 +1385,7 @@ impl StreamSuite {
             time_mode as ae_sys::AEGP_LTimeMode,
             &time as *const _ as *const ae_sys::A_Time,
             sample_stream_pre_expression as u8,
-            stream_value_ptr as *mut aftereffects_sys::AEGP_StreamValue2,
+            stream_value_ptr as *mut ae_sys::AEGP_StreamValue2,
         ) {
             Ok(()) => {
                 let value = unsafe { *stream_value_ptr };
@@ -1393,7 +1393,7 @@ impl StreamSuite {
                     self.suite_ptr,
                     AEGP_DisposeStreamValue,
                     stream_value_ptr
-                        as *mut aftereffects_sys::AEGP_StreamValue2,
+                        as *mut ae_sys::AEGP_StreamValue2,
                 )
                 .unwrap();
                 Ok(StreamValue2 {
