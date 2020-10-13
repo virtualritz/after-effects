@@ -1,7 +1,12 @@
 use crate::*;
 use aftereffects_sys as ae_sys;
-
-use std::{convert::TryInto, ffi::CString, fmt::Debug, marker::PhantomData};
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+use std::{
+    convert::{TryFrom, TryInto},
+    ffi::CString,
+    fmt::Debug,
+    marker::PhantomData,
+};
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -35,6 +40,60 @@ impl From<Pixel> for ae_sys::PF_Pixel {
 }
 
 pub type Pixel8 = Pixel;
+
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive,
+)]
+#[repr(i32)]
+pub enum EventType {
+    None = ae_sys::PF_Event_NONE,
+    NewContext = ae_sys::PF_Event_NEW_CONTEXT,
+    Activate = ae_sys::PF_Event_ACTIVATE,
+    DoClick = ae_sys::PF_Event_DO_CLICK,
+    Drag = ae_sys::PF_Event_DRAG,
+    Draw = ae_sys::PF_Event_DRAW,
+    Deactivate = ae_sys::PF_Event_DEACTIVATE,
+    Context = ae_sys::PF_Event_CLOSE_CONTEXT,
+    Idle = ae_sys::PF_Event_IDLE,
+    // New for AE 4.0, sent when mouse moves over custom UI
+    AdjustCursor = ae_sys::PF_Event_ADJUST_CURSOR,
+    // New for AE 7.0, replaces previous keydown event with
+    // cross platform codes and unicode characters.
+    Keydown = ae_sys::PF_Event_KEYDOWN,
+    // New for AE 11.0, notification that the mouse is no
+    // longer over a specific view (layer or comp only).
+    MouseExited = ae_sys::PF_Event_MOUSE_EXITED,
+    NumEvents = ae_sys::PF_Event_NUM_EVENTS,
+}
+
+bitflags! {
+    pub struct EventOutFlags: u32 {
+        const NONE = ae_sys::PF_EO_NONE;
+        const HANDLED_EVENT = ae_sys::PF_EO_HANDLED_EVENT;
+        // Rerender the comp.
+        const ALWAYS_UPDATE = ae_sys::PF_EO_ALWAYS_UPDATE;
+        // Do not rerender the comp.
+        const NEVER_UPDATE = ae_sys::PF_EO_NEVER_UPDATE;
+        // Update the view immediately after the event returns when using pf::InvalidateRect.
+        const UPDATE_NOW = ae_sys::PF_EO_UPDATE_NOW;
+    }
+}
+
+define_struct_wrapper!(EventExtra, PF_EventExtra);
+
+impl EventExtra {
+    pub fn get_context_handle(&self) -> ContextHandle {
+        ContextHandle::from_raw(self.0.contextH)
+    }
+
+    pub fn get_event_type(&self) -> EventType {
+        EventType::try_from(self.0.e_type).unwrap()
+    }
+
+    pub fn event_out_flags(&mut self, flags: EventOutFlags) {
+        self.0.evt_out_flags = flags.bits() as _;
+    }
+}
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -934,6 +993,103 @@ impl InDataHandle {
 
 pub type ProgPtr = ae_sys::PF_ProgPtr;
 
+bitflags! {
+    pub struct CustomEventFlags: u32 {
+        const NONE = ae_sys::PF_CustomEFlag_NONE;
+        const COMP = ae_sys::PF_CustomEFlag_COMP;
+        const LAYER = ae_sys::PF_CustomEFlag_LAYER;
+        const EFFECT = ae_sys::PF_CustomEFlag_EFFECT;
+        const PREVIEW = ae_sys::PF_CustomEFlag_PREVIEW;
+    }
+}
+
+bitflags! {
+    struct _UIAlignment: u32 {
+        // No values other than PF_UIAlignment_NONE are honored, in Ae or PPro.
+        const NONE = ae_sys::PF_UIAlignment_NONE;
+        const TOP = ae_sys::PF_UIAlignment_TOP;
+        const LEFT = ae_sys::PF_UIAlignment_LEFT;
+        const BOTTOM = ae_sys::PF_UIAlignment_BOTTOM;
+        const RIGHT = ae_sys::PF_UIAlignment_RIGHT;
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct CustomUIInfo(ae_sys::PF_CustomUIInfo);
+
+impl CustomUIInfo {
+    pub fn new() -> Self {
+        Self(unsafe { std::mem::MaybeUninit::zeroed().assume_init() })
+    }
+
+    pub fn as_ptr(&self) -> *const ae_sys::PF_CustomUIInfo {
+        &self.0
+    }
+
+    pub fn events<'a>(&'a mut self, events: CustomEventFlags) -> &'a mut Self {
+        self.0.events = events.bits() as _;
+        self
+    }
+
+    pub fn comp_ui_width<'a>(&'a mut self, width: u16) -> &'a mut Self {
+        self.0.comp_ui_width = width as _;
+        self
+    }
+
+    pub fn comp_ui_height<'a>(&'a mut self, height: u16) -> &'a mut Self {
+        self.0.comp_ui_height = height as _;
+        self
+    }
+
+    pub fn layer_ui_width<'a>(&'a mut self, width: u16) -> &'a mut Self {
+        self.0.layer_ui_width = width as _;
+        self
+    }
+
+    pub fn layer_ui_height<'a>(&'a mut self, height: u16) -> &'a mut Self {
+        self.0.layer_ui_height = height as _;
+        self
+    }
+
+    pub fn preview_ui_width<'a>(&'a mut self, width: u16) -> &'a mut Self {
+        self.0.preview_ui_width = width as _;
+        self
+    }
+
+    pub fn preview_ui_height<'a>(&'a mut self, height: u16) -> &'a mut Self {
+        self.0.preview_ui_height = height as _;
+        self
+    }
+
+    pub fn finalize(self) -> Self {
+        self
+    }
+}
+
+pub struct InteractCallbacks(InDataHandle);
+
+impl InteractCallbacks {
+    pub fn new(in_data: InDataHandle) -> Self {
+        Self(in_data)
+    }
+
+    pub fn register_ui(
+        &self,
+        custom_ui_info: CustomUIInfo,
+    ) -> Result<(), Error> {
+        match unsafe {
+            (*self.0.as_ptr()).inter.register_ui.unwrap()(
+                (*self.0.as_ptr()).effect_ref,
+                custom_ui_info.as_ptr() as _,
+            )
+        } as u32
+        {
+            ae_sys::PF_Err_NONE => Ok(()),
+            e => Err(unsafe { Error::from_unchecked(e as i32) }),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 #[repr(i32)]
 pub enum ParamType {
@@ -957,6 +1113,35 @@ pub enum ParamType {
     Reserved2 = ae_sys::PF_Param_RESERVED2,
     Reserved3 = ae_sys::PF_Param_RESERVED3,
     Point3D = ae_sys::PF_Param_POINT_3D,
+}
+
+bitflags! {
+    pub struct ParamUIFlags: u32 {
+        const NONE = ae_sys::PF_PUI_NONE;
+        /// Effect has custom UI and wants events for this params' title (portion visible when twirled up).
+        const TOPIC = ae_sys::PF_PUI_TOPIC;
+        /// Effect has custom UI and wants events for this params' control (portion invisible when twirled up).
+        const CONTROL = ae_sys::PF_PUI_CONTROL;
+        // Param will be used as UI only, no data (new in AE 4.0).
+        const CONTROL_ONLY = ae_sys::PF_PUI_STD_CONTROL_ONLY;
+        // stop param from appearing in Effect Controls (which in PPro also means you won't see a keyframe track there)
+        const NO_ECW_UI = ae_sys::PF_PUI_NO_ECW_UI;
+        // draw a thick separating line above this param; not used by AE
+        const ECW_SEPARATOR = ae_sys::PF_PUI_ECW_SEPARATOR;
+        // disable (gray-out) UI for this param
+        const DISABLED = ae_sys::PF_PUI_DISABLED;
+        // AE will not erase the ECW topic, it's up to the FX to erase/draw every pixel.
+        // Handy if FX author implements an offscreen, prevents flashing.
+        const DONT_ERASE_TOPIC = ae_sys::PF_PUI_DONT_ERASE_TOPIC;
+        const DONT_ERASE_CONTROL = ae_sys::PF_PUI_DONT_ERASE_CONTROL;
+        /// Display as a radio-button group; only valid for PF_Param_POPUP; ignored by Ae.
+        const RADIO_BUTTON = ae_sys::PF_PUI_RADIO_BUTTON;
+        /// In Ae as of CS6, this hides the parameter UI in both the Effect Controls and Timeline.
+        /// in Premiere since earlier than that, this hides the parameter UI in the Effect Controls,
+        ///	which includes the keyframe track; for PPro only, the flag is dynamic and can be cleared
+        ///	to make the parameter visible again.
+        const INVISIBLE = ae_sys::PF_PUI_INVISIBLE;
+    }
 }
 
 bitflags! {
@@ -1036,22 +1221,19 @@ impl ButtonDef {
 
 #[repr(C)]
 #[derive(Clone)]
-pub struct PopupDef {
-    popup_def: ae_sys::PF_PopupDef,
-    names: CString,
-}
+pub struct PopupDef(ae_sys::PF_PopupDef, CString);
 
 use crate::ae_sys::PF_PopupDef;
-define_param_basic_wrapper!(PopupDef, PF_PopupDef, popup_def, i32, u16);
+define_param_basic_wrapper!(PopupDef, PF_PopupDef, i32, u16);
 //define_param_value_str_wrapper!(PopupDef, popup_def);
 //define_param_value_desc_wrapper!(PopupDef, popup_def);
 
 impl PopupDef {
     pub fn new() -> Self {
-        Self {
-            popup_def: unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
-            names: CString::new("").unwrap(),
-        }
+        Self(
+            unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+            CString::new("").unwrap(),
+        )
     }
 
     pub fn names<'a>(&'a mut self, names: Vec<&str>) -> &'a mut Self {
@@ -1061,18 +1243,18 @@ impl PopupDef {
         names
             .iter()
             .for_each(|s| names_tmp += format!("{}|", *s).as_str());
-        self.names = CString::new(names_tmp).unwrap();
-        self.popup_def.u.namesptr = self.names.as_ptr();
-        self.popup_def.num_choices = names.len().try_into().unwrap();
+        self.1 = CString::new(names_tmp).unwrap();
+        self.0.u.namesptr = self.1.as_ptr();
+        self.0.num_choices = names.len().try_into().unwrap();
         self
     }
 
     pub fn from(param: &ParamDef) -> Option<Self> {
         if ae_sys::PF_Param_POPUP == param.param_def_boxed.param_type {
-            Some(Self {
-                popup_def: unsafe { param.param_def_boxed.u.pd },
-                names: CString::new("").unwrap(),
-            })
+            Some(Self(
+                unsafe { param.param_def_boxed.u.pd },
+                CString::new("").unwrap(),
+            ))
         } else {
             None
         }
@@ -1081,85 +1263,79 @@ impl PopupDef {
     //pub fn check_out()
 
     pub fn get(&self) -> u16 {
-        self.popup_def.value as u16
+        self.0.value as u16
     }
 }
 
 use crate::ae_sys::PF_AngleDef;
-define_param_wrapper!(AngleDef, PF_AngleDef, angle_def);
-define_param_basic_wrapper!(AngleDef, PF_AngleDef, angle_def, i32, i32);
+define_param_wrapper!(AngleDef, PF_AngleDef);
+define_param_basic_wrapper!(AngleDef, PF_AngleDef, i32, i32);
 //define_param_value_str_wrapper!(AngleDef, angle_def);
 //define_param_value_desc_wrapper!(AngleDef, angle_def);
 
 impl AngleDef {
     pub fn from(param: &ParamDef) -> Option<Self> {
         if ae_sys::PF_Param_ANGLE == param.param_def_boxed.param_type {
-            Some(Self {
-                angle_def: unsafe { param.param_def_boxed.u.ad },
-            })
+            Some(Self(unsafe { param.param_def_boxed.u.ad }))
         } else {
             None
         }
     }
 
     pub fn get(&self) -> i32 {
-        self.angle_def.value
+        self.0.value
     }
 }
 
-define_param_wrapper!(ColorDef, PF_ColorDef, color_def);
+define_param_wrapper!(ColorDef, PF_ColorDef);
 
 impl ColorDef {
     pub fn from(param: &ParamDef) -> Option<Self> {
         if ae_sys::PF_Param_COLOR == param.param_def_boxed.param_type {
-            Some(Self {
-                color_def: unsafe { param.param_def_boxed.u.cd },
-            })
+            Some(Self(unsafe { param.param_def_boxed.u.cd }))
         } else {
             None
         }
     }
 
     pub fn get(&self) -> Pixel {
-        Pixel::from(self.color_def.value)
+        Pixel::from(self.0.value)
     }
 
     pub fn value<'a>(&'a mut self, value: Pixel) -> &'a mut Self {
-        self.color_def.value = ae_sys::PF_Pixel::from(value);
+        self.0.value = ae_sys::PF_Pixel::from(value);
         self
     }
 
     pub fn default<'a>(&'a mut self, default: Pixel) -> &'a mut Self {
-        self.color_def.dephault = ae_sys::PF_Pixel::from(default);
+        self.0.dephault = ae_sys::PF_Pixel::from(default);
         self
     }
 
     pub fn into_raw(def: ColorDef) -> ae_sys::PF_ColorDef {
-        def.color_def
+        def.0
     }
 }
 
 use crate::ae_sys::PF_SliderDef;
-define_param_wrapper!(SliderDef, PF_SliderDef, slider_def);
-define_param_basic_wrapper!(SliderDef, PF_SliderDef, slider_def, i32, i32);
-define_param_valid_min_max_wrapper!(SliderDef, slider_def, i32);
-define_param_slider_min_max_wrapper!(SliderDef, slider_def, i32);
-define_param_value_str_wrapper!(SliderDef, slider_def);
-define_param_value_desc_wrapper!(SliderDef, slider_def);
+define_param_wrapper!(SliderDef, PF_SliderDef);
+define_param_basic_wrapper!(SliderDef, PF_SliderDef, i32, i32);
+define_param_valid_min_max_wrapper!(SliderDef, i32);
+define_param_slider_min_max_wrapper!(SliderDef, i32);
+define_param_value_str_wrapper!(SliderDef);
+define_param_value_desc_wrapper!(SliderDef);
 
 impl SliderDef {
     pub fn from(param: &ParamDef) -> Option<Self> {
         if ae_sys::PF_Param_SLIDER == param.param_def_boxed.param_type {
-            Some(Self {
-                slider_def: unsafe { param.param_def_boxed.u.sd },
-            })
+            Some(Self(unsafe { param.param_def_boxed.u.sd }))
         } else {
             None
         }
     }
 
     pub fn get(&self) -> i32 {
-        self.slider_def.value
+        self.0.value
     }
 }
 /* Adobe recommends not useing fixed (point) sliders any more and
@@ -1187,44 +1363,36 @@ impl SliderDef {
 
 // Float Slider
 use crate::ae_sys::PF_FloatSliderDef;
-define_param_wrapper!(FloatSliderDef, PF_FloatSliderDef, slider_def);
-define_param_basic_wrapper!(
-    FloatSliderDef,
-    PF_FloatSliderDef,
-    slider_def,
-    f64,
-    f32
-);
-define_param_valid_min_max_wrapper!(FloatSliderDef, slider_def, f32);
-define_param_slider_min_max_wrapper!(FloatSliderDef, slider_def, f32);
-define_param_value_desc_wrapper!(FloatSliderDef, slider_def);
+define_param_wrapper!(FloatSliderDef, PF_FloatSliderDef);
+define_param_basic_wrapper!(FloatSliderDef, PF_FloatSliderDef, f64, f32);
+define_param_valid_min_max_wrapper!(FloatSliderDef, f32);
+define_param_slider_min_max_wrapper!(FloatSliderDef, f32);
+define_param_value_desc_wrapper!(FloatSliderDef);
 
 impl FloatSliderDef {
     pub fn display_flags<'a>(
         &'a mut self,
         display_flags: ValueDisplayFlag,
     ) -> &'a mut Self {
-        self.slider_def.display_flags = display_flags.bits() as i16;
+        self.0.display_flags = display_flags.bits() as i16;
         self
     }
 
     pub fn precision<'a>(&'a mut self, precision: u8) -> &'a mut Self {
-        self.slider_def.precision = precision as i16;
+        self.0.precision = precision as i16;
         self
     }
 
     pub fn from(param: &ParamDef) -> Option<Self> {
         if ae_sys::PF_Param_FLOAT_SLIDER == param.param_def_boxed.param_type {
-            Some(Self {
-                slider_def: unsafe { param.param_def_boxed.u.fs_d },
-            })
+            Some(Self(unsafe { param.param_def_boxed.u.fs_d }))
         } else {
             None
         }
     }
 
     pub fn get(&self) -> f64 {
-        self.slider_def.value
+        self.0.value
     }
 }
 
@@ -1234,56 +1402,76 @@ impl FloatSliderDef {
 // the define_param_basic_wrapper!() macro.
 #[repr(C)]
 #[derive(Clone)]
-pub struct CheckBoxDef {
-    check_box_def: ae_sys::PF_CheckBoxDef,
-    label: CString,
-}
+pub struct CheckBoxDef(ae_sys::PF_CheckBoxDef, CString);
 
 impl CheckBoxDef {
     pub fn new() -> Self {
-        Self {
-            check_box_def: unsafe {
-                std::mem::MaybeUninit::zeroed().assume_init()
-            },
-            label: CString::new("").unwrap(),
-        }
+        Self(
+            unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+            CString::new("").unwrap(),
+        )
     }
 
     pub fn label<'a>(&'a mut self, label: &str) -> &'a mut Self {
-        self.label = CString::new(label).unwrap();
-        self.check_box_def.u.nameptr = self.label.as_ptr();
+        self.1 = CString::new(label).unwrap();
+        self.0.u.nameptr = self.1.as_ptr();
         self
     }
 
     pub fn from(param: &ParamDef) -> Option<Self> {
         if ae_sys::PF_Param_CHECKBOX == param.param_def_boxed.param_type {
-            Some(Self {
-                check_box_def: unsafe { param.param_def_boxed.u.bd },
-                label: unsafe {
-                    CString::from_raw(param.param_def_boxed.u.bd.u.nameptr as _)
-                },
-            })
+            Some(Self(unsafe { param.param_def_boxed.u.bd }, unsafe {
+                CString::from_raw(param.param_def_boxed.u.bd.u.nameptr as _)
+            }))
         } else {
             None
         }
     }
 
     pub fn get(&self) -> bool {
-        self.check_box_def.value != 0
+        self.0.value != 0
     }
 }
 
 use crate::ae_sys::PF_CheckBoxDef;
-define_param_basic_wrapper!(
-    CheckBoxDef,
-    PF_CheckBoxDef,
-    check_box_def,
-    i32,
-    bool
+define_param_basic_wrapper!(CheckBoxDef, PF_CheckBoxDef, i32, bool);
+
+use std::any::Any;
+
+//trait AnyClone: Any + Clone {};
+
+pub struct ArbitraryDef(
+    ae_sys::PF_ArbitraryDef,
+    // We use Box::into_raw() and Box::from_raw() to manage
+    // handling of this data with Ae
+    Box<dyn Any>,
 );
 
+impl ArbitraryDef {
+    pub fn new() -> Self {
+        Self(
+            unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+            Box::new(()),
+        )
+    }
+
+    pub fn into_raw(def: ArbitraryDef) -> ae_sys::PF_ArbitraryDef {
+        def.0
+    }
+
+    pub fn finalize(self) -> Self {
+        self
+    }
+
+    pub fn value<T: Any>(mut self, data: T) -> Self {
+        self.1 = Box::new(data);
+        //self.0.
+        self
+    }
+}
+
 #[repr(C)]
-#[derive(Clone)]
+//#[derive(Clone)]
 pub enum ParamDefUnion {
     PopupDef(PopupDef),
     AngleDef(AngleDef),
@@ -1293,6 +1481,7 @@ pub enum ParamDefUnion {
     ColorDef(ColorDef),
     ButtonDef(ButtonDef),
     //FixedSliderDef(FixedSliderDef),
+    ArbitraryDef(ArbitraryDef),
 }
 
 #[derive(Clone)]
@@ -1405,6 +1594,11 @@ impl ParamDef {
                 self.param_def_boxed.u.button_d = ButtonDef::into_raw(button_d);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_BUTTON;
             }
+            ParamDefUnion::ArbitraryDef(arb_d) => {
+                self.param_def_boxed.u.arb_d = ArbitraryDef::into_raw(arb_d);
+                self.param_def_boxed.param_type =
+                    ae_sys::PF_Param_ARBITRARY_DATA;
+            }
         }
         self
     }
@@ -1426,23 +1620,23 @@ impl ParamDef {
         self
     }
 
-    pub fn ui_flags<'a>(&'a mut self, flags: i32) -> &'a mut ParamDef {
-        self.param_def_boxed.ui_flags = flags;
+    pub fn ui_flags<'a>(&'a mut self, flags: ParamUIFlags) -> &'a mut ParamDef {
+        self.param_def_boxed.ui_flags = flags.bits() as _;
         self
     }
 
     pub fn ui_width<'a>(&'a mut self, width: u16) -> &'a mut ParamDef {
-        self.param_def_boxed.ui_width = width as i16;
+        self.param_def_boxed.ui_width = width as _;
         self
     }
 
     pub fn ui_height<'a>(&'a mut self, height: u16) -> &'a mut ParamDef {
-        self.param_def_boxed.ui_height = height as i16;
+        self.param_def_boxed.ui_height = height as _;
         self
     }
 
     pub fn flags<'a>(&'a mut self, flags: ParamFlag) -> &'a mut ParamDef {
-        self.param_def_boxed.flags = flags.bits() as i32;
+        self.param_def_boxed.flags = flags.bits() as _;
         self
     }
 }
@@ -1502,3 +1696,74 @@ define_suite!(
     kPFEffectCustomUIOverlayThemeSuite,
     kPFEffectCustomUIOverlayThemeSuiteVersion1
 );
+
+/*
+pub enum GameState {
+    FreePlacement(FreePlacement),
+    Play(PlayState),
+    Scoring(ScoringState),
+    Done(ScoringState),
+}
+
+assume!(GameState);
+assume!(GameState, Play(x) => x, PlayState);
+assume!(GameState, Scoring(x) => x, ScoringState);
+assume!(GameState, FreePlacement(x) => x, FreePlacement);
+
+// and then I can:
+
+state.assume::<PlayState>()
+*/
+
+pub trait AssumeFrom<T> {
+    fn assume(x: &T) -> &Self;
+    fn assume_mut(x: &mut T) -> &mut Self;
+}
+
+#[macro_export]
+macro_rules! assume {
+    ($owner:ident, $var:pat => $out:expr, $ty:ty) => {
+        impl AssumeFrom<$owner> for $ty {
+            fn assume(x: &$owner) -> &$ty {
+                use $owner::*;
+                match x {
+                    $var => $out,
+                    _ => panic!(
+                        concat!(
+                            "Assumed ",
+                            stringify!($var),
+                            " but was in {:?}"
+                        ),
+                        x
+                    ),
+                }
+            }
+
+            fn assume_mut(x: &mut $owner) -> &mut $ty {
+                use $owner::*;
+                match x {
+                    $var => $out,
+                    _ => panic!(
+                        concat!(
+                            "Assumed ",
+                            stringify!($var),
+                            " but was in {:?}"
+                        ),
+                        x
+                    ),
+                }
+            }
+        }
+    };
+    ($owner:ident) => {
+        impl $owner {
+            pub fn assume<T: AssumeFrom<Self>>(&self) -> &T {
+                T::assume(self)
+            }
+
+            pub fn assume_mut<T: AssumeFrom<Self>>(&mut self) -> &mut T {
+                T::assume_mut(self)
+            }
+        }
+    };
+}

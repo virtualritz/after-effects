@@ -79,7 +79,7 @@ pub enum LayerStream {
 
     CastsShadows = ae_sys::AEGP_LayerStream_CASTS_SHADOWS, /* LIGHT and AV only, no CAMERA */
     LightTransmission = ae_sys::AEGP_LayerStream_LIGHT_TRANSMISSION, /* AV Layer only */
-    Metal = ae_sys::AEGP_LayerStream_METAL,                // AV layer only
+    Metal = ae_sys::AEGP_LayerStream_METAL, // AV layer only
 
     SourceText = ae_sys::AEGP_LayerStream_SOURCE_TEXT,
 
@@ -91,7 +91,8 @@ pub enum LayerStream {
     IrisDiffractionFringe = ae_sys::AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE,
     IrisHighlightGain = ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN,
     IrisHighlightThreshold = ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD,
-    IrisHighlightSaturation = ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION,
+    IrisHighlightSaturation =
+        ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION,
 
     // only valid for AEGP_ObjectType == ae_sys::AEGP_ObjectTyp_LIGHT
     LightFalloffType = ae_sys::AEGP_LayerStream_LIGHT_FALLOFF_TYPE,
@@ -109,7 +110,8 @@ pub enum LayerStream {
     BevelStyle = ae_sys::AEGP_LayerStream_EXTRUSION_BEVEL_STYLE,
     BevelDirection = ae_sys::AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION,
     BevelDepth = ae_sys::AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH,
-    ExtrusionHoleBeveDepth = ae_sys::AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH,
+    ExtrusionHoleBeveDepth =
+        ae_sys::AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH,
     ExtrusionDepth = ae_sys::AEGP_LayerStream_EXTRUSION_DEPTH,
     PlaneCurvature = ae_sys::AEGP_LayerStream_PLANE_CURVATURE,
     PlaneSubdivision = ae_sys::AEGP_LayerStream_PLANE_SUBDIVISION,
@@ -186,7 +188,12 @@ pub enum StreamType {
 #[repr(C)]
 pub enum StreamValue {
     None,
-    FourD(ae_sys::A_FpLong, ae_sys::A_FpLong, ae_sys::A_FpLong, ae_sys::A_FpLong),
+    FourD(
+        ae_sys::A_FpLong,
+        ae_sys::A_FpLong,
+        ae_sys::A_FpLong,
+        ae_sys::A_FpLong,
+    ),
     ThreeD {
         x: ae_sys::A_FpLong,
         y: ae_sys::A_FpLong,
@@ -1393,8 +1400,7 @@ impl StreamSuite {
                 ae_call_suite_fn!(
                     self.suite_ptr,
                     AEGP_DisposeStreamValue,
-                    stream_value_ptr
-                        as *mut ae_sys::AEGP_StreamValue2,
+                    stream_value_ptr as *mut ae_sys::AEGP_StreamValue2,
                 )
                 .unwrap();
                 Ok(StreamValue2 {

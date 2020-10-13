@@ -123,7 +123,9 @@ macro_rules! define_ptr_wrapper {
         pub struct $wrapper_pretty_name(*const aftereffects_sys::$data_type);
 
         impl $wrapper_pretty_name {
-            pub fn from_raw(raw_ptr: *const aftereffects_sys::$data_type) -> Self {
+            pub fn from_raw(
+                raw_ptr: *const aftereffects_sys::$data_type,
+            ) -> Self {
                 Self(raw_ptr)
             }
 
@@ -136,7 +138,9 @@ macro_rules! define_ptr_wrapper {
             }
         }
 
-        impl From<$wrapper_pretty_name> for *const aftereffects_sys::$data_type {
+        impl From<$wrapper_pretty_name>
+            for *const aftereffects_sys::$data_type
+        {
             fn from(ptr_wrapper: $wrapper_pretty_name) -> Self {
                 ptr_wrapper.as_ptr()
             }
@@ -166,6 +170,29 @@ macro_rules! define_handle_wrapper {
         impl From<$wrapper_pretty_name> for aftereffects_sys::$data_type {
             fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
                 handle_wrapper.as_ptr()
+            }
+        }
+    };
+}
+
+macro_rules! define_struct_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:ident) => {
+        #[derive(Copy, Clone)]
+        pub struct $wrapper_pretty_name(aftereffects_sys::$data_type);
+
+        impl $wrapper_pretty_name {
+            pub fn from_raw(ae_struct: aftereffects_sys::$data_type) -> Self {
+                Self(ae_struct)
+            }
+
+            pub fn as_ref(&self) -> &aftereffects_sys::$data_type {
+                &self.0
+            }
+        }
+
+        impl From<$wrapper_pretty_name> for aftereffects_sys::$data_type {
+            fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
+                handle_wrapper.0
             }
         }
     };
@@ -203,32 +230,27 @@ macro_rules! define_owned_handle_wrapper {
 }
 
 macro_rules! define_param_wrapper {
-    ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident) => {
+    ($wrapper_pretty_name:ident, $data_type:ident) => {
         #[derive(Copy, Clone, Debug)]
         #[repr(C)]
-        pub struct $wrapper_pretty_name {
-            pub(crate) $data_name: aftereffects_sys::$data_type,
-        }
+        pub struct $wrapper_pretty_name(aftereffects_sys::$data_type);
+
         impl $wrapper_pretty_name {
             pub fn new() -> Self {
-                Self {
-                    $data_name: unsafe {
-                        std::mem::MaybeUninit::zeroed().assume_init()
-                    },
-                }
+                Self(unsafe { std::mem::MaybeUninit::zeroed().assume_init() })
             }
         }
     };
 }
 
 macro_rules! define_param_basic_wrapper {
-    ($wrapper_pretty_name:ident, $data_type:ident, $data_name:ident, $value_type:ident, $value_type_ui:ident) => {
+    ($wrapper_pretty_name:ident, $data_type:ident, $value_type:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
             pub fn value<'a>(
                 &'a mut self,
                 value: $value_type,
             ) -> &'a mut $wrapper_pretty_name {
-                self.$data_name.value = value;
+                self.0.value = value;
                 self
             }
 
@@ -236,25 +258,25 @@ macro_rules! define_param_basic_wrapper {
                 &'a mut self,
                 default: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
-                self.$data_name.dephault = default as _;
+                self.0.dephault = default as _;
                 self
             }
 
             pub fn into_raw(def: $wrapper_pretty_name) -> $data_type {
-                def.$data_name
+                def.0
             }
         }
     };
 }
 
 macro_rules! define_param_valid_min_max_wrapper {
-    ($wrapper_pretty_name:ident, $data_name:ident, $value_type_ui:ident) => {
+    ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
             pub fn valid_min<'a>(
                 &'a mut self,
                 valid_min: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
-                self.$data_name.valid_min = valid_min;
+                self.0.valid_min = valid_min;
                 self
             }
 
@@ -262,7 +284,7 @@ macro_rules! define_param_valid_min_max_wrapper {
                 &'a mut self,
                 valid_max: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
-                self.$data_name.valid_max = valid_max;
+                self.0.valid_max = valid_max;
                 self
             }
         }
@@ -270,13 +292,13 @@ macro_rules! define_param_valid_min_max_wrapper {
 }
 
 macro_rules! define_param_slider_min_max_wrapper {
-    ($wrapper_pretty_name:ident, $data_name:ident, $value_type_ui:ident) => {
+    ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
             pub fn slider_min<'a>(
                 &'a mut self,
                 slider_min: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
-                self.$data_name.slider_min = slider_min;
+                self.0.slider_min = slider_min;
                 self
             }
 
@@ -284,7 +306,7 @@ macro_rules! define_param_slider_min_max_wrapper {
                 &'a mut self,
                 slider_max: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
-                self.$data_name.slider_max = slider_max;
+                self.0.slider_max = slider_max;
                 self
             }
         }
@@ -292,7 +314,7 @@ macro_rules! define_param_slider_min_max_wrapper {
 }
 
 macro_rules! define_param_value_str_wrapper {
-    ($wrapper_pretty_name:ident, $data_name:ident) => {
+    ($wrapper_pretty_name:ident) => {
         impl $wrapper_pretty_name {
             pub fn value_str<'a>(
                 &'a mut self,
@@ -301,10 +323,9 @@ macro_rules! define_param_value_str_wrapper {
                 assert!(value_str.len() < 32);
                 let value_cstr = CString::new(value_str).unwrap();
                 let value_slice = value_cstr.to_bytes_with_nul();
-                self.$data_name.value_str[0..value_slice.len()]
-                    .copy_from_slice(unsafe {
-                        std::mem::transmute(value_slice)
-                    });
+                self.0.value_str[0..value_slice.len()].copy_from_slice(
+                    unsafe { std::mem::transmute(value_slice) },
+                );
                 self
             }
         }
@@ -312,7 +333,7 @@ macro_rules! define_param_value_str_wrapper {
 }
 
 macro_rules! define_param_value_desc_wrapper {
-    ($wrapper_pretty_name:ident, $data_name:ident) => {
+    ($wrapper_pretty_name:ident) => {
         impl $wrapper_pretty_name {
             pub fn value_desc<'a>(
                 &'a mut self,
@@ -321,10 +342,9 @@ macro_rules! define_param_value_desc_wrapper {
                 assert!(value_desc.len() < 32);
                 let value_desc_cstr = CString::new(value_desc).unwrap();
                 let value_desc_slice = value_desc_cstr.to_bytes_with_nul();
-                self.$data_name.value_desc[0..value_desc_slice.len()]
-                    .copy_from_slice(unsafe {
-                        std::mem::transmute(value_desc_slice)
-                    });
+                self.0.value_desc[0..value_desc_slice.len()].copy_from_slice(
+                    unsafe { std::mem::transmute(value_desc_slice) },
+                );
                 self
             }
         }

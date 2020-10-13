@@ -28,7 +28,6 @@ pub use pf::*;
 pub mod pr;
 pub use pr::*;
 
-
 thread_local!(
     pub static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> =
         RefCell::new(std::ptr::null_mut())
@@ -188,7 +187,6 @@ impl From<AeError> for i32 {
         ae_error.0
     }
 }*/
-
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
