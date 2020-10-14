@@ -11,6 +11,7 @@ define_handle_wrapper!(ImageRef, DRAWBOT_ImageRef);
 pub type PointF32 = ae_sys::DRAWBOT_PointF32;
 pub type ColorRGBA = ae_sys::DRAWBOT_ColorRGBA;
 pub type RectF32 = ae_sys::DRAWBOT_RectF32;
+pub type MatrixF32 = ae_sys::DRAWBOT_MatrixF32;
 
 #[repr(i32)]
 pub enum PixelLayout {
@@ -54,10 +55,7 @@ impl DrawbotSuite {
         }
     }
 
-    pub fn get_surface(
-        &self,
-        draw_ref: &DrawRef,
-    ) -> Result<SurfaceRef, Error> {
+    pub fn get_surface(&self, draw_ref: &DrawRef) -> Result<SurfaceRef, Error> {
         let mut surface_ref =
             std::mem::MaybeUninit::<ae_sys::DRAWBOT_SurfaceRef>::uninit();
 
@@ -134,6 +132,22 @@ impl SurfaceSuite {
             surface_ref.as_ptr(),
             color as _,
             rect as _,
+        ) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn transform(
+        &self,
+        surface_ref: &SurfaceRef,
+        matrix: &MatrixF32,
+    ) -> Result<(), Error> {
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            Transform,
+            surface_ref.as_ptr(),
+            matrix as _,
         ) {
             Ok(()) => Ok(()),
             Err(e) => Err(e),

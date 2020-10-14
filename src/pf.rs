@@ -1,9 +1,11 @@
 use crate::*;
 use aftereffects_sys as ae_sys;
+use c_vec::CVec;
 use num_enum::{IntoPrimitive, TryFromPrimitive};
+use serde::{de::DeserializeOwned, Serialize};
 use std::{
     convert::{TryFrom, TryInto},
-    ffi::CString,
+    ffi::{CStr, CString},
     fmt::Debug,
     marker::PhantomData,
 };
@@ -524,7 +526,7 @@ impl<'a, T: 'a> Handle<'a, T> {
         ) as *mut T;
         if !ptr.is_null() {
             unsafe {
-                // Run destructors, if any
+                // Run destructors, if any.
                 ptr.read()
             };
         }
@@ -629,6 +631,10 @@ impl<'a, T: 'a> Drop for Handle<'a, T> {
     }
 }
 
+/// A flat handle takes a [Vec<u8>] as data. This is useful when data it passed
+/// to Ae permanently or between runs of your plug-in.
+/// You can use something like [serde_cbor::to_vec()] to seriealize your data
+/// structure into a flat [Vec<u8>].
 #[derive(Debug)]
 pub struct FlatHandle<'a> {
     suite_ptr: *const ae_sys::PF_HandleSuite1,
@@ -678,17 +684,33 @@ impl<'a> FlatHandle<'a> {
         }
     }
 
-    pub fn get(&self) -> &'a [u8] {
+    pub fn as_slice(&'a self) -> &'a [u8] {
         let ptr = unsafe { *(self.handle as *const *const u8) };
-        debug_assert!(!ptr.is_null());
-        unsafe { &*std::ptr::slice_from_raw_parts(ptr, self.size()) }
+        if ptr.is_null() {
+            &[]
+        } else {
+            unsafe { &*std::ptr::slice_from_raw_parts(ptr, self.size()) }
+        }
     }
 
-    /*
-    pub fn is_empty(&self) -> bool {
+    pub fn as_ptr(&self) -> *const u8 {
+        unsafe { *(self.handle as *const *const u8) }
+    }
+
+    pub fn to_vec(&self) -> Vec<u8> {
         let ptr = unsafe { *(self.handle as *const *const u8) };
-        ptr.is_null()
-    }*/
+        if ptr.is_null() {
+            Vec::new()
+        } else {
+            unsafe {
+                &*std::ptr::slice_from_raw_parts(
+                    *(self.handle as *const *const u8),
+                    self.size(),
+                )
+            }
+            .to_vec()
+        }
+    }
 
     pub fn size(&self) -> usize {
         ae_call_suite_fn_no_err!(
@@ -1436,22 +1458,14 @@ impl CheckBoxDef {
 use crate::ae_sys::PF_CheckBoxDef;
 define_param_basic_wrapper!(CheckBoxDef, PF_CheckBoxDef, i32, bool);
 
-use std::any::Any;
-
-//trait AnyClone: Any + Clone {};
-
 pub struct ArbitraryDef(
     ae_sys::PF_ArbitraryDef,
-    // We use Box::into_raw() and Box::from_raw() to manage
-    // handling of this data with Ae
-    Box<dyn Any>,
 );
 
 impl ArbitraryDef {
     pub fn new() -> Self {
         Self(
             unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
-            Box::new(()),
         )
     }
 
@@ -1463,10 +1477,244 @@ impl ArbitraryDef {
         self
     }
 
-    pub fn value<T: Any>(mut self, data: T) -> Self {
+    /*pub fn value<T: Any>(mut self, data: T) -> Self {
         self.1 = Box::new(data);
-        //self.0.
         self
+    }*/
+
+    pub fn default<T>(mut self, handle: FlatHandle) -> Self {
+        self.0.dephault = FlatHandle::into_raw(handle);
+        self
+    }
+}
+
+define_struct_wrapper!(ArbParamsExtra, PF_ArbParamsExtra);
+
+pub trait ArbitraryData<T> {
+    fn default() -> T;
+    fn interpolate(&self, other: &T, value: f64) -> T;
+}
+pub struct ArbitraryCallbacks<T: ArbitraryData<T> + DeserializeOwned + Serialize + PartialEq + PartialOrd>(
+    ArbParamsExtra,
+    PhantomData<T>,
+);
+
+impl<T> ArbitraryCallbacks<T>
+where
+    T: ArbitraryData<T> + DeserializeOwned + Serialize + PartialEq + PartialOrd,
+{
+    pub fn new(extra: ArbParamsExtra) -> Self {
+        Self(extra, PhantomData)
+    }
+
+    pub fn dispatch(&mut self) {
+        match self.0.0.which_function as _ {
+            ae_sys::PF_Arbitrary_NEW_FUNC => {
+                // Create a new instance, serialize it to a Vec<u8>
+                // pass it to a FlatHandle and turn that into a raw
+                // ae handle that we stash in the PF_ArbParamsExtra
+                // struct wrapper.
+                self.0.0.u.new_func_params.arbPH = FlatHandle::into_raw(
+                    FlatHandle::new(serde_cbor::to_vec(&T::default()).unwrap())
+                        .unwrap(),
+                ) as _;
+            }
+
+            ae_sys::PF_Arbitrary_DISPOSE_FUNC => {
+                // Create a new handle from the raw Ae handle. This
+                // disposes then handle when it goes out of scope
+                // and is dropped just after.
+                FlatHandle::from_raw(unsafe {
+                    self.0.0.u.dispose_func_params.arbH
+                })
+                .unwrap();
+            }
+
+            ae_sys::PF_Arbitrary_COPY_FUNC =>  unsafe {
+                // Create a new handle wraper from the sources,
+                // get a referece to that as a slice create a new
+                // handle from that and write that to the
+                // destination pointer.
+                self.0.0
+                    .u
+                    .copy_func_params
+                    .dst_arbPH
+                    .write(FlatHandle::into_raw(
+                        FlatHandle::new(
+                            FlatHandle::from_raw(
+                                self.0.0.u.copy_func_params.src_arbH
+                            )
+                            .unwrap()
+                            .as_slice(),
+                        )
+                        .unwrap()
+                    ));
+            }
+
+            ae_sys::PF_Arbitrary_FLAT_SIZE_FUNC => unsafe {
+                self.0.0.u.flat_size_func_params.flat_data_sizePLu.write(
+                    FlatHandle::from_raw(
+                        self.0.0.u.flat_size_func_params.arbH
+                    )
+                    .unwrap()
+                    .size() as _,
+                );
+            }
+
+
+            ae_sys::PF_Arbitrary_FLATTEN_FUNC => {
+
+                debug_assert!(
+                    FlatHandle::from_raw(unsafe {
+                        self.0.0.u.flatten_func_params.arbH
+                    })
+                    .unwrap()
+                    .size()
+                        <= unsafe { self.0.0.u.flatten_func_params.buf_sizeLu } as _
+                );
+
+                let handle = FlatHandle::from_raw(unsafe {
+                    self.0.0.u.flatten_func_params.arbH
+                })
+                .unwrap();
+                unsafe {
+                    std::ptr::copy_nonoverlapping(
+                    handle.as_ptr(),
+                        self.0.0.u.flatten_func_params.flat_dataPV as _,
+                        handle.size(),
+                    );
+                }
+            }
+
+            ae_sys::PF_Arbitrary_UNFLATTEN_FUNC => unsafe {
+                self.0.0.u.unflatten_func_params.arbPH.write(
+                    FlatHandle::into_raw(
+                        FlatHandle::new(CVec::<u8>::new(
+                            self.0.0.u.unflatten_func_params.flat_dataPV as *mut u8,
+                            self.0.0.u.unflatten_func_params.buf_sizeLu as _,
+                        ))
+                        .unwrap(),
+                    ),
+                );
+            }
+
+            ae_sys::PF_Arbitrary_INTERP_FUNC => unsafe {
+                self.0.0.u.interp_func_params.interpPH.write(
+                    FlatHandle::into_raw(
+                        FlatHandle::new(
+                            serde_cbor::to_vec(&serde_cbor::from_slice::<T>(
+                                &FlatHandle::from_raw(
+                                    self.0.0.u.interp_func_params.left_arbH
+                                )
+                                .unwrap()
+                                .as_slice()
+                            )
+                            .unwrap().interpolate(
+                                &serde_cbor::from_slice::<T>(
+                                    &FlatHandle::from_raw(
+                                        self.0.0.u.interp_func_params.right_arbH
+                                    )
+                                    .unwrap()
+                                    .as_slice()
+                                )
+                                .unwrap(),
+                                self.0.0.u.interp_func_params.tF
+                            )).unwrap()
+                        ).unwrap()
+                    )
+                )
+            }
+
+            ae_sys::PF_Arbitrary_COMPARE_FUNC => {
+                let a = serde_cbor::from_slice::<T>(
+                    &FlatHandle::from_raw(
+                        unsafe { self.0.0.u.compare_func_params.a_arbH }
+                    )
+                    .unwrap()
+                    .as_slice()
+                ).unwrap();
+
+                let b = serde_cbor::from_slice::<T>(
+                    &FlatHandle::from_raw(
+                        unsafe { self.0.0.u.compare_func_params.b_arbH }
+                    )
+                    .unwrap()
+                    .as_slice()
+                ).unwrap();
+
+                if a < b {
+                    unsafe { self.0.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_LESS as _); }
+                } else if a > b {
+                    unsafe { self.0.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_MORE as _); }
+                } else if a == b {
+                    unsafe { self.0.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_EQUAL as _); }
+                } else {
+                    unsafe { self.0.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_NOT_EQUAL as _); }
+                }
+            }
+
+            ae_sys::PF_Arbitrary_PRINT_SIZE_FUNC =>  unsafe {
+                self.0.0.u.print_size_func_params.print_sizePLu.write((
+                    serde_json::to_string(
+                        &serde_cbor::from_slice::<T>(
+                            &FlatHandle::from_raw(
+                                self.0.0.u.print_size_func_params.arbH
+                            )
+                            .unwrap()
+                            .as_slice()
+                        ).unwrap()
+                    )
+                    .unwrap()
+                    // The len + terminating nul byte.
+                    .len() + 1) as _
+                );
+            }
+
+            // Print arbitrary data into a string as JSON.
+            // Note that we could use any text-based serializer here.
+            ae_sys::PF_Arbitrary_PRINT_FUNC => {
+                let string = serde_json::to_string(
+                    &serde_cbor::from_slice::<T>(
+                        &FlatHandle::from_raw(
+                            unsafe { self.0.0.u.print_func_params.arbH }
+                        )
+                        .unwrap()
+                        .as_slice()
+                    ).unwrap())
+                .unwrap();
+
+                if string.len() + 1 <= unsafe { self.0.0.u.print_func_params.print_sizeLu } as _
+                    && unsafe { self.0.0.u.print_func_params.print_flags } == 0 {
+                        unsafe {
+                            std::ptr::copy_nonoverlapping(
+                                string.as_ptr(),
+                                self.0.0.u.print_func_params.print_bufferPC as _,
+                                string.len(),
+                            );
+                            // Nul-terminate the C string.
+                            self.0.0.u.print_func_params.print_bufferPC.offset(string.len() as _).write(0);
+                        }
+                }
+            }
+            ae_sys::PF_Arbitrary_SCAN_FUNC => {
+                unsafe{
+                    self.0.0.u.scan_func_params.arbPH.write(
+                        FlatHandle::into_raw(
+                            FlatHandle::new(
+                                serde_cbor::to_vec::<T>(&serde_json::from_str(
+                                    CStr::from_ptr(
+                                        self.0.0.u.scan_func_params.bufPC
+                                    )
+                                    .to_str().unwrap()
+                                ).unwrap()
+                            ).unwrap()
+                        ).unwrap()
+                    )
+                );
+            }
+            }
+            _ => {}
+        }
     }
 }
 
@@ -1696,6 +1944,52 @@ define_suite!(
     kPFEffectCustomUIOverlayThemeSuite,
     kPFEffectCustomUIOverlayThemeSuiteVersion1
 );
+
+impl EffectCustomUIOverlayThemeSuite {
+    pub fn get_preferred_foreground_color(
+        &self,
+    ) -> Result<drawbot::ColorRGBA, Error> {
+        let mut color = std::mem::MaybeUninit::<drawbot::ColorRGBA>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            PF_GetPreferredForegroundColor,
+            color.as_mut_ptr() as _,
+        ) {
+            Ok(()) => Ok(unsafe { color.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    //PF_GetPreferredShadowColor
+    //PF_GetPreferredShadowOffset
+
+    pub fn get_preferred_stroke_width(&self) -> Result<f32, Error> {
+        let mut width = std::mem::MaybeUninit::<f32>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            PF_GetPreferredStrokeWidth,
+            width.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok(unsafe { width.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_preferred_vertex_size(&self) -> Result<f32, Error> {
+        let mut size = std::mem::MaybeUninit::<f32>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            PF_GetPreferredVertexSize,
+            size.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok(unsafe { size.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+}
 
 /*
 pub enum GameState {
