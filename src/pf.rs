@@ -1488,33 +1488,26 @@ impl ArbitraryDef {
     }
 }
 
-define_struct_wrapper!(ArbParamsExtra, PF_ArbParamsExtra);
-
 pub trait ArbitraryData<T> {
     fn default() -> T;
     fn interpolate(&self, other: &T, value: f64) -> T;
 }
-pub struct ArbitraryCallbacks<T: ArbitraryData<T> + DeserializeOwned + Serialize + PartialEq + PartialOrd>(
-    ArbParamsExtra,
-    PhantomData<T>,
-);
 
-impl<T> ArbitraryCallbacks<T>
-where
-    T: ArbitraryData<T> + DeserializeOwned + Serialize + PartialEq + PartialOrd,
-{
-    pub fn new(extra: ArbParamsExtra) -> Self {
-        Self(extra, PhantomData)
+define_struct_wrapper!(ArbParamsExtra, PF_ArbParamsExtra);
+
+impl ArbParamsExtra {
+    pub fn id(&self) -> isize {
+        self.0.id as _
     }
 
-    pub fn dispatch(&mut self) {
-        match self.0.0.which_function as _ {
+    pub fn dispatch<T: ArbitraryData<T> + DeserializeOwned + Serialize + PartialEq + PartialOrd>(&mut self) {
+        match self.0.which_function as _ {
             ae_sys::PF_Arbitrary_NEW_FUNC => {
                 // Create a new instance, serialize it to a Vec<u8>
                 // pass it to a FlatHandle and turn that into a raw
                 // ae handle that we stash in the PF_ArbParamsExtra
                 // struct wrapper.
-                self.0.0.u.new_func_params.arbPH = FlatHandle::into_raw(
+                self.0.u.new_func_params.arbPH = FlatHandle::into_raw(
                     FlatHandle::new(serde_cbor::to_vec(&T::default()).unwrap())
                         .unwrap(),
                 ) as _;
@@ -1525,7 +1518,7 @@ where
                 // disposes then handle when it goes out of scope
                 // and is dropped just after.
                 FlatHandle::from_raw(unsafe {
-                    self.0.0.u.dispose_func_params.arbH
+                    self.0.u.dispose_func_params.arbH
                 })
                 .unwrap();
             }
@@ -1535,14 +1528,14 @@ where
                 // get a referece to that as a slice create a new
                 // handle from that and write that to the
                 // destination pointer.
-                self.0.0
+                self.0
                     .u
                     .copy_func_params
                     .dst_arbPH
                     .write(FlatHandle::into_raw(
                         FlatHandle::new(
                             FlatHandle::from_raw(
-                                self.0.0.u.copy_func_params.src_arbH
+                                self.0.u.copy_func_params.src_arbH
                             )
                             .unwrap()
                             .as_slice(),
@@ -1552,9 +1545,9 @@ where
             }
 
             ae_sys::PF_Arbitrary_FLAT_SIZE_FUNC => unsafe {
-                self.0.0.u.flat_size_func_params.flat_data_sizePLu.write(
+                self.0.u.flat_size_func_params.flat_data_sizePLu.write(
                     FlatHandle::from_raw(
-                        self.0.0.u.flat_size_func_params.arbH
+                        self.0.u.flat_size_func_params.arbH
                     )
                     .unwrap()
                     .size() as _,
@@ -1566,32 +1559,32 @@ where
 
                 debug_assert!(
                     FlatHandle::from_raw(unsafe {
-                        self.0.0.u.flatten_func_params.arbH
+                        self.0.u.flatten_func_params.arbH
                     })
                     .unwrap()
                     .size()
-                        <= unsafe { self.0.0.u.flatten_func_params.buf_sizeLu } as _
+                        <= unsafe { self.0.u.flatten_func_params.buf_sizeLu } as _
                 );
 
                 let handle = FlatHandle::from_raw(unsafe {
-                    self.0.0.u.flatten_func_params.arbH
+                    self.0.u.flatten_func_params.arbH
                 })
                 .unwrap();
                 unsafe {
                     std::ptr::copy_nonoverlapping(
                     handle.as_ptr(),
-                        self.0.0.u.flatten_func_params.flat_dataPV as _,
+                        self.0.u.flatten_func_params.flat_dataPV as _,
                         handle.size(),
                     );
                 }
             }
 
             ae_sys::PF_Arbitrary_UNFLATTEN_FUNC => unsafe {
-                self.0.0.u.unflatten_func_params.arbPH.write(
+                self.0.u.unflatten_func_params.arbPH.write(
                     FlatHandle::into_raw(
                         FlatHandle::new(CVec::<u8>::new(
-                            self.0.0.u.unflatten_func_params.flat_dataPV as *mut u8,
-                            self.0.0.u.unflatten_func_params.buf_sizeLu as _,
+                            self.0.u.unflatten_func_params.flat_dataPV as *mut u8,
+                            self.0.u.unflatten_func_params.buf_sizeLu as _,
                         ))
                         .unwrap(),
                     ),
@@ -1599,12 +1592,12 @@ where
             }
 
             ae_sys::PF_Arbitrary_INTERP_FUNC => unsafe {
-                self.0.0.u.interp_func_params.interpPH.write(
+                self.0.u.interp_func_params.interpPH.write(
                     FlatHandle::into_raw(
                         FlatHandle::new(
                             serde_cbor::to_vec(&serde_cbor::from_slice::<T>(
                                 &FlatHandle::from_raw(
-                                    self.0.0.u.interp_func_params.left_arbH
+                                    self.0.u.interp_func_params.left_arbH
                                 )
                                 .unwrap()
                                 .as_slice()
@@ -1612,13 +1605,13 @@ where
                             .unwrap().interpolate(
                                 &serde_cbor::from_slice::<T>(
                                     &FlatHandle::from_raw(
-                                        self.0.0.u.interp_func_params.right_arbH
+                                        self.0.u.interp_func_params.right_arbH
                                     )
                                     .unwrap()
                                     .as_slice()
                                 )
                                 .unwrap(),
-                                self.0.0.u.interp_func_params.tF
+                                self.0.u.interp_func_params.tF
                             )).unwrap()
                         ).unwrap()
                     )
@@ -1628,7 +1621,7 @@ where
             ae_sys::PF_Arbitrary_COMPARE_FUNC => {
                 let a = serde_cbor::from_slice::<T>(
                     &FlatHandle::from_raw(
-                        unsafe { self.0.0.u.compare_func_params.a_arbH }
+                        unsafe { self.0.u.compare_func_params.a_arbH }
                     )
                     .unwrap()
                     .as_slice()
@@ -1636,29 +1629,29 @@ where
 
                 let b = serde_cbor::from_slice::<T>(
                     &FlatHandle::from_raw(
-                        unsafe { self.0.0.u.compare_func_params.b_arbH }
+                        unsafe { self.0.u.compare_func_params.b_arbH }
                     )
                     .unwrap()
                     .as_slice()
                 ).unwrap();
 
                 if a < b {
-                    unsafe { self.0.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_LESS as _); }
+                    unsafe { self.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_LESS as _); }
                 } else if a > b {
-                    unsafe { self.0.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_MORE as _); }
+                    unsafe { self.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_MORE as _); }
                 } else if a == b {
-                    unsafe { self.0.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_EQUAL as _); }
+                    unsafe { self.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_EQUAL as _); }
                 } else {
-                    unsafe { self.0.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_NOT_EQUAL as _); }
+                    unsafe { self.0.u.compare_func_params.compareP.write(ae_sys::PF_ArbCompare_NOT_EQUAL as _); }
                 }
             }
 
             ae_sys::PF_Arbitrary_PRINT_SIZE_FUNC =>  unsafe {
-                self.0.0.u.print_size_func_params.print_sizePLu.write((
+                self.0.u.print_size_func_params.print_sizePLu.write((
                     serde_json::to_string(
                         &serde_cbor::from_slice::<T>(
                             &FlatHandle::from_raw(
-                                self.0.0.u.print_size_func_params.arbH
+                                self.0.u.print_size_func_params.arbH
                             )
                             .unwrap()
                             .as_slice()
@@ -1676,34 +1669,34 @@ where
                 let string = serde_json::to_string(
                     &serde_cbor::from_slice::<T>(
                         &FlatHandle::from_raw(
-                            unsafe { self.0.0.u.print_func_params.arbH }
+                            unsafe { self.0.u.print_func_params.arbH }
                         )
                         .unwrap()
                         .as_slice()
                     ).unwrap())
                 .unwrap();
 
-                if string.len() + 1 <= unsafe { self.0.0.u.print_func_params.print_sizeLu } as _
-                    && unsafe { self.0.0.u.print_func_params.print_flags } == 0 {
+                if string.len() + 1 <= unsafe { self.0.u.print_func_params.print_sizeLu } as _
+                    && unsafe { self.0.u.print_func_params.print_flags } == 0 {
                         unsafe {
                             std::ptr::copy_nonoverlapping(
                                 string.as_ptr(),
-                                self.0.0.u.print_func_params.print_bufferPC as _,
+                                self.0.u.print_func_params.print_bufferPC as _,
                                 string.len(),
                             );
                             // Nul-terminate the C string.
-                            self.0.0.u.print_func_params.print_bufferPC.offset(string.len() as _).write(0);
+                            self.0.u.print_func_params.print_bufferPC.offset(string.len() as _).write(0);
                         }
                 }
             }
             ae_sys::PF_Arbitrary_SCAN_FUNC => {
                 unsafe{
-                    self.0.0.u.scan_func_params.arbPH.write(
+                    self.0.u.scan_func_params.arbPH.write(
                         FlatHandle::into_raw(
                             FlatHandle::new(
                                 serde_cbor::to_vec::<T>(&serde_json::from_str(
                                     CStr::from_ptr(
-                                        self.0.0.u.scan_func_params.bufPC
+                                        self.0.u.scan_func_params.bufPC
                                     )
                                     .to_str().unwrap()
                                 ).unwrap()
