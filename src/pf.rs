@@ -1482,9 +1482,18 @@ impl ArbitraryDef {
         self
     }*/
 
-    pub fn default<T>(mut self, handle: FlatHandle) -> Self {
+    pub fn default(mut self, handle: FlatHandle) -> Self {
         self.0.dephault = FlatHandle::into_raw(handle);
         self
+    }
+
+    pub fn refcon(mut self, refcon: usize) -> Self {
+        self.0.refconPV = refcon as _;
+        self
+    }
+
+    pub fn has_refcon(&self, refcon: usize) -> bool {
+        self.0.refconPV == refcon as _
     }
 }
 
@@ -1498,6 +1507,10 @@ define_struct_wrapper!(ArbParamsExtra, PF_ArbParamsExtra);
 impl ArbParamsExtra {
     pub fn id(&self) -> isize {
         self.0.id as _
+    }
+
+    pub fn refcon(&self) -> usize {
+        unsafe { std::mem::transmute( self.0.u.new_func_params.refconPV ) }
     }
 
     pub fn dispatch<T: ArbitraryData<T> + DeserializeOwned + Serialize + PartialEq + PartialOrd>(&mut self) {
