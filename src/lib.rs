@@ -122,7 +122,14 @@ impl Drop for PicaBasicSuite {
 }
 
 #[derive(
-    Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive,
+    Copy,
+    Clone,
+    Debug,
+    Eq,
+    PartialEq,
+    IntoPrimitive,
+    UnsafeFromPrimitive,
+    TryFromPrimitive,
 )]
 #[repr(i32)]
 pub enum Error {
@@ -154,6 +161,45 @@ pub enum Error {
     // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
     // arbitrary data from text
     CannonParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as i32,
+}
+
+impl From<Error> for &'static str {
+    fn from(error: Error) -> &'static str {
+        match error {
+            Error::Generic => "Generic error.",
+            Error::Struct => "Wrong struct.",
+            Error::Parameter => "Wrong parameter.",
+            Error::OutOfMemory => "Out of memory.",
+            Error::WrongThread => "Call made from wrong thread.",
+            Error::ConstProjectModification => {
+                " Project changes must originate in the UI/Main thread."
+            }
+            Error::MissingSuite => "Could no aquire suite.",
+            Error::None => "No error – wtf?",
+            Error::InternalStructDamaged => "Internal struct is damaged.",
+            Error::InvalidIndex => {
+                "Out of range, or action not allowed on this index."
+            }
+            Error::UnrecogizedParamType => "Unrecognized parameter type",
+            Error::InvalidCallback => "Invalid callback.",
+            Error::BadCallbackParam => "Bad callback parameter.",
+            Error::InterruptCancel => "Rendering interrupted.",
+            Error::CannonParseKeyframeText => "Keyframe data damaged.",
+        }
+    }
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let err_str: &'static str = (*self).into();
+        write!(f, "{}", err_str)
+    }
+}
+
+impl std::error::Error for Error {
+    fn description(&self) -> &str {
+        (*self).into()
+    }
 }
 
 /* FIXME uncomment this once TryReserve() becomes stable in nightly
