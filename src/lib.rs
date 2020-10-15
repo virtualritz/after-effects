@@ -10,7 +10,7 @@
 extern crate bitflags;
 use aftereffects_sys as ae_sys;
 
-use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
+use num_enum::{IntoPrimitive, TryFromPrimitive, UnsafeFromPrimitive};
 use std::{cell::RefCell, ops::Add};
 
 #[macro_use]

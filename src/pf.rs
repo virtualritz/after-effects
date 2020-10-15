@@ -730,16 +730,20 @@ impl<'a> FlatHandle<'a> {
             kPFHandleSuiteVersion1
         ) {
             Ok(suite_ptr) => {
-                let ptr = unsafe { *(handle as *const *const u8) };
-                if ptr.is_null() {
-                    Err(Error::InternalStructDamaged)
+                if handle.is_null() {
+                    Err(Error::Generic)
                 } else {
-                    Ok(FlatHandle {
-                        suite_ptr,
-                        handle,
-                        //dispose: true,
-                        _marker: PhantomData,
-                    })
+                    let ptr = unsafe { *(handle as *const *const u8) };
+                    if ptr.is_null() {
+                        Err(Error::InternalStructDamaged)
+                    } else {
+                        Ok(FlatHandle {
+                            suite_ptr,
+                            handle,
+                            //dispose: true,
+                            _marker: PhantomData,
+                        })
+                    }
                 }
             }
             Err(_) => Err(Error::InvalidCallback),
@@ -759,6 +763,12 @@ impl<'a> FlatHandle<'a> {
         return_handle
     }
 }
+/*
+impl<'a> Clone for FlatHandle<'a> {
+    fn clone(&self) -> FlatHandle<'a> {
+        Self::new(self.as_slice()).unwrap()
+    }
+}*/
 
 impl<'a> Drop for FlatHandle<'a> {
     fn drop(&mut self) {
@@ -1524,7 +1534,7 @@ impl ArbParamsExtra {
     ) -> Result<(), Box<dyn std::error::Error>> {
         match self.0.which_function as _ {
             ae_sys::PF_Arbitrary_NEW_FUNC => unsafe {
-                println!("NEW_FUNC");
+                //println!("NEW_FUNC");
                 // Create a new instance, serialize it to a Vec<u8>
                 // pass it to a FlatHandle and turn that into a raw
                 // ae handle that we stash in the PF_ArbParamsExtra
@@ -1535,7 +1545,7 @@ impl ArbParamsExtra {
             },
 
             ae_sys::PF_Arbitrary_DISPOSE_FUNC => {
-                println!("DISPOSE_FUNC");
+                //println!("DISPOSE_FUNC");
                 // Create a new handle from the raw Ae handle. This
                 // disposes then handle when it goes out of scope
                 // and is dropped just after.
@@ -1545,41 +1555,47 @@ impl ArbParamsExtra {
             }
 
             ae_sys::PF_Arbitrary_COPY_FUNC => unsafe {
+                //println!("COPY_FUNC");
                 // Create a new handle wraper from the sources,
                 // get a referece to that as a slice create a new
                 // handle from that and write that to the
                 // destination pointer.
-                println!("COPY_FUNC");
+                let src =
+                    FlatHandle::from_raw(self.0.u.copy_func_params.src_arbH)?;
+
                 self.0.u.copy_func_params.dst_arbPH.write(
-                    FlatHandle::into_raw(FlatHandle::new(
-                        FlatHandle::from_raw(
-                            self.0.u.copy_func_params.src_arbH,
-                        )?
-                        .as_slice(),
-                    )?),
+                    FlatHandle::into_raw(FlatHandle::new(src.as_slice())?),
                 );
+
+                // Make sure we do not drop the source handle.
+                FlatHandle::into_raw(src);
             },
 
             ae_sys::PF_Arbitrary_FLAT_SIZE_FUNC => unsafe {
-                self.0.u.flat_size_func_params.flat_data_sizePLu.write(
-                    FlatHandle::from_raw(self.0.u.flat_size_func_params.arbH)?
-                        .size() as _,
-                );
+                let handle =
+                    FlatHandle::from_raw(self.0.u.flat_size_func_params.arbH)?;
+
+                self.0
+                    .u
+                    .flat_size_func_params
+                    .flat_data_sizePLu
+                    .write(handle.size() as _);
+
+                // Make sure we do not drop the source handle.
+                FlatHandle::into_raw(handle);
             },
 
             ae_sys::PF_Arbitrary_FLATTEN_FUNC => {
+                let handle = FlatHandle::from_raw(unsafe {
+                    self.0.u.flatten_func_params.arbH
+                })?;
+
                 debug_assert!(
-                    FlatHandle::from_raw(unsafe {
-                        self.0.u.flatten_func_params.arbH
-                    })?
-                    .size()
+                    handle.size()
                         <= unsafe { self.0.u.flatten_func_params.buf_sizeLu }
                             as _
                 );
 
-                let handle = FlatHandle::from_raw(unsafe {
-                    self.0.u.flatten_func_params.arbH
-                })?;
                 unsafe {
                     std::ptr::copy_nonoverlapping(
                         handle.as_ptr(),
@@ -1587,6 +1603,9 @@ impl ArbParamsExtra {
                         handle.size(),
                     );
                 }
+
+                // Make sure we do not drop the handle.
+                FlatHandle::into_raw(handle);
             }
 
             ae_sys::PF_Arbitrary_UNFLATTEN_FUNC => unsafe {
@@ -1599,41 +1618,44 @@ impl ArbParamsExtra {
             },
 
             ae_sys::PF_Arbitrary_INTERP_FUNC => unsafe {
+                let left = FlatHandle::from_raw(
+                    self.0.u.interp_func_params.left_arbH,
+                )?;
+                let right = FlatHandle::from_raw(
+                    self.0.u.interp_func_params.right_arbH,
+                )?;
+
                 self.0.u.interp_func_params.interpPH.write(
                     FlatHandle::into_raw(FlatHandle::new(serde_cbor::to_vec(
-                        &serde_cbor::from_slice::<T>(
-                            &FlatHandle::from_raw(
-                                self.0.u.interp_func_params.left_arbH,
-                            )?
-                            .as_slice(),
-                        )?
-                        .interpolate(
-                            &serde_cbor::from_slice::<T>(
-                                &FlatHandle::from_raw(
-                                    self.0.u.interp_func_params.right_arbH,
-                                )?
-                                .as_slice(),
-                            )?,
-                            self.0.u.interp_func_params.tF,
-                        ),
+                        &serde_cbor::from_slice::<T>(&left.as_slice())?
+                            .interpolate(
+                                &serde_cbor::from_slice::<T>(
+                                    &right.as_slice(),
+                                )?,
+                                self.0.u.interp_func_params.tF,
+                            ),
                     )?)?),
-                )
+                );
+
+                // Make sure we do not drop the handles.
+                FlatHandle::into_raw(left);
+                FlatHandle::into_raw(right);
             },
 
             ae_sys::PF_Arbitrary_COMPARE_FUNC => {
-                let a = serde_cbor::from_slice::<T>(
-                    &FlatHandle::from_raw(unsafe {
-                        self.0.u.compare_func_params.a_arbH
-                    })?
-                    .as_slice(),
-                )?;
+                let handle_a = FlatHandle::from_raw(unsafe {
+                    self.0.u.compare_func_params.a_arbH
+                })?;
+                let a = serde_cbor::from_slice::<T>(&handle_a.as_slice())?;
+                // Make sure we do not drop the handle.
+                FlatHandle::into_raw(handle_a);
 
-                let b = serde_cbor::from_slice::<T>(
-                    &FlatHandle::from_raw(unsafe {
-                        self.0.u.compare_func_params.b_arbH
-                    })?
-                    .as_slice(),
-                )?;
+                let handle_b = FlatHandle::from_raw(unsafe {
+                    self.0.u.compare_func_params.b_arbH
+                })?;
+                let b = serde_cbor::from_slice::<T>(&handle_b.as_slice())?;
+                // Make sure we do not drop the handle.
+                FlatHandle::into_raw(handle_b);
 
                 if a < b {
                     unsafe {
@@ -1671,28 +1693,31 @@ impl ArbParamsExtra {
             }
 
             ae_sys::PF_Arbitrary_PRINT_SIZE_FUNC => unsafe {
+                let handle =
+                    FlatHandle::from_raw(self.0.u.print_size_func_params.arbH)?;
+
                 self.0.u.print_size_func_params.print_sizePLu.write(
                     (serde_json::to_string(&serde_cbor::from_slice::<T>(
-                        &FlatHandle::from_raw(
-                            self.0.u.print_size_func_params.arbH,
-                        )?
-                        .as_slice(),
+                        &handle.as_slice(),
                     )?)?
                     // The len + terminating nul byte.
                     .len()
                         + 1) as _,
                 );
+
+                // Make sure we do not drop the handle.
+                FlatHandle::into_raw(handle);
             },
 
             // Print arbitrary data into a string as JSON.
             // Note that we could use any text-based serializer here.
             ae_sys::PF_Arbitrary_PRINT_FUNC => {
+                let handle = FlatHandle::from_raw(unsafe {
+                    self.0.u.print_func_params.arbH
+                })?;
                 let string =
                     serde_json::to_string(&serde_cbor::from_slice::<T>(
-                        &FlatHandle::from_raw(unsafe {
-                            self.0.u.print_func_params.arbH
-                        })?
-                        .as_slice(),
+                        &handle.as_slice(),
                     )?)?;
 
                 if string.len() + 1
@@ -1714,6 +1739,9 @@ impl ArbParamsExtra {
                             .write(0);
                     }
                 }
+
+                // Make sure we do not drop the handle.
+                FlatHandle::into_raw(handle);
             }
             ae_sys::PF_Arbitrary_SCAN_FUNC => unsafe {
                 self.0.u.scan_func_params.arbPH.write(FlatHandle::into_raw(
