@@ -81,6 +81,25 @@ bitflags! {
     }
 }
 
+define_struct_wrapper!(DoClickEventInfo, PF_DoClickEventInfo);
+
+impl DoClickEventInfo {
+    pub fn screen_point(&self) -> Point {
+        Point::from_raw(self.0.screen_point)
+    }
+}
+
+define_struct_wrapper!(DrawEventInfo, PF_DrawEventInfo);
+define_struct_wrapper!(KeyDownEventInfo, PF_KeyDownEvent);
+define_struct_wrapper!(AdjustCursorEventInfo, PF_AdjustCursorEventInfo);
+
+pub enum Event {
+    Click(DoClickEventInfo),
+    Draw(DrawEventInfo),
+    KeyDown(KeyDownEventInfo),
+    AdjustCursor(AdjustCursorEventInfo),
+}
+
 define_struct_wrapper!(EventExtra, PF_EventExtra);
 #[derive(
     Clone, Copy, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive,
@@ -92,6 +111,16 @@ pub enum EffectArea {
     Control = ae_sys::PF_EA_CONTROL,
 }
 
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive,
+)]
+#[repr(i32)]
+pub enum WindowType {
+    Comp = ae_sys::PF_Window_COMP,
+    Layer = ae_sys::PF_Window_LAYER,
+    Effect = ae_sys::PF_Window_EFFECT,
+}
+
 impl EventExtra {
     pub fn context_handle(&self) -> ContextHandle {
         ContextHandle::from_raw(self.0.contextH)
@@ -99,6 +128,28 @@ impl EventExtra {
 
     pub fn event_type(&self) -> EventType {
         EventType::try_from(self.0.e_type).unwrap()
+    }
+
+    pub fn event(&self) -> Event {
+        match self.event_type() {
+            //EventType::NewContext =>
+            //EventType::Activate =>
+            EventType::DoClick | EventType::Drag => {
+                Event::Click(DoClickEventInfo::from_raw(unsafe{self.0.u.do_click}))
+            }
+            /*EventType::Draw =>
+            EventType::Deactivate =>
+            EventType::Context =>
+            EventType::AdjustCursor =>
+            EventType::Keydown =>
+            EventType::MouseExited =>
+            EventType::NumEvents =>*/
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn window_type(&self) -> WindowType {
+        WindowType::try_from(unsafe { **self.0.contextH }.w_type).unwrap()
     }
 
     pub fn event_out_flags(&mut self, flags: EventOutFlags) {
@@ -220,6 +271,15 @@ pub struct CompositeMode {
 pub struct Point {
     pub h: i32,
     pub v: i32,
+}
+
+impl Point {
+    pub fn from_raw(point: ae_sys::PF_Point) -> Point {
+        Point {
+            h: point.h,
+            v: point.v,
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, Hash)]
@@ -1837,15 +1897,15 @@ impl ArbParamsExtra {
 #[repr(C)]
 //#[derive(Clone)]
 pub enum Param {
-    PopupDef(PopupDef),
-    AngleDef(AngleDef),
-    CheckBoxDef(CheckBoxDef),
-    SliderDef(SliderDef),
-    FloatSliderDef(FloatSliderDef),
-    ColorDef(ColorDef),
-    ButtonDef(ButtonDef),
+    Popup(PopupDef),
+    Angle(AngleDef),
+    CheckBox(CheckBoxDef),
+    Slider(SliderDef),
+    FloatSlider(FloatSliderDef),
+    Color(ColorDef),
+    Button(ButtonDef),
     //FixedSliderDef(FixedSliderDef),
-    ArbitraryDef(ArbitraryDef),
+    Arbitrary(ArbitraryDef),
 }
 
 #[derive(Clone)]
@@ -1927,38 +1987,38 @@ impl ParamDef {
 
     pub fn param<'a>(&'a mut self, param: Param) -> &'a mut ParamDef {
         match param {
-            Param::PopupDef(pd) => {
+            Param::Popup(pd) => {
                 self.param_def_boxed.u.pd = PopupDef::into_raw(pd);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_POPUP;
             }
-            Param::AngleDef(ad) => {
+            Param::Angle(ad) => {
                 self.param_def_boxed.u.ad = AngleDef::into_raw(ad);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_ANGLE;
             }
-            Param::CheckBoxDef(bd) => {
+            Param::CheckBox(bd) => {
                 self.param_def_boxed.u.bd = CheckBoxDef::into_raw(bd);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_CHECKBOX;
             }
-            Param::ColorDef(cd) => {
+            Param::Color(cd) => {
                 self.param_def_boxed.u.cd = ColorDef::into_raw(cd);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_COLOR;
             }
-            Param::SliderDef(sd) => {
+            Param::Slider(sd) => {
                 self.param_def_boxed.u.sd = SliderDef::into_raw(sd);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_SLIDER;
             }
-            Param::FloatSliderDef(fs_d) => {
+            Param::FloatSlider(fs_d) => {
                 self.param_def_boxed.u.fs_d = FloatSliderDef::into_raw(fs_d);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_FLOAT_SLIDER;
             } /*Param::FixedSliderDef(sd) => {
             self.param_def_boxed.u.fd = FixedSliderDef::into_raw(sd);
             self.param_def_boxed.param_type = ae_sys::PF_Param_FIX_SLIDER;
             }*/
-            Param::ButtonDef(button_d) => {
+            Param::Button(button_d) => {
                 self.param_def_boxed.u.button_d = ButtonDef::into_raw(button_d);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_BUTTON;
             }
-            Param::ArbitraryDef(arb_d) => {
+            Param::Arbitrary(arb_d) => {
                 self.param_def_boxed.u.arb_d = ArbitraryDef::into_raw(arb_d);
                 self.param_def_boxed.param_type =
                     ae_sys::PF_Param_ARBITRARY_DATA;
@@ -1970,42 +2030,42 @@ impl ParamDef {
     pub fn to_param(&self) -> Param {
         match self.param_def_boxed.param_type {
             ae_sys::PF_Param_ANGLE => {
-                Param::AngleDef(AngleDef::from_raw(unsafe {
+                Param::Angle(AngleDef::from_raw(unsafe {
                     self.param_def_boxed.u.ad
                 }))
             }
             ae_sys::PF_Param_ARBITRARY_DATA => {
-                Param::ArbitraryDef(ArbitraryDef::from_raw(unsafe {
+                Param::Arbitrary(ArbitraryDef::from_raw(unsafe {
                     self.param_def_boxed.u.arb_d
                 }))
             }
             ae_sys::PF_Param_BUTTON => {
-                Param::ButtonDef(ButtonDef::from_raw(unsafe {
+                Param::Button(ButtonDef::from_raw(unsafe {
                     self.param_def_boxed.u.button_d
                 }))
             }
             ae_sys::PF_Param_CHECKBOX => {
-                Param::CheckBoxDef(CheckBoxDef::from_raw(unsafe {
+                Param::CheckBox(CheckBoxDef::from_raw(unsafe {
                     self.param_def_boxed.u.bd
                 }))
             }
             ae_sys::PF_Param_COLOR => {
-                Param::ColorDef(ColorDef::from_raw(unsafe {
+                Param::Color(ColorDef::from_raw(unsafe {
                     self.param_def_boxed.u.cd
                 }))
             }
             ae_sys::PF_Param_FLOAT_SLIDER => {
-                Param::FloatSliderDef(FloatSliderDef::from_raw(unsafe {
+                Param::FloatSlider(FloatSliderDef::from_raw(unsafe {
                     self.param_def_boxed.u.fs_d
                 }))
             }
             ae_sys::PF_Param_POPUP => {
-                Param::PopupDef(PopupDef::from_raw(unsafe {
+                Param::Popup(PopupDef::from_raw(unsafe {
                     self.param_def_boxed.u.pd
                 }))
             }
             ae_sys::PF_Param_SLIDER => {
-                Param::SliderDef(SliderDef::from_raw(unsafe {
+                Param::Slider(SliderDef::from_raw(unsafe {
                     self.param_def_boxed.u.sd
                 }))
             }
