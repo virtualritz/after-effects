@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::{
     convert::{TryFrom, TryInto},
     ffi::{CStr, CString},
-    fmt::Debug,
+    fmt::{Debug, Write},
     marker::PhantomData,
 };
 
@@ -82,18 +82,47 @@ bitflags! {
 }
 
 define_struct_wrapper!(EventExtra, PF_EventExtra);
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive,
+)]
+#[repr(u32)]
+pub enum EffectArea {
+    Mone = ae_sys::PF_EA_NONE,
+    Title = ae_sys::PF_EA_PARAM_TITLE,
+    Control = ae_sys::PF_EA_CONTROL,
+}
 
 impl EventExtra {
-    pub fn get_context_handle(&self) -> ContextHandle {
+    pub fn context_handle(&self) -> ContextHandle {
         ContextHandle::from_raw(self.0.contextH)
     }
 
-    pub fn get_event_type(&self) -> EventType {
+    pub fn event_type(&self) -> EventType {
         EventType::try_from(self.0.e_type).unwrap()
     }
 
     pub fn event_out_flags(&mut self, flags: EventOutFlags) {
         self.0.evt_out_flags = flags.bits() as _;
+    }
+
+    pub fn param_index(&self) -> usize {
+        self.0.effect_win.index as _
+    }
+
+    pub fn effect_area(&self) -> EffectArea {
+        EffectArea::try_from(self.0.effect_win.area as u32).unwrap()
+    }
+
+    pub fn current_frame(&self) -> Rect {
+        unsafe { std::mem::transmute(self.0.effect_win.current_frame) }
+    }
+
+    pub fn param_title_frame(&self) -> Rect {
+        unsafe { std::mem::transmute(self.0.effect_win.param_title_frame) }
+    }
+
+    pub fn horiz_offset(&self) -> i32 {
+        self.0.effect_win.horiz_offset
     }
 }
 
@@ -639,6 +668,7 @@ impl<'a, T: 'a> Drop for Handle<'a, T> {
 pub struct FlatHandle<'a> {
     suite_ptr: *const ae_sys::PF_HandleSuite1,
     handle: ae_sys::PF_Handle,
+    owned: bool,
     _marker: PhantomData<&'a ()>,
 }
 
@@ -677,6 +707,7 @@ impl<'a> FlatHandle<'a> {
                 Ok(FlatHandle {
                     suite_ptr,
                     handle,
+                    owned: true,
                     _marker: PhantomData,
                 })
             }
@@ -740,7 +771,37 @@ impl<'a> FlatHandle<'a> {
                         Ok(FlatHandle {
                             suite_ptr,
                             handle,
-                            //dispose: true,
+                            owned: false,
+                            _marker: PhantomData,
+                        })
+                    }
+                }
+            }
+            Err(_) => Err(Error::InvalidCallback),
+        }
+    }
+
+    pub fn from_raw_owned(
+        handle: ae_sys::PF_Handle,
+    ) -> Result<FlatHandle<'a>, Error> {
+        match ae_acquire_suite_ptr!(
+            borrow_pica_basic_as_ptr(),
+            PF_HandleSuite1,
+            kPFHandleSuite,
+            kPFHandleSuiteVersion1
+        ) {
+            Ok(suite_ptr) => {
+                if handle.is_null() {
+                    Err(Error::Generic)
+                } else {
+                    let ptr = unsafe { *(handle as *const *const u8) };
+                    if ptr.is_null() {
+                        Err(Error::InternalStructDamaged)
+                    } else {
+                        Ok(FlatHandle {
+                            suite_ptr,
+                            handle,
+                            owned: true,
                             _marker: PhantomData,
                         })
                     }
@@ -762,6 +823,10 @@ impl<'a> FlatHandle<'a> {
 
         return_handle
     }
+
+    pub fn as_raw(&self) -> ae_sys::PF_Handle {
+        self.handle
+    }
 }
 /*
 impl<'a> Clone for FlatHandle<'a> {
@@ -772,11 +837,13 @@ impl<'a> Clone for FlatHandle<'a> {
 
 impl<'a> Drop for FlatHandle<'a> {
     fn drop(&mut self) {
-        ae_call_suite_fn_no_err!(
-            self.suite_ptr,
-            host_dispose_handle,
-            self.handle
-        );
+        if self.owned {
+            ae_call_suite_fn_no_err!(
+                self.suite_ptr,
+                host_dispose_handle,
+                self.handle
+            );
+        }
     }
 }
 
@@ -1207,47 +1274,43 @@ bitflags! {
 
 #[repr(C)]
 #[derive(Clone)]
-pub struct ButtonDef {
-    button_def: ae_sys::PF_ButtonDef,
-    label: CString,
-}
+pub struct ButtonDef(ae_sys::PF_ButtonDef, CString);
 
 //define_param_value_str_wrapper!(ButtonDef, button_def);
 //define_param_value_desc_wrapper!(ButtonDef, button_def);
 
 impl ButtonDef {
     pub fn new() -> Self {
-        Self {
-            button_def: unsafe {
-                std::mem::MaybeUninit::zeroed().assume_init()
-            },
-            label: CString::new("").unwrap(),
-        }
+        Self(
+            unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
+            CString::new("").unwrap(),
+        )
+    }
+
+    pub fn from_raw(def: ae_sys::PF_ButtonDef) -> Self {
+        Self(def, CString::new("").unwrap())
     }
 
     pub fn label<'a>(&'a mut self, label: &str) -> &'a mut Self {
-        self.label = CString::new(label).unwrap();
-        self.button_def.u.namesptr = self.label.as_ptr();
+        self.1 = CString::new(label).unwrap();
+        self.0.u.namesptr = self.1.as_ptr();
         self
     }
 
     pub fn from(param: &ParamDef) -> Option<Self> {
         if ae_sys::PF_Param_BUTTON == param.param_def_boxed.param_type {
-            Some(Self {
-                button_def: unsafe { param.param_def_boxed.u.button_d },
-                label: unsafe {
-                    CString::from_raw(
-                        param.param_def_boxed.u.button_d.u.namesptr as _,
-                    )
-                },
-            })
+            Some(Self(unsafe { param.param_def_boxed.u.button_d }, unsafe {
+                CString::from_raw(
+                    param.param_def_boxed.u.button_d.u.namesptr as _,
+                )
+            }))
         } else {
             None
         }
     }
 
     pub fn into_raw(def: ButtonDef) -> ae_sys::PF_ButtonDef {
-        def.button_def
+        def.0
     }
 }
 
@@ -1255,7 +1318,6 @@ impl ButtonDef {
 #[derive(Clone)]
 pub struct PopupDef(ae_sys::PF_PopupDef, CString);
 
-use crate::ae_sys::PF_PopupDef;
 define_param_basic_wrapper!(PopupDef, PF_PopupDef, i32, u16);
 //define_param_value_str_wrapper!(PopupDef, popup_def);
 //define_param_value_desc_wrapper!(PopupDef, popup_def);
@@ -1268,13 +1330,17 @@ impl PopupDef {
         )
     }
 
+    pub fn from_raw(def: ae_sys::PF_PopupDef) -> Self {
+        Self(def, CString::new("").unwrap())
+    }
+
     pub fn names<'a>(&'a mut self, names: Vec<&str>) -> &'a mut Self {
         // Build a string in the format "list|of|choices|", the
         // format Ae expects. Ae ignores the trailing '|'.
         let mut names_tmp = String::new();
         names
             .iter()
-            .for_each(|s| names_tmp += format!("{}|", *s).as_str());
+            .for_each(|s| write!(names_tmp, "{}|", *s).unwrap());
         self.1 = CString::new(names_tmp).unwrap();
         self.0.u.namesptr = self.1.as_ptr();
         self.0.num_choices = names.len().try_into().unwrap();
@@ -1299,7 +1365,6 @@ impl PopupDef {
     }
 }
 
-use crate::ae_sys::PF_AngleDef;
 define_param_wrapper!(AngleDef, PF_AngleDef);
 define_param_basic_wrapper!(AngleDef, PF_AngleDef, i32, i32);
 //define_param_value_str_wrapper!(AngleDef, angle_def);
@@ -1349,7 +1414,6 @@ impl ColorDef {
     }
 }
 
-use crate::ae_sys::PF_SliderDef;
 define_param_wrapper!(SliderDef, PF_SliderDef);
 define_param_basic_wrapper!(SliderDef, PF_SliderDef, i32, i32);
 define_param_valid_min_max_wrapper!(SliderDef, i32);
@@ -1394,7 +1458,6 @@ impl SliderDef {
 }*/
 
 // Float Slider
-use crate::ae_sys::PF_FloatSliderDef;
 define_param_wrapper!(FloatSliderDef, PF_FloatSliderDef);
 define_param_basic_wrapper!(FloatSliderDef, PF_FloatSliderDef, f64, f32);
 define_param_valid_min_max_wrapper!(FloatSliderDef, f32);
@@ -1444,6 +1507,10 @@ impl CheckBoxDef {
         )
     }
 
+    pub fn from_raw(def: ae_sys::PF_CheckBoxDef) -> Self {
+        Self(def, CString::new("").unwrap())
+    }
+
     pub fn label<'a>(&'a mut self, label: &str) -> &'a mut Self {
         self.1 = CString::new(label).unwrap();
         self.0.u.nameptr = self.1.as_ptr();
@@ -1465,9 +1532,7 @@ impl CheckBoxDef {
     }
 }
 
-use crate::ae_sys::PF_CheckBoxDef;
 define_param_basic_wrapper!(CheckBoxDef, PF_CheckBoxDef, i32, bool);
-
 pub struct ArbitraryDef(ae_sys::PF_ArbitraryDef);
 
 impl ArbitraryDef {
@@ -1479,17 +1544,21 @@ impl ArbitraryDef {
         def.0
     }
 
+    pub fn from_raw(def: ae_sys::PF_ArbitraryDef) -> Self {
+        Self(def)
+    }
+
     pub fn finalize(self) -> Self {
         self
     }
 
-    /*pub fn value<T: Any>(mut self, data: T) -> Self {
-        self.1 = Box::new(data);
+    pub fn value(mut self, value_handle: FlatHandle) -> Self {
+        self.0.value = FlatHandle::into_raw(value_handle);
         self
-    }*/
+    }
 
-    pub fn default(mut self, handle: FlatHandle) -> Self {
-        self.0.dephault = FlatHandle::into_raw(handle);
+    pub fn default(mut self, value_handle: FlatHandle) -> Self {
+        self.0.dephault = FlatHandle::into_raw(value_handle);
         self
     }
 
@@ -1500,6 +1569,10 @@ impl ArbitraryDef {
 
     pub fn has_refcon(&self, refcon: usize) -> bool {
         self.0.refconPV == refcon as _
+    }
+
+    pub fn get(&self) -> Result<FlatHandle, Error> {
+        FlatHandle::from_raw(self.0.value)
     }
 }
 
@@ -1763,7 +1836,7 @@ impl ArbParamsExtra {
 
 #[repr(C)]
 //#[derive(Clone)]
-pub enum ParamDefUnion {
+pub enum Param {
     PopupDef(PopupDef),
     AngleDef(AngleDef),
     CheckBoxDef(CheckBoxDef),
@@ -1852,46 +1925,92 @@ impl ParamDef {
         self.drop = false;
     }
 
-    pub fn param<'a>(&'a mut self, param: ParamDefUnion) -> &'a mut ParamDef {
+    pub fn param<'a>(&'a mut self, param: Param) -> &'a mut ParamDef {
         match param {
-            ParamDefUnion::PopupDef(pd) => {
+            Param::PopupDef(pd) => {
                 self.param_def_boxed.u.pd = PopupDef::into_raw(pd);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_POPUP;
             }
-            ParamDefUnion::AngleDef(ad) => {
+            Param::AngleDef(ad) => {
                 self.param_def_boxed.u.ad = AngleDef::into_raw(ad);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_ANGLE;
             }
-            ParamDefUnion::CheckBoxDef(bd) => {
+            Param::CheckBoxDef(bd) => {
                 self.param_def_boxed.u.bd = CheckBoxDef::into_raw(bd);
-                self.param_def_boxed.param_type = ae_sys::PF_Param_BUTTON;
+                self.param_def_boxed.param_type = ae_sys::PF_Param_CHECKBOX;
             }
-            ParamDefUnion::ColorDef(cd) => {
+            Param::ColorDef(cd) => {
                 self.param_def_boxed.u.cd = ColorDef::into_raw(cd);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_COLOR;
             }
-            ParamDefUnion::SliderDef(sd) => {
+            Param::SliderDef(sd) => {
                 self.param_def_boxed.u.sd = SliderDef::into_raw(sd);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_SLIDER;
             }
-            ParamDefUnion::FloatSliderDef(fs_d) => {
+            Param::FloatSliderDef(fs_d) => {
                 self.param_def_boxed.u.fs_d = FloatSliderDef::into_raw(fs_d);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_FLOAT_SLIDER;
-            } /*ParamDefUnion::FixedSliderDef(sd) => {
+            } /*Param::FixedSliderDef(sd) => {
             self.param_def_boxed.u.fd = FixedSliderDef::into_raw(sd);
             self.param_def_boxed.param_type = ae_sys::PF_Param_FIX_SLIDER;
             }*/
-            ParamDefUnion::ButtonDef(button_d) => {
+            Param::ButtonDef(button_d) => {
                 self.param_def_boxed.u.button_d = ButtonDef::into_raw(button_d);
                 self.param_def_boxed.param_type = ae_sys::PF_Param_BUTTON;
             }
-            ParamDefUnion::ArbitraryDef(arb_d) => {
+            Param::ArbitraryDef(arb_d) => {
                 self.param_def_boxed.u.arb_d = ArbitraryDef::into_raw(arb_d);
                 self.param_def_boxed.param_type =
                     ae_sys::PF_Param_ARBITRARY_DATA;
             }
         }
         self
+    }
+
+    pub fn to_param(&self) -> Param {
+        match self.param_def_boxed.param_type {
+            ae_sys::PF_Param_ANGLE => {
+                Param::AngleDef(AngleDef::from_raw(unsafe {
+                    self.param_def_boxed.u.ad
+                }))
+            }
+            ae_sys::PF_Param_ARBITRARY_DATA => {
+                Param::ArbitraryDef(ArbitraryDef::from_raw(unsafe {
+                    self.param_def_boxed.u.arb_d
+                }))
+            }
+            ae_sys::PF_Param_BUTTON => {
+                Param::ButtonDef(ButtonDef::from_raw(unsafe {
+                    self.param_def_boxed.u.button_d
+                }))
+            }
+            ae_sys::PF_Param_CHECKBOX => {
+                Param::CheckBoxDef(CheckBoxDef::from_raw(unsafe {
+                    self.param_def_boxed.u.bd
+                }))
+            }
+            ae_sys::PF_Param_COLOR => {
+                Param::ColorDef(ColorDef::from_raw(unsafe {
+                    self.param_def_boxed.u.cd
+                }))
+            }
+            ae_sys::PF_Param_FLOAT_SLIDER => {
+                Param::FloatSliderDef(FloatSliderDef::from_raw(unsafe {
+                    self.param_def_boxed.u.fs_d
+                }))
+            }
+            ae_sys::PF_Param_POPUP => {
+                Param::PopupDef(PopupDef::from_raw(unsafe {
+                    self.param_def_boxed.u.pd
+                }))
+            }
+            ae_sys::PF_Param_SLIDER => {
+                Param::SliderDef(SliderDef::from_raw(unsafe {
+                    self.param_def_boxed.u.sd
+                }))
+            }
+            _ => unreachable!(),
+        }
     }
 
     pub fn param_type<'a>(
@@ -1943,9 +2062,9 @@ impl Drop for ParamDef {
                     &mut **self.param_def_boxed,
                 );
             }
-        }
-        unsafe {
-            std::mem::ManuallyDrop::drop(&mut self.param_def_boxed);
+            unsafe {
+                std::mem::ManuallyDrop::drop(&mut self.param_def_boxed);
+            }
         }
     }
 }

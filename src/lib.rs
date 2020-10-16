@@ -197,8 +197,8 @@ impl std::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {
-    fn description(&self) -> &str {
-        (*self).into()
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(self)
     }
 }
 
@@ -468,7 +468,7 @@ impl PicaBasicSuiteHandle {
     }
 }
 
-pub trait Suite: Drop {
+pub trait Suite {
     fn new() -> Result<Self, Error>
     where
         Self: Sized;

@@ -239,6 +239,10 @@ macro_rules! define_param_wrapper {
             pub fn new() -> Self {
                 Self(unsafe { std::mem::MaybeUninit::zeroed().assume_init() })
             }
+
+            pub fn from_raw(def: aftereffects_sys::$data_type) -> Self {
+                Self(def)
+            }
         }
     };
 }
@@ -262,7 +266,9 @@ macro_rules! define_param_basic_wrapper {
                 self
             }
 
-            pub fn into_raw(def: $wrapper_pretty_name) -> $data_type {
+            pub fn into_raw(
+                def: $wrapper_pretty_name,
+            ) -> aftereffects_sys::$data_type {
                 def.0
             }
         }
