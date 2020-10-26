@@ -19,6 +19,9 @@ pub struct Pixel {
     pub blue: ae_sys::A_u_char,
 }
 
+unsafe impl Send for Pixel {}
+unsafe impl Sync for Pixel {}
+
 impl From<ae_sys::PF_Pixel> for Pixel {
     fn from(pixel: ae_sys::PF_Pixel) -> Self {
         Self {
@@ -43,31 +46,6 @@ impl From<Pixel> for ae_sys::PF_Pixel {
 
 pub type Pixel8 = Pixel;
 
-#[derive(
-    Clone, Copy, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive,
-)]
-#[repr(i32)]
-pub enum EventType {
-    None = ae_sys::PF_Event_NONE,
-    NewContext = ae_sys::PF_Event_NEW_CONTEXT,
-    Activate = ae_sys::PF_Event_ACTIVATE,
-    DoClick = ae_sys::PF_Event_DO_CLICK,
-    Drag = ae_sys::PF_Event_DRAG,
-    Draw = ae_sys::PF_Event_DRAW,
-    Deactivate = ae_sys::PF_Event_DEACTIVATE,
-    Context = ae_sys::PF_Event_CLOSE_CONTEXT,
-    Idle = ae_sys::PF_Event_IDLE,
-    // New for AE 4.0, sent when mouse moves over custom UI
-    AdjustCursor = ae_sys::PF_Event_ADJUST_CURSOR,
-    // New for AE 7.0, replaces previous keydown event with
-    // cross platform codes and unicode characters.
-    Keydown = ae_sys::PF_Event_KEYDOWN,
-    // New for AE 11.0, notification that the mouse is no
-    // longer over a specific view (layer or comp only).
-    MouseExited = ae_sys::PF_Event_MOUSE_EXITED,
-    NumEvents = ae_sys::PF_Event_NUM_EVENTS,
-}
-
 bitflags! {
     pub struct EventOutFlags: u32 {
         const NONE = ae_sys::PF_EO_NONE;
@@ -81,23 +59,62 @@ bitflags! {
     }
 }
 
-define_struct_wrapper!(DoClickEventInfo, PF_DoClickEventInfo);
+define_struct_wrapper!(ClickEventInfo, PF_DoClickEventInfo);
 
-impl DoClickEventInfo {
+impl ClickEventInfo {
     pub fn screen_point(&self) -> Point {
         Point::from_raw(self.0.screen_point)
     }
 }
 
+impl std::fmt::Debug for ClickEventInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ClickEventInfo")
+    }
+}
+
 define_struct_wrapper!(DrawEventInfo, PF_DrawEventInfo);
+
+impl std::fmt::Debug for DrawEventInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("DrawEventInfo")
+    }
+}
+
 define_struct_wrapper!(KeyDownEventInfo, PF_KeyDownEvent);
+
+impl std::fmt::Debug for KeyDownEventInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("KeyDownEventInfo")
+    }
+}
+
 define_struct_wrapper!(AdjustCursorEventInfo, PF_AdjustCursorEventInfo);
 
+impl std::fmt::Debug for AdjustCursorEventInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("AdjustCursorEventInfo")
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
 pub enum Event {
-    Click(DoClickEventInfo),
+    None,
+    NewContext,
+    Activate,
+    Click(ClickEventInfo),
+    Drag(ClickEventInfo),
     Draw(DrawEventInfo),
-    KeyDown(KeyDownEventInfo),
+    Deactivate,
+    CloseContext,
+    Idle,
+    // Sent when mouse moves over custom UI.
     AdjustCursor(AdjustCursorEventInfo),
+    // Sends keycodes or unicode characters.
+    Keydown(KeyDownEventInfo),
+    // Notification that the mouse is no
+    // longer over a specific view (layer or comp only).
+    MouseExited,
 }
 
 define_struct_wrapper!(EventExtra, PF_EventExtra);
@@ -126,24 +143,37 @@ impl EventExtra {
         ContextHandle::from_raw(self.0.contextH)
     }
 
-    pub fn event_type(&self) -> EventType {
-        EventType::try_from(self.0.e_type).unwrap()
-    }
-
     pub fn event(&self) -> Event {
-        match self.event_type() {
-            //EventType::NewContext =>
-            //EventType::Activate =>
-            EventType::DoClick | EventType::Drag => {
-                Event::Click(DoClickEventInfo::from_raw(unsafe{self.0.u.do_click}))
+        match self.0.e_type {
+            ae_sys::PF_Event_NEW_CONTEXT => Event::NewContext,
+            ae_sys::PF_Event_ACTIVATE => Event::Activate,
+            ae_sys::PF_Event_DO_CLICK => {
+                Event::Click(ClickEventInfo::from_raw(unsafe {
+                    self.0.u.do_click
+                }))
             }
-            /*EventType::Draw =>
-            EventType::Deactivate =>
-            EventType::Context =>
-            EventType::AdjustCursor =>
-            EventType::Keydown =>
-            EventType::MouseExited =>
-            EventType::NumEvents =>*/
+            ae_sys::PF_Event_DRAG => {
+                Event::Drag(ClickEventInfo::from_raw(unsafe {
+                    self.0.u.do_click
+                }))
+            }
+            ae_sys::PF_Event_DRAW => {
+                Event::Draw(DrawEventInfo::from_raw(unsafe { self.0.u.draw }))
+            }
+            ae_sys::PF_Event_DEACTIVATE => Event::Deactivate,
+            ae_sys::PF_Event_CLOSE_CONTEXT => Event::CloseContext,
+            ae_sys::PF_Event_IDLE => Event::Idle,
+            ae_sys::PF_Event_ADJUST_CURSOR => {
+                Event::AdjustCursor(AdjustCursorEventInfo::from_raw(unsafe {
+                    self.0.u.adjust_cursor
+                }))
+            }
+            ae_sys::PF_Event_KEYDOWN => {
+                Event::Keydown(KeyDownEventInfo::from_raw(unsafe {
+                    self.0.u.key_down
+                }))
+            }
+            ae_sys::PF_Event_MOUSE_EXITED => Event::MouseExited,
             _ => unreachable!(),
         }
     }
@@ -174,6 +204,57 @@ impl EventExtra {
 
     pub fn horiz_offset(&self) -> i32 {
         self.0.effect_win.horiz_offset
+    }
+
+    pub fn modifiers(&self) -> Modifiers {
+        debug_assert!(
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG]
+                .contains(&self.0.e_type),
+            "The modifiers() method is only valid if event() is Click or Drag."
+        );
+        unsafe {
+            Modifiers::from_bits(self.0.u.do_click.modifiers as _).unwrap()
+        }
+    }
+
+    pub fn continue_refcon(&mut self, index: usize, value: ae_sys::A_intptr_t) {
+        debug_assert!(
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG]
+                .contains(&self.0.e_type),
+            "The continue_refcon() method is only valid if event() is Click or Drag."
+        );
+        debug_assert!(index < 4);
+        unsafe {
+            self.0.u.do_click.continue_refcon[index] = value;
+        }
+    }
+
+    pub fn get_continue_refcon(&self, index: usize) -> ae_sys::A_intptr_t {
+        debug_assert!(
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG]
+                .contains(&self.0.e_type),
+            "The get_continue_refcon() method is only valid if event() is Click or Drag."
+        );
+        debug_assert!(index < 4);
+        unsafe { self.0.u.do_click.continue_refcon[index] }
+    }
+
+    pub fn send_drag(&mut self, send: bool) {
+        debug_assert!(
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG]
+                .contains(&self.0.e_type),
+            "The send_drag() method is only valid if event() is Click or Drag."
+        );
+        self.0.u.do_click.send_drag = send as _;
+    }
+
+    pub fn last_time(&self) -> bool {
+        debug_assert!(
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG]
+                .contains(&self.0.e_type),
+            "The last_time() method is only valid if event() is Click or Drag."
+        );
+        unsafe { self.0.u.do_click.last_time != 0 }
     }
 }
 
@@ -312,7 +393,10 @@ impl From<ae_sys::PF_RationalScale> for RationalScale {
 impl From<RationalScale> for f64 {
     #[inline]
     fn from(ratio: RationalScale) -> Self {
-        debug_assert!(ratio.den != 0);
+        debug_assert!(
+            ratio.den != 0,
+            "Denominator is zero. This would lead to a division by zero."
+        );
         ratio.num as Self / ratio.den as Self
     }
 }
@@ -320,7 +404,10 @@ impl From<RationalScale> for f64 {
 impl From<RationalScale> for f32 {
     #[inline]
     fn from(ratio: RationalScale) -> Self {
-        debug_assert!(ratio.den != 0);
+        debug_assert!(
+            ratio.den != 0,
+            "Denominator is zero. This would lead to a division by zero."
+        );
         ratio.num as Self / ratio.den as Self
     }
 }
@@ -413,7 +500,7 @@ impl EffectWorld {
     }
 
     #[inline]
-    pub fn data_as_ptr_mut(&self) -> *mut u8 {
+    pub fn data_as_mut_ptr(&self) -> *mut u8 {
         self.effect_world.data as *mut u8
     }
 
@@ -436,7 +523,10 @@ impl EffectWorld {
 
     #[inline]
     pub fn as_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
-        debug_assert!(x < self.width() && y < self.height());
+        debug_assert!(
+            x < self.width() && y < self.height(),
+            "Coordinate is outside EffectWorld bounds."
+        );
         unsafe {
             &mut *(self.effect_world.data.add(y * self.row_bytes())
                 as *mut Pixel8)
@@ -446,13 +536,19 @@ impl EffectWorld {
 
     #[inline]
     pub fn as_pixel8(&self, x: usize, y: usize) -> &Pixel8 {
-        debug_assert!(x < self.width() && y < self.height());
+        debug_assert!(
+            x < self.width() && y < self.height(),
+            "Coordinate is outside EffectWorld bounds."
+        );
         self.as_pixel8_mut(x, y)
     }
 
     #[inline]
     pub fn as_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
-        debug_assert!(x < self.width() && y < self.height());
+        debug_assert!(
+            x < self.width() && y < self.height(),
+            "Coordinate is outside EffectWorld bounds."
+        );
         unsafe {
             &mut *(self.effect_world.data.add(y * self.row_bytes())
                 as *mut Pixel16)
@@ -462,13 +558,19 @@ impl EffectWorld {
 
     #[inline]
     pub fn as_pixel16(&self, x: usize, y: usize) -> &Pixel16 {
-        debug_assert!(x < self.width() && y < self.height());
+        debug_assert!(
+            x < self.width() && y < self.height(),
+            "Coordinate is outside EffectWorld bounds."
+        );
         self.as_pixel16_mut(x, y)
     }
 
     #[inline]
     pub fn as_pixel32_mut(&self, x: usize, y: usize) -> &mut Pixel32 {
-        debug_assert!(x < self.width() && y < self.height());
+        debug_assert!(
+            x < self.width() && y < self.height(),
+            "Coordinate is outside EffectWorld bounds."
+        );
         unsafe {
             &mut *(self.effect_world.data.add(y * self.row_bytes())
                 as *mut Pixel32)
@@ -478,7 +580,10 @@ impl EffectWorld {
 
     #[inline]
     pub fn as_pixel32(&self, x: usize, y: usize) -> &Pixel32 {
-        debug_assert!(x < self.width() && y < self.height());
+        debug_assert!(
+            x < self.width() && y < self.height(),
+            "Coordinate is outside EffectWorld bounds."
+        );
         unsafe {
             &*((self.effect_world.data as *const u8).add(y * self.row_bytes())
                 as *const Pixel32)
@@ -586,6 +691,7 @@ impl<'a, T: 'a> Handle<'a, T> {
                 if handle.is_null() {
                     return Err(Error::OutOfMemory);
                 }
+
                 let ptr = ae_call_suite_fn_no_err!(
                     suite_ptr,
                     host_lock_handle,
@@ -594,6 +700,7 @@ impl<'a, T: 'a> Handle<'a, T> {
                 if ptr.is_null() {
                     return Err(Error::InvalidIndex);
                 }
+
                 unsafe { ptr.write(value) };
                 ae_call_suite_fn_no_err!(suite_ptr, host_unlock_handle, handle);
                 Ok(Handle {
@@ -720,15 +827,29 @@ impl<'a, T: 'a> Drop for Handle<'a, T> {
     }
 }
 
+pub struct FlatHandleLock<'a, 'b: 'a> {
+    parent_handle: &'a FlatHandle<'b>,
+}
+
+impl<'a, 'b> Drop for FlatHandleLock<'a, 'b> {
+    fn drop(&mut self) {
+        ae_call_suite_fn_no_err!(
+            self.parent_handle.suite_ptr,
+            host_unlock_handle,
+            self.parent_handle.handle
+        );
+    }
+}
+
 /// A flat handle takes a [Vec<u8>] as data. This is useful when data it passed
 /// to Ae permanently or between runs of your plug-in.
-/// You can use something like [serde_cbor::to_vec()] to seriealize your data
+/// You can use something like [bincode::serialize()] to seriealize your data
 /// structure into a flat [Vec<u8>].
 #[derive(Debug)]
 pub struct FlatHandle<'a> {
     suite_ptr: *const ae_sys::PF_HandleSuite1,
     handle: ae_sys::PF_Handle,
-    owned: bool,
+    is_owned: bool,
     _marker: PhantomData<&'a ()>,
 }
 
@@ -751,23 +872,32 @@ impl<'a> FlatHandle<'a> {
                     vector.len() as u64
                 );
 
+                if handle.is_null() {
+                    return Err(Error::OutOfMemory);
+                }
+
                 let ptr = ae_call_suite_fn_no_err!(
                     suite_ptr,
                     host_lock_handle,
                     handle
                 ) as *mut u8;
-                debug_assert!(!ptr.is_null());
+
+                if ptr.is_null() {
+                    return Err(Error::OutOfMemory);
+                }
 
                 let dest =
                     std::ptr::slice_from_raw_parts_mut(ptr, vector.len());
+
                 unsafe {
                     (*dest).copy_from_slice(vector.as_slice());
                 }
+
                 ae_call_suite_fn_no_err!(suite_ptr, host_unlock_handle, handle);
-                Ok(FlatHandle {
+                Ok(Self {
                     suite_ptr,
                     handle,
-                    owned: true,
+                    is_owned: true,
                     _marker: PhantomData,
                 })
             }
@@ -775,19 +905,69 @@ impl<'a> FlatHandle<'a> {
         }
     }
 
-    pub fn as_slice(&'a self) -> &'a [u8] {
-        let ptr = unsafe { *(self.handle as *const *const u8) };
-        if ptr.is_null() {
-            &[]
-        } else {
-            unsafe { &*std::ptr::slice_from_raw_parts(ptr, self.size()) }
+    #[inline]
+    pub fn resize(&mut self, size: usize) -> Result<(), Error> {
+        match ae_call_suite_fn_no_err!(
+            self.suite_ptr,
+            host_resize_handle,
+            size as _,
+            &mut self.handle as _
+        ) as u32
+        {
+            ae_sys::PF_Err_NONE => Ok(()),
+            e => Err(unsafe { Error::from_unchecked(e as i32) }),
         }
     }
 
+    #[inline]
+    pub fn lock<'b: 'a>(&'b self) -> Result<FlatHandleLock, Error> {
+        let ptr = ae_call_suite_fn_no_err!(
+            self.suite_ptr,
+            host_lock_handle,
+            self.handle
+        ) as *mut u8;
+        if ptr.is_null() {
+            Err(Error::InvalidIndex)
+        } else {
+            Ok(FlatHandleLock {
+                parent_handle: self,
+            })
+        }
+    }
+
+    #[inline]
+    pub fn as_slice(&'a self) -> Option<&'a [u8]> {
+        let ptr = unsafe { *(self.handle as *const *const u8) };
+        if ptr.is_null() {
+            None
+        } else {
+            Some(unsafe { &*std::ptr::slice_from_raw_parts(ptr, self.size()) })
+        }
+    }
+
+    #[inline]
+    pub fn as_slice_mut(&'a self) -> Option<&'a mut [u8]> {
+        let ptr = unsafe { *(self.handle as *const *mut u8) };
+        if ptr.is_null() {
+            None
+        } else {
+            Some(unsafe {
+                &mut *std::ptr::slice_from_raw_parts_mut(ptr, self.size())
+            })
+        }
+    }
+
+    #[inline]
     pub fn as_ptr(&self) -> *const u8 {
         unsafe { *(self.handle as *const *const u8) }
     }
 
+    #[inline]
+    pub fn as_ptr_mut(&self) -> *mut u8 {
+        unsafe { *(self.handle as *const *mut u8) }
+    }
+
+    #[inline]
     pub fn to_vec(&self) -> Vec<u8> {
         let ptr = unsafe { *(self.handle as *const *const u8) };
         if ptr.is_null() {
@@ -803,6 +983,7 @@ impl<'a> FlatHandle<'a> {
         }
     }
 
+    #[inline]
     pub fn size(&self) -> usize {
         ae_call_suite_fn_no_err!(
             self.suite_ptr,
@@ -811,6 +992,7 @@ impl<'a> FlatHandle<'a> {
         ) as usize
     }
 
+    #[inline]
     pub fn from_raw(
         handle: ae_sys::PF_Handle,
     ) -> Result<FlatHandle<'a>, Error> {
@@ -828,10 +1010,10 @@ impl<'a> FlatHandle<'a> {
                     if ptr.is_null() {
                         Err(Error::InternalStructDamaged)
                     } else {
-                        Ok(FlatHandle {
+                        Ok(Self {
                             suite_ptr,
                             handle,
-                            owned: false,
+                            is_owned: false,
                             _marker: PhantomData,
                         })
                     }
@@ -841,6 +1023,7 @@ impl<'a> FlatHandle<'a> {
         }
     }
 
+    #[inline]
     pub fn from_raw_owned(
         handle: ae_sys::PF_Handle,
     ) -> Result<FlatHandle<'a>, Error> {
@@ -858,10 +1041,10 @@ impl<'a> FlatHandle<'a> {
                     if ptr.is_null() {
                         Err(Error::InternalStructDamaged)
                     } else {
-                        Ok(FlatHandle {
+                        Ok(Self {
                             suite_ptr,
                             handle,
-                            owned: true,
+                            is_owned: true,
                             _marker: PhantomData,
                         })
                     }
@@ -871,19 +1054,28 @@ impl<'a> FlatHandle<'a> {
         }
     }
 
+    /// Turns the handle into and owned one
+    #[inline]
+    pub fn into_owned(mut handle: Self) -> Self {
+        handle.is_owned = true;
+        handle
+    }
+
     /// Consumes the handle.
-    pub fn into_raw(handle: FlatHandle) -> ae_sys::PF_Handle {
+    #[inline]
+    pub fn into_raw(handle: Self) -> ae_sys::PF_Handle {
         let return_handle = handle.handle;
-        // Handle is just on the stack so
-        // we're not leaking anything here.
         // We need to call forget() or else
         // drop() will be called on handle
         // which will dispose the memory.
+        // Handle is just on the stack so
+        // we're not leaking anything here.
         std::mem::forget(handle);
 
         return_handle
     }
 
+    #[inline]
     pub fn as_raw(&self) -> ae_sys::PF_Handle {
         self.handle
     }
@@ -896,77 +1088,15 @@ impl<'a> Clone for FlatHandle<'a> {
 }*/
 
 impl<'a> Drop for FlatHandle<'a> {
+    #[inline]
     fn drop(&mut self) {
-        if self.owned {
+        if self.is_owned {
             ae_call_suite_fn_no_err!(
                 self.suite_ptr,
                 host_dispose_handle,
                 self.handle
             );
         }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-#[repr(C)]
-pub struct Rect {
-    pub left: i32,
-    pub top: i32,
-    pub right: i32,
-    pub bottom: i32,
-}
-
-impl From<ae_sys::PF_LRect> for Rect {
-    fn from(rect: ae_sys::PF_LRect) -> Self {
-        Rect {
-            left: rect.left,
-            top: rect.top,
-            right: rect.right,
-            bottom: rect.bottom,
-        }
-    }
-}
-
-impl From<Rect> for ae_sys::PF_LRect {
-    fn from(rect: Rect) -> Self {
-        ae_sys::PF_LRect {
-            left: rect.left,
-            top: rect.top,
-            right: rect.right,
-            bottom: rect.bottom,
-        }
-    }
-}
-
-impl Rect {
-    pub fn is_empty(&self) -> bool {
-        (self.left >= self.right) || (self.top >= self.bottom)
-    }
-
-    pub fn union<'a>(&'a mut self, other: &Rect) -> &'a mut Rect {
-        if other.is_empty() {
-            *self = *other;
-        } else if !other.is_empty() {
-            self.left = std::cmp::min(self.left, other.left);
-            self.top = std::cmp::min(self.top, other.top);
-            self.right = std::cmp::max(self.right, other.right);
-            self.bottom = std::cmp::max(self.bottom, other.bottom);
-        }
-        self
-    }
-
-    pub fn is_edge_pixel(&self, x: i32, y: i32) -> bool {
-        let mut x_hit = (x == self.left) || (x == self.right);
-        let mut y_hit = (y == self.top) || (y == self.bottom);
-
-        if x_hit {
-            y_hit = (y >= self.top) && (y <= self.bottom);
-        } else {
-            if y_hit {
-                x_hit = (x >= self.left) && (x <= self.right);
-            }
-        }
-        x_hit && y_hit
     }
 }
 
@@ -1153,7 +1283,7 @@ impl InDataHandle {
 pub type ProgPtr = ae_sys::PF_ProgPtr;
 
 bitflags! {
-    pub struct CustomEventFlags: u32 {
+    pub struct CustomEventFlags: ae_sys::A_u_long {
         const NONE = ae_sys::PF_CustomEFlag_NONE;
         const COMP = ae_sys::PF_CustomEFlag_COMP;
         const LAYER = ae_sys::PF_CustomEFlag_LAYER;
@@ -1163,13 +1293,27 @@ bitflags! {
 }
 
 bitflags! {
-    struct _UIAlignment: u32 {
+    struct _UIAlignment: ae_sys::A_u_long {
         // No values other than PF_UIAlignment_NONE are honored, in Ae or PPro.
         const NONE = ae_sys::PF_UIAlignment_NONE;
         const TOP = ae_sys::PF_UIAlignment_TOP;
         const LEFT = ae_sys::PF_UIAlignment_LEFT;
         const BOTTOM = ae_sys::PF_UIAlignment_BOTTOM;
         const RIGHT = ae_sys::PF_UIAlignment_RIGHT;
+    }
+}
+
+bitflags! {
+    pub struct Modifiers: ae_sys::A_u_long {
+        const NONE = ae_sys::PF_Mod_NONE;
+        /// Cmd on macOS, Ctrl on Windows.
+        const CMD_CTRL_KEY = ae_sys::PF_Mod_CMD_CTRL_KEY;
+        const SHIFT_KEY = ae_sys::PF_Mod_SHIFT_KEY;
+        const CAPS_LOCK_KEY = ae_sys::PF_Mod_CAPS_LOCK_KEY;
+        // Option on macOS, alt on Windows.
+        const OPT_ALT_KEY = ae_sys::PF_Mod_OPT_ALT_KEY;
+        // Mac control key only
+        const MAC_CONTROL_KEY = ae_sys::PF_Mod_MAC_CONTROL_KEY;
     }
 }
 
@@ -1281,18 +1425,18 @@ bitflags! {
         const TOPIC = ae_sys::PF_PUI_TOPIC;
         /// Effect has custom UI and wants events for this params' control (portion invisible when twirled up).
         const CONTROL = ae_sys::PF_PUI_CONTROL;
-        // Param will be used as UI only, no data (new in AE 4.0).
+        // Param will be used as UI only, no data.
         const CONTROL_ONLY = ae_sys::PF_PUI_STD_CONTROL_ONLY;
-        // stop param from appearing in Effect Controls (which in PPro also means you won't see a keyframe track there)
+        // Stop param from appearing in Effect Controls (which in PPro also means you won't see a keyframe track there).
         const NO_ECW_UI = ae_sys::PF_PUI_NO_ECW_UI;
-        // draw a thick separating line above this param; not used by AE
+        // Draw a thick separating line above this param; not used by Ae.
         const ECW_SEPARATOR = ae_sys::PF_PUI_ECW_SEPARATOR;
-        // disable (gray-out) UI for this param
+        // Disable (gray-out) UI for this parameter.
         const DISABLED = ae_sys::PF_PUI_DISABLED;
-        // AE will not erase the ECW topic, it's up to the FX to erase/draw every pixel.
+        // Ae will not erase the ECW topic, it's up to the FX to erase/draw every pixel.
         // Handy if FX author implements an offscreen, prevents flashing.
-        const DONT_ERASE_TOPIC = ae_sys::PF_PUI_DONT_ERASE_TOPIC;
-        const DONT_ERASE_CONTROL = ae_sys::PF_PUI_DONT_ERASE_CONTROL;
+        const DO_NOT_ERASE_TOPIC = ae_sys::PF_PUI_DONT_ERASE_TOPIC;
+        const DO_NOT_ERASE_CONTROL = ae_sys::PF_PUI_DONT_ERASE_CONTROL;
         /// Display as a radio-button group; only valid for PF_Param_POPUP; ignored by Ae.
         const RADIO_BUTTON = ae_sys::PF_PUI_RADIO_BUTTON;
         /// In Ae as of CS6, this hides the parameter UI in both the Effect Controls and Timeline.
@@ -1317,6 +1461,16 @@ bitflags! {
         const LAYER_PARAM_IS_TRACKMATTE = ae_sys::PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE;
         const EXCLUDE_FROM_HAVE_INPUTS_CHANGED = ae_sys::PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED;
         const SKIP_REVEAL_WHEN_UNHIDDEN = ae_sys::PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN;
+    }
+}
+
+bitflags! {
+    pub struct ChangeFlag: u32 {
+        const NONE = ae_sys::PF_ChangeFlag_NONE;
+        const CHANGED_VALUE = ae_sys::PF_ChangeFlag_CHANGED_VALUE;
+        const RESERVED= ae_sys::PF_ChangeFlag_RESERVED;
+        const SET_TO_VARY= ae_sys::PF_ChangeFlag_SET_TO_VARY;
+        const SET_TO_CONSTANT = ae_sys::PF_ChangeFlag_SET_TO_CONSTANT;
     }
 }
 
@@ -1394,6 +1548,10 @@ impl PopupDef {
         Self(def, CString::new("").unwrap())
     }
 
+    pub fn into_raw(def: Self) -> ae_sys::PF_PopupDef {
+        def.0
+    }
+
     pub fn names<'a>(&'a mut self, names: Vec<&str>) -> &'a mut Self {
         // Build a string in the format "list|of|choices|", the
         // format Ae expects. Ae ignores the trailing '|'.
@@ -1467,10 +1625,6 @@ impl ColorDef {
     pub fn default<'a>(&'a mut self, default: Pixel) -> &'a mut Self {
         self.0.dephault = ae_sys::PF_Pixel::from(default);
         self
-    }
-
-    pub fn into_raw(def: ColorDef) -> ae_sys::PF_ColorDef {
-        def.0
     }
 }
 
@@ -1571,6 +1725,10 @@ impl CheckBoxDef {
         Self(def, CString::new("").unwrap())
     }
 
+    pub fn into_raw(def: Self) -> ae_sys::PF_CheckBoxDef {
+        def.0
+    }
+
     pub fn label<'a>(&'a mut self, label: &str) -> &'a mut Self {
         self.1 = CString::new(label).unwrap();
         self.0.u.nameptr = self.1.as_ptr();
@@ -1634,6 +1792,10 @@ impl ArbitraryDef {
     pub fn get(&self) -> Result<FlatHandle, Error> {
         FlatHandle::from_raw(self.0.value)
     }
+
+    pub fn get_owned(&self) -> Result<FlatHandle, Error> {
+        FlatHandle::from_raw_owned(self.0.value)
+    }
 }
 
 pub trait ArbitraryData<T> {
@@ -1673,7 +1835,7 @@ impl ArbParamsExtra {
                 // ae handle that we stash in the PF_ArbParamsExtra
                 // struct wrapper.
                 self.0.u.new_func_params.arbPH.write(FlatHandle::into_raw(
-                    FlatHandle::new(serde_cbor::to_vec(&T::default())?)?,
+                    FlatHandle::new(bincode::serialize(&T::default())?)?,
                 ));
             },
 
@@ -1693,15 +1855,19 @@ impl ArbParamsExtra {
                 // get a referece to that as a slice create a new
                 // handle from that and write that to the
                 // destination pointer.
-                let src =
+
+                assert!(!self.0.u.copy_func_params.src_arbH.is_null());
+
+                let src_handle =
                     FlatHandle::from_raw(self.0.u.copy_func_params.src_arbH)?;
 
-                self.0.u.copy_func_params.dst_arbPH.write(
-                    FlatHandle::into_raw(FlatHandle::new(src.as_slice())?),
-                );
+                let src_handle_lock = src_handle.lock()?;
 
-                // Make sure we do not drop the source handle.
-                FlatHandle::into_raw(src);
+                self.0.u.copy_func_params.dst_arbPH.write(
+                    FlatHandle::into_raw(FlatHandle::new(
+                        src_handle.as_slice().unwrap(),
+                    )?),
+                );
             },
 
             ae_sys::PF_Arbitrary_FLAT_SIZE_FUNC => unsafe {
@@ -1713,15 +1879,14 @@ impl ArbParamsExtra {
                     .flat_size_func_params
                     .flat_data_sizePLu
                     .write(handle.size() as _);
-
-                // Make sure we do not drop the source handle.
-                FlatHandle::into_raw(handle);
             },
 
             ae_sys::PF_Arbitrary_FLATTEN_FUNC => {
-                let handle = FlatHandle::from_raw(unsafe {
+                let mut handle = FlatHandle::from_raw(unsafe {
                     self.0.u.flatten_func_params.arbH
                 })?;
+
+                let handle_lock = handle.lock()?;
 
                 debug_assert!(
                     handle.size()
@@ -1736,9 +1901,6 @@ impl ArbParamsExtra {
                         handle.size(),
                     );
                 }
-
-                // Make sure we do not drop the handle.
-                FlatHandle::into_raw(handle);
             }
 
             ae_sys::PF_Arbitrary_UNFLATTEN_FUNC => unsafe {
@@ -1751,44 +1913,49 @@ impl ArbParamsExtra {
             },
 
             ae_sys::PF_Arbitrary_INTERP_FUNC => unsafe {
-                let left = FlatHandle::from_raw(
+                let mut left = FlatHandle::from_raw(
                     self.0.u.interp_func_params.left_arbH,
                 )?;
-                let right = FlatHandle::from_raw(
+
+                let left_lock = left.lock()?;
+
+                let mut right = FlatHandle::from_raw(
                     self.0.u.interp_func_params.right_arbH,
                 )?;
 
+                let right_lock = right.lock()?;
+
                 self.0.u.interp_func_params.interpPH.write(
-                    FlatHandle::into_raw(FlatHandle::new(serde_cbor::to_vec(
-                        &serde_cbor::from_slice::<T>(&left.as_slice())?
+                    FlatHandle::into_raw(FlatHandle::new(bincode::serialize(
+                        &bincode::deserialize::<T>(&left.as_slice().unwrap())?
                             .interpolate(
-                                &serde_cbor::from_slice::<T>(
-                                    &right.as_slice(),
+                                &bincode::deserialize::<T>(
+                                    &right.as_slice().unwrap(),
                                 )?,
                                 self.0.u.interp_func_params.tF,
                             ),
                     )?)?),
                 );
-
-                // Make sure we do not drop the handles.
-                FlatHandle::into_raw(left);
-                FlatHandle::into_raw(right);
             },
 
             ae_sys::PF_Arbitrary_COMPARE_FUNC => {
-                let handle_a = FlatHandle::from_raw(unsafe {
+                let mut handle_a = FlatHandle::from_raw(unsafe {
                     self.0.u.compare_func_params.a_arbH
                 })?;
-                let a = serde_cbor::from_slice::<T>(&handle_a.as_slice())?;
-                // Make sure we do not drop the handle.
-                FlatHandle::into_raw(handle_a);
 
-                let handle_b = FlatHandle::from_raw(unsafe {
+                let handle_a_lock = handle_a.lock()?;
+
+                let a =
+                    bincode::deserialize::<T>(&handle_a.as_slice().unwrap())?;
+
+                let mut handle_b = FlatHandle::from_raw(unsafe {
                     self.0.u.compare_func_params.b_arbH
                 })?;
-                let b = serde_cbor::from_slice::<T>(&handle_b.as_slice())?;
-                // Make sure we do not drop the handle.
-                FlatHandle::into_raw(handle_b);
+
+                let handle_b_lock = handle_b.lock()?;
+
+                let b =
+                    bincode::deserialize::<T>(&handle_b.as_slice().unwrap())?;
 
                 if a < b {
                     unsafe {
@@ -1826,32 +1993,33 @@ impl ArbParamsExtra {
             }
 
             ae_sys::PF_Arbitrary_PRINT_SIZE_FUNC => unsafe {
-                let handle =
+                let mut handle =
                     FlatHandle::from_raw(self.0.u.print_size_func_params.arbH)?;
 
+                let handle_lock = handle.lock()?;
+
                 self.0.u.print_size_func_params.print_sizePLu.write(
-                    (serde_json::to_string(&serde_cbor::from_slice::<T>(
-                        &handle.as_slice(),
+                    (serde_json::to_string(&bincode::deserialize::<T>(
+                        &handle.as_slice().unwrap(),
                     )?)?
                     // The len + terminating nul byte.
                     .len()
                         + 1) as _,
                 );
-
-                // Make sure we do not drop the handle.
-                FlatHandle::into_raw(handle);
             },
 
             // Print arbitrary data into a string as JSON.
             // Note that we could use any text-based serializer here.
             ae_sys::PF_Arbitrary_PRINT_FUNC => {
-                let handle = FlatHandle::from_raw(unsafe {
+                let mut handle = FlatHandle::from_raw(unsafe {
                     self.0.u.print_func_params.arbH
                 })?;
-                let string =
-                    serde_json::to_string(&serde_cbor::from_slice::<T>(
-                        &handle.as_slice(),
-                    )?)?;
+
+                let handle_lock = handle.lock()?;
+
+                let string = serde_json::to_string(
+                    &bincode::deserialize::<T>(&handle.as_slice().unwrap())?,
+                )?;
 
                 if string.len() + 1
                     <= unsafe { self.0.u.print_func_params.print_sizeLu } as _
@@ -1872,13 +2040,10 @@ impl ArbParamsExtra {
                             .write(0);
                     }
                 }
-
-                // Make sure we do not drop the handle.
-                FlatHandle::into_raw(handle);
             }
             ae_sys::PF_Arbitrary_SCAN_FUNC => unsafe {
                 self.0.u.scan_func_params.arbPH.write(FlatHandle::into_raw(
-                    FlatHandle::new(serde_cbor::to_vec::<T>(
+                    FlatHandle::new(bincode::serialize::<T>(
                         &serde_json::from_str(
                             CStr::from_ptr(self.0.u.scan_func_params.bufPC)
                                 .to_str()?,
@@ -1931,6 +2096,7 @@ impl ParamDef {
         in_data_ptr: *const ae_sys::PF_InData,
         param_def: *mut ae_sys::PF_ParamDef,
     ) -> Self {
+        debug_assert!(!param_def.is_null());
         Self {
             param_def_boxed: unsafe {
                 std::mem::ManuallyDrop::new(Box::from_raw(param_def))
@@ -2081,7 +2247,7 @@ impl ParamDef {
         self
     }
 
-    pub fn name<'a>(&'a mut self, name: &str) -> &'a mut ParamDef {
+    pub fn name<'a>(&'a mut self, name: &str) -> &'a mut Self {
         assert!(name.len() < 32);
         let name_cstr = CString::new(name).unwrap();
         let name_slice = name_cstr.to_bytes_with_nul();
@@ -2090,23 +2256,31 @@ impl ParamDef {
         self
     }
 
-    pub fn ui_flags<'a>(&'a mut self, flags: ParamUIFlags) -> &'a mut ParamDef {
+    pub fn ui_flags<'a>(&'a mut self, flags: ParamUIFlags) -> &'a mut Self {
         self.param_def_boxed.ui_flags = flags.bits() as _;
         self
     }
 
-    pub fn ui_width<'a>(&'a mut self, width: u16) -> &'a mut ParamDef {
+    pub fn ui_width<'a>(&'a mut self, width: u16) -> &'a mut Self {
         self.param_def_boxed.ui_width = width as _;
         self
     }
 
-    pub fn ui_height<'a>(&'a mut self, height: u16) -> &'a mut ParamDef {
+    pub fn ui_height<'a>(&'a mut self, height: u16) -> &'a mut Self {
         self.param_def_boxed.ui_height = height as _;
         self
     }
 
-    pub fn flags<'a>(&'a mut self, flags: ParamFlag) -> &'a mut ParamDef {
+    pub fn flags<'a>(&'a mut self, flags: ParamFlag) -> &'a mut Self {
         self.param_def_boxed.flags = flags.bits() as _;
+        self
+    }
+
+    pub fn change_flags<'a>(
+        &'a mut self,
+        change_flags: ChangeFlag,
+    ) -> &'a mut Self {
+        self.param_def_boxed.uu.change_flags = change_flags.bits() as _;
         self
     }
 }
@@ -2183,7 +2357,21 @@ impl EffectCustomUIOverlayThemeSuite {
         }
     }
 
-    //PF_GetPreferredShadowColor
+    pub fn get_preferred_shadow_color(
+        &self,
+    ) -> Result<drawbot::ColorRGBA, Error> {
+        let mut color = std::mem::MaybeUninit::<drawbot::ColorRGBA>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            PF_GetPreferredShadowColor,
+            color.as_mut_ptr() as _,
+        ) {
+            Ok(()) => Ok(unsafe { color.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+
     //PF_GetPreferredShadowOffset
 
     pub fn get_preferred_stroke_width(&self) -> Result<f32, Error> {

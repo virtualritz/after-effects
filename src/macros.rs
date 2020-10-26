@@ -185,6 +185,12 @@ macro_rules! define_struct_wrapper {
                 Self(ae_struct)
             }
 
+            pub fn into_raw(
+                def: $wrapper_pretty_name,
+            ) -> aftereffects_sys::$data_type {
+                def.0
+            }
+
             pub fn as_ref(&self) -> &aftereffects_sys::$data_type {
                 &self.0
             }
@@ -243,6 +249,12 @@ macro_rules! define_param_wrapper {
             pub fn from_raw(def: aftereffects_sys::$data_type) -> Self {
                 Self(def)
             }
+
+            pub fn into_raw(
+                def: $wrapper_pretty_name,
+            ) -> aftereffects_sys::$data_type {
+                def.0
+            }
         }
     };
 }
@@ -264,12 +276,6 @@ macro_rules! define_param_basic_wrapper {
             ) -> &'a mut $wrapper_pretty_name {
                 self.0.dephault = default as _;
                 self
-            }
-
-            pub fn into_raw(
-                def: $wrapper_pretty_name,
-            ) -> aftereffects_sys::$data_type {
-                def.0
             }
         }
     };

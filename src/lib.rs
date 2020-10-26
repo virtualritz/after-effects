@@ -1,6 +1,6 @@
 // FIXME: make ALL the functions below return Result-wrapped values
 #![feature(new_uninit)]
-#![feature(proc_macro_hygiene)]
+//#![feature(proc_macro_hygiene)]
 //#![feature(try_reserve)]
 
 //#[macro_use]
@@ -15,7 +15,6 @@ use std::{cell::RefCell, ops::Add};
 
 #[macro_use]
 mod macros;
-pub use macros::*;
 
 pub mod aegp;
 pub use aegp::*;
@@ -382,6 +381,60 @@ pub struct Rect {
     pub top: i32,
     pub right: i32,
     pub bottom: i32,
+}
+
+impl From<ae_sys::PF_LRect> for Rect {
+    fn from(rect: ae_sys::PF_LRect) -> Self {
+        Rect {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+        }
+    }
+}
+
+impl From<Rect> for ae_sys::PF_LRect {
+    fn from(rect: Rect) -> Self {
+        ae_sys::PF_LRect {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+        }
+    }
+}
+
+impl Rect {
+    pub fn is_empty(&self) -> bool {
+        (self.left >= self.right) || (self.top >= self.bottom)
+    }
+
+    pub fn union<'a>(&'a mut self, other: &Rect) -> &'a mut Rect {
+        if other.is_empty() {
+            *self = *other;
+        } else if !other.is_empty() {
+            self.left = std::cmp::min(self.left, other.left);
+            self.top = std::cmp::min(self.top, other.top);
+            self.right = std::cmp::max(self.right, other.right);
+            self.bottom = std::cmp::max(self.bottom, other.bottom);
+        }
+        self
+    }
+
+    pub fn is_edge_pixel(&self, x: i32, y: i32) -> bool {
+        let mut x_hit = (x == self.left) || (x == self.right);
+        let mut y_hit = (y == self.top) || (y == self.bottom);
+
+        if x_hit {
+            y_hit = (y >= self.top) && (y <= self.bottom);
+        } else {
+            if y_hit {
+                x_hit = (x >= self.left) && (x <= self.right);
+            }
+        }
+        x_hit && y_hit
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
