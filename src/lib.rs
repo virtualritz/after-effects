@@ -435,6 +435,11 @@ impl Rect {
         }
         x_hit && y_hit
     }
+
+    pub fn contains(&self, x: i32, y: i32) -> bool {
+        (self.left <= x) && (x <= self.right) &&
+        (self.top <= y) && (y <= self.bottom)
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -444,6 +449,13 @@ pub struct FloatRect {
     pub top: f64,
     pub right: f64,
     pub bottom: f64,
+}
+
+impl FloatRect {
+    pub fn contains(&self, x: f64, y: f64) -> bool {
+        (self.left <= x) && (x <= self.right) &&
+        (self.top <= y) && (y <= self.bottom)
+    }
 }
 
 // Note that this has a different ordering
