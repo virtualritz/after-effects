@@ -65,6 +65,10 @@ impl ClickEventInfo {
     pub fn screen_point(&self) -> Point {
         Point::from_raw(self.0.screen_point)
     }
+
+    pub fn num_clicks(&self) -> u32 {
+        self.0.num_clicks as _
+    }
 }
 
 impl std::fmt::Debug for ClickEventInfo {
