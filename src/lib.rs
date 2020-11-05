@@ -437,8 +437,10 @@ impl Rect {
     }
 
     pub fn contains(&self, x: i32, y: i32) -> bool {
-        (self.left <= x) && (x <= self.right) &&
-        (self.top <= y) && (y <= self.bottom)
+        (self.left <= x)
+            && (x <= self.right)
+            && (self.top <= y)
+            && (y <= self.bottom)
     }
 }
 
@@ -453,8 +455,10 @@ pub struct FloatRect {
 
 impl FloatRect {
     pub fn contains(&self, x: f64, y: f64) -> bool {
-        (self.left <= x) && (x <= self.right) &&
-        (self.top <= y) && (y <= self.bottom)
+        (self.left <= x)
+            && (x <= self.right)
+            && (self.top <= y)
+            && (y <= self.bottom)
     }
 }
 

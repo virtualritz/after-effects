@@ -1836,7 +1836,7 @@ impl ArbParamsExtra {
                 //println!("NEW_FUNC");
                 // Create a new instance, serialize it to a Vec<u8>
                 // pass it to a FlatHandle and turn that into a raw
-                // ae handle that we stash in the PF_ArbParamsExtra
+                // Ae handle that we stash in the PF_ArbParamsExtra
                 // struct wrapper.
                 self.0.u.new_func_params.arbPH.write(FlatHandle::into_raw(
                     FlatHandle::new(bincode::serialize(&T::default())?)?,
@@ -1845,10 +1845,15 @@ impl ArbParamsExtra {
 
             ae_sys::PF_Arbitrary_DISPOSE_FUNC => {
                 //println!("DISPOSE_FUNC");
+
                 // Create a new handle from the raw Ae handle. This
                 // disposes then handle when it goes out of scope
                 // and is dropped just after.
-                FlatHandle::from_raw(unsafe {
+                assert!(unsafe {
+                    !self.0.u.dispose_func_params.arbH.is_null()
+                });
+
+                FlatHandle::from_raw_owned(unsafe {
                     self.0.u.dispose_func_params.arbH
                 })?;
             }
@@ -1865,7 +1870,7 @@ impl ArbParamsExtra {
                 let src_handle =
                     FlatHandle::from_raw(self.0.u.copy_func_params.src_arbH)?;
 
-                let src_handle_lock = src_handle.lock()?;
+                let _src_handle_lock = src_handle.lock()?;
 
                 self.0.u.copy_func_params.dst_arbPH.write(
                     FlatHandle::into_raw(FlatHandle::new(
@@ -1875,6 +1880,8 @@ impl ArbParamsExtra {
             },
 
             ae_sys::PF_Arbitrary_FLAT_SIZE_FUNC => unsafe {
+                //println!("FLAT_SIZE_FUNC");
+
                 let handle =
                     FlatHandle::from_raw(self.0.u.flat_size_func_params.arbH)?;
 
@@ -1886,11 +1893,13 @@ impl ArbParamsExtra {
             },
 
             ae_sys::PF_Arbitrary_FLATTEN_FUNC => {
-                let mut handle = FlatHandle::from_raw(unsafe {
+                //println!("FLATTEN_FUNC");
+
+                let handle = FlatHandle::from_raw(unsafe {
                     self.0.u.flatten_func_params.arbH
                 })?;
 
-                let handle_lock = handle.lock()?;
+                let _handle_lock = handle.lock()?;
 
                 debug_assert!(
                     handle.size()
@@ -1908,6 +1917,8 @@ impl ArbParamsExtra {
             }
 
             ae_sys::PF_Arbitrary_UNFLATTEN_FUNC => unsafe {
+                //println!("UNFLATTEN_FUNC");
+
                 self.0.u.unflatten_func_params.arbPH.write(
                     FlatHandle::into_raw(FlatHandle::new(CVec::<u8>::new(
                         self.0.u.unflatten_func_params.flat_dataPV as *mut u8,
@@ -1917,17 +1928,19 @@ impl ArbParamsExtra {
             },
 
             ae_sys::PF_Arbitrary_INTERP_FUNC => unsafe {
-                let mut left = FlatHandle::from_raw(
+                //println!("INTERP_FUNC");
+
+                let left = FlatHandle::from_raw(
                     self.0.u.interp_func_params.left_arbH,
                 )?;
 
-                let left_lock = left.lock()?;
+                let _left_lock = left.lock()?;
 
-                let mut right = FlatHandle::from_raw(
+                let right = FlatHandle::from_raw(
                     self.0.u.interp_func_params.right_arbH,
                 )?;
 
-                let right_lock = right.lock()?;
+                let _right_lock = right.lock()?;
 
                 self.0.u.interp_func_params.interpPH.write(
                     FlatHandle::into_raw(FlatHandle::new(bincode::serialize(
@@ -1943,20 +1956,22 @@ impl ArbParamsExtra {
             },
 
             ae_sys::PF_Arbitrary_COMPARE_FUNC => {
-                let mut handle_a = FlatHandle::from_raw(unsafe {
+                //println!("COMPARE_FUNC");
+
+                let handle_a = FlatHandle::from_raw(unsafe {
                     self.0.u.compare_func_params.a_arbH
                 })?;
 
-                let handle_a_lock = handle_a.lock()?;
+                let _handle_a_lock = handle_a.lock()?;
 
                 let a =
                     bincode::deserialize::<T>(&handle_a.as_slice().unwrap())?;
 
-                let mut handle_b = FlatHandle::from_raw(unsafe {
+                let handle_b = FlatHandle::from_raw(unsafe {
                     self.0.u.compare_func_params.b_arbH
                 })?;
 
-                let handle_b_lock = handle_b.lock()?;
+                let _handle_b_lock = handle_b.lock()?;
 
                 let b =
                     bincode::deserialize::<T>(&handle_b.as_slice().unwrap())?;
@@ -1997,10 +2012,12 @@ impl ArbParamsExtra {
             }
 
             ae_sys::PF_Arbitrary_PRINT_SIZE_FUNC => unsafe {
-                let mut handle =
+                //println!("PRINT_SIZE_FUNC");
+
+                let handle =
                     FlatHandle::from_raw(self.0.u.print_size_func_params.arbH)?;
 
-                let handle_lock = handle.lock()?;
+                let _handle_lock = handle.lock()?;
 
                 self.0.u.print_size_func_params.print_sizePLu.write(
                     (serde_json::to_string(&bincode::deserialize::<T>(
@@ -2015,11 +2032,13 @@ impl ArbParamsExtra {
             // Print arbitrary data into a string as JSON.
             // Note that we could use any text-based serializer here.
             ae_sys::PF_Arbitrary_PRINT_FUNC => {
-                let mut handle = FlatHandle::from_raw(unsafe {
+                //println!("PRINT_FUNC");
+
+                let handle = FlatHandle::from_raw(unsafe {
                     self.0.u.print_func_params.arbH
                 })?;
 
-                let handle_lock = handle.lock()?;
+                let _handle_lock = handle.lock()?;
 
                 let string = serde_json::to_string(
                     &bincode::deserialize::<T>(&handle.as_slice().unwrap())?,
@@ -2046,6 +2065,8 @@ impl ArbParamsExtra {
                 }
             }
             ae_sys::PF_Arbitrary_SCAN_FUNC => unsafe {
+                //println!("SCAN_FUNC");
+
                 self.0.u.scan_func_params.arbPH.write(FlatHandle::into_raw(
                     FlatHandle::new(bincode::serialize::<T>(
                         &serde_json::from_str(
