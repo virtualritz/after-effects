@@ -1,5 +1,6 @@
 // FIXME: make ALL the functions below return Result-wrapped values
 #![feature(new_uninit)]
+#![allow(temporary_cstring_as_ptr)]
 //#![feature(proc_macro_hygiene)]
 //#![feature(try_reserve)]
 
@@ -9,9 +10,10 @@
 #[macro_use]
 extern crate bitflags;
 use aftereffects_sys as ae_sys;
-
 use num_enum::{IntoPrimitive, TryFromPrimitive, UnsafeFromPrimitive};
-use std::{cell::RefCell, ops::Add};
+use std::{cell::RefCell, convert::TryInto, ops::Add};
+#[cfg(feature = "ultraviolet")]
+use ultraviolet as uv;
 
 #[macro_use]
 mod macros;
@@ -239,12 +241,38 @@ pub struct Matrix4([[f64; 4]; 4]);
 
 impl Matrix4 {
     #[inline]
-    fn as_slice(&self) -> &[f64] {
+    pub fn as_slice(&self) -> &[f64] {
         unsafe { std::slice::from_raw_parts(self.0.as_ptr() as _, 16) }
     }
 }
 
-#[cfg(feature = "algebra-nalgebra")]
+impl From<Matrix4> for [f64; 16] {
+    #[inline]
+    fn from(m: Matrix4) -> Self {
+        // This can not panic.
+        m.as_slice().try_into().unwrap()
+    }
+}
+
+#[cfg(feature = "ultraviolet")]
+impl From<Matrix4> for uv::DMat4 {
+    #[inline]
+    fn from(m: Matrix4) -> Self {
+        // Ae is row-based – transpose
+        uv::DMat4::from(m.0).transposed()
+    }
+}
+
+#[cfg(feature = "ultraviolet")]
+#[test]
+fn test_from() {
+    let m = Matrix4 {
+        0: [[0.; 4], [0.; 4], [0.; 4], [0.; 4]],
+    };
+    let _matrix = uv::mat4D::from(m);
+}
+
+#[cfg(feature = "nalgebra")]
 impl From<Matrix4> for nalgebra::Matrix4<f64> {
     #[inline]
     fn from(m: Matrix4) -> Self {
@@ -252,7 +280,7 @@ impl From<Matrix4> for nalgebra::Matrix4<f64> {
     }
 }
 
-#[cfg(feature = "algebra-nalgebra")]
+#[cfg(feature = "nalgebra")]
 #[test]
 fn test_from() {
     let m = Matrix4 {

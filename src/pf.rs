@@ -504,7 +504,7 @@ impl EffectWorld {
     }
 
     #[inline]
-    pub fn data_as_mut_ptr(&self) -> *mut u8 {
+    pub fn data_as_ptr_mut(&self) -> *mut u8 {
         self.effect_world.data as *mut u8
     }
 
