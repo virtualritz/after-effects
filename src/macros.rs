@@ -1,4 +1,3 @@
-#[macro_export]
 macro_rules! ae_acquire_suite_ptr {
     ($pica:expr, $type:ident, $name:ident, $version:ident) => {{
         unsafe {
@@ -21,7 +20,6 @@ macro_rules! ae_acquire_suite_ptr {
     }};
 }
 
-#[macro_export]
 macro_rules! ae_release_suite_ptr {
     ($pica:expr, $name:ident, $version:ident) => {{
         unsafe {
@@ -35,7 +33,6 @@ macro_rules! ae_release_suite_ptr {
     }};
 }
 
-#[macro_export]
 macro_rules! ae_get_suite_fn {
     ($suite_ptr:expr, $function:ident ) => {{
         // Return an invocable function
@@ -43,7 +40,6 @@ macro_rules! ae_get_suite_fn {
     }};
 }
 
-#[macro_export]
 macro_rules! ae_call_suite_fn {
     ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
         let err = unsafe { ae_get_suite_fn!(($suite_ptr), $function)($($arg)*) };
@@ -59,7 +55,6 @@ macro_rules! ae_call_suite_fn {
 // Some new functions in AE_Scene3D_Private.h abandon suite API design
 // practices and return a value instead of an error. E.g. the
 // AEGP_*BufferElementSize() ones.
-#[macro_export]
 macro_rules! ae_call_suite_fn_no_err {
     ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
         unsafe {
@@ -68,7 +63,6 @@ macro_rules! ae_call_suite_fn_no_err {
     }};
 }
 
-#[macro_export]
 macro_rules! ae_acquire_suite_and_call_suite_fn_no_err {
     ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
         match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
@@ -81,7 +75,6 @@ macro_rules! ae_acquire_suite_and_call_suite_fn_no_err {
     }};
 }
 
-#[macro_export]
 macro_rules! ae_acquire_suite_and_call_suite_fn {
     ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
         match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
@@ -117,41 +110,12 @@ macro_rules! define_handle_wrapper_v2 {
     };
 }*/
 
-macro_rules! define_ptr_wrapper {
-    ($wrapper_pretty_name:ident, $data_type:ident) => {
-        #[derive(Copy, Clone, Debug, Hash)]
-        pub struct $wrapper_pretty_name(*const aftereffects_sys::$data_type);
-
-        impl $wrapper_pretty_name {
-            pub fn from_raw(
-                raw_ptr: *const aftereffects_sys::$data_type,
-            ) -> Self {
-                Self(raw_ptr)
-            }
-
-            pub fn as_ptr(&self) -> *const aftereffects_sys::$data_type {
-                self.0
-            }
-
-            pub fn is_null(&self) -> bool {
-                self.0.is_null()
-            }
-        }
-
-        impl From<$wrapper_pretty_name>
-            for *const aftereffects_sys::$data_type
-        {
-            fn from(ptr_wrapper: $wrapper_pretty_name) -> Self {
-                ptr_wrapper.as_ptr()
-            }
-        }
-    };
-}
-
 macro_rules! define_handle_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident) => {
         #[derive(Copy, Clone, Debug, Hash)]
-        pub struct $wrapper_pretty_name(aftereffects_sys::$data_type);
+        pub struct $wrapper_pretty_name(
+            pub(crate) aftereffects_sys::$data_type,
+        );
 
         impl $wrapper_pretty_name {
             pub fn from_raw(raw_handle: aftereffects_sys::$data_type) -> Self {
@@ -414,6 +378,95 @@ macro_rules! define_suite {
                     $suite_name_string,
                     $suite_version
                 );
+            }
+        }
+    };
+}
+
+macro_rules! add_param {
+    (in_data: expr,
+    index: expr,
+    def: expr) => {
+        in_data.inter.add_param.unwrap()(in_data.effect_ref, (index), &(def))
+    };
+}
+
+macro_rules! assume {
+    ($owner:ident, $var:pat => $out:expr, $ty:ty) => {
+        impl AssumeFrom<$owner> for $ty {
+            fn assume(x: &$owner) -> &$ty {
+                use $owner::*;
+                match x {
+                    $var => $out,
+                    _ => panic!(
+                        concat!(
+                            "Assumed ",
+                            stringify!($var),
+                            " but was in {:?}"
+                        ),
+                        x
+                    ),
+                }
+            }
+
+            fn assume_mut(x: &mut $owner) -> &mut $ty {
+                use $owner::*;
+                match x {
+                    $var => $out,
+                    _ => panic!(
+                        concat!(
+                            "Assumed ",
+                            stringify!($var),
+                            " but was in {:?}"
+                        ),
+                        x
+                    ),
+                }
+            }
+        }
+    };
+    ($owner:ident) => {
+        impl $owner {
+            pub fn assume<T: AssumeFrom<Self>>(&self) -> &T {
+                T::assume(self)
+            }
+
+            pub fn assume_mut<T: AssumeFrom<Self>>(&mut self) -> &mut T {
+                T::assume_mut(self)
+            }
+        }
+    };
+}
+
+#[cfg(feature = "artisan-2-api")]
+macro_rules! define_ptr_wrapper {
+    ($wrapper_pretty_name:ident, $data_type:ident) => {
+        #[derive(Copy, Clone, Debug, Hash)]
+        pub struct $wrapper_pretty_name(
+            pub(crate) *const aftereffects_sys::$data_type,
+        );
+
+        impl $wrapper_pretty_name {
+            pub fn from_raw(
+                raw_ptr: *const aftereffects_sys::$data_type,
+            ) -> Self {
+                Self(raw_ptr)
+            }
+
+            pub fn as_ptr(&self) -> *const aftereffects_sys::$data_type {
+                self.0
+            }
+
+            pub fn is_null(&self) -> bool {
+                self.0.is_null()
+            }
+        }
+
+        impl From<$wrapper_pretty_name>
+            for *const aftereffects_sys::$data_type
+        {
+            fn from(ptr_wrapper: $wrapper_pretty_name) -> Self {
+                ptr_wrapper.as_ptr()
             }
         }
     };

@@ -465,6 +465,11 @@ unsafe impl Sync for EffectWorldConst {}
 
 define_handle_wrapper!(EffectBlendingTables, PF_EffectBlendingTables);
 
+// FIXME: this is not safe.
+// We just use EffectWorld responsibly but another user of this care may not.
+unsafe impl Send for EffectWorld {}
+unsafe impl Sync for EffectWorld {}
+
 impl EffectWorld {
     #[inline]
     pub fn new(world_handle: WorldHandle) -> Result<Self, crate::Error> {
@@ -518,9 +523,9 @@ impl EffectWorld {
             - self.width()
                 * 4
                 * match self.world_type() {
-                    WorldType::Integer => 2,
-                    WorldType::Byte => 1,
-                    WorldType::Float => 4,
+                    WorldType::U15 => 2,
+                    WorldType::U8 => 1,
+                    WorldType::F32 => 4,
                     WorldType::None => panic!(),
                 }
     }
@@ -532,7 +537,7 @@ impl EffectWorld {
             "Coordinate is outside EffectWorld bounds."
         );
         unsafe {
-            &mut *(self.effect_world.data.add(y * self.row_bytes())
+            &mut *(self.data_as_ptr_mut().add(y * self.row_bytes())
                 as *mut Pixel8)
                 .add(x)
         }
@@ -540,10 +545,6 @@ impl EffectWorld {
 
     #[inline]
     pub fn as_pixel8(&self, x: usize, y: usize) -> &Pixel8 {
-        debug_assert!(
-            x < self.width() && y < self.height(),
-            "Coordinate is outside EffectWorld bounds."
-        );
         self.as_pixel8_mut(x, y)
     }
 
@@ -554,7 +555,7 @@ impl EffectWorld {
             "Coordinate is outside EffectWorld bounds."
         );
         unsafe {
-            &mut *(self.effect_world.data.add(y * self.row_bytes())
+            &mut *(self.data_as_ptr_mut().add(y * self.row_bytes())
                 as *mut Pixel16)
                 .add(x)
         }
@@ -562,10 +563,6 @@ impl EffectWorld {
 
     #[inline]
     pub fn as_pixel16(&self, x: usize, y: usize) -> &Pixel16 {
-        debug_assert!(
-            x < self.width() && y < self.height(),
-            "Coordinate is outside EffectWorld bounds."
-        );
         self.as_pixel16_mut(x, y)
     }
 
@@ -576,7 +573,7 @@ impl EffectWorld {
             "Coordinate is outside EffectWorld bounds."
         );
         unsafe {
-            &mut *(self.effect_world.data.add(y * self.row_bytes())
+            &mut *(self.data_as_ptr_mut().add(y * self.row_bytes())
                 as *mut Pixel32)
                 .add(x)
         }
@@ -584,15 +581,7 @@ impl EffectWorld {
 
     #[inline]
     pub fn as_pixel32(&self, x: usize, y: usize) -> &Pixel32 {
-        debug_assert!(
-            x < self.width() && y < self.height(),
-            "Coordinate is outside EffectWorld bounds."
-        );
-        unsafe {
-            &*((self.effect_world.data as *const u8).add(y * self.row_bytes())
-                as *const Pixel32)
-                .add(x)
-        }
+        self.as_pixel32_mut(x, y)
     }
 
     #[inline]
@@ -600,11 +589,11 @@ impl EffectWorld {
         let flags = self.effect_world.world_flags;
         // Most frequent case is 16bit integer.
         if ae_sys::PF_WorldFlag_DEEP & flags as u32 != 0 {
-            WorldType::Integer
+            WorldType::U15
         } else if ae_sys::PF_WorldFlag_RESERVED1 & flags as u32 != 0 {
-            WorldType::Float
+            WorldType::F32
         } else {
-            WorldType::Byte
+            WorldType::U8
         }
     }
 
@@ -617,15 +606,6 @@ impl EffectWorld {
     pub fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
         &mut self.effect_world as *mut ae_sys::PF_EffectWorld
     }
-}
-
-#[macro_export]
-macro_rules! add_param {
-    (in_data: expr,
-    index: expr,
-    def: expr) => {
-        in_data.inter.add_param.unwrap()(in_data.effect_ref, (index), &(def))
-    };
 }
 
 pub fn progress(in_data: InDataHandle, count: u16, total: u16) -> i32 {
@@ -2447,52 +2427,4 @@ state.assume::<PlayState>()
 pub trait AssumeFrom<T> {
     fn assume(x: &T) -> &Self;
     fn assume_mut(x: &mut T) -> &mut Self;
-}
-
-#[macro_export]
-macro_rules! assume {
-    ($owner:ident, $var:pat => $out:expr, $ty:ty) => {
-        impl AssumeFrom<$owner> for $ty {
-            fn assume(x: &$owner) -> &$ty {
-                use $owner::*;
-                match x {
-                    $var => $out,
-                    _ => panic!(
-                        concat!(
-                            "Assumed ",
-                            stringify!($var),
-                            " but was in {:?}"
-                        ),
-                        x
-                    ),
-                }
-            }
-
-            fn assume_mut(x: &mut $owner) -> &mut $ty {
-                use $owner::*;
-                match x {
-                    $var => $out,
-                    _ => panic!(
-                        concat!(
-                            "Assumed ",
-                            stringify!($var),
-                            " but was in {:?}"
-                        ),
-                        x
-                    ),
-                }
-            }
-        }
-    };
-    ($owner:ident) => {
-        impl $owner {
-            pub fn assume<T: AssumeFrom<Self>>(&self) -> &T {
-                T::assume(self)
-            }
-
-            pub fn assume_mut<T: AssumeFrom<Self>>(&mut self) -> &mut T {
-                T::assume_mut(self)
-            }
-        }
-    };
 }

@@ -11,7 +11,13 @@
 extern crate bitflags;
 use aftereffects_sys as ae_sys;
 use num_enum::{IntoPrimitive, TryFromPrimitive, UnsafeFromPrimitive};
-use std::{cell::RefCell, convert::TryInto, ops::Add};
+use num_traits::identities::Zero;
+use std::{
+    cell::RefCell,
+    cmp::{PartialEq, PartialOrd},
+    convert::TryInto,
+    ops::{Add, RemAssign},
+};
 #[cfg(feature = "ultraviolet")]
 use ultraviolet as uv;
 
@@ -30,12 +36,12 @@ pub mod pr;
 pub use pr::*;
 
 thread_local!(
-    pub static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> =
+    pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> =
         RefCell::new(std::ptr::null_mut())
 );
 
 #[inline]
-pub fn borrow_pica_basic_as_ptr() -> *const ae_sys::SPBasicSuite {
+pub(crate) fn borrow_pica_basic_as_ptr() -> *const ae_sys::SPBasicSuite {
     let mut pica_basic_ptr: *const ae_sys::SPBasicSuite = std::ptr::null();
 
     PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
@@ -45,12 +51,13 @@ pub fn borrow_pica_basic_as_ptr() -> *const ae_sys::SPBasicSuite {
     pica_basic_ptr
 }
 
-/// This lets us access a thread-local version of the PicaBasic
-/// Suite. Whenever we gen a new SPBasic_Suite from Ae somehow,
-/// we create a PicaBasicSuite::new from it and use that to initialize
+/// This lets us access a thread-local version of the `PicaBasic`
+/// suite. Whenever we generate a new `SPBasic_Suite` from Ae somehow,
+/// we create a PicaBasicSuite::new() from that and use that to initialize
 /// access to any suites.
-/// When we leave scope, drop() ic alled automatically and restores the
-/// previous value to our thread local storage so the caller
+///
+/// When we leave scope, `drop()` ic alled automatically and restores the
+/// previous value to our thread-local storage so the caller
 /// can continue using their pointer to the suite.
 ///
 /// FIXME: Is this really neccessary? Check if the pointer is always the
@@ -264,6 +271,15 @@ impl From<Matrix4> for uv::DMat4 {
 }
 
 #[cfg(feature = "ultraviolet")]
+impl From<uv::DMat4> for Matrix4 {
+    #[inline]
+    fn from(m: uv::DMat4) -> Self {
+        // Ae is row-based – transpose
+        Self(m.transposed())
+    }
+}
+
+#[cfg(feature = "ultraviolet")]
 #[test]
 fn test_from() {
     let m = Matrix4 {
@@ -294,7 +310,6 @@ pub type Color = ae_sys::A_Color;
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
 #[repr(C)]
 pub struct Time {
-    #[inline]
     pub value: ae_sys::A_long,
     pub scale: ae_sys::A_u_long,
 }
@@ -325,26 +340,26 @@ impl From<Time> for ae_sys::A_Time {
     }
 }
 
-// Next bit (std::ops::Add) ported from aeutility.cpp
-// Rust version is so much shorter & cleaner!
-
 // Euclid's two-thousand-year-old algorithm for finding the
 // greatest common divisor. Copied non-recursive version from
 // Rust docs.
 #[inline]
-fn greatest_common_divisor(x: u32, y: u32) -> u32 {
-    let mut x = x;
-    let mut y = y;
-    while y != 0 {
-        let t = y;
-        y = x % y;
-        x = t;
+fn greatest_common_divisor<T>(mut n: T, mut m: T) -> T
+where
+    T: Copy + PartialEq + PartialOrd + RemAssign + Zero,
+{
+    debug_assert!(n != Zero::zero() && m != Zero::zero());
+    while m != Zero::zero() {
+        if m < n {
+            std::mem::swap(&mut m, &mut n);
+        }
+        m %= n;
     }
-    x
+    n
 }
 
-// Calculates the Option-wrapped sum of two Times. If no common integer
-// demoninator can be found, None is returned.
+/// Calculates the wrapped sum of two [`Time`]s. If no common integer
+/// demoninator can be found, `None` is returned.
 #[inline]
 fn add_time_lossless(time1: Time, time2: Time) -> Option<Time> {
     if (time1.scale == 0) || (time2.scale == 0) {
@@ -372,7 +387,7 @@ fn add_time_lossless(time1: Time, time2: Time) -> Option<Time> {
     })
 }
 
-// Calculates the sum of two Times using FP math.
+/// Calculates the sum of two [`Time`]s using floating point math.
 #[inline]
 fn add_time_lossy(time1: Time, time2: Time) -> Time {
     let time = (time1.value as f64 / time1.scale as f64)
@@ -387,7 +402,11 @@ fn add_time_lossy(time1: Time, time2: Time) -> Time {
     }
 }
 
-// Calculates the sum of two Times, lossless if possible.
+// Next bit (std::ops::Add) ported from aeutility.cpp
+// Rust version is so much shorter & cleaner!
+//
+/// Calculates the sum of two [`Time`]s, lossless if possible.
+///
 // FIXME: is it worth going the lossless route at all???
 impl Add<Time> for Time {
     type Output = Self;
@@ -400,8 +419,8 @@ impl Add<Time> for Time {
     }
 }
 
-// Note that this has a different ordering
-// of values than Legacy_Rect!!!
+/// Note that this has a different ordering
+/// of values than [`LegacyRect`]!!!
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
 pub struct Rect {
@@ -490,8 +509,8 @@ impl FloatRect {
     }
 }
 
-// Note that this has a different ordering
-// of values than Rect!!!
+/// Note that this has a different ordering
+/// of values than [`Rect`]!!!
 #[derive(Debug, Copy, Clone, Hash)]
 #[repr(C)]
 pub struct LegacyRect {
@@ -542,7 +561,6 @@ impl From<Ratio> for f32 {
 // When the struct misses the trailing 'H', Ae does expect us to
 // manage the memory. We then use a Box<T>.
 pub struct PicaBasicSuiteHandle {
-    #[inline]
     pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
 }
 
@@ -565,7 +583,7 @@ impl PicaBasicSuiteHandle {
     }
 }
 
-pub trait Suite {
+pub(crate) trait Suite {
     fn new() -> Result<Self, Error>
     where
         Self: Sized;
