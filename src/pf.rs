@@ -221,7 +221,11 @@ impl EventExtra {
         }
     }
 
-    pub fn continue_refcon(&mut self, index: usize, value: ae_sys::A_intptr_t) {
+    pub fn set_continue_refcon(
+        &mut self,
+        index: usize,
+        value: ae_sys::A_intptr_t,
+    ) {
         debug_assert!(
             [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG]
                 .contains(&self.0.e_type),
@@ -233,7 +237,7 @@ impl EventExtra {
         }
     }
 
-    pub fn get_continue_refcon(&self, index: usize) -> ae_sys::A_intptr_t {
+    pub fn continue_refcon(&self, index: usize) -> ae_sys::A_intptr_t {
         debug_assert!(
             [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG]
                 .contains(&self.0.e_type),
@@ -631,7 +635,7 @@ pub struct HandleLock<'a, T> {
 }
 
 impl<'a, T> HandleLock<'a, T> {
-    pub fn get(&self) -> Result<&'a T, Error> {
+    pub fn as_ref(&self) -> Result<&'a T, Error> {
         if self.ptr.is_null() {
             Err(Error::InvalidIndex)
         } else {
@@ -639,7 +643,7 @@ impl<'a, T> HandleLock<'a, T> {
         }
     }
 
-    pub fn get_mut(&self) -> Result<&'a mut T, Error> {
+    pub fn as_ref_mut(&self) -> Result<&'a mut T, Error> {
         if self.ptr.is_null() {
             Err(Error::InvalidIndex)
         } else {
@@ -734,7 +738,7 @@ impl<'a, T: 'a> Handle<'a, T> {
         }
     }
 
-    pub fn get(&self) -> Result<&'a T, Error> {
+    pub fn as_ref(&self) -> Result<&'a T, Error> {
         let ptr = unsafe { *(self.handle as *const *const T) };
         if ptr.is_null() {
             Err(Error::InvalidIndex)
@@ -1562,7 +1566,7 @@ impl PopupDef {
 
     //pub fn check_out()
 
-    pub fn get(&self) -> u16 {
+    pub fn value(&self) -> u16 {
         self.0.value as u16
     }
 }
@@ -1581,7 +1585,7 @@ impl AngleDef {
         }
     }
 
-    pub fn get(&self) -> i32 {
+    pub fn value(&self) -> i32 {
         self.0.value
     }
 }
@@ -1597,11 +1601,11 @@ impl ColorDef {
         }
     }
 
-    pub fn get(&self) -> Pixel {
+    pub fn value(&self) -> Pixel {
         Pixel::from(self.0.value)
     }
 
-    pub fn value<'a>(&'a mut self, value: Pixel) -> &'a mut Self {
+    pub fn set_value<'a>(&'a mut self, value: Pixel) -> &'a mut Self {
         self.0.value = ae_sys::PF_Pixel::from(value);
         self
     }
@@ -1628,7 +1632,7 @@ impl SliderDef {
         }
     }
 
-    pub fn get(&self) -> i32 {
+    pub fn value(&self) -> i32 {
         self.0.value
     }
 }
@@ -1684,7 +1688,7 @@ impl FloatSliderDef {
         }
     }
 
-    pub fn get(&self) -> f64 {
+    pub fn value(&self) -> f64 {
         self.0.value
     }
 }
@@ -1729,7 +1733,7 @@ impl CheckBoxDef {
         }
     }
 
-    pub fn get(&self) -> bool {
+    pub fn value(&self) -> bool {
         self.0.value != 0
     }
 }
@@ -1754,7 +1758,7 @@ impl ArbitraryDef {
         self
     }
 
-    pub fn value(mut self, value_handle: FlatHandle) -> Self {
+    pub fn set_value(mut self, value_handle: FlatHandle) -> Self {
         self.0.value = FlatHandle::into_raw(value_handle);
         self
     }
@@ -1773,11 +1777,11 @@ impl ArbitraryDef {
         self.0.refconPV == refcon as _
     }
 
-    pub fn get(&self) -> Result<FlatHandle, Error> {
+    pub fn value(&self) -> Result<FlatHandle, Error> {
         FlatHandle::from_raw(self.0.value)
     }
 
-    pub fn get_owned(&self) -> Result<FlatHandle, Error> {
+    pub fn value_owned(&self) -> Result<FlatHandle, Error> {
         FlatHandle::from_raw_owned(self.0.value)
     }
 }
@@ -2318,7 +2322,7 @@ define_suite!(
 );
 
 impl EffectCustomUISuite {
-    pub fn get_drawing_reference(
+    pub fn drawing_reference(
         &self,
         context_handle: &ContextHandle,
     ) -> Result<drawbot::DrawRef, Error> {
@@ -2347,7 +2351,7 @@ define_suite!(
 );
 
 impl EffectCustomUIOverlayThemeSuite {
-    pub fn get_preferred_foreground_color(
+    pub fn preferred_foreground_color(
         &self,
     ) -> Result<drawbot::ColorRGBA, Error> {
         let mut color = std::mem::MaybeUninit::<drawbot::ColorRGBA>::uninit();
@@ -2362,9 +2366,7 @@ impl EffectCustomUIOverlayThemeSuite {
         }
     }
 
-    pub fn get_preferred_shadow_color(
-        &self,
-    ) -> Result<drawbot::ColorRGBA, Error> {
+    pub fn preferred_shadow_color(&self) -> Result<drawbot::ColorRGBA, Error> {
         let mut color = std::mem::MaybeUninit::<drawbot::ColorRGBA>::uninit();
 
         match ae_call_suite_fn!(
@@ -2379,7 +2381,7 @@ impl EffectCustomUIOverlayThemeSuite {
 
     //PF_GetPreferredShadowOffset
 
-    pub fn get_preferred_stroke_width(&self) -> Result<f32, Error> {
+    pub fn preferred_stroke_width(&self) -> Result<f32, Error> {
         let mut width = std::mem::MaybeUninit::<f32>::uninit();
 
         match ae_call_suite_fn!(
@@ -2392,7 +2394,7 @@ impl EffectCustomUIOverlayThemeSuite {
         }
     }
 
-    pub fn get_preferred_vertex_size(&self) -> Result<f32, Error> {
+    pub fn preferred_vertex_size(&self) -> Result<f32, Error> {
         let mut size = std::mem::MaybeUninit::<f32>::uninit();
 
         match ae_call_suite_fn!(

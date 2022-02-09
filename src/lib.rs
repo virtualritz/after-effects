@@ -14,9 +14,12 @@ use num_enum::{IntoPrimitive, TryFromPrimitive, UnsafeFromPrimitive};
 use num_traits::identities::Zero;
 use std::{
     cell::RefCell,
-    cmp::{PartialEq, PartialOrd},
+    cmp::{max, min, PartialEq, PartialOrd},
     convert::TryInto,
+    error,
+    fmt::Display,
     ops::{Add, RemAssign},
+    ptr,
 };
 #[cfg(feature = "ultraviolet")]
 use ultraviolet as uv;
@@ -37,12 +40,12 @@ pub use pr::*;
 
 thread_local!(
     pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> =
-        RefCell::new(std::ptr::null_mut())
+        RefCell::new(ptr::null_mut())
 );
 
 #[inline]
 pub(crate) fn borrow_pica_basic_as_ptr() -> *const ae_sys::SPBasicSuite {
-    let mut pica_basic_ptr: *const ae_sys::SPBasicSuite = std::ptr::null();
+    let mut pica_basic_ptr: *const ae_sys::SPBasicSuite = ptr::null();
 
     PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
         pica_basic_ptr = *pica_basic_ptr_cell.borrow();
@@ -71,7 +74,7 @@ impl PicaBasicSuite {
         pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
     ) -> *const ae_sys::SPBasicSuite {
         let mut previous_pica_basic_suite_ptr: *const ae_sys::SPBasicSuite =
-            std::ptr::null();
+            ptr::null();
 
         PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
             previous_pica_basic_suite_ptr =
@@ -197,25 +200,25 @@ impl From<Error> for &'static str {
     }
 }
 
-impl std::fmt::Display for Error {
+impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let err_str: &'static str = (*self).into();
         write!(f, "{}", err_str)
     }
 }
 
-impl std::error::Error for Error {
+impl error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         Some(self)
     }
 }
 
-/* FIXME uncomment this once TryReserve() becomes stable in nightly
+//FIXME uncomment this once TryReserve() becomes stable in nightly
 impl From<std::collections::TryReserveError> for Error {
-    fn from(try_reserve_err: std::collections::TryReserveError) -> Self {
-        Error::Alloc
+    fn from(_: std::collections::TryReserveError) -> Self {
+        Error::OutOfMemory
     }
-}*/
+}
 
 /*
 impl From<Error> for ae_sys::A_Err {
@@ -275,7 +278,7 @@ impl From<uv::DMat4> for Matrix4 {
     #[inline]
     fn from(m: uv::DMat4) -> Self {
         // Ae is row-based – transpose
-        Self(m.transposed())
+        Self(m.transposed().into())
     }
 }
 
@@ -460,11 +463,12 @@ impl Rect {
     pub fn union<'a>(&'a mut self, other: &Rect) -> &'a mut Rect {
         if other.is_empty() {
             *self = *other;
-        } else if !other.is_empty() {
-            self.left = std::cmp::min(self.left, other.left);
-            self.top = std::cmp::min(self.top, other.top);
-            self.right = std::cmp::max(self.right, other.right);
-            self.bottom = std::cmp::max(self.bottom, other.bottom);
+        } else {
+            // if !other.is_empty()
+            self.left = min(self.left, other.left);
+            self.top = min(self.top, other.top);
+            self.right = max(self.right, other.right);
+            self.bottom = max(self.bottom, other.bottom);
         }
         self
     }
@@ -557,8 +561,8 @@ impl From<Ratio> for f32 {
 // manage the memory and for others it doesn't (the caller only
 // deals with a pointer that gets dereferenced for actually
 // calling into the suite). In this case the struct ends
-// with a 'H' (for handle).
-// When the struct misses the trailing 'H', Ae does expect us to
+// with a `H` (for handle).
+// When the struct misses the trailing `H`, Ae does expect us to
 // manage the memory. We then use a Box<T>.
 pub struct PicaBasicSuiteHandle {
     pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,

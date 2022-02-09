@@ -63,6 +63,7 @@ macro_rules! ae_call_suite_fn_no_err {
     }};
 }
 
+#[macro_export]
 macro_rules! ae_acquire_suite_and_call_suite_fn_no_err {
     ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
         match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
@@ -75,6 +76,7 @@ macro_rules! ae_acquire_suite_and_call_suite_fn_no_err {
     }};
 }
 
+#[macro_export]
 macro_rules! ae_acquire_suite_and_call_suite_fn {
     ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
         match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
@@ -226,7 +228,7 @@ macro_rules! define_param_wrapper {
 macro_rules! define_param_basic_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident, $value_type:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn value<'a>(
+            pub fn set_value<'a>(
                 &'a mut self,
                 value: $value_type,
             ) -> &'a mut $wrapper_pretty_name {
@@ -234,7 +236,7 @@ macro_rules! define_param_basic_wrapper {
                 self
             }
 
-            pub fn default<'a>(
+            pub fn set_default<'a>(
                 &'a mut self,
                 default: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
@@ -248,7 +250,7 @@ macro_rules! define_param_basic_wrapper {
 macro_rules! define_param_valid_min_max_wrapper {
     ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn valid_min<'a>(
+            pub fn set_valid_min<'a>(
                 &'a mut self,
                 valid_min: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
@@ -256,7 +258,7 @@ macro_rules! define_param_valid_min_max_wrapper {
                 self
             }
 
-            pub fn valid_max<'a>(
+            pub fn set_valid_max<'a>(
                 &'a mut self,
                 valid_max: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
@@ -270,7 +272,7 @@ macro_rules! define_param_valid_min_max_wrapper {
 macro_rules! define_param_slider_min_max_wrapper {
     ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn slider_min<'a>(
+            pub fn set_slider_min<'a>(
                 &'a mut self,
                 slider_min: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
@@ -278,7 +280,7 @@ macro_rules! define_param_slider_min_max_wrapper {
                 self
             }
 
-            pub fn slider_max<'a>(
+            pub fn set_slider_max<'a>(
                 &'a mut self,
                 slider_max: $value_type_ui,
             ) -> &'a mut $wrapper_pretty_name {
@@ -292,7 +294,7 @@ macro_rules! define_param_slider_min_max_wrapper {
 macro_rules! define_param_value_str_wrapper {
     ($wrapper_pretty_name:ident) => {
         impl $wrapper_pretty_name {
-            pub fn value_str<'a>(
+            pub fn set_value_str<'a>(
                 &'a mut self,
                 value_str: &str,
             ) -> &'a mut $wrapper_pretty_name {
@@ -311,7 +313,7 @@ macro_rules! define_param_value_str_wrapper {
 macro_rules! define_param_value_desc_wrapper {
     ($wrapper_pretty_name:ident) => {
         impl $wrapper_pretty_name {
-            pub fn value_desc<'a>(
+            pub fn set_value_desc<'a>(
                 &'a mut self,
                 value_desc: &str,
             ) -> &'a mut $wrapper_pretty_name {
@@ -383,6 +385,7 @@ macro_rules! define_suite {
     };
 }
 
+#[macro_export]
 macro_rules! add_param {
     (in_data: expr,
     index: expr,
@@ -391,6 +394,7 @@ macro_rules! add_param {
     };
 }
 
+#[macro_export]
 macro_rules! assume {
     ($owner:ident, $var:pat => $out:expr, $ty:ty) => {
         impl AssumeFrom<$owner> for $ty {

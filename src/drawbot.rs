@@ -37,10 +37,7 @@ define_suite!(
 );
 
 impl DrawbotSuite {
-    pub fn get_supplier(
-        &self,
-        draw_ref: &DrawRef,
-    ) -> Result<SupplierRef, Error> {
+    pub fn supplier(&self, draw_ref: &DrawRef) -> Result<SupplierRef, Error> {
         let mut supplier_ref =
             std::mem::MaybeUninit::<ae_sys::DRAWBOT_SupplierRef>::uninit();
 
@@ -55,7 +52,7 @@ impl DrawbotSuite {
         }
     }
 
-    pub fn get_surface(&self, draw_ref: &DrawRef) -> Result<SurfaceRef, Error> {
+    pub fn surface(&self, draw_ref: &DrawRef) -> Result<SurfaceRef, Error> {
         let mut surface_ref =
             std::mem::MaybeUninit::<ae_sys::DRAWBOT_SurfaceRef>::uninit();
 

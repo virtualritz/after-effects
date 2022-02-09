@@ -64,12 +64,12 @@ impl Scene3D {
     }
 
     #[inline]
-    pub fn get_scene3d_ptr(&self) -> *mut ae_sys::AEGP_Scene3D {
+    pub fn scene3d_ptr(&self) -> *mut ae_sys::AEGP_Scene3D {
         self.scene3d_ptr
     }
 
     #[inline]
-    pub fn get_scene3d_suite_ptr(&self) -> *const ae_sys::AEGP_Scene3DSuite2 {
+    pub fn scene3d_suite_ptr(&self) -> *const ae_sys::AEGP_Scene3DSuite2 {
         self.suite_ptr
     }
 
@@ -178,7 +178,7 @@ impl Scene3D {
     }
 
     #[inline]
-    pub fn layer_get_post_xform(
+    pub fn layer_post_xform(
         &self,
         layer_handle: &Scene3DLayerHandle,
         index: usize,
@@ -207,7 +207,7 @@ impl Scene3D {
     }
 
     #[inline]
-    pub fn get_sub_frame_time(&self, index: usize) -> Result<Time, Error> {
+    pub fn sub_frame_time(&self, index: usize) -> Result<Time, Error> {
         let mut time = std::mem::MaybeUninit::<Time>::uninit();
 
         match ae_call_suite_fn!(
@@ -326,7 +326,7 @@ impl Scene3DMaterialSuite {
     }
 
     #[inline]
-    pub fn get_uv_color_texture(
+    pub fn uv_color_texture(
         &self,
         material: Scene3DMaterialHandle,
     ) -> Result<WorldHandle, Error> {
@@ -345,7 +345,7 @@ impl Scene3DMaterialSuite {
     }
 
     #[inline]
-    pub fn get_basic_coeffs(
+    pub fn basic_coeffs(
         &self,
         material: Scene3DMaterialHandle,
     ) -> Result<Box<ae_sys::AEGP_MaterialBasic_v1>, Error> {
@@ -373,7 +373,7 @@ define_suite!(
 
 impl Scene3DNodeSuite {
     #[inline]
-    pub fn get_material_for_side(
+    pub fn material_for_side(
         &self,
         node_handle: Scene3DNodeHandle,
         side: ae_sys::AEGP_Scene3DMaterialSide,
@@ -397,7 +397,7 @@ impl Scene3DNodeSuite {
     }
 
     #[inline]
-    pub fn node_mesh_get(
+    pub fn node_mesh(
         &self,
         node_handle: Scene3DNodeHandle,
     ) -> Result<Scene3DMeshHandle, Error> {
@@ -418,7 +418,7 @@ impl Scene3DNodeSuite {
     }
 
     #[inline]
-    pub fn node_post_xform_get(
+    pub fn node_post_xform(
         &self,
         scene3d_node_handle: Scene3DNodeHandle,
         index: usize,
@@ -462,7 +462,7 @@ impl Scene3DMeshSuite {
             mesh_handle.as_ptr() as *mut _,
             &mut face_groups
         ) {
-            Ok(()) => Ok(face_groups as usize),
+            Ok(()) => Ok(face_groups as _),
             Err(e) => Err(e),
         }
     }
@@ -482,13 +482,13 @@ impl Scene3DMeshSuite {
             group_index as i32,
             &mut face_count
         ) {
-            Ok(()) => Ok(face_count as usize),
+            Ok(()) => Ok(face_count as _),
             Err(e) => Err(e),
         }
     }
 
     #[inline]
-    pub fn face_group_buffer_fill(
+    pub fn fill_face_group_buffer(
         &self,
         mesh_handle: Scene3DMeshHandle,
         group_index: usize,
@@ -521,7 +521,7 @@ impl Scene3DMeshSuite {
     }
 
     #[inline]
-    pub fn get_material_side_for_face_group(
+    pub fn material_side_for_face_group(
         &self,
         mesh_handle: Scene3DMeshHandle,
         group_index: usize,
@@ -542,7 +542,7 @@ impl Scene3DMeshSuite {
     }
 
     #[inline]
-    pub fn mesh_get_info(
+    pub fn mesh_info(
         &self,
         mesh_handle: Scene3DMeshHandle,
     ) -> Result<(usize, usize), Error> {
@@ -580,7 +580,7 @@ impl Scene3DMeshSuite {
             self.suite_ptr,
             AEGP_VertexBufferElementSize,
             vertex_type
-        ) as usize
+        ) as _
     }
 
     #[inline]
@@ -592,7 +592,7 @@ impl Scene3DMeshSuite {
             self.suite_ptr,
             AEGP_FaceBufferElementSize,
             face_type
-        ) as usize
+        ) as _
     }
 
     #[inline]
@@ -604,7 +604,7 @@ impl Scene3DMeshSuite {
             self.suite_ptr,
             AEGP_UVBufferElementSize,
             uv_type
-        ) as usize
+        ) as _
     }
 
     #[inline]
@@ -622,7 +622,7 @@ impl Scene3DMeshSuite {
         ),
         Error,
     > {
-        let (num_vertex, num_face) = self.mesh_get_info(mesh_handle)?;
+        let (num_vertex, num_face) = self.mesh_info(mesh_handle)?;
 
         // Points (3-tuples) of f64
         let vertex_buffer_size: usize = num_vertex * 3;

@@ -470,7 +470,7 @@ impl<'a, T: 'a> MemHandle<'a, T> {
                             _marker: PhantomData,
                         };
 
-                        *handle.lock()?.get_mut()? = value;
+                        *handle.lock()?.as_ref_mut()? = value;
 
                         Ok(handle)
                     }
@@ -562,7 +562,7 @@ pub struct MemHandleLock<'a, T> {
 }
 
 impl<'a, T> MemHandleLock<'a, T> {
-    pub fn get(&self) -> Result<&'a T, Error> {
+    pub fn as_ref(&self) -> Result<&'a T, Error> {
         if self.ptr.is_null() {
             Err(Error::Generic)
         } else {
@@ -570,7 +570,7 @@ impl<'a, T> MemHandleLock<'a, T> {
         }
     }
 
-    pub fn get_mut(&self) -> Result<&'a mut T, Error> {
+    pub fn as_ref_mut(&self) -> Result<&'a mut T, Error> {
         if self.ptr.is_null() {
             Err(Error::Generic)
         } else {
@@ -597,7 +597,7 @@ define_suite!(
 );
 
 impl IOInSuite {
-    pub fn get_in_spec_options_handle(
+    pub fn in_spec_options_handle(
         &self,
         in_spec_handle: aeio::InSpecHandle,
     ) -> Result<aeio::Handle, Error> {
@@ -680,7 +680,7 @@ define_suite!(
 );
 
 impl PFInterfaceSuite {
-    pub fn get_effect_layer(
+    pub fn effect_layer(
         &self,
         effect_ref: pf::ProgPtr,
     ) -> Result<LayerHandle, Error> {
@@ -698,7 +698,7 @@ impl PFInterfaceSuite {
         }
     }
 
-    pub fn get_effect_camera(
+    pub fn effect_camera(
         &self,
         effect_ref: pf::ProgPtr,
         time: Time,
@@ -761,7 +761,7 @@ impl WorldSuite {
     }
 
     #[inline]
-    pub fn get_base_addr8(
+    pub fn base_addr8(
         &self,
         world_handle: WorldHandle,
     ) -> Result<*mut pf::Pixel8, Error> {
@@ -779,7 +779,7 @@ impl WorldSuite {
     }
 
     #[inline]
-    pub fn get_base_addr16(
+    pub fn base_addr16(
         &self,
         world_handle: WorldHandle,
     ) -> Result<*mut pf::Pixel16, Error> {
@@ -797,7 +797,7 @@ impl WorldSuite {
     }
 
     #[inline]
-    pub fn get_base_addr32(
+    pub fn base_addr32(
         &self,
         world_handle: WorldHandle,
     ) -> Result<*mut pf::Pixel32, Error> {
@@ -815,7 +815,7 @@ impl WorldSuite {
     }
 
     #[inline]
-    pub fn get_type(&self, world: WorldHandle) -> Result<WorldType, Error> {
+    pub fn world_type(&self, world: WorldHandle) -> Result<WorldType, Error> {
         let mut world_type = std::mem::MaybeUninit::<WorldType>::uninit();
 
         match ae_call_suite_fn!(
@@ -830,7 +830,7 @@ impl WorldSuite {
     }
 
     #[inline]
-    pub fn get_size(&self, world: WorldHandle) -> Result<(u32, u32), Error> {
+    pub fn size(&self, world: WorldHandle) -> Result<(u32, u32), Error> {
         let mut width = std::mem::MaybeUninit::<u32>::uninit();
         let mut height = std::mem::MaybeUninit::<u32>::uninit();
 
@@ -849,7 +849,7 @@ impl WorldSuite {
     }
 
     #[inline]
-    pub fn get_row_bytes(&self, world: WorldHandle) -> Result<usize, Error> {
+    pub fn row_bytes(&self, world: WorldHandle) -> Result<usize, Error> {
         let mut row_bytes = std::mem::MaybeUninit::<usize>::uninit();
 
         match ae_call_suite_fn!(
@@ -945,7 +945,7 @@ define_suite!(
 
 impl CompSuite {
     #[inline]
-    pub fn get_comp_shutter_angle_phase(
+    pub fn comp_shutter_angle_phase(
         &self,
         comp_handle: CompHandle,
     ) -> Result<(Ratio, Ratio), Error> {
@@ -965,7 +965,7 @@ impl CompSuite {
     }
 
     #[inline]
-    pub fn get_comp_suggested_motion_blur_samples(
+    pub fn comp_suggested_motion_blur_samples(
         &self,
         comp_handle: CompHandle,
     ) -> Result<u32, Error> {
@@ -983,7 +983,7 @@ impl CompSuite {
     }
 
     #[inline]
-    pub fn get_item_from_comp(
+    pub fn item_from_comp(
         &self,
         comp_handle: CompHandle,
     ) -> Result<ItemHandle, Error> {
@@ -1003,7 +1003,7 @@ impl CompSuite {
     }
 
     #[inline]
-    pub fn get_comp_flags(
+    pub fn comp_flags(
         &self,
         comp_handle: CompHandle,
     ) -> Result<CompFlags, Error> {
@@ -1021,7 +1021,7 @@ impl CompSuite {
     }
 
     #[inline]
-    pub fn get_comp_framerate(
+    pub fn comp_framerate(
         &self,
         comp_handle: CompHandle,
     ) -> Result<f64, Error> {
@@ -1101,7 +1101,7 @@ define_suite!(
 
 impl LayerSuite {
     #[inline]
-    pub fn get_layer_parent_comp(
+    pub fn layer_parent_comp(
         &self,
         layer_handle: LayerHandle,
     ) -> Result<CompHandle, Error> {
@@ -1121,7 +1121,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn get_comp_num_layers(
+    pub fn comp_layer_count(
         &self,
         comp_handle: CompHandle,
     ) -> Result<usize, Error> {
@@ -1139,7 +1139,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn get_comp_layer_by_index(
+    pub fn comp_layer_by_index(
         &self,
         comp_handle: CompHandle,
         layer_index: usize,
@@ -1161,7 +1161,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn get_layer_name(
+    pub fn layer_name(
         &self,
         plugin_id: PluginID,
         layer_handle: LayerHandle,
@@ -1210,7 +1210,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn get_layer_id(
+    pub fn layer_id(
         &self,
         layer_handle: LayerHandle,
     ) -> Result<LayerID, Error> {
@@ -1228,7 +1228,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn get_layer_flags(
+    pub fn layer_flags(
         &self,
         layer_handle: LayerHandle,
     ) -> Result<LayerFlags, Error> {
@@ -1246,7 +1246,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn get_layer_object_type(
+    pub fn layer_object_type(
         &self,
         layer_handle: LayerHandle,
     ) -> Result<ObjectType, Error> {
@@ -1264,7 +1264,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn get_layer_to_world_xform(
+    pub fn layer_to_world_xform(
         &self,
         layer_handle: LayerHandle,
         time: Time,
@@ -1284,7 +1284,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn get_layer_masked_bounds(
+    pub fn layer_masked_bounds(
         &self,
         layer_handle: LayerHandle,
         time_mode: TimeMode,
@@ -1334,7 +1334,7 @@ impl Drop for StreamReferenceHandle {
 
 impl StreamSuite {
     #[inline]
-    pub fn get_new_layer_stream(
+    pub fn new_layer_stream(
         &self,
         plugin_id: PluginID,
         layer_handle: LayerHandle,
@@ -1378,7 +1378,7 @@ impl StreamSuite {
     // for what we're doing atm but for stream data like image buffers this
     // is wasteful and potentially slow.
     #[inline]
-    pub fn get_new_stream_value(
+    pub fn new_stream_value(
         &self,
         plugin_id: PluginID,
         stream_reference_handle: StreamReferenceHandle,
@@ -1432,7 +1432,7 @@ impl StreamSuite {
     }
 
     #[inline]
-    pub fn get_layer_stream_value(
+    pub fn layer_stream_value(
         &self,
         layer_handle: LayerHandle,
         stream: LayerStream,
@@ -1523,7 +1523,7 @@ define_suite!(
 
 impl DynamicStreamSuite {
     #[inline]
-    pub fn get_new_stream_ref_for_layer(
+    pub fn new_stream_ref_for_layer(
         &self,
         plugin_id: PluginID,
         layer_handle: LayerHandle,
@@ -1547,7 +1547,7 @@ impl DynamicStreamSuite {
     }
 
     #[inline]
-    pub fn get_num_streams_in_group(
+    pub fn stream_count_in_group(
         &self,
         stream_reference_handle: StreamReferenceHandle,
     ) -> Result<usize, Error> {
@@ -1564,7 +1564,7 @@ impl DynamicStreamSuite {
         }
     }
 
-    pub fn get_match_name(
+    pub fn match_name(
         &self,
         stream_reference_handle: StreamReferenceHandle,
     ) -> Result<String, Error> {
@@ -1619,7 +1619,7 @@ impl UtilitySuite {
 
     /*
     #[inline]
-    pub fn get_plugin_paths(
+    pub fn plugin_paths(
         &self,
     ) -> Result<Path, Error>
     {
@@ -1708,7 +1708,7 @@ define_suite!(
 
 impl CanvasSuite {
     #[inline]
-    pub fn get_comp_to_render(
+    pub fn comp_to_render(
         &self,
         render_context_handle: pr::RenderContextHandle,
     ) -> Result<CompHandle, Error> {
@@ -1729,7 +1729,7 @@ impl CanvasSuite {
     }
 
     #[inline]
-    pub fn get_comp_render_time(
+    pub fn comp_render_time(
         &self,
         render_context_handle: pr::RenderContextHandle,
     ) -> Result<(Time, Time), Error> {
@@ -1756,7 +1756,7 @@ impl CanvasSuite {
     }
 
     #[inline]
-    pub fn get_comp_destination_buffer(
+    pub fn comp_destination_buffer(
         &self,
         render_context_handle: pr::RenderContextHandle,
         comp_handle: CompHandle,
@@ -1798,7 +1798,7 @@ impl CanvasSuite {
     }
 
     #[inline]
-    pub fn get_roi(
+    pub fn region_of_interest(
         &self,
         render_context_handle: pr::RenderContextHandle,
     ) -> Result<Rect, Error> {
@@ -1824,7 +1824,7 @@ impl CanvasSuite {
     }
 
     #[inline]
-    pub fn get_render_downsample_factor(
+    pub fn render_downsample_factor(
         &self,
         render_context_handle: pr::RenderContextHandle,
     ) -> Result<DownsampleFactor, Error> {
@@ -1842,7 +1842,7 @@ impl CanvasSuite {
     }
 
     /*
-    pub fn get_render_layer_bounds(
+    pub fn render_layer_bounds(
         &self,
         render_context_handle: pr::RenderContextHandle,
     ) -> Result<FloatRect, Error> {
@@ -1867,7 +1867,7 @@ define_suite!(
 
 impl LightSuite {
     #[inline]
-    pub fn get_light_type(
+    pub fn light_type(
         &self,
         layer_handle: LayerHandle,
     ) -> Result<LightType, Error> {
@@ -1896,10 +1896,7 @@ define_suite!(
 
 impl ItemSuite {
     #[inline]
-    pub fn get_item_id(
-        &self,
-        item_handle: ItemHandle,
-    ) -> Result<ItemID, Error> {
+    pub fn item_id(&self, item_handle: ItemHandle) -> Result<ItemID, Error> {
         let mut item_id = std::mem::MaybeUninit::<ItemID>::uninit();
 
         match ae_call_suite_fn!(
@@ -1914,7 +1911,7 @@ impl ItemSuite {
     }
 
     #[inline]
-    pub fn get_item_dimensions(
+    pub fn item_dimensions(
         &self,
         item_handle: ItemHandle,
     ) -> Result<(u32, u32), Error> {
@@ -1936,7 +1933,7 @@ impl ItemSuite {
     }
 
     #[inline]
-    pub fn get_item_pixel_aspect_ratio(
+    pub fn item_pixel_aspect_ratio(
         &self,
         item_handle: ItemHandle,
     ) -> Result<Ratio, Error> {
@@ -1963,7 +1960,7 @@ define_suite!(
 
 impl CameraSuite {
     #[inline]
-    pub fn get_camera(
+    pub fn camera(
         &self,
         render_context_handle: pr::RenderContextHandle,
         time: Time,
@@ -1995,7 +1992,7 @@ impl CameraSuite {
     }
 
     #[inline]
-    pub fn get_camera_film_size(
+    pub fn camera_film_size(
         &self,
         camera_layer_handle: LayerHandle,
     ) -> Result<(FilmSizeUnits, f64), Error> {
@@ -2015,7 +2012,7 @@ impl CameraSuite {
     }
 
     #[inline]
-    pub fn get_default_camera_distance_to_image_plane(
+    pub fn default_camera_distance_to_image_plane(
         &self,
         comp_handle: CompHandle,
     ) -> Result<f64, Error> {
@@ -2033,7 +2030,7 @@ impl CameraSuite {
     }
 
     #[inline]
-    pub fn get_camera_type(
+    pub fn camera_type(
         &self,
         camera_layer_handle: LayerHandle,
     ) -> Result<CameraType, Error> {
