@@ -2,9 +2,9 @@
 name = "after-effects"
 version = "0.1.6"
 authors = ["Moritz Moeller <virtualritz@protonmail.com>"]
+license = "Apache-2.0 OR BSD-3-Clause OR MIT OR Zlib"
 edition = "2021"
 exclude = [".github/**/*", "crates/**/*"]
-
 description = "High(er) level bindings for the Adobe After Effects® SDK."
 keywords = ["motion-graphics", "after-effects", "graphics", "plugins"]
 categories = ["graphics", "multimedia::video", "rendering::graphics-api"]
