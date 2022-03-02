@@ -1,15 +1,70 @@
 // FIXME: make ALL the functions below return Result-wrapped values
 #![feature(new_uninit)]
 #![allow(temporary_cstring_as_ptr)]
-//#![feature(proc_macro_hygiene)]
-//#![feature(try_reserve)]
-
-//#[macro_use]
-//extern crate casey;
-
-#[macro_use]
-extern crate bitflags;
-use aftereffects_sys as ae_sys;
+//! High(er) level bindings for the Adobe AfterEffects (Ae) SDK.
+//!
+//! This wraps many of the API suites in the Ae SDK and exposes them in safe
+//! Rust.
+//!
+//! This is WIP – only tested on `macOS`. Will likely require additional work to
+//! build on `Windows`.
+//!
+//! ## Prequisites
+//!
+//! Download the [*Adobe After Effects SDK*](https://console.adobe.io/downloads/ae).
+//! > Note that the SDK published by Adobe is outdated if you are using the 3D
+//! > Artisan API to write your own 3D renderer plug-in.
+//! > Also see [Features](#features) below for more information.
+//! >
+//! > Ignore this if you just want to develop 2D plugins (which still have
+//! > access to 3D data).
+//!
+//! Define the `AESDK_ROOT` environment variable that contains the path to your
+//! Ae SDK. Typically the directory structure will look like this:
+//!
+//! ```text
+//! AfterEffectsSDK
+//! ├── After_Effects_SDK_Guide.pdf
+//! ├── Examples
+//!     ├── AEGP
+//!     ├── Effect
+//!     ├── ...
+//! ```
+//! ## Features
+//!
+//! * `artisan-2-api` – Use the 2nd generation Artisan 3D API. This is not
+//!   included in the official Ae SDK. Specifically it requires:
+//!   * `AE_Scene3D_Private.h`
+//!   * `PR_Feature.h`
+//!
+//!   Contact the Adobe Ae SDK team and ask nicely and they may send you
+//!   theses headers.
+//!
+//! ## Using
+//!
+//! Add `after-effects` to your dependencies.
+//!
+//! ```
+//! cargo add after-effects
+//! ```
+//!
+//! ## Getting Started
+//!
+//! There are currently no examples. Use the C/C++ examples in the Ae SDK as
+//! guides for now. They translate mor or less 1:1 to Rust when using this
+//! crate.
+//!
+//! ## Help Wanted/To Do
+//!
+//! * Examples! I have a few plug-ins but they need polishing.
+//!
+//! * A build system extension that creates the bundle for Ae using
+//!   `cargo-post`/`cargo-make`/cargo-bundle`. I.e. enter one command to get a
+//!   plug-in ready to load in Ae. Currently there are manual steps and they
+//!   need documenting too.
+//!
+//! * Better error handling. Possibly using [`color-`](https://crates.io/crates/color-eyre)[`eyre`](https://crates.io/crates/eyre)?
+use after_effects_sys as ae_sys;
 use num_enum::{IntoPrimitive, TryFromPrimitive, UnsafeFromPrimitive};
 use num_traits::identities::Zero;
 use std::{
@@ -70,15 +125,11 @@ pub struct PicaBasicSuite {
 }
 
 impl PicaBasicSuite {
-    fn set(
-        pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
-    ) -> *const ae_sys::SPBasicSuite {
-        let mut previous_pica_basic_suite_ptr: *const ae_sys::SPBasicSuite =
-            ptr::null();
+    fn set(pica_basic_suite_ptr: *const ae_sys::SPBasicSuite) -> *const ae_sys::SPBasicSuite {
+        let mut previous_pica_basic_suite_ptr: *const ae_sys::SPBasicSuite = ptr::null();
 
         PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
-            previous_pica_basic_suite_ptr =
-                pica_basic_ptr_cell.replace(pica_basic_suite_ptr);
+            previous_pica_basic_suite_ptr = pica_basic_ptr_cell.replace(pica_basic_suite_ptr);
         });
 
         previous_pica_basic_suite_ptr
@@ -87,9 +138,7 @@ impl PicaBasicSuite {
     #[inline]
     pub fn from_pr_in_data_raw(in_data_ptr: *const ae_sys::PR_InData) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: PicaBasicSuite::set(
-                unsafe { *in_data_ptr }.pica_basicP,
-            ),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_ptr }.pica_basicP),
         }
     }
 
@@ -105,20 +154,14 @@ impl PicaBasicSuite {
     #[inline]
     pub fn from_pf_in_data_raw(in_data_ptr: *const ae_sys::PF_InData) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: PicaBasicSuite::set(
-                unsafe { *in_data_ptr }.pica_basicP,
-            ),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_ptr }.pica_basicP),
         }
     }
 
     #[inline]
-    pub fn from_sp_basic_suite_raw(
-        pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
-    ) -> Self {
+    pub fn from_sp_basic_suite_raw(pica_basic_suite_ptr: *const ae_sys::SPBasicSuite) -> Self {
         Self {
-            previous_pica_basic_suite_ptr: PicaBasicSuite::set(
-                pica_basic_suite_ptr,
-            ),
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(pica_basic_suite_ptr),
         }
     }
 }
@@ -133,14 +176,7 @@ impl Drop for PicaBasicSuite {
 }
 
 #[derive(
-    Copy,
-    Clone,
-    Debug,
-    Eq,
-    PartialEq,
-    IntoPrimitive,
-    UnsafeFromPrimitive,
-    TryFromPrimitive,
+    Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive, TryFromPrimitive,
 )]
 #[repr(i32)]
 pub enum Error {
@@ -153,25 +189,25 @@ pub enum Error {
     // Also, calls back to Ae can only be made from the same thread Ae
     // called you on.
     WrongThread = ae_sys::A_Err_WRONG_THREAD as i32,
-    // An attempt was made to write to a read only copy of an AE
+    // An attempt was made to write to a read only copy of an Ae
     // project. Project changes must originate in the UI/Main thread.
     ConstProjectModification = ae_sys::A_Err_CONST_PROJECT_MODIFICATION as i32,
     // Acquire suite failed on a required suite.
     MissingSuite = ae_sys::A_Err_MISSING_SUITE as i32,
 
-    None = ae_sys::PF_Err_NONE as i32,
-
     InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as i32,
     // Out of range, or action not allowed on this index.
     InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as i32,
-    UnrecogizedParamType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as i32,
+    UnrecogizedParameterType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as i32,
     InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as i32,
-    BadCallbackParam = ae_sys::PF_Err_BAD_CALLBACK_PARAM as i32,
+    BadCallbackParameter = ae_sys::PF_Err_BAD_CALLBACK_PARAM as i32,
     // Returned when user interrupts rendering.
     InterruptCancel = ae_sys::PF_Interrupt_CANCEL as i32,
     // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
     // arbitrary data from text
-    CannonParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as i32,
+    CannotParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as i32,
+
+    None = ae_sys::PF_Err_NONE as i32,
 }
 
 impl From<Error> for &'static str {
@@ -186,16 +222,14 @@ impl From<Error> for &'static str {
                 " Project changes must originate in the UI/Main thread."
             }
             Error::MissingSuite => "Could no aquire suite.",
-            Error::None => "No error – wtf?",
             Error::InternalStructDamaged => "Internal struct is damaged.",
-            Error::InvalidIndex => {
-                "Out of range, or action not allowed on this index."
-            }
-            Error::UnrecogizedParamType => "Unrecognized parameter type",
+            Error::InvalidIndex => "Out of range, or action not allowed on this index.",
+            Error::UnrecogizedParameterType => "Unrecognized parameter type",
             Error::InvalidCallback => "Invalid callback.",
-            Error::BadCallbackParam => "Bad callback parameter.",
+            Error::BadCallbackParameter => "Bad callback parameter.",
             Error::InterruptCancel => "Rendering interrupted.",
-            Error::CannonParseKeyframeText => "Keyframe data damaged.",
+            Error::CannotParseKeyframeText => "Keyframe data damaged.",
+            Error::None => "No error – wtf?",
         }
     }
 }
@@ -393,8 +427,8 @@ fn add_time_lossless(time1: Time, time2: Time) -> Option<Time> {
 /// Calculates the sum of two [`Time`]s using floating point math.
 #[inline]
 fn add_time_lossy(time1: Time, time2: Time) -> Time {
-    let time = (time1.value as f64 / time1.scale as f64)
-        + (time2.value as f64 / time2.scale as f64);
+    let time =
+        (time1.value as f64 / time1.scale as f64) + (time2.value as f64 / time2.scale as f64);
 
     let num_bits = time.log2() as usize;
     let scale: u32 = 1u32 << (30 - num_bits);
@@ -409,10 +443,10 @@ fn add_time_lossy(time1: Time, time2: Time) -> Time {
 // Rust version is so much shorter & cleaner!
 //
 /// Calculates the sum of two [`Time`]s, lossless if possible.
-///
 // FIXME: is it worth going the lossless route at all???
 impl Add<Time> for Time {
     type Output = Self;
+
     #[inline]
     fn add(self, rhs: Self) -> Self {
         match add_time_lossless(self, rhs) {
@@ -488,10 +522,7 @@ impl Rect {
     }
 
     pub fn contains(&self, x: i32, y: i32) -> bool {
-        (self.left <= x)
-            && (x <= self.right)
-            && (self.top <= y)
-            && (y <= self.bottom)
+        (self.left <= x) && (x <= self.right) && (self.top <= y) && (y <= self.bottom)
     }
 }
 
@@ -506,10 +537,7 @@ pub struct FloatRect {
 
 impl FloatRect {
     pub fn contains(&self, x: f64, y: f64) -> bool {
-        (self.left <= x)
-            && (x <= self.right)
-            && (self.top <= y)
-            && (y <= self.bottom)
+        (self.left <= x) && (x <= self.right) && (self.top <= y) && (y <= self.bottom)
     }
 }
 
@@ -570,9 +598,7 @@ pub struct PicaBasicSuiteHandle {
 
 impl PicaBasicSuiteHandle {
     #[inline]
-    pub fn from_raw(
-        pica_basic_suite_ptr: *const ae_sys::SPBasicSuite,
-    ) -> PicaBasicSuiteHandle {
+    pub fn from_raw(pica_basic_suite_ptr: *const ae_sys::SPBasicSuite) -> PicaBasicSuiteHandle {
         /*if pica_basic_suite_ptr == ptr::null() {
             panic!()
         }*/

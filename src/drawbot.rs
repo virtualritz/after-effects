@@ -1,5 +1,4 @@
 use crate::*;
-use aftereffects_sys as ae_sys;
 
 define_handle_wrapper!(DrawRef, DRAWBOT_DrawRef);
 define_handle_wrapper!(SupplierRef, DRAWBOT_SupplierRef);
@@ -38,8 +37,7 @@ define_suite!(
 
 impl DrawbotSuite {
     pub fn supplier(&self, draw_ref: &DrawRef) -> Result<SupplierRef, Error> {
-        let mut supplier_ref =
-            std::mem::MaybeUninit::<ae_sys::DRAWBOT_SupplierRef>::uninit();
+        let mut supplier_ref = std::mem::MaybeUninit::<ae_sys::DRAWBOT_SupplierRef>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -53,8 +51,7 @@ impl DrawbotSuite {
     }
 
     pub fn surface(&self, draw_ref: &DrawRef) -> Result<SurfaceRef, Error> {
-        let mut surface_ref =
-            std::mem::MaybeUninit::<ae_sys::DRAWBOT_SurfaceRef>::uninit();
+        let mut surface_ref = std::mem::MaybeUninit::<ae_sys::DRAWBOT_SurfaceRef>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -85,8 +82,7 @@ impl SupplierSuite {
         pixel_layout: PixelLayout,
         pixel_data: Vec<u8>,
     ) -> Result<ImageRef, Error> {
-        let mut image_ref =
-            std::mem::MaybeUninit::<ae_sys::DRAWBOT_ImageRef>::uninit();
+        let mut image_ref = std::mem::MaybeUninit::<ae_sys::DRAWBOT_ImageRef>::uninit();
 
         assert!(row_bytes * height <= pixel_data.len());
 
@@ -101,9 +97,7 @@ impl SupplierSuite {
             pixel_data.as_ptr() as _,
             image_ref.as_mut_ptr()
         ) {
-            Ok(()) => {
-                Ok(ImageRef::from_raw(unsafe { image_ref.assume_init() }))
-            }
+            Ok(()) => Ok(ImageRef::from_raw(unsafe { image_ref.assume_init() })),
             Err(e) => Err(e),
         }
     }
@@ -135,17 +129,8 @@ impl SurfaceSuite {
         }
     }
 
-    pub fn transform(
-        &self,
-        surface_ref: &SurfaceRef,
-        matrix: &MatrixF32,
-    ) -> Result<(), Error> {
-        match ae_call_suite_fn!(
-            self.suite_ptr,
-            Transform,
-            surface_ref.as_ptr(),
-            matrix as _,
-        ) {
+    pub fn transform(&self, surface_ref: &SurfaceRef, matrix: &MatrixF32) -> Result<(), Error> {
+        match ae_call_suite_fn!(self.suite_ptr, Transform, surface_ref.as_ptr(), matrix as _,) {
             Ok(()) => Ok(()),
             Err(e) => Err(e),
         }

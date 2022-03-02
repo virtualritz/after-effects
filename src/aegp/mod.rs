@@ -1,9 +1,6 @@
 use crate::*;
-use aftereffects_sys as ae_sys;
 use num_enum::{IntoPrimitive, UnsafeFromPrimitive};
-use std::{
-    convert::TryFrom, ffi::CString, marker::PhantomData, mem::MaybeUninit,
-};
+use std::{convert::TryFrom, ffi::CString, marker::PhantomData, mem::MaybeUninit};
 use widestring::U16CString;
 
 #[cfg(feature = "artisan-2-api")]
@@ -21,10 +18,8 @@ pub type CompFlags = u32;
 pub const COMP_FLAG_SHOW_ALL_SHY: u32 = ae_sys::AEGP_CompFlag_SHOW_ALL_SHY;
 pub const COMP_FLAG_RESERVED_1: u32 = ae_sys::AEGP_CompFlag_RESERVED_1;
 pub const COMP_FLAG_RESERVED_2: u32 = ae_sys::AEGP_CompFlag_RESERVED_2;
-pub const COMP_FLAG_ENABLE_MOTION_BLUR: u32 =
-    ae_sys::AEGP_CompFlag_ENABLE_MOTION_BLUR;
-pub const COMP_FLAG_ENABLE_TIME_FILTER: u32 =
-    ae_sys::AEGP_CompFlag_ENABLE_TIME_FILTER;
+pub const COMP_FLAG_ENABLE_MOTION_BLUR: u32 = ae_sys::AEGP_CompFlag_ENABLE_MOTION_BLUR;
+pub const COMP_FLAG_ENABLE_TIME_FILTER: u32 = ae_sys::AEGP_CompFlag_ENABLE_TIME_FILTER;
 pub const COMP_FLAG_GRID_TO_FRAMES: u32 = ae_sys::AEGP_CompFlag_GRID_TO_FRAMES;
 pub const COMP_FLAG_GRID_TO_FIELDS: u32 = ae_sys::AEGP_CompFlag_GRID_TO_FIELDS;
 pub const COMP_FLAG_USE_LOCAL_DSF: u32 = ae_sys::AEGP_CompFlag_USE_LOCAL_DSF;
@@ -81,7 +76,7 @@ pub enum LayerStream {
 
     CastsShadows = ae_sys::AEGP_LayerStream_CASTS_SHADOWS, /* LIGHT and AV only, no CAMERA */
     LightTransmission = ae_sys::AEGP_LayerStream_LIGHT_TRANSMISSION, /* AV Layer only */
-    Metal = ae_sys::AEGP_LayerStream_METAL, // AV layer only
+    Metal = ae_sys::AEGP_LayerStream_METAL,                // AV layer only
 
     SourceText = ae_sys::AEGP_LayerStream_SOURCE_TEXT,
 
@@ -93,8 +88,7 @@ pub enum LayerStream {
     IrisDiffractionFringe = ae_sys::AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE,
     IrisHighlightGain = ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN,
     IrisHighlightThreshold = ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD,
-    IrisHighlightSaturation =
-        ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION,
+    IrisHighlightSaturation = ae_sys::AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION,
 
     // only valid for AEGP_ObjectType == ae_sys::AEGP_ObjectTyp_LIGHT
     LightFalloffType = ae_sys::AEGP_LayerStream_LIGHT_FALLOFF_TYPE,
@@ -112,8 +106,7 @@ pub enum LayerStream {
     BevelStyle = ae_sys::AEGP_LayerStream_EXTRUSION_BEVEL_STYLE,
     BevelDirection = ae_sys::AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION,
     BevelDepth = ae_sys::AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH,
-    ExtrusionHoleBeveDepth =
-        ae_sys::AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH,
+    ExtrusionHoleBeveDepth = ae_sys::AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH,
     ExtrusionDepth = ae_sys::AEGP_LayerStream_EXTRUSION_DEPTH,
     PlaneCurvature = ae_sys::AEGP_LayerStream_PLANE_CURVATURE,
     PlaneSubdivision = ae_sys::AEGP_LayerStream_PLANE_SUBDIVISION,
@@ -233,6 +226,7 @@ pub enum StreamValue {
 
 impl TryFrom<StreamValue> for f32 {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
             StreamValue::OneD(v) => Ok(v as f32),
@@ -243,6 +237,7 @@ impl TryFrom<StreamValue> for f32 {
 
 impl TryFrom<StreamValue> for f64 {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
             StreamValue::OneD(v) => Ok(v),
@@ -253,6 +248,7 @@ impl TryFrom<StreamValue> for f64 {
 
 impl TryFrom<StreamValue> for usize {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
             StreamValue::OneD(v) => Ok(v as usize),
@@ -263,6 +259,7 @@ impl TryFrom<StreamValue> for usize {
 
 impl TryFrom<StreamValue> for u32 {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
             StreamValue::OneD(v) => Ok(v as u32),
@@ -273,6 +270,7 @@ impl TryFrom<StreamValue> for u32 {
 
 impl TryFrom<StreamValue> for bool {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
             StreamValue::OneD(v) => Ok(v != 0.0f64),
@@ -283,6 +281,7 @@ impl TryFrom<StreamValue> for bool {
 
 impl TryFrom<StreamValue> for [f32; 2] {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
             StreamValue::TwoD { x, y } | StreamValue::TwoDSpatial { x, y } => {
@@ -295,11 +294,10 @@ impl TryFrom<StreamValue> for [f32; 2] {
 
 impl TryFrom<StreamValue> for [f64; 2] {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
-            StreamValue::TwoD { x, y } | StreamValue::TwoDSpatial { x, y } => {
-                Ok([x, y])
-            }
+            StreamValue::TwoD { x, y } | StreamValue::TwoDSpatial { x, y } => Ok([x, y]),
             _ => Err(Error::Parameter),
         }
     }
@@ -307,10 +305,10 @@ impl TryFrom<StreamValue> for [f64; 2] {
 
 impl TryFrom<StreamValue> for [f32; 3] {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
-            StreamValue::ThreeD { x, y, z }
-            | StreamValue::ThreeDSpatial { x, y, z } => {
+            StreamValue::ThreeD { x, y, z } | StreamValue::ThreeDSpatial { x, y, z } => {
                 Ok([x as f32, y as f32, z as f32])
             }
             StreamValue::Color {
@@ -326,10 +324,12 @@ impl TryFrom<StreamValue> for [f32; 3] {
 
 impl TryFrom<StreamValue> for [f64; 3] {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
-            StreamValue::ThreeD { x, y, z }
-            | StreamValue::ThreeDSpatial { x, y, z } => Ok([x, y, z]),
+            StreamValue::ThreeD { x, y, z } | StreamValue::ThreeDSpatial { x, y, z } => {
+                Ok([x, y, z])
+            }
             StreamValue::Color {
                 alpha: _,
                 red,
@@ -343,11 +343,10 @@ impl TryFrom<StreamValue> for [f64; 3] {
 
 impl TryFrom<StreamValue> for [f32; 4] {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
-            StreamValue::FourD(a, b, c, d) => {
-                Ok([a as f32, b as f32, c as f32, d as f32])
-            }
+            StreamValue::FourD(a, b, c, d) => Ok([a as f32, b as f32, c as f32, d as f32]),
             StreamValue::Color {
                 alpha,
                 red,
@@ -361,6 +360,7 @@ impl TryFrom<StreamValue> for [f32; 4] {
 
 impl TryFrom<StreamValue> for [f64; 4] {
     type Error = Error;
+
     fn try_from(value: StreamValue) -> Result<Self, Error> {
         match value {
             StreamValue::FourD(a, b, c, d) => Ok([a, b, c, d]),
@@ -385,9 +385,7 @@ pub enum LightType {
     Ambient = ae_sys::AEGP_LightType_AMBIENT,
 }
 
-#[derive(
-    Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive,
-)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
 #[repr(i32)]
 pub enum ObjectType {
     None = ae_sys::AEGP_ObjectType_NONE,
@@ -402,9 +400,7 @@ pub enum ObjectType {
 }
 
 #[allow(dead_code)]
-#[derive(
-    Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive,
-)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
 #[repr(u32)]
 pub enum FilmSizeUnits {
     None = ae_sys::AEGP_FilmSizeUnits_NONE,
@@ -414,9 +410,7 @@ pub enum FilmSizeUnits {
 }
 
 #[allow(dead_code)]
-#[derive(
-    Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive,
-)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
 #[repr(i32)]
 pub enum CameraType {
     None = ae_sys::AEGP_CameraType_NONE,
@@ -440,11 +434,7 @@ pub struct MemHandle<'a, T: 'a> {
 }
 
 impl<'a, T: 'a> MemHandle<'a, T> {
-    pub fn new(
-        plugin_id: PluginID,
-        name: &str,
-        value: T,
-    ) -> Result<MemHandle<'a, T>, Error> {
+    pub fn new(plugin_id: PluginID, name: &str, value: T) -> Result<MemHandle<'a, T>, Error> {
         match ae_acquire_suite_ptr!(
             borrow_pica_basic_as_ptr(),
             AEGP_MemorySuite1,
@@ -504,9 +494,7 @@ impl<'a, T: 'a> MemHandle<'a, T> {
         ae_call_suite_fn!(self.suite_ptr, AEGP_UnlockMemHandle, self.handle)
     }
 
-    pub fn from_raw(
-        handle: ae_sys::AEGP_MemHandle,
-    ) -> Result<MemHandle<'a, T>, Error> {
+    pub fn from_raw(handle: ae_sys::AEGP_MemHandle) -> Result<MemHandle<'a, T>, Error> {
         match ae_acquire_suite_ptr!(
             borrow_pica_basic_as_ptr(),
             AEGP_MemorySuite1,
@@ -548,11 +536,7 @@ impl<'a, T: 'a> Drop for MemHandle<'a, T> {
             unsafe { lock.ptr.read() };
         }
 
-        ae_call_suite_fn_no_err!(
-            self.suite_ptr,
-            AEGP_FreeMemHandle,
-            self.handle
-        );
+        ae_call_suite_fn_no_err!(self.suite_ptr, AEGP_FreeMemHandle, self.handle);
     }
 }
 
@@ -601,8 +585,7 @@ impl IOInSuite {
         &self,
         in_spec_handle: aeio::InSpecHandle,
     ) -> Result<aeio::Handle, Error> {
-        let mut in_spec_options_handle =
-            std::mem::MaybeUninit::<ae_sys::AEIO_Handle>::uninit();
+        let mut in_spec_options_handle = std::mem::MaybeUninit::<ae_sys::AEIO_Handle>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -680,12 +663,8 @@ define_suite!(
 );
 
 impl PFInterfaceSuite {
-    pub fn effect_layer(
-        &self,
-        effect_ref: pf::ProgPtr,
-    ) -> Result<LayerHandle, Error> {
-        let mut layer_handle =
-            std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
+    pub fn effect_layer(&self, effect_ref: pf::ProgPtr) -> Result<LayerHandle, Error> {
+        let mut layer_handle = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -698,13 +677,8 @@ impl PFInterfaceSuite {
         }
     }
 
-    pub fn effect_camera(
-        &self,
-        effect_ref: pf::ProgPtr,
-        time: Time,
-    ) -> Result<LayerHandle, Error> {
-        let mut camera_layer_handle =
-            std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
+    pub fn effect_camera(&self, effect_ref: pf::ProgPtr, time: Time) -> Result<LayerHandle, Error> {
+        let mut camera_layer_handle = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -714,8 +688,7 @@ impl PFInterfaceSuite {
             camera_layer_handle.as_mut_ptr()
         ) {
             Ok(()) => {
-                let camera_layer_handle =
-                    unsafe { camera_layer_handle.assume_init() };
+                let camera_layer_handle = unsafe { camera_layer_handle.assume_init() };
                 if camera_layer_handle.is_null() {
                     Err(Error::Generic)
                 } else {
@@ -740,12 +713,8 @@ define_suite!(
 
 impl WorldSuite {
     #[inline]
-    pub fn fill_out_pf_effect_world(
-        &self,
-        world: WorldHandle,
-    ) -> Result<EffectWorld, Error> {
-        let mut effect_world =
-            std::mem::MaybeUninit::<ae_sys::PF_EffectWorld>::uninit();
+    pub fn fill_out_pf_effect_world(&self, world: WorldHandle) -> Result<EffectWorld, Error> {
+        let mut effect_world = std::mem::MaybeUninit::<ae_sys::PF_EffectWorld>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -761,10 +730,7 @@ impl WorldSuite {
     }
 
     #[inline]
-    pub fn base_addr8(
-        &self,
-        world_handle: WorldHandle,
-    ) -> Result<*mut pf::Pixel8, Error> {
+    pub fn base_addr8(&self, world_handle: WorldHandle) -> Result<*mut pf::Pixel8, Error> {
         let mut base_addr = std::mem::MaybeUninit::<*mut pf::Pixel8>::uninit();
 
         match ae_call_suite_fn!(
@@ -779,10 +745,7 @@ impl WorldSuite {
     }
 
     #[inline]
-    pub fn base_addr16(
-        &self,
-        world_handle: WorldHandle,
-    ) -> Result<*mut pf::Pixel16, Error> {
+    pub fn base_addr16(&self, world_handle: WorldHandle) -> Result<*mut pf::Pixel16, Error> {
         let mut base_addr = std::mem::MaybeUninit::<*mut pf::Pixel16>::uninit();
 
         match ae_call_suite_fn!(
@@ -797,10 +760,7 @@ impl WorldSuite {
     }
 
     #[inline]
-    pub fn base_addr32(
-        &self,
-        world_handle: WorldHandle,
-    ) -> Result<*mut pf::Pixel32, Error> {
+    pub fn base_addr32(&self, world_handle: WorldHandle) -> Result<*mut pf::Pixel32, Error> {
         let mut base_addr = std::mem::MaybeUninit::<*mut pf::Pixel32>::uninit();
 
         match ae_call_suite_fn!(
@@ -841,9 +801,7 @@ impl WorldSuite {
             width.as_mut_ptr() as _,
             height.as_mut_ptr() as _,
         ) {
-            Ok(()) => {
-                Ok(unsafe { (width.assume_init(), height.assume_init()) })
-            }
+            Ok(()) => Ok(unsafe { (width.assume_init(), height.assume_init()) }),
             Err(e) => Err(e),
         }
     }
@@ -892,8 +850,7 @@ impl World {
         width: u32,
         height: u32,
     ) -> Result<World, Error> {
-        let mut world_handle =
-            std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
+        let mut world_handle = std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
         let world_suite = WorldSuite::new()?;
 
         match ae_call_suite_fn!(
@@ -924,12 +881,8 @@ impl Drop for World {
         if self.is_owned {
             let world_suite = WorldSuite::new().unwrap();
             // Dispose memory we allocated
-            ae_call_suite_fn!(
-                world_suite.suite_ptr,
-                AEGP_Dispose,
-                self.world_handle
-            )
-            .expect("Failed to dispose world handle.");
+            ae_call_suite_fn!(world_suite.suite_ptr, AEGP_Dispose, self.world_handle)
+                .expect("Failed to dispose world handle.");
         }
     }
 }
@@ -983,12 +936,8 @@ impl CompSuite {
     }
 
     #[inline]
-    pub fn item_from_comp(
-        &self,
-        comp_handle: CompHandle,
-    ) -> Result<ItemHandle, Error> {
-        let mut item_handle_ptr =
-            std::mem::MaybeUninit::<ae_sys::AEGP_ItemH>::uninit();
+    pub fn item_from_comp(&self, comp_handle: CompHandle) -> Result<ItemHandle, Error> {
+        let mut item_handle_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_ItemH>::uninit();
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetItemFromComp,
@@ -1003,10 +952,7 @@ impl CompSuite {
     }
 
     #[inline]
-    pub fn comp_flags(
-        &self,
-        comp_handle: CompHandle,
-    ) -> Result<CompFlags, Error> {
+    pub fn comp_flags(&self, comp_handle: CompHandle) -> Result<CompFlags, Error> {
         let mut comp_flags = std::mem::MaybeUninit::<CompFlags>::uninit();
 
         match ae_call_suite_fn!(
@@ -1021,10 +967,7 @@ impl CompSuite {
     }
 
     #[inline]
-    pub fn comp_framerate(
-        &self,
-        comp_handle: CompHandle,
-    ) -> Result<f64, Error> {
+    pub fn comp_framerate(&self, comp_handle: CompHandle) -> Result<f64, Error> {
         let mut framerate = std::mem::MaybeUninit::<f64>::uninit();
 
         match ae_call_suite_fn!(
@@ -1101,30 +1044,21 @@ define_suite!(
 
 impl LayerSuite {
     #[inline]
-    pub fn layer_parent_comp(
-        &self,
-        layer_handle: LayerHandle,
-    ) -> Result<CompHandle, Error> {
-        let mut parent_comp_handle =
-            MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
+    pub fn layer_parent_comp(&self, layer_handle: LayerHandle) -> Result<CompHandle, Error> {
+        let mut parent_comp_handle = MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetLayerParentComp,
             layer_handle.as_ptr(),
             parent_comp_handle.as_mut_ptr(),
         ) {
-            Ok(()) => Ok(unsafe {
-                CompHandle::from_raw(parent_comp_handle.assume_init())
-            }),
+            Ok(()) => Ok(unsafe { CompHandle::from_raw(parent_comp_handle.assume_init()) }),
             Err(e) => Err(e),
         }
     }
 
     #[inline]
-    pub fn comp_layer_count(
-        &self,
-        comp_handle: CompHandle,
-    ) -> Result<usize, Error> {
+    pub fn comp_layer_count(&self, comp_handle: CompHandle) -> Result<usize, Error> {
         let mut num_layers = MaybeUninit::<i32>::uninit();
 
         match ae_call_suite_fn!(
@@ -1153,9 +1087,7 @@ impl LayerSuite {
             layer_index as i32,
             num_layers.as_mut_ptr()
         ) {
-            Ok(()) => {
-                Ok(LayerHandle::from_raw(unsafe { num_layers.assume_init() }))
-            }
+            Ok(()) => Ok(LayerHandle::from_raw(unsafe { num_layers.assume_init() })),
             Err(e) => Err(e),
         }
     }
@@ -1166,10 +1098,8 @@ impl LayerSuite {
         plugin_id: PluginID,
         layer_handle: LayerHandle,
     ) -> Result<(String, String), Error> {
-        let mut layer_name_mem_handle =
-            MaybeUninit::<ae_sys::AEGP_MemHandle>::uninit();
-        let mut source_name_mem_handle =
-            MaybeUninit::<ae_sys::AEGP_MemHandle>::uninit();
+        let mut layer_name_mem_handle = MaybeUninit::<ae_sys::AEGP_MemHandle>::uninit();
+        let mut source_name_mem_handle = MaybeUninit::<ae_sys::AEGP_MemHandle>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1186,21 +1116,17 @@ impl LayerSuite {
                 // of scope it gives the memory back to Ae.
                 unsafe {
                     U16CString::from_ptr_str(
-                        MemHandle::<u16>::from_raw(
-                            layer_name_mem_handle.assume_init(),
-                        )?
-                        .lock()?
-                        .as_ptr(),
+                        MemHandle::<u16>::from_raw(layer_name_mem_handle.assume_init())?
+                            .lock()?
+                            .as_ptr(),
                     )
                     .to_string_lossy()
                 },
                 unsafe {
                     U16CString::from_ptr_str(
-                        MemHandle::<u16>::from_raw(
-                            source_name_mem_handle.assume_init(),
-                        )?
-                        .lock()?
-                        .as_ptr(),
+                        MemHandle::<u16>::from_raw(source_name_mem_handle.assume_init())?
+                            .lock()?
+                            .as_ptr(),
                     )
                     .to_string_lossy()
                 },
@@ -1210,10 +1136,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn layer_id(
-        &self,
-        layer_handle: LayerHandle,
-    ) -> Result<LayerID, Error> {
+    pub fn layer_id(&self, layer_handle: LayerHandle) -> Result<LayerID, Error> {
         let mut id = MaybeUninit::<LayerID>::uninit();
 
         match ae_call_suite_fn!(
@@ -1228,10 +1151,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn layer_flags(
-        &self,
-        layer_handle: LayerHandle,
-    ) -> Result<LayerFlags, Error> {
+    pub fn layer_flags(&self, layer_handle: LayerHandle) -> Result<LayerFlags, Error> {
         let mut flags = MaybeUninit::<LayerFlags>::uninit();
 
         match ae_call_suite_fn!(
@@ -1246,10 +1166,7 @@ impl LayerSuite {
     }
 
     #[inline]
-    pub fn layer_object_type(
-        &self,
-        layer_handle: LayerHandle,
-    ) -> Result<ObjectType, Error> {
+    pub fn layer_object_type(&self, layer_handle: LayerHandle) -> Result<ObjectType, Error> {
         let mut object_type = MaybeUninit::<ObjectType>::uninit();
 
         match ae_call_suite_fn!(
@@ -1340,8 +1257,7 @@ impl StreamSuite {
         layer_handle: LayerHandle,
         stream_name: LayerStream,
     ) -> Result<StreamReferenceHandle, Error> {
-        let mut stream_reference_ptr =
-            std::mem::MaybeUninit::<ae_sys::AEGP_StreamRefH>::uninit();
+        let mut stream_reference_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_StreamRefH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1417,10 +1333,7 @@ impl StreamSuite {
     }
 
     #[inline]
-    fn _dispose_stream_value(
-        &self,
-        mut stream_value: StreamValue2,
-    ) -> Result<(), Error> {
+    fn _dispose_stream_value(&self, mut stream_value: StreamValue2) -> Result<(), Error> {
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_DisposeStreamValue,
@@ -1440,10 +1353,8 @@ impl StreamSuite {
         time: Time,
         pre_expression: bool,
     ) -> Result<StreamValue, Error> {
-        let mut stream_value =
-            std::mem::MaybeUninit::<ae_sys::AEGP_StreamVal2>::uninit();
-        let mut stream_type =
-            std::mem::MaybeUninit::<ae_sys::AEGP_StreamType>::uninit();
+        let mut stream_value = std::mem::MaybeUninit::<ae_sys::AEGP_StreamVal2>::uninit();
+        let mut stream_type = std::mem::MaybeUninit::<ae_sys::AEGP_StreamType>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1528,8 +1439,7 @@ impl DynamicStreamSuite {
         plugin_id: PluginID,
         layer_handle: LayerHandle,
     ) -> Result<StreamReferenceHandle, Error> {
-        let mut stream_reference_ptr =
-            std::mem::MaybeUninit::<ae_sys::AEGP_StreamRefH>::uninit();
+        let mut stream_reference_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_StreamRefH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1578,11 +1488,11 @@ impl DynamicStreamSuite {
             stream_reference_handle.as_ptr(),
             stream_value.as_mut_ptr() as *mut _
         ) {
-            Ok(()) => Ok(unsafe {
-                CString::from_raw(stream_value.as_mut_ptr() as *mut _)
-            }
-            .into_string()
-            .unwrap()),
+            Ok(()) => Ok(
+                unsafe { CString::from_raw(stream_value.as_mut_ptr() as *mut _) }
+                    .into_string()
+                    .unwrap(),
+            ),
             Err(e) => Err(e),
         }
     }
@@ -1602,8 +1512,7 @@ impl UtilitySuite {
         //global_refcon:,
         plug_in_name: impl Into<Vec<u8>>,
     ) -> Result<PluginID, Error> {
-        let mut plugin_id =
-            std::mem::MaybeUninit::<ae_sys::AEGP_PluginID>::uninit();
+        let mut plugin_id = std::mem::MaybeUninit::<ae_sys::AEGP_PluginID>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1712,8 +1621,7 @@ impl CanvasSuite {
         &self,
         render_context_handle: pr::RenderContextHandle,
     ) -> Result<CompHandle, Error> {
-        let mut comp_ptr =
-            std::mem::MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
+        let mut comp_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1721,9 +1629,7 @@ impl CanvasSuite {
             render_context_handle.as_ptr(),
             comp_ptr.as_mut_ptr()
         ) {
-            Ok(()) => {
-                Ok(CompHandle::from_raw(unsafe { comp_ptr.assume_init() }))
-            }
+            Ok(()) => Ok(CompHandle::from_raw(unsafe { comp_ptr.assume_init() })),
             Err(e) => Err(e),
         }
     }
@@ -1735,8 +1641,7 @@ impl CanvasSuite {
     ) -> Result<(Time, Time), Error> {
         let mut shutter_frame_start = std::mem::MaybeUninit::<Time>::uninit();
 
-        let mut shutter_frame_duration =
-            std::mem::MaybeUninit::<Time>::uninit();
+        let mut shutter_frame_duration = std::mem::MaybeUninit::<Time>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1761,8 +1666,7 @@ impl CanvasSuite {
         render_context_handle: pr::RenderContextHandle,
         comp_handle: CompHandle,
     ) -> Result<WorldHandle, Error> {
-        let mut world_ptr =
-            std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
+        let mut world_ptr = std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1771,9 +1675,7 @@ impl CanvasSuite {
             comp_handle.as_ptr(),
             world_ptr.as_mut_ptr(),
         ) {
-            Ok(()) => {
-                Ok(WorldHandle::from_raw(unsafe { world_ptr.assume_init() }))
-            }
+            Ok(()) => Ok(WorldHandle::from_raw(unsafe { world_ptr.assume_init() })),
             Err(e) => Err(e),
         }
     }
@@ -1867,10 +1769,7 @@ define_suite!(
 
 impl LightSuite {
     #[inline]
-    pub fn light_type(
-        &self,
-        layer_handle: LayerHandle,
-    ) -> Result<LightType, Error> {
+    pub fn light_type(&self, layer_handle: LayerHandle) -> Result<LightType, Error> {
         let mut light_type = std::mem::MaybeUninit::<LightType>::uninit();
 
         match ae_call_suite_fn!(
@@ -1911,10 +1810,7 @@ impl ItemSuite {
     }
 
     #[inline]
-    pub fn item_dimensions(
-        &self,
-        item_handle: ItemHandle,
-    ) -> Result<(u32, u32), Error> {
+    pub fn item_dimensions(&self, item_handle: ItemHandle) -> Result<(u32, u32), Error> {
         let mut width = std::mem::MaybeUninit::<u32>::uninit();
         let mut height = std::mem::MaybeUninit::<u32>::uninit();
 
@@ -1925,18 +1821,13 @@ impl ItemSuite {
             width.as_mut_ptr() as _,
             height.as_mut_ptr() as _
         ) {
-            Ok(()) => {
-                Ok(unsafe { (width.assume_init(), height.assume_init()) })
-            }
+            Ok(()) => Ok(unsafe { (width.assume_init(), height.assume_init()) }),
             Err(e) => Err(e),
         }
     }
 
     #[inline]
-    pub fn item_pixel_aspect_ratio(
-        &self,
-        item_handle: ItemHandle,
-    ) -> Result<Ratio, Error> {
+    pub fn item_pixel_aspect_ratio(&self, item_handle: ItemHandle) -> Result<Ratio, Error> {
         let mut ratio = std::mem::MaybeUninit::<Ratio>::uninit();
 
         match ae_call_suite_fn!(
@@ -1965,8 +1856,7 @@ impl CameraSuite {
         render_context_handle: pr::RenderContextHandle,
         time: Time,
     ) -> Result<LayerHandle, Error> {
-        let mut camera_layer_handle =
-            std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
+        let mut camera_layer_handle = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -1979,8 +1869,7 @@ impl CameraSuite {
                 // If the comp has no camera Ae will return a NULL
                 // ptr instead of an error! We need to handle this
                 // ourselves.
-                let camera_layer_handle =
-                    unsafe { camera_layer_handle.assume_init() };
+                let camera_layer_handle = unsafe { camera_layer_handle.assume_init() };
                 if camera_layer_handle.is_null() {
                     Err(Error::Generic)
                 } else {
@@ -2030,10 +1919,7 @@ impl CameraSuite {
     }
 
     #[inline]
-    pub fn camera_type(
-        &self,
-        camera_layer_handle: LayerHandle,
-    ) -> Result<CameraType, Error> {
+    pub fn camera_type(&self, camera_layer_handle: LayerHandle) -> Result<CameraType, Error> {
         let mut camera_type: CameraType = CameraType::None;
 
         match ae_call_suite_fn!(

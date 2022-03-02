@@ -1,13 +1,12 @@
 [package]
 name = "after-effects-sys"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Moritz Moeller <virtualritz@protonmail.com>"]
 license = "Apache-2.0 OR BSD-3-Clause OR MIT OR Zlib"
 edition = "2021"
 description = "Auto-generated After Effects® bindings"
 keywords = ["motion-graphics", "after-effects", "graphics", "plugins"]
 categories = ["graphics", "multimedia::video", "rendering::graphics-api"]
-exclude = [".github/**/*", "crates/**/*"]
 readme = "README.md"
 homepage = "https://developer.adobe.com/content/udp/en/apis/creativecloud/aftereffects.html"
 repository = "https://github.com/virtualritz/after-effects/"

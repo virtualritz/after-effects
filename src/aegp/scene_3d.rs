@@ -1,7 +1,4 @@
-use crate::{
-    ae_sys, borrow_pica_basic_as_ptr, pr, Error, Matrix4, Suite, Time,
-    WorldHandle,
-};
+use crate::{ae_sys, borrow_pica_basic_as_ptr, pr, Error, Matrix4, Suite, Time, WorldHandle};
 
 pub type MaterialBasic = ae_sys::AEGP_MaterialBasic_v1;
 
@@ -39,8 +36,7 @@ impl Scene3D {
 
         ae_call_suite_fn!(suite_ptr, AEGP_Scene3DAlloc, &mut scene3d_ptr,)?;
 
-        let mut texture_context_ptr: *mut ae_sys::AEGP_Scene3DTextureContext =
-            std::ptr::null_mut();
+        let mut texture_context_ptr: *mut ae_sys::AEGP_Scene3DTextureContext = std::ptr::null_mut();
 
         match ae_call_suite_fn!(
             suite_ptr,
@@ -194,11 +190,7 @@ impl Scene3D {
             Ok(()) => Ok({
                 let mut matrix = std::mem::MaybeUninit::<Matrix4>::uninit();
                 unsafe {
-                    std::ptr::copy(
-                        matrix_ptr.assume_init(),
-                        matrix.as_mut_ptr(),
-                        1,
-                    );
+                    std::ptr::copy(matrix_ptr.assume_init(), matrix.as_mut_ptr(), 1);
                     matrix.assume_init()
                 }
             }),
@@ -234,11 +226,7 @@ impl Drop for Scene3D {
         );
 
         // dispose scene
-        ae_call_suite_fn!(
-            self.suite_ptr,
-            AEGP_Scene3DDispose,
-            self.scene3d_ptr
-        );
+        ae_call_suite_fn!(self.suite_ptr, AEGP_Scene3DDispose, self.scene3d_ptr);
 
         // release suite
         ae_release_suite_ptr!(
@@ -255,9 +243,7 @@ pub struct Scene3DLayerHandle {
 
 impl Scene3DLayerHandle {
     #[inline]
-    pub fn from_raw(
-        scene3d_layer_ptr: *const ae_sys::AEGP_Scene3DLayer,
-    ) -> Self {
+    pub fn from_raw(scene3d_layer_ptr: *const ae_sys::AEGP_Scene3DLayer) -> Self {
         Self { scene3d_layer_ptr }
     }
 
@@ -274,8 +260,7 @@ pub struct Scene3DTextureCacheHandle {
 impl Scene3DTextureCacheHandle {
     #[inline]
     pub fn new(scene3d: Scene3D) -> Result<Scene3DTextureCacheHandle, Error> {
-        let mut texture_cache_ptr: *mut ae_sys::AEGP_Scene3DTextureCache =
-            std::ptr::null_mut();
+        let mut texture_cache_ptr: *mut ae_sys::AEGP_Scene3DTextureCache = std::ptr::null_mut();
 
         match ae_call_suite_fn!(
             scene3d.suite_ptr,
@@ -326,12 +311,8 @@ impl Scene3DMaterialSuite {
     }
 
     #[inline]
-    pub fn uv_color_texture(
-        &self,
-        material: Scene3DMaterialHandle,
-    ) -> Result<WorldHandle, Error> {
-        let mut world_handle =
-            std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
+    pub fn uv_color_texture(&self, material: Scene3DMaterialHandle) -> Result<WorldHandle, Error> {
+        let mut world_handle = std::mem::MaybeUninit::<ae_sys::AEGP_WorldH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -349,8 +330,7 @@ impl Scene3DMaterialSuite {
         &self,
         material: Scene3DMaterialHandle,
     ) -> Result<Box<ae_sys::AEGP_MaterialBasic_v1>, Error> {
-        let mut basic_material_coefficients =
-            Box::<ae_sys::AEGP_MaterialBasic_v1>::new_uninit();
+        let mut basic_material_coefficients = Box::<ae_sys::AEGP_MaterialBasic_v1>::new_uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -378,9 +358,8 @@ impl Scene3DNodeSuite {
         node_handle: Scene3DNodeHandle,
         side: ae_sys::AEGP_Scene3DMaterialSide,
     ) -> Result<Scene3DMaterialHandle, Error> {
-        let mut material_handle = std::mem::MaybeUninit::<
-            *const ae_sys::AEGP_Scene3DMaterial,
-        >::uninit();
+        let mut material_handle =
+            std::mem::MaybeUninit::<*const ae_sys::AEGP_Scene3DMaterial>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -397,12 +376,8 @@ impl Scene3DNodeSuite {
     }
 
     #[inline]
-    pub fn node_mesh(
-        &self,
-        node_handle: Scene3DNodeHandle,
-    ) -> Result<Scene3DMeshHandle, Error> {
-        let mut mesh_handle =
-            std::mem::MaybeUninit::<*const ae_sys::AEGP_Scene3DMesh>::uninit();
+    pub fn node_mesh(&self, node_handle: Scene3DNodeHandle) -> Result<Scene3DMeshHandle, Error> {
+        let mut mesh_handle = std::mem::MaybeUninit::<*const ae_sys::AEGP_Scene3DMesh>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -410,9 +385,7 @@ impl Scene3DNodeSuite {
             node_handle.as_ptr(),
             mesh_handle.as_mut_ptr() as *mut *mut _
         ) {
-            Ok(()) => {
-                Ok(Scene3DMeshHandle(unsafe { mesh_handle.assume_init() }))
-            }
+            Ok(()) => Ok(Scene3DMeshHandle(unsafe { mesh_handle.assume_init() })),
             Err(e) => Err(e),
         }
     }
@@ -450,10 +423,7 @@ define_suite!(
 
 impl Scene3DMeshSuite {
     #[inline]
-    pub fn face_group_buffer_count(
-        &self,
-        mesh_handle: Scene3DMeshHandle,
-    ) -> Result<usize, Error> {
+    pub fn face_group_buffer_count(&self, mesh_handle: Scene3DMeshHandle) -> Result<usize, Error> {
         let mut face_groups: ae_sys::A_long = 0;
 
         match ae_call_suite_fn!(
@@ -493,11 +463,9 @@ impl Scene3DMeshSuite {
         mesh_handle: Scene3DMeshHandle,
         group_index: usize,
     ) -> Result<Vec<ae_sys::A_long>, Error> {
-        let face_count =
-            self.face_group_buffer_size(mesh_handle, group_index)?;
+        let face_count = self.face_group_buffer_size(mesh_handle, group_index)?;
 
-        let mut face_index_buffer =
-            Vec::<ae_sys::A_long>::with_capacity(face_count as usize);
+        let mut face_index_buffer = Vec::<ae_sys::A_long>::with_capacity(face_count as usize);
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -526,8 +494,7 @@ impl Scene3DMeshSuite {
         mesh_handle: Scene3DMeshHandle,
         group_index: usize,
     ) -> Result<ae_sys::AEGP_Scene3DMaterialSide, Error> {
-        let mut material_side =
-            std::mem::MaybeUninit::<ae_sys::AEGP_Scene3DMaterialSide>::uninit();
+        let mut material_side = std::mem::MaybeUninit::<ae_sys::AEGP_Scene3DMaterialSide>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
@@ -542,10 +509,7 @@ impl Scene3DMeshSuite {
     }
 
     #[inline]
-    pub fn mesh_info(
-        &self,
-        mesh_handle: Scene3DMeshHandle,
-    ) -> Result<(usize, usize), Error> {
+    pub fn mesh_info(&self, mesh_handle: Scene3DMeshHandle) -> Result<(usize, usize), Error> {
         let mut num_vertex = std::mem::MaybeUninit::<i32>::uninit();
         let mut num_face = std::mem::MaybeUninit::<i32>::uninit();
 
@@ -576,35 +540,17 @@ impl Scene3DMeshSuite {
         &self,
         vertex_type: ae_sys::Scene3DVertexBufferType,
     ) -> usize {
-        ae_call_suite_fn_no_err!(
-            self.suite_ptr,
-            AEGP_VertexBufferElementSize,
-            vertex_type
-        ) as _
+        ae_call_suite_fn_no_err!(self.suite_ptr, AEGP_VertexBufferElementSize, vertex_type) as _
     }
 
     #[inline]
-    pub fn face_index_element_size(
-        &self,
-        face_type: ae_sys::Scene3DFaceBufferType,
-    ) -> usize {
-        ae_call_suite_fn_no_err!(
-            self.suite_ptr,
-            AEGP_FaceBufferElementSize,
-            face_type
-        ) as _
+    pub fn face_index_element_size(&self, face_type: ae_sys::Scene3DFaceBufferType) -> usize {
+        ae_call_suite_fn_no_err!(self.suite_ptr, AEGP_FaceBufferElementSize, face_type) as _
     }
 
     #[inline]
-    pub fn uv_buffer_element_size(
-        &self,
-        uv_type: ae_sys::Scene3DUVBufferType,
-    ) -> usize {
-        ae_call_suite_fn_no_err!(
-            self.suite_ptr,
-            AEGP_UVBufferElementSize,
-            uv_type
-        ) as _
+    pub fn uv_buffer_element_size(&self, uv_type: ae_sys::Scene3DUVBufferType) -> usize {
+        ae_call_suite_fn_no_err!(self.suite_ptr, AEGP_UVBufferElementSize, uv_type) as _
     }
 
     #[inline]
@@ -626,13 +572,11 @@ impl Scene3DMeshSuite {
 
         // Points (3-tuples) of f64
         let vertex_buffer_size: usize = num_vertex * 3;
-        let mut vertex_buffer =
-            Vec::<ae_sys::A_FpLong>::with_capacity(vertex_buffer_size);
+        let mut vertex_buffer = Vec::<ae_sys::A_FpLong>::with_capacity(vertex_buffer_size);
 
         // quad meshes
         let face_index_buffer_size: usize = num_face * 4;
-        let mut face_index_buffer =
-            Vec::<ae_sys::A_long>::with_capacity(face_index_buffer_size);
+        let mut face_index_buffer = Vec::<ae_sys::A_long>::with_capacity(face_index_buffer_size);
 
         // 2 uvs per vertex per face
         let uv_per_face_buffer_size: usize = match uv_type {

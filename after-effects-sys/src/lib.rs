@@ -11,7 +11,7 @@
 //!
 //! # Prequisites
 //!
-//! Download the [*Adobe AfterEffects SDK*](https://console.adobe.io/downloads/ae).
+//! Download the [*Adobe After Effects SDK*](https://console.adobe.io/downloads/ae).
 //! > Note that the SDK published by Adobe is outdated if you are using the 3D
 //! > Artisan API to write your own 3D renderer plug-in.
 //! > Also see [Features](#features) below for more information.
@@ -45,12 +45,12 @@
 //! ## Features
 //!
 //! * `artisan-2-api` – Use the 2nd generation Artisan 3D API. This is not
-//!   included in the official SDK. Specifically it requires:
+//!   included in the official Ae SDK. Specifically it requires:
 //!   * `AE_Scene3D_Private.h`
 //!   * `PR_Feature.h`
 //!
-//!   Contact the Ae SDK team and ask nicely and they may send you theses
-//!   headers.
+//!   Contact the Adobe Ae SDK team and ask nicely and they may send you
+//!   theses headers.
 //!
 //! ## macOS
 //!
