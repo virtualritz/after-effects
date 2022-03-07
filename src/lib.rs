@@ -12,7 +12,7 @@
 //! ## Prequisites
 //!
 //! Download the [*Adobe After Effects SDK*](https://console.adobe.io/downloads/ae).
-//! > Note that the SDK published by Adobe is outdated if you are using the 3D
+//! > ⚠️ The SDK published by Adobe is outdated if you are using the 3D
 //! > Artisan API to write your own 3D renderer plug-in.
 //! > Also see [Features](#features) below for more information.
 //! >
@@ -51,7 +51,7 @@
 //! ## Getting Started
 //!
 //! There are currently no examples. Use the C/C++ examples in the Ae SDK as
-//! guides for now. They translate mor or less 1:1 to Rust when using this
+//! guides for now. They translate more or less 1:1 to Rust when using this
 //! crate.
 //!
 //! ## Help Wanted/To Do
