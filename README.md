@@ -2,7 +2,7 @@
 
 Current version: 0.1.6
 
-High(er) level bindings for the Adobe AfterEffects (Ae) SDK.
+High(er) level bindings for the Adobe AfterEffects® (Ae) SDK.
 
 This wraps many of the API suites in the Ae SDK and exposes them in safe
 Rust.
@@ -13,7 +13,7 @@ build on `Windows`.
 ### Prequisites
 
 Download the [*Adobe After Effects SDK*](https://console.adobe.io/downloads/ae).
-> Note that the SDK published by Adobe is outdated if you are using the 3D
+> ⚠️ The SDK published by Adobe is outdated if you are using the 3D
 > Artisan API to write your own 3D renderer plug-in.
 > Also see [Features](#features) below for more information.
 >
@@ -52,7 +52,7 @@ cargo add after-effects
 ### Getting Started
 
 There are currently no examples. Use the C/C++ examples in the Ae SDK as
-guides for now. They translate mor or less 1:1 to Rust when using this
+guides for now. They translate more or less 1:1 to Rust when using this
 crate.
 
 ### Help Wanted/To Do
@@ -60,11 +60,11 @@ crate.
 * Examples! I have a few plug-ins but they need polishing.
 
 * A build system extension that creates the bundle for Ae using
-  `cargo-post`/`cargo-make`/cargo-bundle`. I.e. enter one command to get a
+  `cargo-post`/`cargo-make`/`cargo-bundle`. I.e. enter one command to get a
   plug-in ready to load in Ae. Currently there are manual steps and they
   need documenting too.
 
-* Better error handling. Possibly using [`color-`](https://crates.io/crates/color-eyre)[`eyre`](https://crates.io/crates/eyre)?
+* Better error handling. Possibly using [`color`](https://crates.io/crates/color-eyre)`-`[`eyre`](https://crates.io/crates/eyre)?
 
 ## License
 

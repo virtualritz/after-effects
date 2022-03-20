@@ -1,7 +1,7 @@
 // FIXME: make ALL the functions below return Result-wrapped values
 #![feature(new_uninit)]
 #![allow(temporary_cstring_as_ptr)]
-//! High(er) level bindings for the Adobe AfterEffects (Ae) SDK.
+//! High(er) level bindings for the Adobe AfterEffects® (Ae) SDK.
 //!
 //! This wraps many of the API suites in the Ae SDK and exposes them in safe
 //! Rust.
@@ -59,11 +59,11 @@
 //! * Examples! I have a few plug-ins but they need polishing.
 //!
 //! * A build system extension that creates the bundle for Ae using
-//!   `cargo-post`/`cargo-make`/cargo-bundle`. I.e. enter one command to get a
+//!   `cargo-post`/`cargo-make`/`cargo-bundle`. I.e. enter one command to get a
 //!   plug-in ready to load in Ae. Currently there are manual steps and they
 //!   need documenting too.
 //!
-//! * Better error handling. Possibly using [`color-`](https://crates.io/crates/color-eyre)[`eyre`](https://crates.io/crates/eyre)?
+//! * Better error handling. Possibly using [`color`](https://crates.io/crates/color-eyre)`-`[`eyre`](https://crates.io/crates/eyre)?
 use after_effects_sys as ae_sys;
 use num_enum::{IntoPrimitive, TryFromPrimitive, UnsafeFromPrimitive};
 use num_traits::identities::Zero;
