@@ -65,8 +65,7 @@
 //!
 //! # Usage
 //!
-//! Until this is published it is suggested to use a link to this repository:
-//!
-//! ````
+//! ```
 //! cargo add after-effects-sys.
+//! ```
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
