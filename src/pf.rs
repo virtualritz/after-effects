@@ -834,7 +834,7 @@ impl<'a> FlatHandle<'a> {
         ) as u32
         {
             ae_sys::PF_Err_NONE => Ok(()),
-            e => Err(unsafe { Error::from_unchecked(e as i32) }),
+            e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
         }
     }
 
@@ -1035,7 +1035,7 @@ impl SmartRenderCallbacks {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
-                e => Err(unsafe { Error::from_unchecked(e as i32) }),
+                e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
             }
         } else {
             Err(Error::InvalidCallback)
@@ -1050,7 +1050,7 @@ impl SmartRenderCallbacks {
         if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
             match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) } as u32 {
                 ae_sys::PF_Err_NONE => Ok(()),
-                e => Err(unsafe { Error::from_unchecked(e as i32) }),
+                e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
             }
         } else {
             Err(Error::InvalidCallback)
@@ -1068,7 +1068,7 @@ impl SmartRenderCallbacks {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
-                e => Err(unsafe { Error::from_unchecked(e as i32) }),
+                e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
             }
         } else {
             Err(Error::InvalidCallback)
@@ -1127,7 +1127,7 @@ impl PreRenderCallbacks {
             } as u32
             {
                 ae_sys::PF_Err_NONE => Ok(unsafe { checkout_result.assume_init() }),
-                e => Err(unsafe { Error::from_unchecked(e as i32) }),
+                e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
             }
         } else {
             Err(Error::InvalidCallback)
@@ -1266,7 +1266,7 @@ impl InteractCallbacks {
         } as u32
         {
             ae_sys::PF_Err_NONE => Ok(()),
-            e => Err(unsafe { Error::from_unchecked(e as i32) }),
+            e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
         }
     }
 }
@@ -1955,12 +1955,25 @@ pub struct ParamDef {
     in_data_ptr: *const ae_sys::PF_InData,
 }
 
+fn zeroed_raw_param_def() -> ae_sys::PF_ParamDef {
+    ae_sys::PF_ParamDef {
+        // all fields same size, no uninitialized memory
+        uu: unsafe { std::mem::zeroed() },
+        ui_flags: 0,
+        ui_width: 0,
+        ui_height: 0,
+        param_type: 0,
+        name: [0; 32],
+        flags: 0,
+        unused: 0,
+        u: unsafe { std::mem::zeroed() },
+    }
+}
+
 impl ParamDef {
     pub fn new(in_data_handle: InDataHandle) -> Self {
         Self {
-            param_def_boxed: std::mem::ManuallyDrop::new(unsafe {
-                Box::new_zeroed().assume_init()
-            }),
+            param_def_boxed: std::mem::ManuallyDrop::new(Box::new(zeroed_raw_param_def())),
             drop: true,
             in_data_ptr: in_data_handle.as_ptr(),
         }
@@ -1998,9 +2011,7 @@ impl ParamDef {
         time_step: i32,
         time_scale: u32,
     ) -> ParamDef {
-        let mut param_def_boxed = std::mem::ManuallyDrop::new(unsafe {
-            Box::<ae_sys::PF_ParamDef>::new_zeroed().assume_init()
-        });
+        let mut param_def_boxed = std::mem::ManuallyDrop::new(Box::new(zeroed_raw_param_def()));
         let in_data_ptr = in_data_handle.as_ptr();
         unsafe {
             (*in_data_ptr).inter.checkout_param.unwrap()(

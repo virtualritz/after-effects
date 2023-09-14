@@ -1,5 +1,4 @@
 // FIXME: make ALL the functions below return Result-wrapped values
-#![feature(new_uninit)]
 #![allow(temporary_cstring_as_ptr)]
 //! High(er) level bindings for the Adobe AfterEffects® (Ae) SDK.
 //!
@@ -44,7 +43,7 @@
 //!
 //! Add `after-effects` to your dependencies.
 //!
-//! ```
+//! ```bash
 //! cargo add after-effects
 //! ```
 //!
@@ -91,7 +90,6 @@ pub use drawbot::*;
 pub mod pf;
 pub use pf::*;
 pub mod pr;
-pub use pr::*;
 
 thread_local!(
     pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> =

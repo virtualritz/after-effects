@@ -42,7 +42,7 @@ macro_rules! ae_call_suite_fn {
 
         match err {
             0 => Ok(()),
-            _ => Err( unsafe { $crate::Error::from_unchecked(err) } )
+            _ => Err( unsafe { $crate::Error::unchecked_transmute_from(err) } )
         }
     }};
 }
