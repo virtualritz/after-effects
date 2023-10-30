@@ -1,0 +1,21 @@
+[package]
+name = "portable"
+version = "0.0.1"
+authors = ["Adrian <adrian.eddy@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+build = "build.rs"
+
+[lib]
+name = "portable"
+crate-type = ["cdylib"]
+
+[dependencies]
+after-effects = { path = "../../" }
+after-effects-sys = { path = "../../after-effects-sys" }
+cstr = "0.2"
+log = "0.4"
+win_dbg_logger = "0.1"
+
+[build-dependencies]
+pipl = { path = "../../pipl" }

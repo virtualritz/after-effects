@@ -1,0 +1,14 @@
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
+
+TargetDir := "target"
+export AESDK_ROOT := justfile_directory() / "../../sdk/AfterEffectsSDK"
+
+[windows]
+build:
+    cargo build
+    Start-Process PowerShell -Verb runAs -ArgumentList "-command Copy-Item -Force '{{TargetDir}}\debug\portable.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\portable.aex'"
+
+[macos]
+build:
+    cargo build
+    # todo
