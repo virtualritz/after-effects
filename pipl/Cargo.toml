@@ -1,0 +1,20 @@
+[package]
+name = "pipl"
+version = "0.0.1"
+authors = ["Adrian <adrian.eddy@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Library for building Adobe's PiPL plugin info resource"
+
+[lib]
+name = "pipl"
+
+[dependencies]
+byteorder = "1.5"
+bitflags = "2.4"
+winres = "0.1"
+pretty-hex = "0.3"
+
+[dev-dependencies]
+similar-asserts = "1.5.0"
+pretty-hex = "0.3"

@@ -42,7 +42,7 @@ macro_rules! ae_call_suite_fn {
 
         match err {
             0 => Ok(()),
-            _ => Err( unsafe { $crate::Error::from_unchecked(err) } )
+            _ => Err(Error::from(err))
         }
     }};
 }
@@ -148,8 +148,9 @@ macro_rules! define_struct_wrapper {
             pub fn into_raw(def: $wrapper_pretty_name) -> after_effects_sys::$data_type {
                 def.0
             }
-
-            pub fn as_ref(&self) -> &after_effects_sys::$data_type {
+        }
+        impl AsRef<after_effects_sys::$data_type> for $wrapper_pretty_name {
+            fn as_ref(&self) -> &after_effects_sys::$data_type {
                 &self.0
             }
         }
@@ -218,15 +219,12 @@ macro_rules! define_param_wrapper {
 macro_rules! define_param_basic_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident, $value_type:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn set_value<'a>(&'a mut self, value: $value_type) -> &'a mut $wrapper_pretty_name {
+            pub fn set_value(&mut self, value: $value_type) -> &mut $wrapper_pretty_name {
                 self.0.value = value;
                 self
             }
 
-            pub fn set_default<'a>(
-                &'a mut self,
-                default: $value_type_ui,
-            ) -> &'a mut $wrapper_pretty_name {
+            pub fn set_default(&mut self, default: $value_type_ui) -> &mut $wrapper_pretty_name {
                 self.0.dephault = default as _;
                 self
             }
@@ -237,18 +235,18 @@ macro_rules! define_param_basic_wrapper {
 macro_rules! define_param_valid_min_max_wrapper {
     ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn set_valid_min<'a>(
-                &'a mut self,
+            pub fn set_valid_min(
+                &mut self,
                 valid_min: $value_type_ui,
-            ) -> &'a mut $wrapper_pretty_name {
+            ) -> &mut $wrapper_pretty_name {
                 self.0.valid_min = valid_min;
                 self
             }
 
-            pub fn set_valid_max<'a>(
-                &'a mut self,
+            pub fn set_valid_max(
+                &mut self,
                 valid_max: $value_type_ui,
-            ) -> &'a mut $wrapper_pretty_name {
+            ) -> &mut $wrapper_pretty_name {
                 self.0.valid_max = valid_max;
                 self
             }
@@ -259,18 +257,18 @@ macro_rules! define_param_valid_min_max_wrapper {
 macro_rules! define_param_slider_min_max_wrapper {
     ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn set_slider_min<'a>(
-                &'a mut self,
+            pub fn set_slider_min(
+                &mut self,
                 slider_min: $value_type_ui,
-            ) -> &'a mut $wrapper_pretty_name {
+            ) -> &mut $wrapper_pretty_name {
                 self.0.slider_min = slider_min;
                 self
             }
 
-            pub fn set_slider_max<'a>(
-                &'a mut self,
+            pub fn set_slider_max(
+                &mut self,
                 slider_max: $value_type_ui,
-            ) -> &'a mut $wrapper_pretty_name {
+            ) -> &mut $wrapper_pretty_name {
                 self.0.slider_max = slider_max;
                 self
             }
