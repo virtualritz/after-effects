@@ -47,15 +47,15 @@ impl From<Pixel> for ae_sys::PF_Pixel {
 pub type Pixel8 = Pixel;
 
 bitflags! {
-    pub struct EventOutFlags: u32 {
-        const NONE = ae_sys::PF_EO_NONE;
-        const HANDLED_EVENT = ae_sys::PF_EO_HANDLED_EVENT;
+    pub struct EventOutFlags: ae_sys::A_long {
+        const NONE          = ae_sys::PF_EO_NONE          as ae_sys::A_long;
+        const HANDLED_EVENT = ae_sys::PF_EO_HANDLED_EVENT as ae_sys::A_long;
         // Rerender the comp.
-        const ALWAYS_UPDATE = ae_sys::PF_EO_ALWAYS_UPDATE;
+        const ALWAYS_UPDATE = ae_sys::PF_EO_ALWAYS_UPDATE as ae_sys::A_long;
         // Do not rerender the comp.
-        const NEVER_UPDATE = ae_sys::PF_EO_NEVER_UPDATE;
+        const NEVER_UPDATE  = ae_sys::PF_EO_NEVER_UPDATE  as ae_sys::A_long;
         // Update the view immediately after the event returns when using pf::InvalidateRect.
-        const UPDATE_NOW = ae_sys::PF_EO_UPDATE_NOW;
+        const UPDATE_NOW    = ae_sys::PF_EO_UPDATE_NOW    as ae_sys::A_long;
     }
 }
 
@@ -123,7 +123,8 @@ pub enum Event {
 
 define_struct_wrapper!(EventExtra, PF_EventExtra);
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
 pub enum EffectArea {
     Mone = ae_sys::PF_EA_NONE,
     Title = ae_sys::PF_EA_PARAM_TITLE,
@@ -183,7 +184,7 @@ impl EventExtra {
     }
 
     pub fn effect_area(&self) -> EffectArea {
-        EffectArea::try_from(self.0.effect_win.area as u32).unwrap()
+        EffectArea::try_from(self.0.effect_win.area as EnumIntType).unwrap()
     }
 
     pub fn current_frame(&self) -> Rect {
@@ -415,13 +416,15 @@ pub enum Quality {
     Hi = ae_sys::PF_Quality_HI,
 }
 
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
 pub enum ModeFlags {
     AlphaPremul = ae_sys::PF_MF_Alpha_PREMUL,
     AlphaStraight = ae_sys::PF_MF_Alpha_STRAIGHT,
 }
 
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
 pub enum Field {
     Frame = ae_sys::PF_Field_FRAME,
     Upper = ae_sys::PF_Field_UPPER,
@@ -458,7 +461,7 @@ impl EffectWorld {
     }
 
     pub fn from_raw(effect_world_ptr: *const ae_sys::PF_EffectWorld) -> Result<Self, crate::Error> {
-        if std::ptr::null() == effect_world_ptr {
+        if effect_world_ptr.is_null() {
             Err(crate::Error::Generic)
         } else {
             Ok(EffectWorld {
@@ -553,11 +556,11 @@ impl EffectWorld {
 
     #[inline]
     pub fn world_type(&self) -> WorldType {
-        let flags = self.effect_world.world_flags;
+        let flags = self.effect_world.world_flags as EnumIntType;
         // Most frequent case is 16bit integer.
-        if ae_sys::PF_WorldFlag_DEEP & flags as u32 != 0 {
+        if ae_sys::PF_WorldFlag_DEEP & flags != 0 {
             WorldType::U15
-        } else if ae_sys::PF_WorldFlag_RESERVED1 & flags as u32 != 0 {
+        } else if ae_sys::PF_WorldFlag_RESERVED1 & flags != 0 {
             WorldType::F32
         } else {
             WorldType::U8
@@ -831,10 +834,9 @@ impl<'a> FlatHandle<'a> {
             host_resize_handle,
             size as _,
             &mut self.handle as _
-        ) as u32
-        {
+        ) as EnumIntType {
             ae_sys::PF_Err_NONE => Ok(()),
-            e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
+            e => Err(Error::from(e)),
         }
     }
 
@@ -1030,12 +1032,11 @@ impl SmartRenderCallbacks {
                     checkout_id as i32,
                     effect_world_ptr.as_mut_ptr(),
                 )
-            } as u32
-            {
+            } as EnumIntType {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
-                e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
+                e => Err(Error::from(e)),
             }
         } else {
             Err(Error::InvalidCallback)
@@ -1048,9 +1049,9 @@ impl SmartRenderCallbacks {
         checkout_id: u32,
     ) -> Result<(), Error> {
         if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
-            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) } as u32 {
+            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) } as EnumIntType {
                 ae_sys::PF_Err_NONE => Ok(()),
-                e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
+                e => Err(Error::from(e)),
             }
         } else {
             Err(Error::InvalidCallback)
@@ -1062,13 +1063,11 @@ impl SmartRenderCallbacks {
             let mut effect_world_ptr =
                 std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
-            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) }
-                as u32
-            {
+            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) } as EnumIntType {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
-                e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
+                e => Err(Error::from(e)),
             }
         } else {
             Err(Error::InvalidCallback)
@@ -1116,18 +1115,17 @@ impl PreRenderCallbacks {
             match unsafe {
                 checkout_layer(
                     effect_ref.as_ptr(),
-                    index as i32,
-                    checkout_id as i32,
+                    index,
+                    checkout_id,
                     req,
                     what_time,
                     time_step,
                     time_scale,
                     checkout_result.as_mut_ptr(),
                 )
-            } as u32
-            {
+            } as EnumIntType {
                 ae_sys::PF_Err_NONE => Ok(unsafe { checkout_result.assume_init() }),
-                e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
+                e => Err(Error::from(e)),
             }
         } else {
             Err(Error::InvalidCallback)
@@ -1159,42 +1157,64 @@ impl InDataHandle {
     pub fn is_null(&self) -> bool {
         self.in_data_ptr.is_null()
     }
+
+    #[inline]
+    pub fn application_id(&self) -> [u8; 4] {
+        let bytes: [u8; 4] = unsafe { std::mem::transmute((*self.in_data_ptr).appl_id) };
+        [bytes[3], bytes[2], bytes[1], bytes[0]]
+    }
+
+    #[inline]
+    pub fn extent_hint(&self) -> Rect {
+        Rect::from(unsafe { (*self.in_data_ptr).extent_hint })
+    }
+
+    #[inline]
+    pub fn effect_ref(&self) -> ProgressInfo {
+        pf::ProgressInfo(unsafe { (*self.in_data_ptr).effect_ref })
+    }
+
+    #[inline]
+    pub fn version(&self) -> (i16, i16) {
+        unsafe { ((*self.in_data_ptr).version.major, (*self.in_data_ptr).version.minor) }
+    }
+
 }
 
 pub type ProgPtr = ae_sys::PF_ProgPtr;
 
 bitflags! {
-    pub struct CustomEventFlags: ae_sys::A_u_long {
-        const NONE = ae_sys::PF_CustomEFlag_NONE;
-        const COMP = ae_sys::PF_CustomEFlag_COMP;
-        const LAYER = ae_sys::PF_CustomEFlag_LAYER;
-        const EFFECT = ae_sys::PF_CustomEFlag_EFFECT;
-        const PREVIEW = ae_sys::PF_CustomEFlag_PREVIEW;
+    pub struct CustomEventFlags: ae_sys::A_long {
+        const NONE    = ae_sys::PF_CustomEFlag_NONE    as ae_sys::A_long;
+        const COMP    = ae_sys::PF_CustomEFlag_COMP    as ae_sys::A_long;
+        const LAYER   = ae_sys::PF_CustomEFlag_LAYER   as ae_sys::A_long;
+        const EFFECT  = ae_sys::PF_CustomEFlag_EFFECT  as ae_sys::A_long;
+        const PREVIEW = ae_sys::PF_CustomEFlag_PREVIEW as ae_sys::A_long;
     }
 }
 
 bitflags! {
-    struct _UIAlignment: ae_sys::A_u_long {
+    struct _UIAlignment: ae_sys::A_long {
         // No values other than PF_UIAlignment_NONE are honored, in Ae or PPro.
-        const NONE = ae_sys::PF_UIAlignment_NONE;
-        const TOP = ae_sys::PF_UIAlignment_TOP;
-        const LEFT = ae_sys::PF_UIAlignment_LEFT;
-        const BOTTOM = ae_sys::PF_UIAlignment_BOTTOM;
-        const RIGHT = ae_sys::PF_UIAlignment_RIGHT;
+        const NONE   = ae_sys::PF_UIAlignment_NONE   as ae_sys::A_long;
+        const TOP    = ae_sys::PF_UIAlignment_TOP    as ae_sys::A_long;
+        const LEFT   = ae_sys::PF_UIAlignment_LEFT   as ae_sys::A_long;
+        const BOTTOM = ae_sys::PF_UIAlignment_BOTTOM as ae_sys::A_long;
+        const RIGHT  = ae_sys::PF_UIAlignment_RIGHT  as ae_sys::A_long;
     }
 }
 
 bitflags! {
-    pub struct Modifiers: ae_sys::A_u_long {
-        const NONE = ae_sys::PF_Mod_NONE;
+    pub struct Modifiers: ae_sys::A_long {
+        const NONE            = ae_sys::PF_Mod_NONE            as ae_sys::A_long;
         /// Cmd on macOS, Ctrl on Windows.
-        const CMD_CTRL_KEY = ae_sys::PF_Mod_CMD_CTRL_KEY;
-        const SHIFT_KEY = ae_sys::PF_Mod_SHIFT_KEY;
-        const CAPS_LOCK_KEY = ae_sys::PF_Mod_CAPS_LOCK_KEY;
+        const CMD_CTRL_KEY    = ae_sys::PF_Mod_CMD_CTRL_KEY    as ae_sys::A_long;
+        const SHIFT_KEY       = ae_sys::PF_Mod_SHIFT_KEY       as ae_sys::A_long;
+        const CAPS_LOCK_KEY   = ae_sys::PF_Mod_CAPS_LOCK_KEY   as ae_sys::A_long;
         // Option on macOS, alt on Windows.
-        const OPT_ALT_KEY = ae_sys::PF_Mod_OPT_ALT_KEY;
+        const OPT_ALT_KEY     = ae_sys::PF_Mod_OPT_ALT_KEY     as ae_sys::A_long;
         // Mac control key only
-        const MAC_CONTROL_KEY = ae_sys::PF_Mod_MAC_CONTROL_KEY;
+        const MAC_CONTROL_KEY = ae_sys::PF_Mod_MAC_CONTROL_KEY as ae_sys::A_long;
     }
 }
 
@@ -1210,37 +1230,37 @@ impl CustomUIInfo {
         &self.0
     }
 
-    pub fn events<'a>(&'a mut self, events: CustomEventFlags) -> &'a mut Self {
+    pub fn events(&mut self, events: CustomEventFlags) -> &mut Self {
         self.0.events = events.bits() as _;
         self
     }
 
-    pub fn comp_ui_width<'a>(&'a mut self, width: u16) -> &'a mut Self {
+    pub fn comp_ui_width(&mut self, width: u16) -> &mut Self {
         self.0.comp_ui_width = width as _;
         self
     }
 
-    pub fn comp_ui_height<'a>(&'a mut self, height: u16) -> &'a mut Self {
+    pub fn comp_ui_height(&mut self, height: u16) -> &mut Self {
         self.0.comp_ui_height = height as _;
         self
     }
 
-    pub fn layer_ui_width<'a>(&'a mut self, width: u16) -> &'a mut Self {
+    pub fn layer_ui_width(&mut self, width: u16) -> &mut Self {
         self.0.layer_ui_width = width as _;
         self
     }
 
-    pub fn layer_ui_height<'a>(&'a mut self, height: u16) -> &'a mut Self {
+    pub fn layer_ui_height(&mut self, height: u16) -> &mut Self {
         self.0.layer_ui_height = height as _;
         self
     }
 
-    pub fn preview_ui_width<'a>(&'a mut self, width: u16) -> &'a mut Self {
+    pub fn preview_ui_width(&mut self, width: u16) -> &mut Self {
         self.0.preview_ui_width = width as _;
         self
     }
 
-    pub fn preview_ui_height<'a>(&'a mut self, height: u16) -> &'a mut Self {
+    pub fn preview_ui_height(&mut self, height: u16) -> &mut Self {
         self.0.preview_ui_height = height as _;
         self
     }
@@ -1263,10 +1283,9 @@ impl InteractCallbacks {
                 (*self.0.as_ptr()).effect_ref,
                 custom_ui_info.as_ptr() as _,
             )
-        } as u32
-        {
+        } as EnumIntType {
             ae_sys::PF_Err_NONE => Ok(()),
-            e => Err(unsafe { Error::unchecked_transmute_from(e as i32) }),
+            e => Err(Error::from(e)),
         }
     }
 }
@@ -1297,58 +1316,58 @@ pub enum ParamType {
 }
 
 bitflags! {
-    pub struct ParamUIFlags: u32 {
-        const NONE = ae_sys::PF_PUI_NONE;
+    pub struct ParamUIFlags: ae_sys::A_long {
+        const NONE = ae_sys::PF_PUI_NONE as ae_sys::A_long;
         /// Effect has custom UI and wants events for this params' title (portion visible when twirled up).
-        const TOPIC = ae_sys::PF_PUI_TOPIC;
+        const TOPIC = ae_sys::PF_PUI_TOPIC as ae_sys::A_long;
         /// Effect has custom UI and wants events for this params' control (portion invisible when twirled up).
-        const CONTROL = ae_sys::PF_PUI_CONTROL;
+        const CONTROL = ae_sys::PF_PUI_CONTROL as ae_sys::A_long;
         // Param will be used as UI only, no data.
-        const CONTROL_ONLY = ae_sys::PF_PUI_STD_CONTROL_ONLY;
+        const CONTROL_ONLY = ae_sys::PF_PUI_STD_CONTROL_ONLY as ae_sys::A_long;
         // Stop param from appearing in Effect Controls (which in PPro also means you won't see a keyframe track there).
-        const NO_ECW_UI = ae_sys::PF_PUI_NO_ECW_UI;
+        const NO_ECW_UI = ae_sys::PF_PUI_NO_ECW_UI as ae_sys::A_long;
         // Draw a thick separating line above this param; not used by Ae.
-        const ECW_SEPARATOR = ae_sys::PF_PUI_ECW_SEPARATOR;
+        const ECW_SEPARATOR = ae_sys::PF_PUI_ECW_SEPARATOR as ae_sys::A_long;
         // Disable (gray-out) UI for this parameter.
-        const DISABLED = ae_sys::PF_PUI_DISABLED;
+        const DISABLED = ae_sys::PF_PUI_DISABLED as ae_sys::A_long;
         // Ae will not erase the ECW topic, it's up to the FX to erase/draw every pixel.
         // Handy if FX author implements an offscreen, prevents flashing.
-        const DO_NOT_ERASE_TOPIC = ae_sys::PF_PUI_DONT_ERASE_TOPIC;
-        const DO_NOT_ERASE_CONTROL = ae_sys::PF_PUI_DONT_ERASE_CONTROL;
+        const DO_NOT_ERASE_TOPIC = ae_sys::PF_PUI_DONT_ERASE_TOPIC as ae_sys::A_long;
+        const DO_NOT_ERASE_CONTROL = ae_sys::PF_PUI_DONT_ERASE_CONTROL as ae_sys::A_long;
         /// Display as a radio-button group; only valid for PF_Param_POPUP; ignored by Ae.
-        const RADIO_BUTTON = ae_sys::PF_PUI_RADIO_BUTTON;
+        const RADIO_BUTTON = ae_sys::PF_PUI_RADIO_BUTTON as ae_sys::A_long;
         /// In Ae as of CS6, this hides the parameter UI in both the Effect Controls and Timeline.
         /// in Premiere since earlier than that, this hides the parameter UI in the Effect Controls,
         ///	which includes the keyframe track; for PPro only, the flag is dynamic and can be cleared
         ///	to make the parameter visible again.
-        const INVISIBLE = ae_sys::PF_PUI_INVISIBLE;
+        const INVISIBLE = ae_sys::PF_PUI_INVISIBLE as ae_sys::A_long;
     }
 }
 
 bitflags! {
-    pub struct ParamFlag: u32 {
-        const RESERVED1 = ae_sys::PF_ParamFlag_RESERVED1;
-        const CANNOT_TIME_VARY = ae_sys::PF_ParamFlag_CANNOT_TIME_VARY;
-        const CANNOT_INTERP= ae_sys::PF_ParamFlag_CANNOT_INTERP;
-        const RESERVED2= ae_sys::PF_ParamFlag_RESERVED2;
-        const RESERVED3 = ae_sys::PF_ParamFlag_RESERVED3;
-        const TWIRLY = ae_sys::PF_ParamFlag_COLLAPSE_TWIRLY;
-        const SUPERVISE = ae_sys::PF_ParamFlag_SUPERVISE;
-        const START_COLLAPSED = ae_sys::PF_ParamFlag_START_COLLAPSED;
-        const USE_VALUE_FOR_OLD_PROJECTS = ae_sys::PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS;
-        const LAYER_PARAM_IS_TRACKMATTE = ae_sys::PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE;
-        const EXCLUDE_FROM_HAVE_INPUTS_CHANGED = ae_sys::PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED;
-        const SKIP_REVEAL_WHEN_UNHIDDEN = ae_sys::PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN;
+    pub struct ParamFlag: ae_sys::A_long {
+        const RESERVED1                        = ae_sys::PF_ParamFlag_RESERVED1                        as ae_sys::A_long;
+        const CANNOT_TIME_VARY                 = ae_sys::PF_ParamFlag_CANNOT_TIME_VARY                 as ae_sys::A_long;
+        const CANNOT_INTERP                    = ae_sys::PF_ParamFlag_CANNOT_INTERP                    as ae_sys::A_long;
+        const RESERVED2                        = ae_sys::PF_ParamFlag_RESERVED2                        as ae_sys::A_long;
+        const RESERVED3                        = ae_sys::PF_ParamFlag_RESERVED3                        as ae_sys::A_long;
+        const TWIRLY                           = ae_sys::PF_ParamFlag_COLLAPSE_TWIRLY                  as ae_sys::A_long;
+        const SUPERVISE                        = ae_sys::PF_ParamFlag_SUPERVISE                        as ae_sys::A_long;
+        const START_COLLAPSED                  = ae_sys::PF_ParamFlag_START_COLLAPSED                  as ae_sys::A_long;
+        const USE_VALUE_FOR_OLD_PROJECTS       = ae_sys::PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS       as ae_sys::A_long;
+        const LAYER_PARAM_IS_TRACKMATTE        = ae_sys::PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE        as ae_sys::A_long;
+        const EXCLUDE_FROM_HAVE_INPUTS_CHANGED = ae_sys::PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED as ae_sys::A_long;
+        const SKIP_REVEAL_WHEN_UNHIDDEN        = ae_sys::PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN        as ae_sys::A_long;
     }
 }
 
 bitflags! {
-    pub struct ChangeFlag: u32 {
-        const NONE = ae_sys::PF_ChangeFlag_NONE;
-        const CHANGED_VALUE = ae_sys::PF_ChangeFlag_CHANGED_VALUE;
-        const RESERVED= ae_sys::PF_ChangeFlag_RESERVED;
-        const SET_TO_VARY= ae_sys::PF_ChangeFlag_SET_TO_VARY;
-        const SET_TO_CONSTANT = ae_sys::PF_ChangeFlag_SET_TO_CONSTANT;
+    pub struct ChangeFlag: ae_sys::A_long {
+        const NONE            = ae_sys::PF_ChangeFlag_NONE            as ae_sys::A_long;
+        const CHANGED_VALUE   = ae_sys::PF_ChangeFlag_CHANGED_VALUE   as ae_sys::A_long;
+        const RESERVED        = ae_sys::PF_ChangeFlag_RESERVED        as ae_sys::A_long;
+        const SET_TO_VARY     = ae_sys::PF_ChangeFlag_SET_TO_VARY     as ae_sys::A_long;
+        const SET_TO_CONSTANT = ae_sys::PF_ChangeFlag_SET_TO_CONSTANT as ae_sys::A_long;
     }
 }
 
@@ -1383,7 +1402,7 @@ impl ButtonDef {
         Self(def, CString::new("").unwrap())
     }
 
-    pub fn label<'a>(&'a mut self, label: &str) -> &'a mut Self {
+    pub fn label(&mut self, label: &str) -> &mut Self {
         self.1 = CString::new(label).unwrap();
         self.0.u.namesptr = self.1.as_ptr();
         self
@@ -1428,7 +1447,7 @@ impl PopupDef {
         def.0
     }
 
-    pub fn names<'a>(&'a mut self, names: Vec<&str>) -> &'a mut Self {
+    pub fn names(&mut self, names: Vec<&str>) -> &mut Self {
         // Build a string in the format "list|of|choices|", the
         // format Ae expects. Ae ignores the trailing '|'.
         let mut names_tmp = String::new();
@@ -1493,12 +1512,12 @@ impl ColorDef {
         Pixel::from(self.0.value)
     }
 
-    pub fn set_value<'a>(&'a mut self, value: Pixel) -> &'a mut Self {
+    pub fn set_value(&mut self, value: Pixel) -> &mut Self {
         self.0.value = ae_sys::PF_Pixel::from(value);
         self
     }
 
-    pub fn default<'a>(&'a mut self, default: Pixel) -> &'a mut Self {
+    pub fn default(&mut self, default: Pixel) -> &mut Self {
         self.0.dephault = ae_sys::PF_Pixel::from(default);
         self
     }
@@ -1555,12 +1574,12 @@ define_param_slider_min_max_wrapper!(FloatSliderDef, f32);
 define_param_value_desc_wrapper!(FloatSliderDef);
 
 impl FloatSliderDef {
-    pub fn display_flags<'a>(&'a mut self, display_flags: ValueDisplayFlag) -> &'a mut Self {
+    pub fn display_flags(&mut self, display_flags: ValueDisplayFlag) -> &mut Self {
         self.0.display_flags = display_flags.bits() as i16;
         self
     }
 
-    pub fn precision<'a>(&'a mut self, precision: u8) -> &'a mut Self {
+    pub fn precision(&mut self, precision: u8) -> &mut Self {
         self.0.precision = precision as i16;
         self
     }
@@ -1602,7 +1621,7 @@ impl CheckBoxDef {
         def.0
     }
 
-    pub fn label<'a>(&'a mut self, label: &str) -> &'a mut Self {
+    pub fn label(&mut self, label: &str) -> &mut Self {
         self.1 = CString::new(label).unwrap();
         self.0.u.nameptr = self.1.as_ptr();
         self
@@ -1804,8 +1823,8 @@ impl ArbParamsExtra {
                     .interp_func_params
                     .interpPH
                     .write(FlatHandle::into_raw(FlatHandle::new(bincode::serialize(
-                        &bincode::deserialize::<T>(&left.as_slice().unwrap())?.interpolate(
-                            &bincode::deserialize::<T>(&right.as_slice().unwrap())?,
+                        &bincode::deserialize::<T>(left.as_slice().unwrap())?.interpolate(
+                            &bincode::deserialize::<T>(right.as_slice().unwrap())?,
                             self.0.u.interp_func_params.tF,
                         ),
                     )?)?));
@@ -1819,14 +1838,14 @@ impl ArbParamsExtra {
 
                 let _handle_a_lock = handle_a.lock()?;
 
-                let a = bincode::deserialize::<T>(&handle_a.as_slice().unwrap())?;
+                let a = bincode::deserialize::<T>(handle_a.as_slice().unwrap())?;
 
                 let handle_b =
                     FlatHandle::from_raw(unsafe { self.0.u.compare_func_params.b_arbH })?;
 
                 let _handle_b_lock = handle_b.lock()?;
 
-                let b = bincode::deserialize::<T>(&handle_b.as_slice().unwrap())?;
+                let b = bincode::deserialize::<T>(handle_b.as_slice().unwrap())?;
 
                 if a < b {
                     unsafe {
@@ -1872,7 +1891,7 @@ impl ArbParamsExtra {
 
                 self.0.u.print_size_func_params.print_sizePLu.write(
                     (serde_json::to_string(&bincode::deserialize::<T>(
-                        &handle.as_slice().unwrap(),
+                        handle.as_slice().unwrap(),
                     )?)?
                     // The len + terminating nul byte.
                     .len()
@@ -1889,11 +1908,10 @@ impl ArbParamsExtra {
 
                 let _handle_lock = handle.lock()?;
 
-                let string = serde_json::to_string(&bincode::deserialize::<T>(
-                    &handle.as_slice().unwrap(),
-                )?)?;
+                let string =
+                    serde_json::to_string(&bincode::deserialize::<T>(handle.as_slice().unwrap())?)?;
 
-                if string.len() + 1 <= unsafe { self.0.u.print_func_params.print_sizeLu } as _
+                if string.len() < unsafe { self.0.u.print_func_params.print_sizeLu } as _
                     && unsafe { self.0.u.print_func_params.print_flags } == 0
                 {
                     unsafe {
@@ -1907,7 +1925,7 @@ impl ArbParamsExtra {
                             .u
                             .print_func_params
                             .print_bufferPC
-                            .offset(string.len() as _)
+                            .add(string.len())
                             .write(0);
                     }
                 }
@@ -2034,7 +2052,7 @@ impl ParamDef {
         self.drop = false;
     }
 
-    pub fn param<'a>(&'a mut self, param: Param) -> &'a mut ParamDef {
+    pub fn param(&mut self, param: Param) -> &mut ParamDef {
         match param {
             Param::Popup(pd) => {
                 self.param_def_boxed.u.pd = PopupDef::into_raw(pd);
@@ -2105,12 +2123,15 @@ impl ParamDef {
         }
     }
 
-    pub fn param_type<'a>(&'a mut self, param_type: ParamType) -> &'a mut ParamDef {
+    pub fn param_type(&mut self, param_type: ParamType) -> &mut ParamDef {
         self.param_def_boxed.param_type = param_type as i32;
         self
     }
 
-    pub fn name<'a>(&'a mut self, name: &str) -> &'a mut Self {
+    pub unsafe fn layer_def(&mut self) -> *mut ae_sys::PF_LayerDef {
+        &mut self.param_def_boxed.u.ld
+    }
+    pub fn name(&mut self, name: &str) -> &mut Self {
         assert!(name.len() < 32);
         let name_cstr = CString::new(name).unwrap();
         let name_slice = name_cstr.to_bytes_with_nul();
@@ -2119,27 +2140,27 @@ impl ParamDef {
         self
     }
 
-    pub fn ui_flags<'a>(&'a mut self, flags: ParamUIFlags) -> &'a mut Self {
+    pub fn ui_flags(&mut self, flags: ParamUIFlags) -> &mut Self {
         self.param_def_boxed.ui_flags = flags.bits() as _;
         self
     }
 
-    pub fn ui_width<'a>(&'a mut self, width: u16) -> &'a mut Self {
+    pub fn ui_width(&mut self, width: u16) -> &mut Self {
         self.param_def_boxed.ui_width = width as _;
         self
     }
 
-    pub fn ui_height<'a>(&'a mut self, height: u16) -> &'a mut Self {
+    pub fn ui_height(&mut self, height: u16) -> &mut Self {
         self.param_def_boxed.ui_height = height as _;
         self
     }
 
-    pub fn flags<'a>(&'a mut self, flags: ParamFlag) -> &'a mut Self {
+    pub fn flags(&mut self, flags: ParamFlag) -> &mut Self {
         self.param_def_boxed.flags = flags.bits() as _;
         self
     }
 
-    pub fn change_flags<'a>(&'a mut self, change_flags: ChangeFlag) -> &'a mut Self {
+    pub fn change_flags(&mut self, change_flags: ChangeFlag) -> &mut Self {
         self.param_def_boxed.uu.change_flags = change_flags.bits() as _;
         self
     }
@@ -2249,6 +2270,38 @@ impl EffectCustomUIOverlayThemeSuite {
             Ok(()) => Ok(unsafe { size.assume_init() }),
             Err(e) => Err(e),
         }
+    }
+}
+
+define_suite!(
+    IterateFloatSuite,
+    PF_iterateFloatSuite2,
+    kPFIterateFloatSuite,
+    kPFIterateFloatSuiteVersion2
+);
+
+impl IterateFloatSuite {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+}
+
+define_suite!(
+    PixelFormatSuite,
+    PF_PixelFormatSuite1,
+    kPFPixelFormatSuite,
+    kPFPixelFormatSuiteVersion1
+);
+
+impl PixelFormatSuite {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    pub fn clear_supported_pixel_formats(&self, effect_ref: ProgressInfo) -> Result<(), Error> {
+        ae_call_suite_fn!(self.suite_ptr, ClearSupportedPixelFormats, effect_ref.as_ptr())
+    }
+    pub fn add_supported_pixel_format(&self, effect_ref: ProgressInfo, pixel_format: ae_sys::PF_PixelFormat) -> Result<(), Error> {
+        ae_call_suite_fn!(self.suite_ptr, AddSupportedPixelFormat, effect_ref.as_ptr(), pixel_format as EnumIntType)
     }
 }
 

@@ -22,7 +22,7 @@ fn main() {
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    let ae_bindings = bindgen::Builder::default()
+    let mut ae_bindings = bindgen::Builder::default()
         .header("wrapper.hpp")
         //.derive_debug(true)
         .allowlist_function("A_.*")
@@ -69,15 +69,16 @@ fn main() {
                 .join("Util")
                 .display()
         ));
+    if cfg!(target_os = "windows") {
+        ae_bindings = ae_bindings.clang_arg("-D_WINDOWS");
+    }
 
-    let ae_bindings = if cfg!(feature = "artisan-2-api") {
-        ae_bindings.clang_arg("--define-macro=ARTISAN_2_API")
-    } else {
-        ae_bindings
-    };
+    if cfg!(feature = "artisan-2-api") {
+        ae_bindings = ae_bindings.clang_arg("--define-macro=ARTISAN_2_API");
+    }
 
-    let ae_bindings = if cfg!(target_os = "macos") {
-        ae_bindings
+    if cfg!(target_os = "macos") {
+        ae_bindings = ae_bindings
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework/Versions/A/Headers/")
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Versions/A/Headers/")
             //.clang_arg("-I/Library/Developer/CommandLineTools/usr/include/c++/v1/")
@@ -86,11 +87,8 @@ fn main() {
             )
             .clang_arg(
                 "-F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/",
-            )
-    } else {
-        // TODO: Windows SDK paths
-        ae_bindings
-    };
+            );
+    }
 
     ae_bindings
         .generate()

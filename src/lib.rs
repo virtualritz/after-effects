@@ -64,7 +64,7 @@
 //!
 //! * Better error handling. Possibly using [`color`](https://crates.io/crates/color-eyre)`-`[`eyre`](https://crates.io/crates/eyre)?
 use after_effects_sys as ae_sys;
-use num_enum::{IntoPrimitive, TryFromPrimitive, UnsafeFromPrimitive};
+use num_enum::UnsafeFromPrimitive;
 use num_traits::identities::Zero;
 use std::{
     cell::RefCell,
@@ -77,6 +77,11 @@ use std::{
 };
 #[cfg(feature = "ultraviolet")]
 use ultraviolet as uv;
+
+#[cfg(target_os = "macos")]
+pub type EnumIntType = u32;
+#[cfg(target_os = "windows")]
+pub type EnumIntType = i32;
 
 #[macro_use]
 mod macros;
@@ -174,38 +179,49 @@ impl Drop for PicaBasicSuite {
 }
 
 #[derive(
-    Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive, TryFromPrimitive,
+    Copy, Clone, Debug, Eq, PartialEq, UnsafeFromPrimitive
 )]
-#[repr(i32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
 pub enum Error {
-    Generic = ae_sys::A_Err_GENERIC as i32,
-    Struct = ae_sys::A_Err_STRUCT as i32,
-    Parameter = ae_sys::A_Err_PARAMETER as i32,
+    Generic = ae_sys::A_Err_GENERIC as EnumIntType,
+    Struct = ae_sys::A_Err_STRUCT as EnumIntType,
+    Parameter = ae_sys::A_Err_PARAMETER as EnumIntType,
     // Also called A_Err_ALLOC in Ae.
-    OutOfMemory = ae_sys::A_Err_ALLOC as i32,
+    OutOfMemory = ae_sys::A_Err_ALLOC as EnumIntType,
     // Some calls can only be used on UI (Main) or Render threads.
     // Also, calls back to Ae can only be made from the same thread Ae
     // called you on.
-    WrongThread = ae_sys::A_Err_WRONG_THREAD as i32,
+    WrongThread = ae_sys::A_Err_WRONG_THREAD as EnumIntType,
     // An attempt was made to write to a read only copy of an Ae
     // project. Project changes must originate in the UI/Main thread.
-    ConstProjectModification = ae_sys::A_Err_CONST_PROJECT_MODIFICATION as i32,
+    ConstProjectModification = ae_sys::A_Err_CONST_PROJECT_MODIFICATION as EnumIntType,
     // Acquire suite failed on a required suite.
-    MissingSuite = ae_sys::A_Err_MISSING_SUITE as i32,
+    MissingSuite = ae_sys::A_Err_MISSING_SUITE as EnumIntType,
 
-    InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as i32,
+    InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as EnumIntType,
     // Out of range, or action not allowed on this index.
-    InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as i32,
-    UnrecogizedParameterType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as i32,
-    InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as i32,
-    BadCallbackParameter = ae_sys::PF_Err_BAD_CALLBACK_PARAM as i32,
+    InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as EnumIntType,
+    UnrecogizedParameterType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as EnumIntType,
+    InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as EnumIntType,
+    BadCallbackParameter = ae_sys::PF_Err_BAD_CALLBACK_PARAM as EnumIntType,
     // Returned when user interrupts rendering.
-    InterruptCancel = ae_sys::PF_Interrupt_CANCEL as i32,
+    InterruptCancel = ae_sys::PF_Interrupt_CANCEL as EnumIntType,
     // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
     // arbitrary data from text
-    CannotParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as i32,
+    CannotParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as EnumIntType,
 
-    None = ae_sys::PF_Err_NONE as i32,
+    None = ae_sys::PF_Err_NONE as EnumIntType,
+}
+impl From<i32> for Error {
+    fn from(value: i32) -> Self {
+        unsafe { Self::unchecked_transmute_from(value as EnumIntType) }
+    }
+}
+impl From<u32> for Error {
+    fn from(value: u32) -> Self {
+        unsafe { Self::unchecked_transmute_from(value as EnumIntType) }
+    }
 }
 
 impl From<Error> for &'static str {
@@ -511,10 +527,8 @@ impl Rect {
 
         if x_hit {
             y_hit = (y >= self.top) && (y <= self.bottom);
-        } else {
-            if y_hit {
-                x_hit = (x >= self.left) && (x <= self.right);
-            }
+        } else if y_hit {
+            x_hit = (x >= self.left) && (x <= self.right);
         }
         x_hit && y_hit
     }

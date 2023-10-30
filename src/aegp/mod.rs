@@ -12,22 +12,24 @@ pub type PluginID = ae_sys::AEGP_PluginID;
 
 pub type ItemID = i32;
 
-// FIXME: make this an enum
-pub type CompFlags = u32;
+bitflags::bitflags! {
+    pub struct CompFlags: ae_sys::A_long {
+        const SHOW_ALL_SHY       = ae_sys::AEGP_CompFlag_SHOW_ALL_SHY       as ae_sys::A_long;
+        const RESERVED_1         = ae_sys::AEGP_CompFlag_RESERVED_1         as ae_sys::A_long;
+        const RESERVED_2         = ae_sys::AEGP_CompFlag_RESERVED_2         as ae_sys::A_long;
+        const ENABLE_MOTION_BLUR = ae_sys::AEGP_CompFlag_ENABLE_MOTION_BLUR as ae_sys::A_long;
+        const ENABLE_TIME_FILTER = ae_sys::AEGP_CompFlag_ENABLE_TIME_FILTER as ae_sys::A_long;
+        const GRID_TO_FRAMES     = ae_sys::AEGP_CompFlag_GRID_TO_FRAMES     as ae_sys::A_long;
+        const GRID_TO_FIELDS     = ae_sys::AEGP_CompFlag_GRID_TO_FIELDS     as ae_sys::A_long;
+        const USE_LOCAL_DSF      = ae_sys::AEGP_CompFlag_USE_LOCAL_DSF      as ae_sys::A_long;
+        const DRAFT_3D           = ae_sys::AEGP_CompFlag_DRAFT_3D           as ae_sys::A_long;
+        const SHOW_GRAPH         = ae_sys::AEGP_CompFlag_SHOW_GRAPH         as ae_sys::A_long;
+        const RESERVED_3         = ae_sys::AEGP_CompFlag_RESERVED_3         as ae_sys::A_long;
+    }
+}
 
-pub const COMP_FLAG_SHOW_ALL_SHY: u32 = ae_sys::AEGP_CompFlag_SHOW_ALL_SHY;
-pub const COMP_FLAG_RESERVED_1: u32 = ae_sys::AEGP_CompFlag_RESERVED_1;
-pub const COMP_FLAG_RESERVED_2: u32 = ae_sys::AEGP_CompFlag_RESERVED_2;
-pub const COMP_FLAG_ENABLE_MOTION_BLUR: u32 = ae_sys::AEGP_CompFlag_ENABLE_MOTION_BLUR;
-pub const COMP_FLAG_ENABLE_TIME_FILTER: u32 = ae_sys::AEGP_CompFlag_ENABLE_TIME_FILTER;
-pub const COMP_FLAG_GRID_TO_FRAMES: u32 = ae_sys::AEGP_CompFlag_GRID_TO_FRAMES;
-pub const COMP_FLAG_GRID_TO_FIELDS: u32 = ae_sys::AEGP_CompFlag_GRID_TO_FIELDS;
-pub const COMP_FLAG_USE_LOCAL_DSF: u32 = ae_sys::AEGP_CompFlag_USE_LOCAL_DSF;
-pub const COMP_FLAG_DRAFT_3D: u32 = ae_sys::AEGP_CompFlag_DRAFT_3D;
-pub const COMP_FLAG_SHOW_GRAPH: u32 = ae_sys::AEGP_CompFlag_SHOW_GRAPH;
-pub const COMP_FLAG_RESERVED_3: u32 = ae_sys::AEGP_CompFlag_RESERVED_3;
-
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
 pub enum MemFlag {
     None = ae_sys::AEGP_MemFlag_NONE,
     Clear = ae_sys::AEGP_MemFlag_CLEAR,
@@ -145,7 +147,8 @@ pub type LayerFlags = u32;
 pub type LayerID = u32;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
 pub enum WorldType {
     None = ae_sys::AEGP_WorldType_NONE,
     U8 = ae_sys::AEGP_WorldType_8,
@@ -163,14 +166,16 @@ pub struct DownsampleFactor {
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
 pub enum TimeMode {
     LayerTime = ae_sys::AEGP_LTimeMode_LayerTime,
     CompTime = ae_sys::AEGP_LTimeMode_CompTime,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
 pub enum StreamType {
     NoData = ae_sys::AEGP_StreamType_NO_DATA,
     ThreeDSpatial = ae_sys::AEGP_StreamType_ThreeD_SPATIAL,
@@ -401,7 +406,8 @@ pub enum ObjectType {
 
 #[allow(dead_code)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, IntoPrimitive, UnsafeFromPrimitive)]
-#[repr(u32)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
 pub enum FilmSizeUnits {
     None = ae_sys::AEGP_FilmSizeUnits_NONE,
     Horizontal = ae_sys::AEGP_FilmSizeUnits_HORIZONTAL,
@@ -1367,7 +1373,7 @@ impl StreamSuite {
             stream_value.as_mut_ptr() as *mut _,
             stream_type.as_mut_ptr() as *mut _,
         ) {
-            Ok(()) => Ok(match unsafe { stream_type.assume_init() } as u32 {
+            Ok(()) => Ok(match unsafe { stream_type.assume_init() } as EnumIntType {
                 ae_sys::AEGP_StreamType_NO_DATA => StreamValue::None,
                 ae_sys::AEGP_StreamType_ThreeD_SPATIAL => unsafe {
                     let value = stream_value.assume_init().three_d;
@@ -1579,17 +1585,14 @@ impl CompositeSuite {
         dst_y: u32,
         dst_world: &mut EffectWorld,
     ) -> Result<(), Error> {
-        let mask_world = match mask_world {
-            None => None,
-            Some(m) => Some(ae_sys::PF_MaskWorld {
-                mask: m.mask.effect_world.clone(),
-                offset: ae_sys::PF_Point {
-                    v: m.offset.v,
-                    h: m.offset.h,
-                },
-                what_is_mask: m.what_is_mask as i32,
-            }),
-        };
+        let mask_world = mask_world.map(|m| ae_sys::PF_MaskWorld {
+            mask: m.mask.effect_world,
+            offset: ae_sys::PF_Point {
+                v: m.offset.v,
+                h: m.offset.h,
+            },
+            what_is_mask: m.what_is_mask as i32,
+        });
         ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_TransferRect,
