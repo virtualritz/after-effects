@@ -1,7 +1,10 @@
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
 
-use byteorder::{ WriteBytesExt, LittleEndian, BigEndian };
+mod resource;
+pub use resource::*;
+
+use byteorder::{ WriteBytesExt, LittleEndian };
 use std::io::Result;
 
 #[derive(Debug)]
@@ -152,7 +155,7 @@ bitflags::bitflags! {
 }
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum FilterCaseInfoIn {
     CantFilter = 0,
     StraightData = 1,
@@ -167,7 +170,7 @@ pub enum FilterCaseInfoIn {
     ForegroundZap = 11
 }
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum FilterCaseInfoOut {
     CantFilter = 0,
     StraightData = 1,
@@ -182,12 +185,12 @@ pub struct FilterCaseInfoStruct {
     out_handling: FilterCaseInfoOut,
     write_outside_selection: bool,
     filters_layer_masks: bool,
-    works_with_blan_data: bool,
+    works_with_blank_data: bool,
     copy_source_to_destination: bool,
 }
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum BitTypes {
     None       = 0x00,
     Top        = 0x01,
@@ -200,16 +203,16 @@ pub enum BitTypes {
     UpperLeft  = 0x80,
 }
 #[repr(u32)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum PixelAspectRatio {
 	AnyPAR   = 0x10000,
 	UnityPAR = 0x20000,
 }
 
-#[repr(u32)] #[derive(Debug)] pub enum AnimDataType { Opaque = 0, Char, Short, Long, UnsignedChar, UnsignedShort, UnsignedLong, Fixed, UnsignedFixed, Extended96, Double64, Float32, ColorRGB }
-#[repr(u32)] #[derive(Debug)] pub enum AnimUIType { NoUI = 0, Angle, Slider, Point, Rect, ColorRGB, ColorCMYK, ColorLAB }
-#[repr(u32)] #[derive(Debug)] pub enum ClassType { None = 0, Scanner, Camera, Video, Floppy, Cdrom, Internet }
-#[derive(Debug)] pub enum ButtonIconType { Mac, Windows }
+#[repr(u32)] #[derive(Debug, Clone, Copy)] pub enum AnimDataType { Opaque = 0, Char, Short, Long, UnsignedChar, UnsignedShort, UnsignedLong, Fixed, UnsignedFixed, Extended96, Double64, Float32, ColorRGB }
+#[repr(u32)] #[derive(Debug, Clone, Copy)] pub enum AnimUIType { NoUI = 0, Angle, Slider, Point, Rect, ColorRGB, ColorCMYK, ColorLAB }
+#[repr(u32)] #[derive(Debug, Clone, Copy)] pub enum ClassType { None = 0, Scanner, Camera, Video, Floppy, Cdrom, Internet }
+#[derive(Debug)] pub enum ButtonIconType { None, MacCICN, WindowsICON }
 
 pub const fn pf_version(vers: u32, subvers: u32, bugvers: u32, stage: u32, build: u32) -> u32 {
     const PF_VERS_BUILD_BITS   : u32 = 0x1ff;
@@ -242,7 +245,7 @@ pub enum Property {
     Kind(PIPLType),
     Version((u32, u32, u32, u32, u32)),
     Priority(u32),
-    RequiredHost([u8; 4]),
+    RequiredHost(&'static [u8; 4]),
     Component((u32, &'static str)),
     Name(&'static str),
     Category(&'static str),
@@ -260,13 +263,13 @@ pub enum Property {
     EnableInfo(&'static str),
     FilterCaseInfo(&'static [FilterCaseInfoStruct]),
     ExportFlags { supports_transparency: bool },
-    FmtFileType((u32, u32)),
-    ReadTypes(&'static [(u32, u32)]),
-    WriteTypes(&'static [(u32, u32)]),
-    FilteredTypes(&'static [(u32, u32)]),
-    ReadExtensions(&'static [[u8; 4]]),
-    WriteExtensions(&'static [[u8; 4]]),
-    FilteredExtensions(&'static [[u8; 4]]),
+    FmtFileType((&'static [u8; 4], &'static [u8; 4])),
+    ReadTypes(&'static [(&'static [u8; 4], &'static [u8; 4])]),
+    WriteTypes(&'static [(&'static [u8; 4], &'static [u8; 4])]),
+    FilteredTypes(&'static [(&'static [u8; 4], &'static [u8; 4])]),
+    ReadExtensions(&'static [&'static [u8; 4]]),
+    WriteExtensions(&'static [&'static [u8; 4]]),
+    FilteredExtensions(&'static [&'static [u8; 4]]),
     FormatFlags {
         saves_image_resources: bool,
         can_read: bool,
@@ -275,11 +278,11 @@ pub enum Property {
     },
     FormatMaxSize { width: u16, height: u16 },
     FormatMaxChannels(&'static [u16]),
-    ParsableTypes(&'static [([u8; 4], [u8; 4])]),
-    ParsableClipboardTypes(&'static [[u8; 4]]),
-    FilteredParsableTypes(&'static [([u8; 4], [u8; 4])]),
-    ParsableExtensions(&'static [[u8; 4]]),
-    FilteredParsableExtensions(&'static [[u8; 4]]),
+    ParsableTypes(&'static [(&'static [u8; 4], &'static [u8; 4])]),
+    ParsableClipboardTypes(&'static [&'static [u8; 4]]),
+    FilteredParsableTypes(&'static [(&'static [u8; 4], &'static [u8; 4])]),
+    ParsableExtensions(&'static [&'static [u8; 4]]),
+    FilteredParsableExtensions(&'static [&'static [u8; 4]]),
     PickerID(&'static str),
     HasTerminology {
         class_id: u32,
@@ -312,7 +315,7 @@ pub enum Property {
         has_file: bool,
         output: bool,
         input: bool,
-        signature: [char; 4]
+        signature: [u8; 4]
     },
     ANIM_FilterInfo {
         spec_version_major: u32,
@@ -390,7 +393,8 @@ pub enum Property {
     },
     ButtonIcon {
         version: u32,
-        icon_type: ButtonIconType,
+        mac_icon_type: ButtonIconType,
+        win_icon_type: ButtonIconType,
         resource_id: u32,
         icon_name: &'static str,
     },
@@ -463,7 +467,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             },
             Property::RequiredHost(x) => {
                 write(&mut buffer, b"8BIM", b"host", |buffer| {
-					buffer.write_u32::<LittleEndian>(u32::from_be_bytes(x))
+					buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*x))
 				})?;
 			},
             Property::Name(x) => {
@@ -543,249 +547,215 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
 					write_cstring(buffer, condition)
 				})?;
 			},
-            /*
+            //-------------------------------------------------------------------
             // Photoshop Filter PiPL properties
             //-------------------------------------------------------------------
-            case FilterCaseInfo:
-                longint = '8BIM';
-                key longint = 'fici';
-                longint = 0;
-                longint = 28;
-                array [7]
-                    {
-                    byte inCantFilter = 0,
-                         inStraightData = 1,
-                         inBlackMat = 2,
-                         inGrayMat = 3,
-                         inWhiteMat = 4,
-                         inDefringe = 5,
-                         inBlackZap = 6,
-                         inGrayZap = 7,
-                         inWhiteZap = 8,
-                         inBackgroundZap = 10,
-                         inForegroundZap = 11;
-                    byte outCantFilter = 0,
-                         outStraightData = 1,
-                         outBlackMat = 2,
-                         outGrayMat = 3,
-                         outWhiteMat = 4,
-                         outFillMask = 9;
-                    fill bit [4];
-                    boolean doNotWriteOutsideSelection, writeOutsideSelection;
-                    boolean doesNotFilterLayerMasks, filtersLayerMasks;
-                    boolean doesNotWorkWithBlankData, worksWithBlankData;
-                    boolean copySourceToDestination, doNotCopySourceToDestination;
-                    fill byte;
-                    };
-
+            Property::FilterCaseInfo(infos) => {
+                write(&mut buffer, b"8BIM", b"fici", |buffer| {
+                    for i in 0..7 {
+                        if let Some(info) = infos.get(i) {
+                            buffer.write_u8(info.in_handling as u8)?;
+                            buffer.write_u8(info.out_handling as u8)?;
+                            let flags = if info.copy_source_to_destination { 0 } else { 1 << 0 } |
+                                           if info.works_with_blank_data      { 1 << 1 } else { 0 } |
+                                           if info.filters_layer_masks        { 1 << 2 } else { 0 } |
+                                           if info.write_outside_selection    { 1 << 3 } else { 0 };
+                            buffer.write_u8(flags)?;
+                            buffer.write_u8(0)?;
+                        } else {
+                            buffer.write_u32::<LittleEndian>(0)?;
+                        }
+                    }
+                    Ok(())
+				})?;
+			},
             //-------------------------------------------------------------------
             // Photoshop Export PiPL properties
             //-------------------------------------------------------------------
-            case ExportFlags:
-                longint = '8BIM';
-                key longint = 'expf';
-                longint = 0;
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (expFlagsEnd[$$ArrayIndex(properties)] - expFlagsStart[$$ArrayIndex(properties)]) / 8;
-                #endif
-             expFlagsStart:
-                boolean expDoesNotSupportTransparency, expSupportsTransparency;
-                fill bit[7];
-              expFlagsEnd:
-                align long;
-
-            //-------------------------------------------------------------------
-            // Photoshop File Format PiPL properties
-            //-------------------------------------------------------------------
-            case FmtFileType:
-                longint = '8BIM';
-                key longint = 'fmTC';
-                longint = 0;
-                longint = 8;
-                literal longint; // Default file type.
-                literal longint; // Default file creator.
-
-            // NOTE: If you specify you can READ type 'foo_', then you
-            // will never be called with a FilterFile for type 'foo_'.
-            case ReadTypes:
-                longint = '8BIM';
-                key longint = 'RdTy';
-                longint = 0;
-                longint = $$CountOf(ReadableTypes) * 8;
-                wide array ReadableTypes { literal longint; literal longint; } ;
-
-            case WriteTypes:
-                longint = '8BIM';
-                key longint = 'WrTy';
-                longint = 0;
-                longint = $$CountOf(WritableTypes) * 8;
-                wide array WritableTypes { literal longint; literal longint; } ;
-
-            // NOTE: If you specify you want to filter type 'foo_' AND you
-            // specify you can read type 'foo_', you will never get
-            // a filter call.
-            case FilteredTypes:
-                longint = '8BIM';
-                key longint = 'fftT';
-                longint = 0;
-                longint = $$CountOf(FilteredTypes) * 8;
-                wide array FilteredTypes { literal longint; literal longint; } ;
-
-            // Macintosh plug-ins can use Windows file extensions
-            // to determine read/write/parseability.
-            //
-            // NOTE: If you specify you READ extension '.foo' then you
-            // won't be called to Filter that type.
-            case ReadExtensions:
-                longint = '8BIM';
-                key longint = 'RdEx';
-                longint = 0;
-                longint = $$CountOf(ReadableExtensions) * 4;
-                wide array ReadableExtensions { literal longint; } ;
-
-            case WriteExtensions:
-                longint = '8BIM';
-                key longint = 'WrEx';
-                longint = 0;
-                longint = $$CountOf(WriteableExtensions) * 4;
-                wide array WriteableExtensions { literal longint; } ;
-
-            // NOTE: If you specify you want to filter extension '.foo'
-            // AND you specify you can read extension '.foo', you will
-            // never get a filter call.
-            case FilteredExtensions:
-                longint = '8BIM';
-                key longint = 'fftE';
-                longint = 0;
-                longint = $$CountOf(FilteredExtensions) * 4;
-                wide array FilteredExtensions { literal longint; } ;
-
-            case FormatFlags:
-                longint = '8BIM';
-                key longint = 'fmtf';
-                longint = 0;
-                longint = (fmtFlagsEnd[$$ArrayIndex(properties)] - fmtFlagsStart[$$ArrayIndex(properties)]) / 8;
-             fmtFlagsStart:
-                boolean = false; // Obsolete.
-                boolean fmtDoesNotSaveImageResources, fmtSavesImageResources;
-                boolean fmtCannotRead, fmtCanRead;
-                boolean fmtCannotWrite, fmtCanWrite;
-                boolean fmtWritesAll, fmtCanWriteIfRead;
-                fill bit[3];
-              fmtFlagsEnd:
-                align long;
-
-            case FormatMaxSize:
-                longint = '8BIM';
-                key longint = 'mxsz';
-                longint = 0;
-                longint = 4;
-                Point;
-
-            case FormatMaxChannels:
-                longint = '8BIM';
-                key longint = 'mxch';
-                longint = 0;
-                longint = $$CountOf(ChannelsSupported) * 2;
-                wide array ChannelsSupported { integer; } ;
-                align long;
-
+            Property::ExportFlags { supports_transparency } => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"expf", |buffer| {
+                    buffer.write_u8(if supports_transparency { 1 << 7 } else { 0 })?;
+                    buffer.write_u24::<LittleEndian>(0)
+				})?;
+			},
+            Property::FmtFileType((type_, creator)) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"fmTC", |buffer| {
+                    buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_))?;
+                    buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*creator))
+				})?;
+			},
+            // NOTE: If you specify you can READ type 'foo_', then you will never be called with a FilterFile for type 'foo_'.
+            Property::ReadTypes(types) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"RdTy", |buffer| {
+                    for type_ in types {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            Property::WriteTypes(types) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"WrTy", |buffer| {
+                    for type_ in types {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            // NOTE: If you specify you want to filter type 'foo_' AND you specify you can read type 'foo_', you will never get a filter call.
+            Property::FilteredTypes(types) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"fftT", |buffer| {
+                    for type_ in types {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            // Macintosh plug-ins can use Windows file extensions to determine read/write/parseability.
+            // NOTE: If you specify you READ extension '.foo' then you won't be called to Filter that type.
+            Property::ReadExtensions(exts) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"RdEx", |buffer| {
+                    for &ext in exts {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            Property::WriteExtensions(exts) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"WrEx", |buffer| {
+                    for &ext in exts {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            // NOTE: If you specify you want to filter extension '.foo' AND you specify you can read extension '.foo', you will never get a filter call.
+            Property::FilteredExtensions(exts) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"fftE", |buffer| {
+                    for &ext in exts {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            Property::FormatFlags { can_read, can_write, can_write_if_read, saves_image_resources } => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"fmtf", |buffer| {
+                    let flags = if can_write_if_read     { 1 << 3 } else { 0 } |
+                                   if can_write             { 1 << 4 } else { 0 } |
+                                   if can_read              { 1 << 5 } else { 0 } |
+                                   if saves_image_resources { 1 << 6 } else { 0 };
+                    buffer.write_u8(flags)?;
+                    buffer.write_u24::<LittleEndian>(0)
+				})?;
+			},
+            Property::FormatMaxSize { width, height } => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"mxsz", |buffer| {
+                    buffer.write_u16::<LittleEndian>(width)?;
+                    buffer.write_u16::<LittleEndian>(height)
+				})?;
+			},
+            Property::FormatMaxChannels(max_channels) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"mxch", |buffer| {
+                    for ch in max_channels {
+                        buffer.write_u16::<LittleEndian>(*ch)?;
+                    }
+                    for _ in 0..padding_4(max_channels.len() as u32 * 2) as usize { buffer.write_u8(0)?; }
+                    Ok(())
+				})?;
+			},
             //-------------------------------------------------------------------
             // Photoshop Parser PiPL properties
             //-------------------------------------------------------------------
-            // NOTE: If you specify you want to filter type 'foo_' and you
-            // specify you can parse type 'foo_', you will never get a
-            // filter call.
-            case ParsableTypes:
-                longint = '8BIM';
-                key longint = 'psTY';
-                longint = 0;
-                longint = $$CountOf(ParsableTypes) * 8;
-                wide array ParsableTypes { literal longint; literal longint; } ;
-
-            case ParsableClipboardTypes:
-                longint = '8BIM';
-                key longint = 'psCB';
-                longint = 0;
-                longint = $$CountOf(ParsableClipboardTypes) * 4;
-                wide array ParsableClipboardTypes { literal longint; };
-
-            // NOTE: If you want to filter type 'foo_' and you specify you
-            // can parse type 'foo_', you will never get a filter call.
-            case FilteredParsableTypes:
-                longint = '8BIM';
-                key longint = 'psTy';
-                longint = 0;
-                longint = $$CountOf(ParsableTypes) * 8;
-                wide array ParsableTypes { literal longint; literal longint; } ;
-
-
-            // Macintosh plug-ins can use Windows file extensions
-            // to determine read/write/parseability.
-            //
-            // NOTE: If you want to filter extension '.foo' and you
-            // specify you can parse extension '.foo', you will
-            // never get a filter call.
-            case ParsableExtensions:
-                longint = '8BIM';
-                key longint = 'psEX';
-                longint = 0;
-                longint = $$CountOf(ParsableExtensions) * 4;
-                wide array ParsableExtensions { literal longint; };
-
-            case FilteredParsableExtensions:
-                longint = '8BIM';
-                key longint = 'psEx';
-                longint = 0;
-                longint = $$CountOf(ParsableExtensions) * 4;
-                wide array ParsableExtensions { literal longint; };
-
+            // NOTE: If you specify you want to filter type 'foo_' and you specify you can parse type 'foo_', you will never get a filter call.
+            Property::ParsableTypes(types) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"psTY", |buffer| {
+                    for type_ in types {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            Property::ParsableClipboardTypes(types) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"psCB", |buffer| {
+                    for &type_ in types {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            // NOTE: If you want to filter type 'foo_' and you specify you can parse type 'foo_', you will never get a filter call.
+            Property::FilteredParsableTypes(types) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"psTy", |buffer| {
+                    for type_ in types {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            // Macintosh plug-ins can use Windows file extensions to determine read/write/parseability.
+            // NOTE: If you want to filter extension '.foo' and you specify you can parse extension '.foo', you will never get a filter call.
+            Property::ParsableExtensions(exts) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"psEX", |buffer| {
+                    for &ext in exts {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            Property::FilteredParsableExtensions(exts) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"psEx", |buffer| {
+                    for &ext in exts {
+                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                    }
+                    Ok(())
+				})?;
+			},
+            Property::PickerID(id) => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"pnme", |buffer| {
+					write_pstring(buffer, id)
+				})?;
+			},
             //-------------------------------------------------------------------
-            // Photoshop Parser PiPL properties
+            // Photoshop Actions/Scripting PiPL properties (Photoshop 4.0 and later)
             //-------------------------------------------------------------------
-            case PickerID:
-                longint = '8BIM';
-                key longint = 'pnme';
-                longint = 0;
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (PickerIDEnd[$$ArrayIndex(properties)] - PickerIDStart[$$ArrayIndex(properties)]) / 8;
-                #endif
-              PickerIDStart:
-                pstring;            // Unique ID string.
-              PickerIDEnd:
-                align long;
-
-            //-------------------------------------------------------------------
-            // Photoshop Actions/Scripting PiPL properties
-            // (Photoshop 4.0 and later)
-            //-------------------------------------------------------------------
-            case HasTerminology:
-                longint = '8BIM';
-                key longint = 'hstm';
-                longint = 0;
-                longint = (hasTermEnd[$$ArrayIndex(properties)] - hasTermStart[$$ArrayIndex(properties)]) / 8;
-            hasTermStart:
-                longint = 0;    // Version.
-                longint;        // Class ID, always required.  Can be Suite ID.
-                longint;        // Event ID, or typeNULL if not Filter/Color Picker/Selection.
-                integer;        // Dictionary ('AETE') resource ID.
-                cstring;        // Unique scope string.  Always required in Photoshop 5.0 and later.
-            hasTermEnd:
-                align long;
-
-            // If this property is present, then its on.  No parameters
-            // are required:
-            case Persistent:
-                longint = '8BIM';
-                key longint = 'prst';
-                longint = 0;    // Index.
-                longint = 4;     // Length.
-                literal longint = 1;    // If specified, always on.
-*/
+            Property::HasTerminology { class_id, event_id, dictionary_resource_id, unique_scope_string } => {
+                // TODO: tests
+                write(&mut buffer, b"8BIM", b"hstm", |buffer| {
+                    buffer.write_u32::<LittleEndian>(0)?; // Version.
+                    buffer.write_u32::<LittleEndian>(class_id)?; // Class ID, always required.  Can be Suite ID.
+                    buffer.write_u32::<LittleEndian>(event_id)?; // Event ID, or typeNULL if not Filter/Color Picker/Selection.
+                    buffer.write_u16::<LittleEndian>(dictionary_resource_id)?; // Dictionary ('AETE') resource ID.
+					write_cstring(buffer, unique_scope_string)
+                    // TODO: Padding?
+				})?;
+			},
+            // If this property is present, then its on. No parameters are required:
+            Property::Persistent => {
+                write(&mut buffer, b"8BIM", b"prst", |buffer| {
+                    buffer.write_u32::<LittleEndian>(1)
+				})?;
+			},
             //-------------------------------------------------------------------
             // After Effects and Premiere specific PiPL properties
             //-------------------------------------------------------------------
@@ -841,445 +811,259 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
 					buffer.write_u32::<LittleEndian>(x)
 				})?;
 			},
-            /*
+            //-------------------------------------------------------------------
             // After Effects Image Format Extension PiPL properties
             //-------------------------------------------------------------------
-            case AE_ImageFormat_Extension_Info:
-                longint = '8BIM';
-                key longint = 'FXMF';
-                longint = 0;
-                longint = 16;
-                integer;        // Major version.
-                integer;        // Minor version.
-                fill bit[21];
-                boolean hasOptions, hasNoOptions;
-                boolean sequentialOnly, nonSequentialOk;
-                boolean noInteractRequired, mustInteract;
-                boolean noInteractPut, hasInteractPut;
-                boolean noInteractGet, hasInteractGet;
-                boolean hasTime, hasNoTime;
-                boolean noVideo, hasVideo;
-                boolean noStill, still;
-                boolean noFile, hasFile;
-                boolean noOutput, output;
-                boolean noInput, input;
-
-                longint = 0;        // Reserved.
-                literal longint;    // Signature.
-
+            Property::AE_ImageFormat_Extension_Info { major_version, minor_version, has_options, sequential_only, must_interact, has_interact_put, has_interact_get, has_time, has_video, still, has_file, output, input, signature } => {
+				write(&mut buffer, b"8BIM", b"FXMF", |buffer| {
+					buffer.write_u16::<LittleEndian>(major_version)?;
+					buffer.write_u16::<LittleEndian>(minor_version)?;
+                    let flags: u32 = if input            { 1u32 << 0 } else { 0 } |
+                                     if output           { 1u32 << 1 } else { 0 } |
+                                     if has_file         { 1u32 << 2 } else { 0 } |
+                                     if still            { 1u32 << 3 } else { 0 } |
+                                     if has_video        { 1u32 << 4 } else { 0 } |
+                                     if !has_time        { 1u32 << 5 } else { 0 } |
+                                     if has_interact_get { 1u32 << 6 } else { 0 } |
+                                     if has_interact_put { 1u32 << 7 } else { 0 } |
+                                     if must_interact    { 1u32 << 8 } else { 0 } |
+                                     if !sequential_only { 1u32 << 9 } else { 0 } |
+                                     if !has_options     { 1u32 << 10 } else { 0 };
+                    buffer.write_u32::<LittleEndian>(flags)?;
+                    buffer.write_u32::<LittleEndian>(0)?; // Reserved.
+                    buffer.write_u32::<LittleEndian>(u32::from_be_bytes(signature))
+				})?;
+			},
             //-------------------------------------------------------------------
             // After Effects and Premiere ANIM PiPL properties
             //-------------------------------------------------------------------
-            case ANIM_FilterInfo:
-                longint = '8BIM';
-                key longint = 'aFLT';
-                longint = 0;    // Index.
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (animFilterEnd[$$ArrayIndex(properties)] - animFilterStart[$$ArrayIndex(properties)]) / 8;
-                #endif
+            Property::ANIM_FilterInfo { spec_version_major, spec_version_minor, filter_params_version, unity_pixel_aspec_tratio, any_pixel_aspect_ratio, drive_me, needs_dialog, params_pointer, params_handle, params_mac_handle, dialog_in_render, params_in_globals, bg_animatable, fg_animatable, geometric, randomness, number_of_parameters, match_name } => {
+				write(&mut buffer, b"8BIM", b"aFLT", |buffer| {
+                    buffer.write_u32::<LittleEndian>(spec_version_major)?;
+                    buffer.write_u32::<LittleEndian>(spec_version_minor)?;
+                    buffer.write_u32::<LittleEndian>(filter_params_version)?;
+                    let flags: u32 = if randomness               { 1u32 << 0 } else { 0 } |  // ANIM_FF_HAS_RANDOMNESS (AE only)
+                                     if !geometric               { 1u32 << 1 } else { 0 } |  // ANIM_FF_NON_GEOMETRIC (AE only)
+                                     if fg_animatable            { 1u32 << 2 } else { 0 } |  // ANIM_FF_FG_ANIMATABLE (AE only)
+                                     if bg_animatable            { 1u32 << 3 } else { 0 } |  // ANIM_FF_BG_ANIMATABLE (AE only)
+                                     if params_in_globals        { 1u32 << 4 } else { 0 } |  // ANIM_FF_PARAMS_IN_GLOBALS (AE only)
+                                     if dialog_in_render         { 1u32 << 5 } else { 0 } |  // ANIM_FF_DIALOG_IN_RENDER (AE only)
+                                     if params_mac_handle        { 1u32 << 6 } else { 0 } |  // ANIM_FF_PARAMS_ARE_MAC_HANDLE (AE only)
+                                     if params_handle            { 1u32 << 7 } else { 0 } |  // ANIM_FF_PARAMS_ARE_HANDLE (AE only)
+                                     if params_pointer           { 1u32 << 8 } else { 0 } |  // ANIM_FF_PARAMS_ARE PTR (AE only)
+                                     if !needs_dialog            { 1u32 << 9 } else { 0 } |  // ANIM_FF_DOESNT_NEED_DLOG (AE only)
+                                     if !drive_me                { 1u32 << 10 } else { 0 } | // ANIM_FF_DONT_DRIVE_ME (AE only)
+                                     if false                    { 1u32 << 11 } else { 0 } | // ANIM_FF_RESERVED0 (AE only)
+                                     if false                    { 1u32 << 12 } else { 0 } | // ANIM_FF_RESERVED1 (AE only)
+                                     if false                    { 1u32 << 13 } else { 0 } | // ANIM_FF_RESERVED2 (spare)
+                                     if false                    { 1u32 << 14 } else { 0 } | // ANIM_FF_RESERVED3 (spare)
+                                     if false                    { 1u32 << 15 } else { 0 } | // ANIM_FF_RESERVED4 (spare)
+                                     if any_pixel_aspect_ratio   { 1u32 << 16 } else { 0 } | // ANIM_FF_ANY_PAR
+                                     if unity_pixel_aspec_tratio { 1u32 << 17 } else { 0 };  // ANIM_FF_UNITY_PAR
 
-              animFilterStart:
-                  longint=1;        // spec_version_major (AE & PrMr)
-                  longint=1;        // spec_version_minor (AE & PrMr)
-                  longint;        // filter_params_version (AE only)
+                    buffer.write_u32::<LittleEndian>(flags)?;
+                    buffer.write_u32::<LittleEndian>(number_of_parameters)?;
 
-#ifdef PiPLVer2p3
-                fill bit[14];
-                boolean notUnityPixelAspectRatio, unityPixelAspectRatio; // ANIM_FF_UNITY_PAR
-                boolean notAnyPixelAspectRatio, anyPixelAspectRatio; // ANIM_FF_ANY_PAR
-                boolean reserved4False, reserved4True;         // ANIM_FF_RESERVED4 (spare)
-                boolean reserved3False, reserved3True;         // ANIM_FF_RESERVED3 (spare)
-                boolean reserved2False, reserved2True;         // ANIM_FF_RESERVED2 (spare)
-#else
-                fill bit[19];
-#endif
-                boolean reserved1False, reserved1True;         // ANIM_FF_RESERVED1 (AE only)
-                boolean reserved0False, reserved0True;         // ANIM_FF_RESERVED0 (AE only)
-                boolean driveMe, dontDriveMe;                 // ANIM_FF_DONT_DRIVE_ME (AE only)
-                boolean needsDialog, doesntNeedDialog;        // ANIM_FF_DOESNT_NEED_DLOG (AE only)
-                boolean paramsNotPointer, paramsPointer;    // ANIM_FF_PARAMS_ARE PTR (AE only)
-                boolean paramsNotHandle, paramsHandle;        // ANIM_FF_PARAMS_ARE_HANDLE (AE only)
-                boolean paramsNotMacHandle,paramsMacHandle;    // ANIM_FF_PARAMS_ARE_MAC_HANDLE (AE only)
-                boolean dialogNotInRender, dialogInRender;    // ANIM_FF_DIALOG_IN_RENDER (AE only)
-                boolean paramsNotInGlobals,paramsInGlobals;    // ANIM_FF_PARAMS_IN_GLOBALS (AE only)
-                boolean bgNotAnimatable, bgAnimatable;        // ANIM_FF_BG_ANIMATABLE (AE only)
-                boolean fgNotAnimatable, fgAnimatable;        // ANIM_FF_FG_ANIMATABLE (AE only)
-                boolean geometric, notGeometric;            // ANIM_FF_NON_GEOMETRIC (AE only)
-                boolean noRandomness, randomness;            // ANIM_FF_HAS_RANDOMNESS (AE only)
+                    let match_name_buf = match_name.as_bytes();
+                    assert!(match_name_buf.len() < 32);
+                    buffer.extend(match_name_buf);
+                    for _ in 0..(32 - match_name_buf.len()) { buffer.push(0); }
 
-                longint;        // number of parameters
+                    buffer.write_u32::<LittleEndian>(0)?; // Operates in place - not currently implemented
+                    buffer.write_u32::<LittleEndian>(0)?; // reserved
+                    buffer.write_u32::<LittleEndian>(0)?; // reserved
+                    buffer.write_u32::<LittleEndian>(0)   // reserved
+				})?;
+			},
+            Property::ANIM_ParamAtom { external_name, match_id, data_type, ui_type, valid_min, valid_max, ui_min, ui_max, scale_ui_range, animate_param, restrict_bounds, space_is_relative, res_dependant, property_size }  => {
+				write(&mut buffer, b"8BIM", b"aPAR", |buffer| {
+                    // TODO: MUST SPECIFY THE FIRST 0 u32 - buffer[4..8]
 
-                cstring[32];    // match name
+                    let external_name = external_name.as_bytes();
+                    assert!(external_name.len() < 32);
+                    buffer.extend(external_name);
+                    for _ in 0..(32 - external_name.len()) { buffer.push(0); }
+                    buffer.write_u32::<LittleEndian>(match_id)?;
+                    buffer.write_u32::<LittleEndian>(data_type as u32)?; // obsolete, don't use OPAQUE with Premiere
+                    buffer.write_u32::<LittleEndian>(ui_type as u32)?; // UI types are only used by AE
+                    buffer.write_f64::<LittleEndian>(valid_min)?; // used for UI type slider - AE only
+                    buffer.write_f64::<LittleEndian>(valid_max)?; // used for UI type slider - AE only
+                    buffer.write_f64::<LittleEndian>(ui_min)?; // used for UI type slider - AE only
+                    buffer.write_f64::<LittleEndian>(ui_max)?; // used for UI type slider - AE only
 
-                  longint=0;        // Operates in place - not currently implemented
-                  longint=0;        // reserved
-                  longint=0;        // reserved
-                  longint=0;        // reserved
-              animFilterEnd:
+                    let flags: u32 = if res_dependant     { 1u32 << 0 } else { 0 } |
+                                     if space_is_relative { 1u32 << 1 } else { 0 } |
+                                     if restrict_bounds   { 1u32 << 2 } else { 0 } |
+                                     if animate_param     { 1u32 << 3 } else { 0 } |
+                                     if scale_ui_range    { 1u32 << 4 } else { 0 };
+                    buffer.write_u32::<LittleEndian>(flags)?;
 
-            case ANIM_ParamAtom:
-                longint = '8BIM';
-                key longint = 'aPAR';
-                longint;        // property id *NOTE: Breaks model -- MUST SPECIFY.
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (animParamEnd[$$ArrayIndex(properties)] - animParamStart[$$ArrayIndex(properties)]) / 8;
-                #endif
+                    buffer.write_u32::<LittleEndian>(property_size)?; // size of property described in bytes (short = 2, long = 4, etc.)
 
-              animParamStart:
-                cstring[32];                    // external name
-
-                  longint;                        // match id
-
-                  longint ANIM_DT_OPAQUE,         // obsolete, don't use OPAQUE with Premiere
-                          ANIM_DT_CHAR,
-                        ANIM_DT_SHORT,
-                        ANIM_DT_LONG,
-                        ANIM_DT_UNSIGNED_CHAR,
-                        ANIM_DT_UNSIGNED_SHORT,
-                        ANIM_DT_UNSIGNED_LONG,
-                        ANIM_DT_FIXED,
-                        ANIM_DT_UNSIGNED_FIXED,
-                        ANIM_DT_EXTENDED_96,
-                        ANIM_DT_DOUBLE_64,
-                        ANIM_DT_FLOAT_32,
-                        ANIM_DT_COLOR_RGB;
-
-                  longint ANIM_UI_NO_UI,            // UI types are only used by AE
-                          ANIM_UI_ANGLE,
-                        ANIM_UI_SLIDER,
-                        ANIM_UI_POINT,
-                        ANIM_UI_RECT,
-                        ANIM_UI_COLOR_RGB,
-                        ANIM_UI_COLOR_CMYK,
-                        ANIM_UI_COLOR_LAB;
-
-                // These next four sets of longints are IEEE 64-bit doubles.  To store
-                // them correctly, you must specify them as hexidecimal numbers.  To
-                // find the correct hexidecimal number, you must convert your decimal
-                // number to a double.
-                  hex longint;        // low long, valid_min (used for UI type slider - AE only)
-                  hex longint;        // high long, valid_min (64-bit double)
-
-                  hex longint;        // low long, valid_max (used for UI type slider - AE only)
-                  hex longint;        // high long, valid_max (64-bit double)
-
-                  hex longint;        // low long, ui_min (used for UI type slider - AE only)
-                  hex longint;        // high long, ui_min (64-bit double)
-
-                  hex longint;        // low long, ui_max (used for UI type slider - AE only)
-                  hex longint;        // high long, ui_max (64-bit double)
-
-#ifdef PiPLVer2p3
-                fill bit[27];        // ANIM_ParamFlags
-                boolean dontScaleUIRange, scaleUIRange;        // ANIM_PF_SCALE_UI_RANGE (Premiere 6.0)
-#else
-                  fill bit[28];        // ANIM_ParamFlags
-#endif
-                  boolean dontAnimateParam, animateParam;        // ANIM_PR_DONT_ANIMATE (PrMr)
-                  boolean dontRestrictBounds, restrictBounds;    // ANIM_PF_RESTRICT_BOUNDS (AE only)
-                  boolean    spaceIsAbsolute, spaceIsRelative;    // ANIM_PF_SPACE_IS_RELATIVE (AE only)
-                  boolean resIndependent, resDependant;        // ANIM_PF_IS_RES_DEPENDENT (AE only)
-
-                  longint;            // size of property described in bytes (short = 2, long = 4, etc.)
-
-                  longint=0;            // reserved0
-                  longint=0;            // reserved1
-                  longint=0;            // reserved2
-                  longint=0;            // reserved3
-              animParamEnd:
-
+                    buffer.write_u32::<LittleEndian>(0)?; // reserved0
+                    buffer.write_u32::<LittleEndian>(0)?; // reserved1
+                    buffer.write_u32::<LittleEndian>(0)?; // reserved2
+                    buffer.write_u32::<LittleEndian>(0)   // reserved3
+				})?;
+			},
             //-------------------------------------------------------------------
             // Premiere Transition Effect PiPL properties
             //-------------------------------------------------------------------
-            case Pr_Effect_Info:        // Mirrors the old Premiere 'Fopt' resource
-                longint = 'PrMr';        // Premiere host.
-                key longint = 'pOPT';
-                longint = 0;            // Index.
-                longint = 16;            // Length.
-#ifdef PiPLVer2p2
-                longint;                // Version of this property
-#else
-                longint = 0;
-#endif
+            Property::Pr_Effect_Info { version, valid_corners_mask, initial_corners, exclusive_dialog, needs_callbacks_at_setup, direct_comp_data, want_initial_setup_call, treat_as_transition, has_custom_dialog, highlight_opposite_corners, exclusive, reversible, have_edges, have_start_point, have_end_point, more_flags }  => {
+				write(&mut buffer, b"PrMr", b"pOPT", |buffer| {
+                    buffer.write_u32::<LittleEndian>(version)?;
 
-                // Valid corners mask and initial corners (lsb to msb):
-                // bitTop | bitRight | bitBottom | bitLeft | bitUpperRight |
-                // bitLowerRight | bitLowerLeft | bitUpperLeft
-                byte;                    // Valid corners mask.
-                byte;                    // Initial corners.
-#ifdef PiPLVer2p2
-                boolean;                                        // Premiere 5.1
-                boolean noExclusiveDialog, exclusiveDialog;        // Premiere 5.1
-                boolean doesNotNeedCallbacksAtSetup, needsCallbacksAtSetup;
-                boolean noDirectCompData, directCompData;        // Premiere 5.1
-#else
-                fill bit[2];
-                boolean doesNotNeedCallbacksAtSetup, needsCallbacksAtSetup;
-                boolean;
-#endif
-                boolean wantInitialSetupCall, dontWantInitialSetupCall;
-                boolean treatAsTransition, treatAsTwoInputFilter;
-                boolean noCustomDialog, hasCustomDialog;
-                boolean dontHighlightOppositeCorners, highlightOppositeCorners;
+                    // Valid corners mask and initial corners (lsb to msb):
+                    // bitTop | bitRight | bitBottom | bitLeft | bitUpperRight | bitLowerRight | bitLowerLeft | bitUpperLeft
+                    buffer.write_u8(valid_corners_mask as u8)?;
+                    buffer.write_u8(initial_corners as u8)?;
+                    let flags: u8 = if highlight_opposite_corners { 1 << 0 } else { 0 } |
+                                    if has_custom_dialog          { 1 << 1 } else { 0 } |
+                                    if !treat_as_transition       { 1 << 2 } else { 0 } |
+                                    if !want_initial_setup_call   { 1 << 3 } else { 0 } |
+                                    if direct_comp_data           { 1 << 4 } else { 0 } |
+                                    if needs_callbacks_at_setup   { 1 << 5 } else { 0 } |
+                                    if exclusive_dialog           { 1 << 6 } else { 0 };
+                    buffer.write_u8(flags)?;
+                    buffer.write_u8(exclusive as u8)?;
+                    buffer.write_u8(reversible as u8)?;
+                    buffer.write_u8(have_edges as u8)?;
+                    buffer.write_u8(have_start_point as u8)?;
+                    buffer.write_u8(have_end_point as u8)?;
 
-                // These should be changed to booleans:
-                byte notExclusive = 0, exclusive = 1;
-                byte notReversible = 0, reversible = 1;
-                byte doesNotHaveEdges = 0, haveEdges = 1;
-                byte doesNotHaveStartPoint = 0, haveStartPoint = 1;
-                byte doesNotHaveEndPoint = 0, haveEndPoint = 1;
-
-#ifdef PiPLVer2p3
-                longint;                // more flags - Premiere 6.0
-#else
-                longint = 0;            // Reserved.
-#endif
-
-            case Pr_Effect_Description:    // The text description of the transition.
-                longint = 'PrMr';        // Premiere host.
-                key longint = 'TEXT';    // This should be changed to 'pDES'.
-                longint = 0;            // Index.
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (descEnd[$$ArrayIndex(properties)] - descStart[$$ArrayIndex(properties)]) / 8;
-                #endif
-              descStart:
-                pstring;
-              descEnd:
-                align long;
-
+                    buffer.write_u32::<LittleEndian>(more_flags)
+				})?;
+			},
+            // The text description of the transition.
+            Property::Pr_Effect_Description(desc) => {
+                write(&mut buffer, b"PrMr", b"TEXT", |buffer| {
+                    write_pstring(buffer, desc)
+                })?;
+            },
             //-------------------------------------------------------------------
             // Illustrator/SweetPea PiPL properties
             //-------------------------------------------------------------------
-            case InterfaceVersion:
-                longint = 'ADBE';        // SweetPea/Illustrator host.
-                key longint = 'ivrs';
-                longint = 0;            // Index.
-                longint = 4;            // Length.
-                longint;                // Version.
+            Property::InterfaceVersion(x) => {
+                write(&mut buffer, b"ADBE", b"ivrs", |buffer| {
+                    buffer.write_u32::<LittleEndian>(x)
+                })?;
+            },
+            Property::AdapterVersion(x) => {
+                write(&mut buffer, b"ADBE", b"adpt", |buffer| {
+                    buffer.write_u32::<LittleEndian>(x)
+                })?;
+            },
+            Property::SP_STSP(x) => {
+                write(&mut buffer, b"ADBE", b"STSP", |buffer| {
+                    buffer.write_u32::<LittleEndian>(x)
+                })?;
+            },
+            Property::InternalName(name) => {
+                write(&mut buffer, b"ADBE", b"pinm", |buffer| {
+                    write_cstring(buffer, name)
+                })?;
+            },
+            Property::Imports(imports) => {
+                write(&mut buffer, b"ADBE", b"impt", |buffer| {
+                    buffer.write_u32::<LittleEndian>(imports.len() as u32)?;
+                    for import in imports {
+                        let len = buffer.len();
 
-            case AdapterVersion:
-                longint = 'ADBE';        // SweetPea/Illustrator host.
-                key longint = 'adpt';
-                longint = 0;            // Index.
-                longint = 4;            // Length.
-                longint;                // Version.
+                        buffer.write_u32::<LittleEndian>(0)?;
+                        write_cstring(buffer, import.0)?;
+                        buffer.write_u32::<LittleEndian>(import.1)?; // Suite version.
 
-            case SP_STSP:
-                longint = 'ADBE';        // SweetPea/Illustrator host.
-                key longint = 'STSP';
-                longint = 0;            // Index.
-                longint = 4;            // Length.
-                longint;
+                        let new_len = (buffer.len() - len) as u32;
+                        buffer[len..len+4].clone_from_slice(&new_len.to_le_bytes());
+                    }
+                    Ok(())
+                })?;
+            },
+            Property::Exports(exports) => {
+                write(&mut buffer, b"ADBE", b"expt", |buffer| {
+                    buffer.write_u32::<LittleEndian>(exports.len() as u32)?;
+                    for export in exports {
+                        let len = buffer.len();
 
-            case InternalName:
-                longint = 'ADBE';        // SweetPea/Illustrator host.
-                key longint = 'pinm';
-                longint = 0;            // Index.
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (plugInNameEnd[$$ArrayIndex(properties)] -
-                               plugInNameStart[$$ArrayIndex(properties)]) / 8;
-                #endif
-                plugInNameStart:
-                    cstring;
-                plugInNameEnd:
-                    align long;
+                        buffer.write_u32::<LittleEndian>(0)?;
+                        write_cstring(buffer, export.0)?;
+                        buffer.write_u32::<LittleEndian>(export.1)?; // Suite version.
 
-            case Imports:
-                longint = 'ADBE';        // SweetPea/Illustrator host.
-                key longint = 'impt';
-                longint = 0;            // Index.
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (importsEnd[$$ArrayIndex(properties)] -
-                               importsStart[$$ArrayIndex(properties)]) / 8;
-                #endif
-                importsStart:
-                    longint = $$CountOf(ImportSuites);
-                    wide array ImportSuites
-                    {
-                        isuitesStart:
-                            // Length (including this long):
-                            #if DeRez
-                                fill long;
-                            #else
-                                longint = ((isuitesEnd[$$ArrayIndex(properties), $$ArrayIndex(ImportSuites)] -
-                                            isuitesStart[$$ArrayIndex(properties), $$ArrayIndex(ImportSuites)]) / 8);
-                            #endif
+                        let new_len = (buffer.len() - len) as u32;
+                        buffer[len..len+4].clone_from_slice(&new_len.to_le_bytes());
+                    }
+                    Ok(())
+                })?;
+            },
+            Property::Description(desc) => {
+                write(&mut buffer, b"ADBE", b"desc", |buffer| {
+                    write_cstring(buffer, desc)
+                })?;
+            },
+            Property::Keywords(keywords) => {
+                write(&mut buffer, b"ADBE", b"keyw", |buffer| {
+                    buffer.write_u32::<LittleEndian>(keywords.len() as u32)?;
+                    for keyword in keywords {
+                        let len = buffer.len();
 
-                            cstring;
-                            align long;
-                            longint;            // Suite version.
-                        isuitesEnd:
-                    };
-                importsEnd:
+                        buffer.write_u32::<LittleEndian>(0)?;
+                        write_cstring(buffer, keyword)?;
 
-            case Exports:
-                longint = 'ADBE';        // SweetPea/Illustrator host.
-                key longint = 'expt';
-                longint = 0;            // Index.
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (exportsEnd[$$ArrayIndex(properties)] -
-                               exportsStart[$$ArrayIndex(properties)]) / 8;
-                #endif
-                exportsStart:
-                    longint = $$CountOf(ExportSuites);
-                    wide array ExportSuites
-                    {
-                        esuitesStart:
-                            // Length (including this long):
-                            #if DeRez
-                                fill long;
-                            #else
-                                longint = ((esuitesEnd[$$ArrayIndex(properties), $$ArrayIndex(ExportSuites)] -
-                                            esuitesStart[$$ArrayIndex(properties), $$ArrayIndex(ExportSuites)]) / 8);
-                            #endif
-
-                            cstring;
-                            align long;
-                            longint;            // Suite version.
-                        esuitesEnd:
-                    };
-                exportsEnd:
-
-            case Description:
-                longint = 'ADBE';        // SweetPea/Illustrator host.
-                key longint = 'desc';
-                longint = 0;            // Index.
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (descriptionEnd[$$ArrayIndex(properties)] -
-                               descriptionStart[$$ArrayIndex(properties)]) / 8;
-                #endif
-                descriptionStart:
-                    cstring;
-                descriptionEnd:
-                    align long;
-
-            case Keywords:
-                longint = 'ADBE';        // SweetPea/Illustrator host.
-                key longint = 'keyw';
-                longint = 0;            // Index.
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (keywordsEnd[$$ArrayIndex(properties)] -
-                               keywordsStart[$$ArrayIndex(properties)]) / 8;
-                #endif
-                keywordsStart:
-                    longint = $$CountOf(KeywordsArray);
-                    wide array KeywordsArray
-                    {
-                        keywordsArrayStart:
-                            // Length (including this long):
-                            #if DeRez
-                                fill long;
-                            #else
-                                longint = ((keywordsArrayEnd[$$ArrayIndex(properties), $$ArrayIndex(KeywordsArray)] -
-                                            keywordsArrayStart[$$ArrayIndex(properties), $$ArrayIndex(KeywordsArray)]) / 8);
-                            #endif
-
-                            cstring;
-                        keywordsArrayEnd:
-                    };
-                keywordsEnd:
-                    align long;
-
-            case Title:
-                longint = 'ADBE';        // SweetPea/Illustrator host.
-                key longint = 'titl';
-                longint = 0;            // Index.
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (titleEnd[$$ArrayIndex(properties)] -
-                               titleStart[$$ArrayIndex(properties)]) / 8;
-                #endif
-                titleStart:
-                    cstring;
-                titleEnd:
-                    align long;
-
-            case Messages:
-                longint = 'ADBE';        // SweetPea/Illustrator host
-                key longint = 'AcpM';
-                longint = 0;            // Index.
-                longint = 4;            // Length.
-                fill bit[28];            // Reserved.
-
-                boolean startupRequired, noStartupRequired;
-                boolean doesNotPurgeCache, purgeCache;
-                boolean shutdownRequired, noShutdownRequired;    // Default is to give shutdown msg.
-                boolean doNotAcceptProperty, acceptProperty;
-
+                        let new_len = (buffer.len() - len) as u32;
+                        buffer[len..len+4].clone_from_slice(&new_len.to_le_bytes());
+                    }
+                    Ok(())
+                })?;
+            },
+            Property::Title(title) => {
+                write(&mut buffer, b"ADBE", b"titl", |buffer| {
+                    write_cstring(buffer, title)
+                })?;
+            },
+            Property::Messages { startup_required, purge_cache, shutdown_required, accept_property } => {
+                write(&mut buffer, b"ADBE", b"AcpM", |buffer| {
+                    let flags: u32 = if accept_property   { 1u32 << 0 } else { 0 } |
+                                     if shutdown_required { 1u32 << 1 } else { 0 } | // Default is to give shutdown msg.
+                                     if purge_cache       { 1u32 << 2 } else { 0 } |
+                                     if startup_required  { 1u32 << 3 } else { 0 };
+                    buffer.write_u32::<LittleEndian>(flags)
+                })?;
+            },
             //-------------------------------------------------------------------
             // PhotoDeluxe PiPL properties
             //-------------------------------------------------------------------
-            case ButtonIcon:
-                longint = '8BIM';
-                key longint = 'btni';
-                longint = 0;        // pad
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (buttonIconEnd[$$ArrayIndex(properties)] - buttonIconStart[$$ArrayIndex(properties)]) / 8; // length
-                #endif
-            buttonIconStart:
-                longint = 0;        // version
-                longint none = 0,
-                         cicn = 1;    // Macintosh icon type
-                longint none = 0,
-                         ICON = 1;    // Windows icon type
-                longint;            // Icon resource ID
-                cstring;            // Button icon name
-            buttonIconEnd:
-                align long;
-
+            Property::ButtonIcon { version, mac_icon_type, win_icon_type, resource_id, icon_name } => {
+                write(&mut buffer, b"8BIM", b"btni", |buffer| {
+                    buffer.write_u32::<LittleEndian>(version)?; // version
+                    match mac_icon_type {
+                        ButtonIconType::None    => buffer.write_u32::<LittleEndian>(0)?,
+                        ButtonIconType::MacCICN => buffer.write_u32::<LittleEndian>(1)?,
+                        _ => {}
+                    }
+                    match win_icon_type {
+                        ButtonIconType::None        => buffer.write_u32::<LittleEndian>(0)?,
+                        ButtonIconType::WindowsICON => buffer.write_u32::<LittleEndian>(1)?,
+                        _ => {}
+                    }
+                    buffer.write_u32::<LittleEndian>(resource_id)?;
+                    write_cstring(buffer, icon_name)
+                })?;
+            },
             //-------------------------------------------------------------------
             // PhotoDeluxe extension to Import plug-in PiPL properties
             //-------------------------------------------------------------------
-            case Class:
-                longint = '8BIM';
-                key longint = 'clas';
-                longint = 0;    // pad
-                longint = 8;    // length
-                longint = 0;    // version
-                longint none = 0,
-                        scanner = 1,
-                        camera = 2,
-                        video = 3,
-                        floppy = 4,
-                        cdrom = 5,
-                        internet = 6;
-
-            case PreviewFile:
-                longint = '8BIM';
-                key longint = 'prvw';
-                longint = 0;    // pad
-                #if DeRez
-                    fill long;
-                #else
-                    longint = (previewFileEnd[$$ArrayIndex(properties)] - previewFileStart[$$ArrayIndex(properties)]) / 8; // length
-                #endif
-            previewFileStart:
-                longint = 0;    // version
-                cstring;        // preview filename
-            previewFileEnd:
-                align long;
-            };
-*/
-            _ => panic!("Property not implemented: {prop:?}")
+            Property::Class { version, class } => {
+                write(&mut buffer, b"8BIM", b"clas", |buffer| {
+                    buffer.write_u32::<LittleEndian>(version)?; // version
+                    buffer.write_u32::<LittleEndian>(class as u32)
+                })?;
+            },
+            Property::PreviewFile { version, filename } => {
+                write(&mut buffer, b"8BIM", b"prvw", |buffer| {
+                    buffer.write_u32::<LittleEndian>(version)?; // version
+                    write_cstring(buffer, filename)
+                })?;
+            }
         }
     }
 
@@ -1303,119 +1087,5 @@ pub fn plugin_build(properties: Vec<Property>) {
     }
     let pipl = build_pipl(properties).unwrap();
 
-	produce_resource(&pipl, Some(&format!("{}/../../../{}.rsrc", std::env::var("OUT_DIR").unwrap(), std::env::var("CARGO_PKG_NAME").unwrap())));
-}
-
-pub fn produce_resource(pipl: &[u8], _macos_rsrc_path: Option<&str>) {
-    #[cfg(target_os = "windows")]
-    {
-        fn to_seq(bytes: &[u8]) -> String {
-            bytes.iter().fold(String::new(), |mut s, b| { s.push_str(&format!("\\x{b:02x}")); s })
-        }
-
-        let mut res = winres::WindowsResource::new();
-        res.append_rc_content(&format!("16000 PiPL DISCARDABLE BEGIN \"{}\" END", to_seq(&pipl)));
-        res.compile().unwrap();
-    }
-    #[cfg(target_os = "macos")]
-    if let Some(rsrc_path) = _macos_rsrc_path {
-        let rsrc_content = create_rsrc(&[
-            (b"PiPL", &[
-                (16001, pipl)
-            ])
-        ]).unwrap();
-        std::fs::write(rsrc_path, rsrc_content).unwrap();
-    }
-}
-
-// Reference: https://github.com/dgelessus/python-rsrcfork/blob/master/src/rsrcfork/api.py#L14
-// Reference: https://github.com/andrews05/ResForge/blob/master/ResForge/Formats/ClassicFormat.swift#L114
-pub type RSRCResource<'a> = (i16, &'a [u8]); // id, data
-
-pub fn create_rsrc(resources: &[(&[u8; 4], &[RSRCResource])]) -> Result<Vec<u8>> {
-    const DATA_OFFSET         : u32 = 256;
-    const DATA_SIZE_MASK      : u32 = (1 << 24) - 1;
-    const MAP_HEADER_LENGTH   : u32 = 24;
-    const TYPE_INFO_LENGTH    : u32 = 8;
-    const RESOURCE_INFO_LENGTH: u32 = 12;
-
-    let mut buffer = Vec::new();
-
-    let num_types = resources.len() as u32;
-    let num_resources: u32 = resources.iter().map(|x| x.1.len() as u32).sum();
-    let type_list_offset = MAP_HEADER_LENGTH + 4;
-    let name_list_offset: u32 = type_list_offset + 2 + (num_types * TYPE_INFO_LENGTH) + (num_resources * RESOURCE_INFO_LENGTH);
-
-    for _ in 0..DATA_OFFSET { buffer.push(0); } // Fill header with 0 for now
-
-    // Write resource data
-    let mut resource_offsets = Vec::new();
-    for (_, resources) in resources {
-        for resource in resources.iter() {
-            let offset = buffer.len() as u32 - DATA_OFFSET;
-            if offset > DATA_SIZE_MASK {
-                panic!("File too big");
-            }
-            resource_offsets.push(offset);
-            buffer.write_u32::<BigEndian>(resource.1.len() as u32)?;
-            buffer.extend(resource.1);
-        }
-    }
-
-    let map_offset = buffer.len() as u32;
-    for _ in 0..MAP_HEADER_LENGTH { buffer.push(0); } // Fill map header with 0 for now
-
-    buffer.write_u16::<BigEndian>(type_list_offset as u16)?;
-    buffer.write_u16::<BigEndian>(name_list_offset as u16)?;
-
-    // Write types
-    buffer.write_u16::<BigEndian>(num_types as u16 - 1)?;
-    let mut resource_list_offset = 2 + (num_types * TYPE_INFO_LENGTH);
-    for (type_, resources) in resources {
-        buffer.write_u32::<BigEndian>(u32::from_be_bytes(**type_))?;
-        buffer.write_u16::<BigEndian>(resources.len() as u16 - 1)?;
-        buffer.write_u16::<BigEndian>(resource_list_offset as u16)?;
-        resource_list_offset += resources.len() as u32 * RESOURCE_INFO_LENGTH;
-    }
-
-    // Write resources
-    // let mut name_list = Vec::<u8>::new();
-    resource_offsets.reverse();
-    for (_, resources) in resources {
-        for resource in resources.iter() {
-            buffer.write_i16::<BigEndian>(resource.0)?;
-            if true { // empty name
-                buffer.write_u16::<BigEndian>(std::u16::MAX)?;
-            } else {
-                // buffer.write_u16::<BigEndian>(nameList.len());
-                // buffer.write_u8(name.len());
-                // buffer.extend(name.as_bytes());
-            }
-
-            let resource_data_offset = resource_offsets.pop().unwrap();
-            let attributes = 0u32;
-            let atts_and_offset = attributes << 24 | resource_data_offset;
-            buffer.write_u32::<BigEndian>(atts_and_offset)?;
-
-            buffer.write_u32::<BigEndian>(0)?; // Skip handle to next resource
-        }
-    }
-
-    // buffer.extend(name_list);
-
-    assert!(buffer.len() < DATA_SIZE_MASK as usize);
-
-    // Go back and write headers
-    let mut header = Vec::new();
-    let data_length = map_offset - DATA_OFFSET;
-    let map_length = buffer.len() as u32 - map_offset;
-    header.write_u32::<BigEndian>(DATA_OFFSET)?;
-    header.write_u32::<BigEndian>(map_offset)?;
-    header.write_u32::<BigEndian>(data_length)?;
-    header.write_u32::<BigEndian>(map_length)?;
-
-    buffer[0..16].copy_from_slice(&header);
-    buffer[map_offset as usize..map_offset as usize + 16].copy_from_slice(&header);
-
-    Ok(buffer)
+	resource::produce_resource(&pipl, Some(&format!("{}/../../../{}.rsrc", std::env::var("OUT_DIR").unwrap(), std::env::var("CARGO_PKG_NAME").unwrap())));
 }
