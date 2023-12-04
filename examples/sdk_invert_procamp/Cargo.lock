@@ -105,6 +105,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "cl-sys"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4febd824a957638c066180fbf72b2bed5bcee33740773f3dc59fe91f0a3e6595"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "clang-sys"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -318,18 +327,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "portable"
-version = "0.0.1"
-dependencies = [
- "after-effects",
- "after-effects-sys",
- "cstr-literal",
- "log",
- "pipl",
- "win_dbg_logger",
-]
-
-[[package]]
 name = "pretty-hex"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -426,6 +423,19 @@ name = "ryu"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ad4cc8da4ef723ed60bced201181d83791ad433213d8c24efffda1eec85d741"
+
+[[package]]
+name = "sdk_invert_procamp"
+version = "0.0.1"
+dependencies = [
+ "after-effects",
+ "after-effects-sys",
+ "cl-sys",
+ "cstr-literal",
+ "log",
+ "pipl",
+ "win_dbg_logger",
+]
 
 [[package]]
 name = "serde"

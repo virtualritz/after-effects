@@ -1,5 +1,5 @@
 [package]
-name = "portable"
+name = "sdk_invert_procamp"
 version = "0.0.1"
 authors = ["Adrian <adrian.eddy@gmail.com>"]
 edition = "2021"
@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 build = "build.rs"
 
 [lib]
-name = "portable"
+name = "sdk_invert_procamp"
 crate-type = ["cdylib"]
 
 [dependencies]
@@ -16,6 +16,7 @@ after-effects-sys = { path = "../../after-effects-sys" }
 cstr-literal = "0.1"
 log = "0.4"
 win_dbg_logger = "0.1"
+cl-sys = "0.4"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }

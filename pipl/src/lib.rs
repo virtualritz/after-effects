@@ -1073,6 +1073,37 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
 pub fn plugin_build(properties: Vec<Property>) {
     for prop in properties.iter() {
         match prop {
+            Property::Kind(x) => {
+                println!("cargo:rustc-env=PIPL_KIND={}", x.as_u32());
+            },
+            Property::Name(x) => {
+                println!("cargo:rustc-env=PIPL_NAME={x}");
+            },
+            Property::Category(x) => {
+                println!("cargo:rustc-env=PIPL_CATEGORY={x}");
+            },
+            Property::AE_Effect_Match_Name(x) => {
+                println!("cargo:rustc-env=PIPL_MATCH_NAME={x}");
+            },
+            Property::AE_Effect_Support_URL(x) => {
+                println!("cargo:rustc-env=PIPL_SUPPORT_URL={x}");
+            },
+            Property::CodeWin64X86(x) => {
+                println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
+            },
+            Property::CodeMacIntel64(x) => {
+                println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
+            },
+            Property::CodeMacARM64(x) => {
+                println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
+            },
+            Property::AE_Effect_Spec_Version { major, minor } => {
+                println!("cargo:rustc-env=PIPL_AE_SPEC_VER_MAJOR={major}");
+                println!("cargo:rustc-env=PIPL_AE_SPEC_VER_MINOR={minor}");
+            },
+            Property::AE_Reserved_Info(x) => {
+                println!("cargo:rustc-env=PIPL_AE_RESERVED={}", x);
+            },
             Property::AE_Effect_Version((a, b, c, d, e)) => {
                 println!("cargo:rustc-env=PIPL_VERSION={}", pf_version(*a, *b, *c, *d, *e));
             },

@@ -1,0 +1,14 @@
+set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
+
+TargetDir := "E:\\Temp"
+export AESDK_ROOT := justfile_directory() / "../../sdk/AfterEffectsSDK"
+
+[windows]
+build:
+    cargo build
+    Start-Process PowerShell -Verb runAs -ArgumentList "-command Copy-Item -Force '{{TargetDir}}\debug\sdk_invert_procamp.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\sdk_invert_procamp.aex'"
+
+[macos]
+build:
+    cargo build
+    # todo

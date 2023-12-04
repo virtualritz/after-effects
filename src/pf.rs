@@ -10,6 +10,46 @@ use std::{
     marker::PhantomData,
 };
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
+#[cfg_attr(target_os = "windows", repr(i32))]
+#[cfg_attr(target_os = "macos", repr(u32))]
+pub enum Command {
+    About                    = ae_sys::PF_Cmd_ABOUT,
+    GlobalSetup              = ae_sys::PF_Cmd_GLOBAL_SETUP,
+    Unused0                  = ae_sys::PF_Cmd_UNUSED_0,
+    GlobalSetdown            = ae_sys::PF_Cmd_GLOBAL_SETDOWN,
+    ParamsSetup              = ae_sys::PF_Cmd_PARAMS_SETUP,
+    SequenceSetup            = ae_sys::PF_Cmd_SEQUENCE_SETUP,
+    SequenceResetup          = ae_sys::PF_Cmd_SEQUENCE_RESETUP,
+    SequenceFlatten          = ae_sys::PF_Cmd_SEQUENCE_FLATTEN,
+    SequenceSetdown          = ae_sys::PF_Cmd_SEQUENCE_SETDOWN,
+    DoDialog                 = ae_sys::PF_Cmd_DO_DIALOG,
+    FrameSetup               = ae_sys::PF_Cmd_FRAME_SETUP,
+    Render                   = ae_sys::PF_Cmd_RENDER,
+    FrameSetdown             = ae_sys::PF_Cmd_FRAME_SETDOWN,
+    UserChangedParam         = ae_sys::PF_Cmd_USER_CHANGED_PARAM, // PF_UserChangedParamExtra
+    UpdateParamsUi           = ae_sys::PF_Cmd_UPDATE_PARAMS_UI,
+    Event                    = ae_sys::PF_Cmd_EVENT,
+    GetExternalDependencies  = ae_sys::PF_Cmd_GET_EXTERNAL_DEPENDENCIES, // PF_ExtDependenciesExtra
+    CompletelyGeneral        = ae_sys::PF_Cmd_COMPLETELY_GENERAL,
+    QueryDynamicFlags        = ae_sys::PF_Cmd_QUERY_DYNAMIC_FLAGS,
+    AudioRender              = ae_sys::PF_Cmd_AUDIO_RENDER,
+    AudioSetup               = ae_sys::PF_Cmd_AUDIO_SETUP,
+    AudioSetdown             = ae_sys::PF_Cmd_AUDIO_SETDOWN,
+    ArbitraryCallback        = ae_sys::PF_Cmd_ARBITRARY_CALLBACK, // PF_ArbParamsExtra
+    SmartPreRender           = ae_sys::PF_Cmd_SMART_PRE_RENDER, // PF_PreRenderExtra
+    SmartRender              = ae_sys::PF_Cmd_SMART_RENDER, // PF_SmartRenderExtra
+    Reserved1                = ae_sys::PF_Cmd_RESERVED1,
+    Reserved2                = ae_sys::PF_Cmd_RESERVED2,
+    Reserved3                = ae_sys::PF_Cmd_RESERVED3,
+    GetFlattenedSequenceData = ae_sys::PF_Cmd_GET_FLATTENED_SEQUENCE_DATA,
+    TranslateParamsToPrefs   = ae_sys::PF_Cmd_TRANSLATE_PARAMS_TO_PREFS, // PF_TranslateParamsToPrefsExtra
+    Reserved4                = ae_sys::PF_Cmd_RESERVED4,
+    SmartRenderGpu           = ae_sys::PF_Cmd_SMART_RENDER_GPU,
+    GpuDeviceSetup           = ae_sys::PF_Cmd_GPU_DEVICE_SETUP, // PF_GPUDeviceSetupExtra
+    GpuDeviceSetdown         = ae_sys::PF_Cmd_GPU_DEVICE_SETDOWN, // PF_GPUDeviceSetdownExtra
+}
+
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
 pub struct Pixel {
@@ -431,8 +471,6 @@ pub enum Field {
     Lower = ae_sys::PF_Field_LOWER,
 }
 
-pub type Command = ae_sys::PF_Cmd;
-
 // FIXME: wrap this nicely
 /// An EffectWorld is a view on a WorldHandle that can be used to write to.
 #[derive(Debug, Copy, Clone)]
@@ -773,7 +811,7 @@ impl<'a, 'b> Drop for FlatHandleLock<'a, 'b> {
 
 /// A flat handle takes a [Vec<u8>] as data. This is useful when data it passed
 /// to Ae permanently or between runs of your plug-in.
-/// You can use something like [bincode::serialize()] to seriealize your data
+/// You can use something like [bincode::serialize()] to serialize your data
 /// structure into a flat [Vec<u8>].
 #[derive(Debug)]
 pub struct FlatHandle<'a> {
@@ -1174,6 +1212,28 @@ impl InDataHandle {
         pf::ProgressInfo(unsafe { (*self.in_data_ptr).effect_ref })
     }
 
+    pub fn width(&self) -> i32 {
+        unsafe { (*self.in_data_ptr).width }
+    }
+    pub fn height(&self) -> i32 {
+        unsafe { (*self.in_data_ptr).height }
+    }
+    pub fn current_frame(&self) -> f32 {
+        unsafe { (*self.in_data_ptr).current_time as f32 / (*self.in_data_ptr).time_step as f32 }
+    }
+    pub fn current_timestamp(&self) -> f32 {
+        unsafe { (*self.in_data_ptr).current_time as f32 / (*self.in_data_ptr).time_scale as f32 }
+    }
+    pub fn current_time(&self) -> i32 {
+        unsafe { (*self.in_data_ptr).current_time }
+    }
+    pub fn time_step(&self) -> i32 {
+        unsafe { (*self.in_data_ptr).time_step }
+    }
+    pub fn time_scale(&self) -> u32 {
+        unsafe { (*self.in_data_ptr).time_scale }
+    }
+
     #[inline]
     pub fn version(&self) -> (i16, i16) {
         unsafe { ((*self.in_data_ptr).version.major, (*self.in_data_ptr).version.minor) }
@@ -1419,7 +1479,9 @@ impl ButtonDef {
     }
 
     pub fn into_raw(def: ButtonDef) -> ae_sys::PF_ButtonDef {
-        def.0
+        let ret = def.0;
+        std::mem::forget(def);
+        ret
     }
 }
 
@@ -1618,7 +1680,9 @@ impl CheckBoxDef {
     }
 
     pub fn into_raw(def: Self) -> ae_sys::PF_CheckBoxDef {
-        def.0
+        let ret = def.0;
+        std::mem::forget(def);
+        ret
     }
 
     pub fn label(&mut self, label: &str) -> &mut Self {
@@ -2164,6 +2228,11 @@ impl ParamDef {
         self.param_def_boxed.uu.change_flags = change_flags.bits() as _;
         self
     }
+
+    pub fn set_id(&mut self, id: i32) -> &mut Self {
+        self.param_def_boxed.uu.id = id;
+        self
+    }
 }
 
 impl Drop for ParamDef {
@@ -2284,6 +2353,84 @@ impl IterateFloatSuite {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
+
+    pub fn iterate(&self, in_data: InDataHandle, progress_base: i32, progress_final: i32, src: EffectWorld, area: Option<Rect>, refcon: *const std::ffi::c_void, pix_fn:
+        Option<unsafe extern "C" fn(refcon: *mut std::ffi::c_void, x: i32, y: i32, in_: *mut ae_sys::PF_PixelFloat, out: *mut ae_sys::PF_PixelFloat) -> ae_sys::PF_Err>,
+        dst: EffectWorld) -> Result<(), Error> {
+
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                iterate,
+                in_data.as_ptr() as *mut _,
+                progress_base,
+                progress_final,
+                src.as_ptr() as *mut _,
+                if let Some(area) = area { &area.into() } else { std::ptr::null() },
+                refcon as *mut _,
+                pix_fn,
+                dst.as_ptr() as *mut _,
+            )
+    }
+}
+define_suite!(
+    Iterate16Suite,
+    PF_Iterate16Suite2,
+    kPFIterate16Suite,
+    kPFIterate16SuiteVersion2
+);
+
+impl Iterate16Suite {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+
+    pub fn iterate(&self, in_data: InDataHandle, progress_base: i32, progress_final: i32, src: EffectWorld, area: Option<Rect>, refcon: *const std::ffi::c_void, pix_fn:
+        Option<unsafe extern "C" fn(refcon: *mut std::ffi::c_void, x: i32, y: i32, in_: *mut ae_sys::PF_Pixel16, out: *mut ae_sys::PF_Pixel16) -> ae_sys::PF_Err>,
+        dst: EffectWorld) -> Result<(), Error> {
+
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                iterate,
+                in_data.as_ptr() as *mut _,
+                progress_base,
+                progress_final,
+                src.as_ptr() as *mut _,
+                if let Some(area) = area { &area.into() } else { std::ptr::null() },
+                refcon as *mut _,
+                pix_fn,
+                dst.as_ptr() as *mut _,
+            )
+    }
+}
+
+define_suite!(
+    Iterate8Suite,
+    PF_Iterate8Suite2,
+    kPFIterate8Suite,
+    kPFIterate8SuiteVersion2
+);
+
+impl Iterate8Suite {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+
+    pub fn iterate(&self, in_data: InDataHandle, progress_base: i32, progress_final: i32, src: EffectWorld, area: Option<Rect>, refcon: *const std::ffi::c_void, pix_fn:
+        Option<unsafe extern "C" fn(refcon: *mut std::ffi::c_void, x: i32, y: i32, in_: *mut ae_sys::PF_Pixel8, out: *mut ae_sys::PF_Pixel8) -> ae_sys::PF_Err>,
+        dst: EffectWorld) -> Result<(), Error> {
+            ae_call_suite_fn!(
+                self.suite_ptr,
+                iterate,
+                in_data.as_ptr() as *mut _,
+                progress_base,
+                progress_final,
+                src.as_ptr() as *mut _,
+                if let Some(area) = area { &area.into() } else { std::ptr::null() },
+                refcon as *mut _,
+                pix_fn,
+                dst.as_ptr() as *mut _,
+            )
+    }
 }
 
 define_suite!(
@@ -2302,6 +2449,92 @@ impl PixelFormatSuite {
     }
     pub fn add_supported_pixel_format(&self, effect_ref: ProgressInfo, pixel_format: ae_sys::PF_PixelFormat) -> Result<(), Error> {
         ae_call_suite_fn!(self.suite_ptr, AddSupportedPixelFormat, effect_ref.as_ptr(), pixel_format as EnumIntType)
+    }
+}
+
+define_suite!(
+    WorldSuite2,
+    PF_WorldSuite2,
+    kPFWorldSuite,
+    kPFWorldSuiteVersion2
+);
+
+impl WorldSuite2 {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    pub fn get_pixel_format(&self, effect_world: EffectWorld) -> Result<ae_sys::PF_PixelFormat, Error> {
+        let mut pixel_format = ae_sys::PF_PixelFormat_INVALID;
+
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            PF_GetPixelFormat,
+            effect_world.as_ptr(),
+            &mut pixel_format
+        )?;
+        Ok(pixel_format)
+
+    }
+}
+
+define_suite!(
+    GPUDeviceSuite1,
+    PF_GPUDeviceSuite1,
+    kPFGPUDeviceSuite,
+    kPFGPUDeviceSuiteVersion1
+);
+impl GPUDeviceSuite1 {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    pub fn get_device_info(&self, in_data_handle: InDataHandle, device_index: u32) -> Result<ae_sys::PF_GPUDeviceInfo, Error> {
+        let mut device_info = std::mem::MaybeUninit::<ae_sys::PF_GPUDeviceInfo>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            GetDeviceInfo,
+            in_data_handle.effect_ref().as_ptr(),
+            device_index,
+            device_info.as_mut_ptr() as _
+        ) {
+            Ok(()) => Ok(unsafe { device_info.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+    pub fn get_gpu_world_data(&self, in_data_handle: InDataHandle, mut world: EffectWorld) -> Result<*mut std::ffi::c_void, Error> {
+        let mut data = std::ptr::null_mut();
+
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            GetGPUWorldData,
+            in_data_handle.effect_ref().as_ptr(),
+            world.as_mut_ptr(),
+            &mut data
+        )?;
+        Ok(data)
+    }
+}
+
+define_suite!(
+    EffectSequenceDataSuite1,
+    PF_EffectSequenceDataSuite1,
+    kPFEffectSequenceDataSuite,
+    kPFEffectSequenceDataSuiteVersion1
+);
+impl EffectSequenceDataSuite1 {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    pub fn get_const_sequence_data(&self, in_data_handle: InDataHandle) -> Result<ae_sys::PF_ConstHandle, Error> {
+        let mut data: ae_sys::PF_ConstHandle = std::ptr::null_mut();
+
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            PF_GetConstSequenceData,
+            in_data_handle.effect_ref().as_ptr(),
+            &mut data
+        )?;
+        Ok(data)
     }
 }
 
