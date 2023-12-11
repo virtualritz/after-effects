@@ -557,15 +557,27 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
         let aligned_len = (buffer.len() - len - 4) as u32;
         // Overwrite the length
         buffer[len..len + 4].clone_from_slice(&u32_bytes(aligned_len));
+
+        // Padding is done differently between Windows and macOS
+        if cfg!(target_os = "macos") {
+            let padding = padding_4(aligned_len);
+            for _ in 0..padding {
+                buffer.write_u8(0)?;
+            }
+        }
         Ok(())
     }
     // Write pascal string
     fn write_pstring(buffer: &mut Vec<u8>, s: &'static str) -> Result<()> {
         buffer.write_u8(s.len() as u8)?;
         buffer.extend(s.as_bytes());
-        let padding = padding_4(s.len() as u32 + 1);
-        for _ in 0..padding {
-            buffer.write_u8(0)?;
+
+        // Padding is done differently between Windows and macOS
+        if cfg!(target_os = "windows") {
+            let padding = padding_4(s.len() as u32 + 1);
+            for _ in 0..padding {
+                buffer.write_u8(0)?;
+            }
         }
         Ok(())
     }
@@ -573,16 +585,22 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
     fn write_cstring(buffer: &mut Vec<u8>, s: &'static str) -> Result<()> {
         buffer.extend(s.as_bytes());
         buffer.push(0);
-        let padding = padding_4(s.len() as u32 + 1);
-        for _ in 0..padding {
-            buffer.write_u8(0)?;
+
+        // Padding is done differently between Windows and macOS
+        if cfg!(target_os = "windows") {
+            let padding = padding_4(s.len() as u32 + 1);
+            for _ in 0..padding {
+                buffer.write_u8(0)?;
+            }
         }
         Ok(())
     }
 
     let mut buffer = Vec::new();
-    buffer.write_u8(1)?; // Reserved
-    buffer.write_u8(0)?; // Reserved
+    if cfg!(target_os = "windows") {
+        buffer.write_u8(1)?; // Reserved
+        buffer.write_u8(0)?; // Reserved
+    }
     buffer.write_u32::<ByteOrder>(0)?; // kPIPropertiesVersion
     buffer.write(&u32_bytes(properties.len() as u32))?;
     for prop in properties {
@@ -966,7 +984,12 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             }
             Property::AE_Effect_Info_Flags(x) => {
                 write(&mut buffer, b"8BIM", b"eINF", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x)
+                    // This shouldn't make a difference, but let's keep it consistent with the native tools
+                    if cfg!(target_os = "windows") {
+                        buffer.write_u32::<ByteOrder>(x)
+                    } else {
+                        buffer.write_u16::<ByteOrder>(x as u16)
+                    }
                 })?;
             }
             Property::AE_Effect_Global_OutFlags(x) => {
