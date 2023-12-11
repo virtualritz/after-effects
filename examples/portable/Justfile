@@ -1,7 +1,7 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 
 TargetDir := "target"
-export AESDK_ROOT := justfile_directory() / "../../sdk/AfterEffectsSDK"
+export AESDK_ROOT := if env_var("AESDK_ROOT") == "" { justfile_directory() / "../../sdk/AfterEffectsSDK" } else { env_var("AESDK_ROOT") }
 
 [windows]
 build:
@@ -11,4 +11,15 @@ build:
 [macos]
 build:
     cargo build
-    # todo
+    echo "Creating plugin bundle"
+    rm -Rf {{TargetDir}}/debug/Portable.plugin
+    mkdir {{TargetDir}}/debug/Portable.plugin
+    mkdir {{TargetDir}}/debug/Portable.plugin/Contents
+    mkdir {{TargetDir}}/debug/Portable.plugin/Contents/Resources
+    mkdir {{TargetDir}}/debug/Portable.plugin/Contents/MacOS
+    echo "Creating Plist"
+    /usr/libexec/PlistBuddy -c 'add CFBundleIdenfier string com.adobe.AfterEffects.Portable' {{TargetDir}}/debug/Portable.plugin/Contents/Info.plist
+    cp {{TargetDir}}/debug/portable.rsrc {{TargetDir}}/debug/Portable.plugin/Contents/Resources/Portable.rsrc
+    echo "eFKTFXTC" >> {{TargetDir}}/debug/Portable.plugin/Contents/PkgInfo
+    # codesign with the first development cert we can find using its hash
+    codesign --options runtime --timestamp -strict  --sign $( security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}' ) target/debug/Portable.plugin

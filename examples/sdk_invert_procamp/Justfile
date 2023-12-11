@@ -1,7 +1,7 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 
 TargetDir := "E:\\Temp"
-export AESDK_ROOT := justfile_directory() / "../../sdk/AfterEffectsSDK"
+export AESDK_ROOT := if env_var("AESDK_ROOT") == "" { justfile_directory() / "../../sdk/AfterEffectsSDK" } else { env_var("AESDK_ROOT") }
 
 [windows]
 build:
