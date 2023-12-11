@@ -280,6 +280,7 @@ pub enum AnimDataType {
     Float32,
     ColorRGB,
 }
+
 #[repr(u32)]
 #[derive(Debug, Clone, Copy)]
 pub enum AnimUIType {
@@ -292,6 +293,7 @@ pub enum AnimUIType {
     ColorCMYK,
     ColorLAB,
 }
+
 #[repr(u32)]
 #[derive(Debug, Clone, Copy)]
 pub enum ClassType {
@@ -303,6 +305,7 @@ pub enum ClassType {
     Cdrom,
     Internet,
 }
+
 #[derive(Debug)]
 pub enum ButtonIconType {
     None,
@@ -310,7 +313,16 @@ pub enum ButtonIconType {
     WindowsICON,
 }
 
-pub const fn pf_version(vers: u32, subvers: u32, bugvers: u32, stage: u32, build: u32) -> u32 {
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum Stage {
+    Develop = 0,
+    Alpha,
+    Beta,
+    Release,
+}
+
+pub const fn pf_version(vers: u32, subvers: u32, bugvers: u32, stage: Stage, build: u32) -> u32 {
     const PF_VERS_BUILD_BITS: u32 = 0x1ff;
     const PF_VERS_BUILD_SHIFT: u32 = 0;
     const PF_VERS_STAGE_BITS: u32 = 0x3;
@@ -331,14 +343,20 @@ pub const fn pf_version(vers: u32, subvers: u32, bugvers: u32, stage: u32, build
         | ((vers & PF_VERS_VERS_BITS) << PF_VERS_VERS_SHIFT)
         | ((subvers & PF_VERS_SUBVERS_BITS) << PF_VERS_SUBVERS_SHIFT)
         | ((bugvers & PF_VERS_BUGFIX_BITS) << PF_VERS_BUGFIX_SHIFT)
-        | ((stage & PF_VERS_STAGE_BITS) << PF_VERS_STAGE_SHIFT)
+        | ((stage as u32 & PF_VERS_STAGE_BITS) << PF_VERS_STAGE_SHIFT)
         | ((build & PF_VERS_BUILD_BITS) << PF_VERS_BUILD_SHIFT)
 }
 
 #[derive(Debug)]
 pub enum Property {
     Kind(PIPLType),
-    Version((u32, u32, u32, u32, u32)),
+    Version {
+        version: u32,
+        subversion: u32,
+        bugversion: u32,
+        stage: Stage,
+        build: u32,
+    },
     Priority(u32),
     RequiredHost(&'static [u8; 4]),
     Component((u32, &'static str)),
@@ -399,7 +417,13 @@ pub enum Property {
         minor: u16,
         major: u16,
     },
-    AE_Effect_Version((u32, u32, u32, u32, u32)),
+    AE_Effect_Version {
+        version: u32,
+        subversion: u32,
+        bugversion: u32,
+        stage: Stage,
+        build: u32,
+    },
     AE_Effect_Match_Name(&'static str),
     AE_Effect_Info_Flags(u32),
     AE_Effect_Global_OutFlags(OutFlags),
@@ -569,9 +593,17 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                     Ok(())
                 })?;
             }
-            Property::Version((a, b, c, d, e)) => {
+            Property::Version {
+                version,
+                subversion,
+                bugversion,
+                stage,
+                build,
+            } => {
                 write(&mut buffer, b"8BIM", b"vers", |buffer| {
-                    buffer.write_u32::<ByteOrder>(pf_version(a, b, c, d, e))
+                    buffer.write_u32::<ByteOrder>(pf_version(
+                        version, subversion, bugversion, stage, build,
+                    ))
                 })?;
             }
             Property::Priority(x) => {
@@ -909,9 +941,17 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                     buffer.write_u16::<ByteOrder>(minor)
                 })?;
             }
-            Property::AE_Effect_Version((a, b, c, d, e)) => {
+            Property::AE_Effect_Version {
+                version,
+                subversion,
+                bugversion,
+                stage,
+                build,
+            } => {
                 write(&mut buffer, b"8BIM", b"eVER", |buffer| {
-                    buffer.write_u32::<ByteOrder>(pf_version(a, b, c, d, e))
+                    buffer.write_u32::<ByteOrder>(pf_version(
+                        version, subversion, bugversion, stage, build,
+                    ))
                 })?;
             }
             Property::AE_Effect_Match_Name(name) => {
@@ -1331,10 +1371,16 @@ pub fn plugin_build(properties: Vec<Property>) {
             Property::AE_Reserved_Info(x) => {
                 println!("cargo:rustc-env=PIPL_AE_RESERVED={}", x);
             }
-            Property::AE_Effect_Version((a, b, c, d, e)) => {
+            Property::AE_Effect_Version {
+                version,
+                subversion,
+                bugversion,
+                stage,
+                build,
+            } => {
                 println!(
                     "cargo:rustc-env=PIPL_VERSION={}",
-                    pf_version(*a, *b, *c, *d, *e)
+                    pf_version(*version, *subversion, *bugversion, *stage, *build)
                 );
             }
             Property::AE_Effect_Global_OutFlags(x) => {

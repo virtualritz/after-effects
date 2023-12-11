@@ -32,7 +32,13 @@ fn sdk_invert_proc_amp() {
         // Property::CodeMacARM64("EffectMain"),
         Property::AE_PiPL_Version { major: 2, minor: 0 },
         Property::AE_Effect_Spec_Version { major: PF_PLUG_IN_VERSION, minor: PF_PLUG_IN_SUBVERS },
-        Property::AE_Effect_Version((1, 1, 0, 0, 1)),
+        Property::AE_Effect_Version {
+            version: 1,
+            subversion: 1,
+            bugversion: 0,
+            stage: Stage::Develop,
+            build: 1
+        },
         Property::AE_Effect_Info_Flags(0),
         Property::AE_Effect_Global_OutFlags(
 			OutFlags::PixIndependent |
