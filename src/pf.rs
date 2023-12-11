@@ -10,6 +10,7 @@ use std::{
     marker::PhantomData,
 };
 
+#[rustfmt::skip]
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
 #[cfg_attr(target_os = "windows", repr(i32))]
 #[cfg_attr(target_os = "macos", repr(u32))]
@@ -872,7 +873,8 @@ impl<'a> FlatHandle<'a> {
             host_resize_handle,
             size as _,
             &mut self.handle as _
-        ) as EnumIntType {
+        ) as EnumIntType
+        {
             ae_sys::PF_Err_NONE => Ok(()),
             e => Err(Error::from(e)),
         }
@@ -1070,7 +1072,8 @@ impl SmartRenderCallbacks {
                     checkout_id as i32,
                     effect_world_ptr.as_mut_ptr(),
                 )
-            } as EnumIntType {
+            } as EnumIntType
+            {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
@@ -1087,7 +1090,9 @@ impl SmartRenderCallbacks {
         checkout_id: u32,
     ) -> Result<(), Error> {
         if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
-            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) } as EnumIntType {
+            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) }
+                as EnumIntType
+            {
                 ae_sys::PF_Err_NONE => Ok(()),
                 e => Err(Error::from(e)),
             }
@@ -1101,7 +1106,9 @@ impl SmartRenderCallbacks {
             let mut effect_world_ptr =
                 std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
-            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) } as EnumIntType {
+            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) }
+                as EnumIntType
+            {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
@@ -1161,7 +1168,8 @@ impl PreRenderCallbacks {
                     time_scale,
                     checkout_result.as_mut_ptr(),
                 )
-            } as EnumIntType {
+            } as EnumIntType
+            {
                 ae_sys::PF_Err_NONE => Ok(unsafe { checkout_result.assume_init() }),
                 e => Err(Error::from(e)),
             }
@@ -1236,9 +1244,13 @@ impl InDataHandle {
 
     #[inline]
     pub fn version(&self) -> (i16, i16) {
-        unsafe { ((*self.in_data_ptr).version.major, (*self.in_data_ptr).version.minor) }
+        unsafe {
+            (
+                (*self.in_data_ptr).version.major,
+                (*self.in_data_ptr).version.minor,
+            )
+        }
     }
-
 }
 
 pub type ProgPtr = ae_sys::PF_ProgPtr;
@@ -1343,7 +1355,8 @@ impl InteractCallbacks {
                 (*self.0.as_ptr()).effect_ref,
                 custom_ui_info.as_ptr() as _,
             )
-        } as EnumIntType {
+        } as EnumIntType
+        {
             ae_sys::PF_Err_NONE => Ok(()),
             e => Err(Error::from(e)),
         }
@@ -2354,22 +2367,41 @@ impl IterateFloatSuite {
         crate::Suite::new()
     }
 
-    pub fn iterate(&self, in_data: InDataHandle, progress_base: i32, progress_final: i32, src: EffectWorld, area: Option<Rect>, refcon: *const std::ffi::c_void, pix_fn:
-        Option<unsafe extern "C" fn(refcon: *mut std::ffi::c_void, x: i32, y: i32, in_: *mut ae_sys::PF_PixelFloat, out: *mut ae_sys::PF_PixelFloat) -> ae_sys::PF_Err>,
-        dst: EffectWorld) -> Result<(), Error> {
-
-            ae_call_suite_fn!(
-                self.suite_ptr,
-                iterate,
-                in_data.as_ptr() as *mut _,
-                progress_base,
-                progress_final,
-                src.as_ptr() as *mut _,
-                if let Some(area) = area { &area.into() } else { std::ptr::null() },
-                refcon as *mut _,
-                pix_fn,
-                dst.as_ptr() as *mut _,
-            )
+    pub fn iterate(
+        &self,
+        in_data: InDataHandle,
+        progress_base: i32,
+        progress_final: i32,
+        src: EffectWorld,
+        area: Option<Rect>,
+        refcon: *const std::ffi::c_void,
+        pix_fn: Option<
+            unsafe extern "C" fn(
+                refcon: *mut std::ffi::c_void,
+                x: i32,
+                y: i32,
+                in_: *mut ae_sys::PF_PixelFloat,
+                out: *mut ae_sys::PF_PixelFloat,
+            ) -> ae_sys::PF_Err,
+        >,
+        dst: EffectWorld,
+    ) -> Result<(), Error> {
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            iterate,
+            in_data.as_ptr() as *mut _,
+            progress_base,
+            progress_final,
+            src.as_ptr() as *mut _,
+            if let Some(area) = area {
+                &area.into()
+            } else {
+                std::ptr::null()
+            },
+            refcon as *mut _,
+            pix_fn,
+            dst.as_ptr() as *mut _,
+        )
     }
 }
 define_suite!(
@@ -2384,22 +2416,41 @@ impl Iterate16Suite {
         crate::Suite::new()
     }
 
-    pub fn iterate(&self, in_data: InDataHandle, progress_base: i32, progress_final: i32, src: EffectWorld, area: Option<Rect>, refcon: *const std::ffi::c_void, pix_fn:
-        Option<unsafe extern "C" fn(refcon: *mut std::ffi::c_void, x: i32, y: i32, in_: *mut ae_sys::PF_Pixel16, out: *mut ae_sys::PF_Pixel16) -> ae_sys::PF_Err>,
-        dst: EffectWorld) -> Result<(), Error> {
-
-            ae_call_suite_fn!(
-                self.suite_ptr,
-                iterate,
-                in_data.as_ptr() as *mut _,
-                progress_base,
-                progress_final,
-                src.as_ptr() as *mut _,
-                if let Some(area) = area { &area.into() } else { std::ptr::null() },
-                refcon as *mut _,
-                pix_fn,
-                dst.as_ptr() as *mut _,
-            )
+    pub fn iterate(
+        &self,
+        in_data: InDataHandle,
+        progress_base: i32,
+        progress_final: i32,
+        src: EffectWorld,
+        area: Option<Rect>,
+        refcon: *const std::ffi::c_void,
+        pix_fn: Option<
+            unsafe extern "C" fn(
+                refcon: *mut std::ffi::c_void,
+                x: i32,
+                y: i32,
+                in_: *mut ae_sys::PF_Pixel16,
+                out: *mut ae_sys::PF_Pixel16,
+            ) -> ae_sys::PF_Err,
+        >,
+        dst: EffectWorld,
+    ) -> Result<(), Error> {
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            iterate,
+            in_data.as_ptr() as *mut _,
+            progress_base,
+            progress_final,
+            src.as_ptr() as *mut _,
+            if let Some(area) = area {
+                &area.into()
+            } else {
+                std::ptr::null()
+            },
+            refcon as *mut _,
+            pix_fn,
+            dst.as_ptr() as *mut _,
+        )
     }
 }
 
@@ -2415,21 +2466,41 @@ impl Iterate8Suite {
         crate::Suite::new()
     }
 
-    pub fn iterate(&self, in_data: InDataHandle, progress_base: i32, progress_final: i32, src: EffectWorld, area: Option<Rect>, refcon: *const std::ffi::c_void, pix_fn:
-        Option<unsafe extern "C" fn(refcon: *mut std::ffi::c_void, x: i32, y: i32, in_: *mut ae_sys::PF_Pixel8, out: *mut ae_sys::PF_Pixel8) -> ae_sys::PF_Err>,
-        dst: EffectWorld) -> Result<(), Error> {
-            ae_call_suite_fn!(
-                self.suite_ptr,
-                iterate,
-                in_data.as_ptr() as *mut _,
-                progress_base,
-                progress_final,
-                src.as_ptr() as *mut _,
-                if let Some(area) = area { &area.into() } else { std::ptr::null() },
-                refcon as *mut _,
-                pix_fn,
-                dst.as_ptr() as *mut _,
-            )
+    pub fn iterate(
+        &self,
+        in_data: InDataHandle,
+        progress_base: i32,
+        progress_final: i32,
+        src: EffectWorld,
+        area: Option<Rect>,
+        refcon: *const std::ffi::c_void,
+        pix_fn: Option<
+            unsafe extern "C" fn(
+                refcon: *mut std::ffi::c_void,
+                x: i32,
+                y: i32,
+                in_: *mut ae_sys::PF_Pixel8,
+                out: *mut ae_sys::PF_Pixel8,
+            ) -> ae_sys::PF_Err,
+        >,
+        dst: EffectWorld,
+    ) -> Result<(), Error> {
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            iterate,
+            in_data.as_ptr() as *mut _,
+            progress_base,
+            progress_final,
+            src.as_ptr() as *mut _,
+            if let Some(area) = area {
+                &area.into()
+            } else {
+                std::ptr::null()
+            },
+            refcon as *mut _,
+            pix_fn,
+            dst.as_ptr() as *mut _,
+        )
     }
 }
 
@@ -2445,10 +2516,23 @@ impl PixelFormatSuite {
         crate::Suite::new()
     }
     pub fn clear_supported_pixel_formats(&self, effect_ref: ProgressInfo) -> Result<(), Error> {
-        ae_call_suite_fn!(self.suite_ptr, ClearSupportedPixelFormats, effect_ref.as_ptr())
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            ClearSupportedPixelFormats,
+            effect_ref.as_ptr()
+        )
     }
-    pub fn add_supported_pixel_format(&self, effect_ref: ProgressInfo, pixel_format: ae_sys::PF_PixelFormat) -> Result<(), Error> {
-        ae_call_suite_fn!(self.suite_ptr, AddSupportedPixelFormat, effect_ref.as_ptr(), pixel_format as EnumIntType)
+    pub fn add_supported_pixel_format(
+        &self,
+        effect_ref: ProgressInfo,
+        pixel_format: ae_sys::PF_PixelFormat,
+    ) -> Result<(), Error> {
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            AddSupportedPixelFormat,
+            effect_ref.as_ptr(),
+            pixel_format as EnumIntType
+        )
     }
 }
 
@@ -2463,7 +2547,10 @@ impl WorldSuite2 {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
-    pub fn get_pixel_format(&self, effect_world: EffectWorld) -> Result<ae_sys::PF_PixelFormat, Error> {
+    pub fn get_pixel_format(
+        &self,
+        effect_world: EffectWorld,
+    ) -> Result<ae_sys::PF_PixelFormat, Error> {
         let mut pixel_format = ae_sys::PF_PixelFormat_INVALID;
 
         ae_call_suite_fn!(
@@ -2473,7 +2560,6 @@ impl WorldSuite2 {
             &mut pixel_format
         )?;
         Ok(pixel_format)
-
     }
 }
 
@@ -2487,7 +2573,11 @@ impl GPUDeviceSuite1 {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
-    pub fn get_device_info(&self, in_data_handle: InDataHandle, device_index: u32) -> Result<ae_sys::PF_GPUDeviceInfo, Error> {
+    pub fn get_device_info(
+        &self,
+        in_data_handle: InDataHandle,
+        device_index: u32,
+    ) -> Result<ae_sys::PF_GPUDeviceInfo, Error> {
         let mut device_info = std::mem::MaybeUninit::<ae_sys::PF_GPUDeviceInfo>::uninit();
 
         match ae_call_suite_fn!(
@@ -2501,7 +2591,11 @@ impl GPUDeviceSuite1 {
             Err(e) => Err(e),
         }
     }
-    pub fn get_gpu_world_data(&self, in_data_handle: InDataHandle, mut world: EffectWorld) -> Result<*mut std::ffi::c_void, Error> {
+    pub fn get_gpu_world_data(
+        &self,
+        in_data_handle: InDataHandle,
+        mut world: EffectWorld,
+    ) -> Result<*mut std::ffi::c_void, Error> {
         let mut data = std::ptr::null_mut();
 
         ae_call_suite_fn!(
@@ -2525,7 +2619,10 @@ impl EffectSequenceDataSuite1 {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
-    pub fn get_const_sequence_data(&self, in_data_handle: InDataHandle) -> Result<ae_sys::PF_ConstHandle, Error> {
+    pub fn get_const_sequence_data(
+        &self,
+        in_data_handle: InDataHandle,
+    ) -> Result<ae_sys::PF_ConstHandle, Error> {
         let mut data: ae_sys::PF_ConstHandle = std::ptr::null_mut();
 
         ae_call_suite_fn!(

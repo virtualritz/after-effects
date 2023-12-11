@@ -40,7 +40,7 @@ fn skeleton_macos() {
             subversion: 1,
             bugversion: 0,
             stage: Stage::Develop,
-            build: 1
+            build: 1,
         },
         Property::AE_Effect_Info_Flags(0),
         Property::AE_Effect_Global_OutFlags(OutFlags::PixIndependent | OutFlags::UseOutputExtent),
@@ -57,6 +57,7 @@ fn skeleton_macos() {
                       00003842494D65474C4F0000000000000004000004403842494D65474C320000000000000004080000003842494D654D4E41000000000000000E0D4144424520506F727461626C650000
                       3842494D6165464C0000000000000004000000003842494D6555524C00000000000000161568747470733A2F2F7777772E61646F62652E636F6D0000");
 
+    #[rustfmt::skip]
     let rsrc = create_rsrc(&[
         (b"PiPL", &[
             (16000, &pipl)

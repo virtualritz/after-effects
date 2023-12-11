@@ -1,7 +1,6 @@
-
 #[macro_export]
 macro_rules! register_plugin {
-	($plugin_type:type) => {
+	($plugin_type:ty) => {
         #[no_mangle]
         pub unsafe extern "C" fn PluginDataEntryFunction2(
             in_ptr: ae_sys::PF_PluginDataPtr,
@@ -59,16 +58,20 @@ macro_rules! register_plugin {
         }
 	};
 }
-
-
+/*
 
 pub trait AdobePlugin {
     fn can_load(host_name: &str, host_version: &str) -> bool;
 
     fn new() -> Self;
-    fn handle_command(&mut self, command: Command, in_data: &InDataHandle, out_data: &mut OutDataHandle, params: &[ParamDef]);
+    fn handle_command(
+        &mut self,
+        command: Command,
+        in_data: &InDataHandle,
+        out_data: &mut OutDataHandle,
+        params: &[ParamDef],
+    );
 }
-
 
 struct MyPlugin {
     //
@@ -80,10 +83,16 @@ impl AdobePlugin for MyPlugin {
     }
 
     fn new() -> Self {
-        Self { }
+        Self {}
     }
 
-    fn handle_command(&mut self, command: Command, in_data: &InDataHandle, out_data: &mut OutDataHandle, params: &[ParamDef]) {
+    fn handle_command(
+        &mut self,
+        command: Command,
+        in_data: &InDataHandle,
+        out_data: &mut OutDataHandle,
+        params: &[ParamDef],
+    ) {
         match command {
             Command::About => {
                 out_data.set_return_msg("Hello");
@@ -93,3 +102,4 @@ impl AdobePlugin for MyPlugin {
 }
 
 register_plugin!(MyPlugin);
+*/

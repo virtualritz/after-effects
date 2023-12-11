@@ -1,8 +1,15 @@
-use after_effects_sys as ae_sys;
 use crate::InvertProcAmpParams;
+use after_effects_sys as ae_sys;
 
-pub unsafe extern "C" fn filter_image_8(refcon: *mut std::ffi::c_void, x: i32, y: i32, in_p: *mut ae_sys::PF_Pixel8, out_p: *mut ae_sys::PF_Pixel8) -> ae_sys::PF_Err {
-	// Rescale and call the 16-bit version. [0..255] -> [0..32768]
+#[rustfmt::skip]
+pub unsafe extern "C" fn filter_image_8(
+    refcon: *mut std::ffi::c_void,
+    x: i32,
+    y: i32,
+    in_p: *mut ae_sys::PF_Pixel8,
+    out_p: *mut ae_sys::PF_Pixel8,
+) -> ae_sys::PF_Err {
+    // Rescale and call the 16-bit version. [0..255] -> [0..32768]
     let mut tmp_src = ae_sys::PF_Pixel16 {
         red:   (((*in_p).red   as u16 * 257) >> 1) + ((*in_p).red   as u16 & 0x1),
         green: (((*in_p).green as u16 * 257) >> 1) + ((*in_p).green as u16 & 0x1),
@@ -10,26 +17,33 @@ pub unsafe extern "C" fn filter_image_8(refcon: *mut std::ffi::c_void, x: i32, y
         alpha: (((*in_p).alpha as u16 * 257) >> 1) + ((*in_p).alpha as u16 & 0x1),
     };
 
-	let mut tmp_dst: ae_sys::PF_Pixel16 = std::mem::zeroed();
-	let err = filter_image_16(refcon, x, y, &mut tmp_src, &mut tmp_dst);
+    let mut tmp_dst: ae_sys::PF_Pixel16 = std::mem::zeroed();
+    let err = filter_image_16(refcon, x, y, &mut tmp_src, &mut tmp_dst);
 
-	if err == ae_sys::PF_Err_NONE as ae_sys::PF_Err {
-		(*out_p).red   = ((tmp_dst.red   >> 7) - ((tmp_dst.red   - 1) >> 14)) as u8;
-		(*out_p).green = ((tmp_dst.green >> 7) - ((tmp_dst.green - 1) >> 14)) as u8;
-		(*out_p).blue  = ((tmp_dst.blue  >> 7) - ((tmp_dst.blue  - 1) >> 14)) as u8;
-		(*out_p).alpha = (*in_p).alpha;
-	}
-	err
+    if err == ae_sys::PF_Err_NONE as ae_sys::PF_Err {
+        (*out_p).red   = ((tmp_dst.red   >> 7) - ((tmp_dst.red   - 1) >> 14)) as u8;
+        (*out_p).green = ((tmp_dst.green >> 7) - ((tmp_dst.green - 1) >> 14)) as u8;
+        (*out_p).blue  = ((tmp_dst.blue  >> 7) - ((tmp_dst.blue  - 1) >> 14)) as u8;
+        (*out_p).alpha = (*in_p).alpha;
+    }
+    err
 }
 
-pub unsafe extern "C" fn filter_image_16(refcon: *mut std::ffi::c_void, _x: i32, _y: i32, in_p: *mut ae_sys::PF_Pixel16, out_p: *mut ae_sys::PF_Pixel16) -> ae_sys::PF_Err {
-	let info = &*(refcon as *const InvertProcAmpParams);
+#[rustfmt::skip]
+pub unsafe extern "C" fn filter_image_16(
+    refcon: *mut std::ffi::c_void,
+    _x: i32,
+    _y: i32,
+    in_p: *mut ae_sys::PF_Pixel16,
+    out_p: *mut ae_sys::PF_Pixel16,
+) -> ae_sys::PF_Err {
+    let info = &*(refcon as *const InvertProcAmpParams);
 
-	let tmp = ae_sys::PF_Pixel16 {
+    let tmp = ae_sys::PF_Pixel16 {
         red:   32768 - (*in_p).red as u16,
         green: 32768 - (*in_p).green as u16,
         blue:  32768 - (*in_p).blue as u16,
-        alpha: 0
+        alpha: 0,
     };
 
 	// RGB -> YUV
@@ -60,14 +74,21 @@ pub unsafe extern "C" fn filter_image_16(refcon: *mut std::ffi::c_void, _x: i32,
     ae_sys::PF_Err_NONE as ae_sys::PF_Err
 }
 
-pub unsafe extern "C" fn filter_image_32(refcon: *mut std::ffi::c_void, _x: i32, _y: i32, in_p: *mut ae_sys::PF_PixelFloat, out_p: *mut ae_sys::PF_PixelFloat) -> ae_sys::PF_Err {
-	let info = &*(refcon as *const InvertProcAmpParams);
+#[rustfmt::skip]
+pub unsafe extern "C" fn filter_image_32(
+    refcon: *mut std::ffi::c_void,
+    _x: i32,
+    _y: i32,
+    in_p: *mut ae_sys::PF_PixelFloat,
+    out_p: *mut ae_sys::PF_PixelFloat,
+) -> ae_sys::PF_Err {
+    let info = &*(refcon as *const InvertProcAmpParams);
 
-	let tmp = ae_sys::PF_PixelFloat {
+    let tmp = ae_sys::PF_PixelFloat {
         red:   1.0 - (*in_p).red,
         green: 1.0 - (*in_p).green,
         blue:  1.0 - (*in_p).blue,
-        alpha: 0.0
+        alpha: 0.0,
     };
 
 	// RGB -> YUV
