@@ -18,8 +18,8 @@ fn detect_host(in_data: ae::InDataHandle, out_data: *mut ae_sys::PF_OutData) {
     let v = (in_data.version().0 as u32, in_data.version().1 as u32);
 
     let app = match &in_data.application_id() {
+        #[rustfmt::skip]
         b"FXTC" => {
-            #[rustfmt::skip]
             if v.0 >= 12 {
                      if v.0 == PF_AE234_PLUG_IN_VERSION && v.1 >= PF_AE234_PLUG_IN_SUBVERS { "After Effects 2023 (23.4) or later." }
                 else if v.0 == PF_AE220_PLUG_IN_VERSION && v.1 == PF_AE220_PLUG_IN_SUBVERS { "After Effects 2022 (22.0)." }
@@ -83,6 +83,7 @@ fn detect_host(in_data: ae::InDataHandle, out_data: *mut ae_sys::PF_OutData) {
     unsafe { write_str(&mut (*out_data).return_msg, format!("Running in {app}")) };
 }
 
+#[rustfmt::skip]
 unsafe extern "C" fn portable_func(
     refcon: *mut std::ffi::c_void,
     _x: i32,
@@ -100,13 +101,10 @@ unsafe extern "C" fn portable_func(
     let average = ((*in_p).red as f64 + (*in_p).green as f64 + (*in_p).blue as f64) / 3.0;
     // let midway_calc = (slider_value * average) + (200.0 - slider_value) * (*in_p).red as f64;
 
-    #[rustfmt::skip]
-    {
-        (*out_p).alpha = (*in_p).alpha;
-        (*out_p).red   = (((slider_value * average) + (100.0 - slider_value) * (*in_p).red   as f64) / 100.0).min(ae_sys::PF_MAX_CHAN8 as f64) as u8;
-        (*out_p).green = (((slider_value * average) + (100.0 - slider_value) * (*in_p).green as f64) / 100.0).min(ae_sys::PF_MAX_CHAN8 as f64) as u8;
-        (*out_p).blue  = (((slider_value * average) + (100.0 - slider_value) * (*in_p).blue  as f64) / 100.0).min(ae_sys::PF_MAX_CHAN8 as f64) as u8;
-    }
+    (*out_p).alpha = (*in_p).alpha;
+    (*out_p).red   = (((slider_value * average) + (100.0 - slider_value) * (*in_p).red   as f64) / 100.0).min(ae_sys::PF_MAX_CHAN8 as f64) as u8;
+    (*out_p).green = (((slider_value * average) + (100.0 - slider_value) * (*in_p).green as f64) / 100.0).min(ae_sys::PF_MAX_CHAN8 as f64) as u8;
+    (*out_p).blue  = (((slider_value * average) + (100.0 - slider_value) * (*in_p).blue  as f64) / 100.0).min(ae_sys::PF_MAX_CHAN8 as f64) as u8;
 
     ae_sys::PF_Err_NONE as ae_sys::PF_Err
 }
@@ -145,11 +143,11 @@ fn render(
     } else {
         let extent_hint = in_data.extent_hint();
         // clear all pixels outside extent_hint.
-        #[rustfmt::skip]
-        if extent_hint.left   != extent_hint.left  ||
-           extent_hint.top    != extent_hint.top   ||
-           extent_hint.right  != extent_hint.right ||
-           extent_hint.bottom != extent_hint.bottom {
+        if extent_hint.left != extent_hint.left
+            || extent_hint.top != extent_hint.top
+            || extent_hint.right != extent_hint.right
+            || extent_hint.bottom != extent_hint.bottom
+        {
             unsafe {
                 if let Some(fill_fn) = (*(*in_data.as_ptr()).utils).fill {
                     err = fill_fn(
@@ -186,6 +184,7 @@ fn render(
 }
 
 #[no_mangle]
+#[rustfmt::skip]
 pub unsafe extern "C" fn PluginDataEntryFunction2(
     in_ptr: ae_sys::PF_PluginDataPtr,
     in_plugin_data_callback_ptr: ae_sys::PF_PluginDataCB2,
@@ -202,7 +201,6 @@ pub unsafe extern "C" fn PluginDataEntryFunction2(
     );
 
     if let Some(cb_ptr) = in_plugin_data_callback_ptr {
-        #[rustfmt::skip]
         cb_ptr(in_ptr,
             cstr!(env!("PIPL_NAME"))       .as_ptr() as *const u8, // Name
             cstr!(env!("PIPL_MATCH_NAME")) .as_ptr() as *const u8, // Match Name
@@ -253,10 +251,10 @@ pub unsafe extern "C" fn EffectMain(
             (*out_data).out_flags2 = env!("PIPL_OUTFLAGS2").parse::<i32>().unwrap();
         }
         ae_sys::PF_Cmd_PARAMS_SETUP => {
-            ParamDef::new(in_data)
+            ae::ParamDef::new(in_data)
                 .name("Mix channels")
-                .param(Param::FloatSlider(
-                    *FloatSliderDef::new()
+                .param(ae::Param::FloatSlider(
+                    *ae::FloatSliderDef::new()
                         .set_valid_min(0.0)
                         .set_slider_min(0.0)
                         .set_valid_max(200.0)
@@ -264,7 +262,7 @@ pub unsafe extern "C" fn EffectMain(
                         .set_value(10.0)
                         .set_default(10.0)
                         .precision(1)
-                        .display_flags(ValueDisplayFlag::PERCENT),
+                        .display_flags(ae::ValueDisplayFlag::PERCENT),
                 ))
                 .add(-1);
 
