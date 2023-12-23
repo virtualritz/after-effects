@@ -83,6 +83,7 @@ fn main() {
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Versions/A/Headers/")
             //.clang_arg("-I/Library/Developer/CommandLineTools/usr/include/c++/v1/")
             .clang_arg(
+                // FIXME: This will bitrot when clang updates or on really old macos instances
                 "-I/Library/Developer/CommandLineTools/usr/lib/clang/12.0.0/include/stdint.h",
             )
             .clang_arg(

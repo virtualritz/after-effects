@@ -4,53 +4,107 @@
 mod resource;
 pub use resource::*;
 
-use byteorder::{ WriteBytesExt, LittleEndian };
+#[cfg(target_os = "macos")]
+use byteorder::BigEndian as ByteOrder;
+#[cfg(target_os = "windows")]
+use byteorder::LittleEndian as ByteOrder;
+
+use byteorder::WriteBytesExt;
 use std::io::Result;
+use std::io::Write;
 
 #[derive(Debug)]
 pub enum PIPLType {
-    General, Filter, Parser, ImageFormat, Extension, Acquire, Export, Selection, Picker, Actions, Test, MSPUtility, PsModernFilter,
-    AEEffect, AEImageFormat, AEAccelerator, AEGeneral,
-    PrEffect, PrVideoFilter, PrAudioFilter, PrEDLExport, PrDataExport, PrDevice, PrImporter, PrCompile, PrRecord, PrPlay,
-    SweetPea, AIGeneral
+    General,
+    Filter,
+    Parser,
+    ImageFormat,
+    Extension,
+    Acquire,
+    Export,
+    Selection,
+    Picker,
+    Actions,
+    Test,
+    MSPUtility,
+    PsModernFilter,
+    AEEffect,
+    AEImageFormat,
+    AEAccelerator,
+    AEGeneral,
+    PrEffect,
+    PrVideoFilter,
+    PrAudioFilter,
+    PrEDLExport,
+    PrDataExport,
+    PrDevice,
+    PrImporter,
+    PrCompile,
+    PrRecord,
+    PrPlay,
+    SweetPea,
+    AIGeneral,
+}
+
+const fn fourcc(code: &[u8; 4]) -> [u8; 4] {
+    // Code order is different between Windows and MacOS
+    #[cfg(target_os = "windows")]
+    {
+        [code[3], code[2], code[1], code[0]]
+    }
+    #[cfg(target_os = "macos")]
+    {
+        *code
+    }
+}
+const fn u32_bytes(v: u32) -> [u8; 4] {
+    #[cfg(target_os = "windows")]
+    {
+        v.to_le_bytes()
+    }
+    #[cfg(target_os = "macos")]
+    {
+        v.to_be_bytes()
+    }
 }
 
 impl PIPLType {
-    pub fn as_u32(&self) -> u32 {
+    #[rustfmt::skip]
+    pub fn as_bytes(&self) -> [u8; 4] {
         match self {
             // Photoshop plug-in types
-            Self::General        => u32::from_be_bytes(*b"8BPI"),
-            Self::Filter         => u32::from_be_bytes(*b"8BFM"),
-            Self::Parser         => u32::from_be_bytes(*b"8BYM"),
-            Self::ImageFormat    => u32::from_be_bytes(*b"8BIF"),
-            Self::Extension      => u32::from_be_bytes(*b"8BXM"),
-            Self::Acquire        => u32::from_be_bytes(*b"8BAM"),
-            Self::Export         => u32::from_be_bytes(*b"8BEM"),
-            Self::Selection      => u32::from_be_bytes(*b"8BSM"),
-            Self::Picker         => u32::from_be_bytes(*b"8BCM"),
-            Self::Actions        => u32::from_be_bytes(*b"8LIZ"),
-            Self::Test           => u32::from_be_bytes(*b"8BTS"),
-            Self::MSPUtility     => u32::from_be_bytes(*b"8SPU"),
-            Self::PsModernFilter => u32::from_be_bytes(*b"8BFm"),
+            Self::General        => fourcc(b"8BPI"),
+            Self::Filter         => fourcc(b"8BFM"),
+            Self::Parser         => fourcc(b"8BYM"),
+            Self::ImageFormat    => fourcc(b"8BIF"),
+            Self::Extension      => fourcc(b"8BXM"),
+            Self::Acquire        => fourcc(b"8BAM"),
+            Self::Export         => fourcc(b"8BEM"),
+            Self::Selection      => fourcc(b"8BSM"),
+            Self::Picker         => fourcc(b"8BCM"),
+            Self::Actions        => fourcc(b"8LIZ"),
+            Self::Test           => fourcc(b"8BTS"),
+            Self::MSPUtility     => fourcc(b"8SPU"),
+            Self::PsModernFilter => fourcc(b"8BFm"),
             // After Effects plug-in types
-            Self::AEEffect       => u32::from_be_bytes(*b"eFKT"),
-            Self::AEImageFormat  => u32::from_be_bytes(*b"FXIF"),
-            Self::AEAccelerator  => u32::from_be_bytes(*b"eFST"),
-            Self::AEGeneral      => u32::from_be_bytes(*b"AEgp"),
-            // Premiere plug-in types
-            Self::PrEffect       => u32::from_be_bytes(*b"SPFX"),
-            Self::PrVideoFilter  => u32::from_be_bytes(*b"VFlt"),
-            Self::PrAudioFilter  => u32::from_be_bytes(*b"AFlt"),
-            Self::PrEDLExport    => u32::from_be_bytes(*b"ExpM"),
-            Self::PrDataExport   => u32::from_be_bytes(*b"ExpD"),
-            Self::PrDevice       => u32::from_be_bytes(*b"DevC"),
-            Self::PrImporter     => u32::from_be_bytes(*b"IMPT"),
-            Self::PrCompile      => u32::from_be_bytes(*b"CMPM"),
-            Self::PrRecord       => u32::from_be_bytes(*b"RECM"),
-            Self::PrPlay         => u32::from_be_bytes(*b"PLYM"),
+            Self::AEEffect       => fourcc(b"eFKT"),
+            Self::AEImageFormat  => fourcc(b"FXIF"),
+            Self::AEAccelerator  => fourcc(b"eFST"),
+            Self::AEGeneral      => fourcc(b"AEgp"),
+            // Premiere plug-in typefourcc
+            Self::PrEffect       => fourcc(b"SPFX"),
+            Self::PrVideoFilter  => fourcc(b"VFlt"),
+            Self::PrAudioFilter  => fourcc(b"AFlt"),
+            Self::PrEDLExport    => fourcc(b"ExpM"),
+            Self::PrDataExport   => fourcc(b"ExpD"),
+            Self::PrDevice       => fourcc(b"DevC"),
+            Self::PrImporter     => fourcc(b"IMPT"),
+            Self::PrCompile      => fourcc(b"CMPM"),
+            Self::PrRecord       => fourcc(b"RECM"),
+            Self::PrPlay         => fourcc(b"PLYM"),
             // Illustrator/SweetPea plug-in types
-            Self::SweetPea       => u32::from_be_bytes(*b"SPEA"),
-            Self::AIGeneral      => u32::from_be_bytes(*b"ARPI")
+            Self::SweetPea       => fourcc(b"SPEA"),
+            Self::AIGeneral      => fourcc(b"ARPI")
         }
     }
 }
@@ -59,7 +113,7 @@ bitflags::bitflags! {
     #[derive(Debug)]
     pub struct OutFlags: u32 {
         const None = 0;
-                                                // which PF_Cmds each flag is relevant for:
+                                                      // which PF_Cmds each flag is relevant for:
         const KeepResourceOpen             = 1 << 0;  // PF_Cmd_GLOBAL_SETUP
         const WideTimeInput                = 1 << 1;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
         const NonParamVary                 = 1 << 2;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
@@ -100,7 +154,7 @@ bitflags::bitflags! {
     #[derive(Debug)]
     pub struct OutFlags2: u32 {
         const None = 0;
-                                                       // which PF_Cmds each flag is relevant for:
+                                                             // which PF_Cmds each flag is relevant for:
         const SupportsQueryDynamicFlags           = 1 << 0;  // PF_Cmd_GLOBAL_SETUP
         const IUse3DCamera                        = 1 << 1;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
         const IUse3DLights                        = 1 << 2;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
@@ -135,22 +189,22 @@ bitflags::bitflags! {
 bitflags::bitflags! {
     #[derive(Debug)]
     pub struct SupportedModes: u32 {
-		const Bitmap           = 1 << 15;
-		const GrayScale        = 1 << 14;
-		const IndexedColor     = 1 << 13;
-		const RGBColor         = 1 << 12;
-		const CMYKColor        = 1 << 11;
-		const HSLColor         = 1 << 10;
-		const HSBColor         = 1 << 9;
-		const Multichannel     = 1 << 8;
-		const Duotone          = 1 << 7;
-		const LABColor         = 1 << 6;
-		const Gray16           = 1 << 5;
-		const RGB48            = 1 << 4;
-		const Lab48            = 1 << 3;
-		const CMYK64           = 1 << 2;
-		const DeepMultichannel = 1 << 1;
-		const Duotone16        = 1 << 0;
+        const Bitmap           = 1 << 15;
+        const GrayScale        = 1 << 14;
+        const IndexedColor     = 1 << 13;
+        const RGBColor         = 1 << 12;
+        const CMYKColor        = 1 << 11;
+        const HSLColor         = 1 << 10;
+        const HSBColor         = 1 << 9;
+        const Multichannel     = 1 << 8;
+        const Duotone          = 1 << 7;
+        const LABColor         = 1 << 6;
+        const Gray16           = 1 << 5;
+        const RGB48            = 1 << 4;
+        const Lab48            = 1 << 3;
+        const CMYK64           = 1 << 2;
+        const DeepMultichannel = 1 << 1;
+        const Duotone16        = 1 << 0;
     }
 }
 
@@ -167,7 +221,7 @@ pub enum FilterCaseInfoIn {
     GrayZap = 7,
     WhiteZap = 8,
     BackgroundZap = 10,
-    ForegroundZap = 11
+    ForegroundZap = 11,
 }
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
@@ -177,7 +231,7 @@ pub enum FilterCaseInfoOut {
     BlackMat = 2,
     GrayMat = 3,
     WhiteMat = 4,
-    FillMask = 9
+    FillMask = 9,
 }
 #[derive(Debug)]
 pub struct FilterCaseInfoStruct {
@@ -192,58 +246,117 @@ pub struct FilterCaseInfoStruct {
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 pub enum BitTypes {
-    None       = 0x00,
-    Top        = 0x01,
-    Right      = 0x02,
-    Bottom     = 0x04,
-    Left       = 0x08,
+    None = 0x00,
+    Top = 0x01,
+    Right = 0x02,
+    Bottom = 0x04,
+    Left = 0x08,
     UpperRight = 0x10,
     LowerRight = 0x20,
-    LowerLeft  = 0x40,
-    UpperLeft  = 0x80,
+    LowerLeft = 0x40,
+    UpperLeft = 0x80,
 }
 #[repr(u32)]
 #[derive(Debug, Clone, Copy)]
 pub enum PixelAspectRatio {
-	AnyPAR   = 0x10000,
-	UnityPAR = 0x20000,
+    AnyPAR = 0x10000,
+    UnityPAR = 0x20000,
 }
 
-#[repr(u32)] #[derive(Debug, Clone, Copy)] pub enum AnimDataType { Opaque = 0, Char, Short, Long, UnsignedChar, UnsignedShort, UnsignedLong, Fixed, UnsignedFixed, Extended96, Double64, Float32, ColorRGB }
-#[repr(u32)] #[derive(Debug, Clone, Copy)] pub enum AnimUIType { NoUI = 0, Angle, Slider, Point, Rect, ColorRGB, ColorCMYK, ColorLAB }
-#[repr(u32)] #[derive(Debug, Clone, Copy)] pub enum ClassType { None = 0, Scanner, Camera, Video, Floppy, Cdrom, Internet }
-#[derive(Debug)] pub enum ButtonIconType { None, MacCICN, WindowsICON }
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum AnimDataType {
+    Opaque = 0,
+    Char,
+    Short,
+    Long,
+    UnsignedChar,
+    UnsignedShort,
+    UnsignedLong,
+    Fixed,
+    UnsignedFixed,
+    Extended96,
+    Double64,
+    Float32,
+    ColorRGB,
+}
 
-pub const fn pf_version(vers: u32, subvers: u32, bugvers: u32, stage: u32, build: u32) -> u32 {
-    const PF_VERS_BUILD_BITS   : u32 = 0x1ff;
-    const PF_VERS_BUILD_SHIFT  : u32 = 0;
-    const PF_VERS_STAGE_BITS   : u32 = 0x3;
-    const PF_VERS_STAGE_SHIFT  : u32 = 9;
-    const PF_VERS_BUGFIX_BITS  : u32 = 0xf;
-    const PF_VERS_BUGFIX_SHIFT : u32 = 11;
-    const PF_VERS_SUBVERS_BITS : u32 = 0xf;
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum AnimUIType {
+    NoUI = 0,
+    Angle,
+    Slider,
+    Point,
+    Rect,
+    ColorRGB,
+    ColorCMYK,
+    ColorLAB,
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum ClassType {
+    None = 0,
+    Scanner,
+    Camera,
+    Video,
+    Floppy,
+    Cdrom,
+    Internet,
+}
+
+#[derive(Debug)]
+pub enum ButtonIconType {
+    None,
+    MacCICN,
+    WindowsICON,
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum Stage {
+    Develop = 0,
+    Alpha,
+    Beta,
+    Release,
+}
+
+pub const fn pf_version(vers: u32, subvers: u32, bugvers: u32, stage: Stage, build: u32) -> u32 {
+    const PF_VERS_BUILD_BITS: u32 = 0x1ff;
+    const PF_VERS_BUILD_SHIFT: u32 = 0;
+    const PF_VERS_STAGE_BITS: u32 = 0x3;
+    const PF_VERS_STAGE_SHIFT: u32 = 9;
+    const PF_VERS_BUGFIX_BITS: u32 = 0xf;
+    const PF_VERS_BUGFIX_SHIFT: u32 = 11;
+    const PF_VERS_SUBVERS_BITS: u32 = 0xf;
     const PF_VERS_SUBVERS_SHIFT: u32 = 15;
-    const PF_VERS_VERS_BITS    : u32 = 0x7;    // incomplete without high bits, below
-    const PF_VERS_VERS_SHIFT   : u32 = 19;
+    const PF_VERS_VERS_BITS: u32 = 0x7; // incomplete without high bits, below
+    const PF_VERS_VERS_SHIFT: u32 = 19;
     // skipping these bits for similarity to Up_Vers_ARCH_*, currently unused in PF
-    const PF_VERS_VERS_HIGH_BITS : u32 = 0xf; // expand version max from 7 to 127
+    const PF_VERS_VERS_HIGH_BITS: u32 = 0xf; // expand version max from 7 to 127
     const PF_VERS_VERS_HIGH_SHIFT: u32 = 26;
     // b/c we are stripping the stand alone vers value for two fields
     const PF_VERS_VERS_LOW_SHIFT: u32 = 3;
 
-    (((vers >> PF_VERS_VERS_LOW_SHIFT) & PF_VERS_VERS_HIGH_BITS) << PF_VERS_VERS_HIGH_SHIFT) |
-    ((vers & PF_VERS_VERS_BITS) << PF_VERS_VERS_SHIFT) |
-    ((subvers & PF_VERS_SUBVERS_BITS) << PF_VERS_SUBVERS_SHIFT) |
-    ((bugvers & PF_VERS_BUGFIX_BITS)  << PF_VERS_BUGFIX_SHIFT) |
-    ((stage & PF_VERS_STAGE_BITS) << PF_VERS_STAGE_SHIFT) |
-    ((build & PF_VERS_BUILD_BITS) << PF_VERS_BUILD_SHIFT)
+    (((vers >> PF_VERS_VERS_LOW_SHIFT) & PF_VERS_VERS_HIGH_BITS) << PF_VERS_VERS_HIGH_SHIFT)
+        | ((vers & PF_VERS_VERS_BITS) << PF_VERS_VERS_SHIFT)
+        | ((subvers & PF_VERS_SUBVERS_BITS) << PF_VERS_SUBVERS_SHIFT)
+        | ((bugvers & PF_VERS_BUGFIX_BITS) << PF_VERS_BUGFIX_SHIFT)
+        | ((stage as u32 & PF_VERS_STAGE_BITS) << PF_VERS_STAGE_SHIFT)
+        | ((build & PF_VERS_BUILD_BITS) << PF_VERS_BUILD_SHIFT)
 }
-
 
 #[derive(Debug)]
 pub enum Property {
     Kind(PIPLType),
-    Version((u32, u32, u32, u32, u32)),
+    Version {
+        version: u32,
+        subversion: u32,
+        bugversion: u32,
+        stage: Stage,
+        build: u32,
+    },
     Priority(u32),
     RequiredHost(&'static [u8; 4]),
     Component((u32, &'static str)),
@@ -262,7 +375,9 @@ pub enum Property {
     SupportedModes(SupportedModes),
     EnableInfo(&'static str),
     FilterCaseInfo(&'static [FilterCaseInfoStruct]),
-    ExportFlags { supports_transparency: bool },
+    ExportFlags {
+        supports_transparency: bool,
+    },
     FmtFileType((&'static [u8; 4], &'static [u8; 4])),
     ReadTypes(&'static [(&'static [u8; 4], &'static [u8; 4])]),
     WriteTypes(&'static [(&'static [u8; 4], &'static [u8; 4])]),
@@ -276,7 +391,10 @@ pub enum Property {
         can_write: bool,
         can_write_if_read: bool,
     },
-    FormatMaxSize { width: u16, height: u16 },
+    FormatMaxSize {
+        width: u16,
+        height: u16,
+    },
     FormatMaxChannels(&'static [u16]),
     ParsableTypes(&'static [(&'static [u8; 4], &'static [u8; 4])]),
     ParsableClipboardTypes(&'static [&'static [u8; 4]]),
@@ -288,12 +406,24 @@ pub enum Property {
         class_id: u32,
         event_id: u32,
         dictionary_resource_id: u16,
-        unique_scope_string: &'static str
+        unique_scope_string: &'static str,
     },
     Persistent,
-    AE_PiPL_Version { minor: u16, major: u16 },
-    AE_Effect_Spec_Version { minor: u16, major: u16 },
-    AE_Effect_Version((u32, u32, u32, u32, u32)),
+    AE_PiPL_Version {
+        minor: u16,
+        major: u16,
+    },
+    AE_Effect_Spec_Version {
+        minor: u16,
+        major: u16,
+    },
+    AE_Effect_Version {
+        version: u32,
+        subversion: u32,
+        bugversion: u32,
+        stage: Stage,
+        build: u32,
+    },
     AE_Effect_Match_Name(&'static str),
     AE_Effect_Info_Flags(u32),
     AE_Effect_Global_OutFlags(OutFlags),
@@ -315,7 +445,7 @@ pub enum Property {
         has_file: bool,
         output: bool,
         input: bool,
-        signature: [u8; 4]
+        signature: [u8; 4],
     },
     ANIM_FilterInfo {
         spec_version_major: u32,
@@ -323,17 +453,17 @@ pub enum Property {
         filter_params_version: u32,
         unity_pixel_aspec_tratio: bool,
         any_pixel_aspect_ratio: bool,
-        drive_me: bool,                 // ANIM_FF_DONT_DRIVE_ME (AE only)
-        needs_dialog: bool,        // ANIM_FF_DOESNT_NEED_DLOG (AE only)
+        drive_me: bool,          // ANIM_FF_DONT_DRIVE_ME (AE only)
+        needs_dialog: bool,      // ANIM_FF_DOESNT_NEED_DLOG (AE only)
         params_pointer: bool,    // ANIM_FF_PARAMS_ARE PTR (AE only)
-        params_handle: bool,        // ANIM_FF_PARAMS_ARE_HANDLE (AE only)
-        params_mac_handle: bool,    // ANIM_FF_PARAMS_ARE_MAC_HANDLE (AE only)
-        dialog_in_render: bool,    // ANIM_FF_DIALOG_IN_RENDER (AE only)
-        params_in_globals: bool,    // ANIM_FF_PARAMS_IN_GLOBALS (AE only)
-        bg_animatable: bool,        // ANIM_FF_BG_ANIMATABLE (AE only)
-        fg_animatable: bool,        // ANIM_FF_FG_ANIMATABLE (AE only)
-        geometric: bool,            // ANIM_FF_NON_GEOMETRIC (AE only)
-        randomness: bool,            // ANIM_FF_HAS_RANDOMNESS (AE only)
+        params_handle: bool,     // ANIM_FF_PARAMS_ARE_HANDLE (AE only)
+        params_mac_handle: bool, // ANIM_FF_PARAMS_ARE_MAC_HANDLE (AE only)
+        dialog_in_render: bool,  // ANIM_FF_DIALOG_IN_RENDER (AE only)
+        params_in_globals: bool, // ANIM_FF_PARAMS_IN_GLOBALS (AE only)
+        bg_animatable: bool,     // ANIM_FF_BG_ANIMATABLE (AE only)
+        fg_animatable: bool,     // ANIM_FF_FG_ANIMATABLE (AE only)
+        geometric: bool,         // ANIM_FF_NON_GEOMETRIC (AE only)
+        randomness: bool,        // ANIM_FF_HAS_RANDOMNESS (AE only)
         number_of_parameters: u32,
         match_name: &'static str, // 32 bytes
     },
@@ -373,7 +503,7 @@ pub enum Property {
         have_start_point: bool,
         have_end_point: bool,
 
-        more_flags: u32
+        more_flags: u32,
     },
     Pr_Effect_Description(&'static str),
     InterfaceVersion(u32),
@@ -400,153 +530,194 @@ pub enum Property {
     },
     Class {
         version: u32,
-        class: ClassType
+        class: ClassType,
     },
     PreviewFile {
         version: u32,
-        filename: &'static str
-    }
+        filename: &'static str,
+    },
 }
 
 pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
-	fn padding_4(x: u32) -> u32 { if x % 4 != 0 { 4 - x % 4 } else { 0 } }
+    #[rustfmt::skip]
+    fn padding_4(x: u32) -> u32 { if x % 4 != 0 { 4 - x % 4 } else { 0 } }
 
-	fn write(buffer: &mut Vec<u8>, type_: &[u8; 4], key: &[u8; 4], mut contents_fn: impl FnMut(&mut Vec<u8>) -> Result<()>) -> Result<()> {
-		buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_))?;
-		buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*key))?;
-		buffer.write_u32::<LittleEndian>(0)?; // pad
-		let len = buffer.len();
-		buffer.write_u32::<LittleEndian>(0)?; // length placeholder
-		contents_fn(buffer)?;
-		let aligned_len = (buffer.len() - len - 4) as u32;
-		// Overwrite the length
-		buffer[len..len+4].clone_from_slice(&aligned_len.to_le_bytes());
+    fn write(
+        buffer: &mut Vec<u8>,
+        type_: &[u8; 4],
+        key: &[u8; 4],
+        mut contents_fn: impl FnMut(&mut Vec<u8>) -> Result<()>,
+    ) -> Result<()> {
+        buffer.write(&fourcc(type_))?;
+        buffer.write(&fourcc(key))?;
+        buffer.write_u32::<ByteOrder>(0)?; // pad
+        let len = buffer.len();
+        buffer.write_u32::<ByteOrder>(0)?; // length placeholder
+        contents_fn(buffer)?;
+        let aligned_len = (buffer.len() - len - 4) as u32;
+        // Overwrite the length
+        buffer[len..len + 4].clone_from_slice(&u32_bytes(aligned_len));
+
+        // Padding is done differently between Windows and macOS
+        if cfg!(target_os = "macos") {
+            let padding = padding_4(aligned_len);
+            for _ in 0..padding {
+                buffer.write_u8(0)?;
+            }
+        }
         Ok(())
-	}
-	fn write_pstring(buffer: &mut Vec<u8>, s: &'static str) -> Result<()> { // Pascal string
-		buffer.write_u8(s.len() as u8)?;
-		buffer.extend(s.as_bytes());
-		let padding = padding_4(s.len() as u32 + 1);
-		for _ in 0..padding { buffer.write_u8(0)?; }
+    }
+    // Write pascal string
+    fn write_pstring(buffer: &mut Vec<u8>, s: &'static str) -> Result<()> {
+        buffer.write_u8(s.len() as u8)?;
+        buffer.extend(s.as_bytes());
+
+        // Padding is done differently between Windows and macOS
+        if cfg!(target_os = "windows") {
+            let padding = padding_4(s.len() as u32 + 1);
+            for _ in 0..padding {
+                buffer.write_u8(0)?;
+            }
+        }
         Ok(())
-	}
-	fn write_cstring(buffer: &mut Vec<u8>, s: &'static str) -> Result<()> { // Long Word padded C String
-		buffer.extend(s.as_bytes());
-		buffer.push(0);
-		let padding = padding_4(s.len() as u32 + 1);
-		for _ in 0..padding { buffer.write_u8(0)?; }
+    }
+    // Write Long Word padded C String
+    fn write_cstring(buffer: &mut Vec<u8>, s: &'static str) -> Result<()> {
+        buffer.extend(s.as_bytes());
+        buffer.push(0);
+
+        // Padding is done differently between Windows and macOS
+        if cfg!(target_os = "windows") {
+            let padding = padding_4(s.len() as u32 + 1);
+            for _ in 0..padding {
+                buffer.write_u8(0)?;
+            }
+        }
         Ok(())
-	}
+    }
 
     let mut buffer = Vec::new();
-	buffer.write_u16::<LittleEndian>(1)?; // Reserved
-    buffer.write_u32::<LittleEndian>(0)?; // kPIPropertiesVersion
-    buffer.write_u32::<LittleEndian>(properties.len() as u32)?;
+    if cfg!(target_os = "windows") {
+        buffer.write_u8(1)?; // Reserved
+        buffer.write_u8(0)?; // Reserved
+    }
+    buffer.write_u32::<ByteOrder>(0)?; // kPIPropertiesVersion
+    buffer.write(&u32_bytes(properties.len() as u32))?;
     for prop in properties {
         match prop {
             Property::Kind(x) => {
                 write(&mut buffer, b"8BIM", b"kind", |buffer| {
-					buffer.write_u32::<LittleEndian>(x.as_u32())
-				})?;
-            },
-            Property::Version((a, b, c, d, e)) => {
+                    buffer.write(&x.as_bytes())?;
+                    Ok(())
+                })?;
+            }
+            Property::Version {
+                version,
+                subversion,
+                bugversion,
+                stage,
+                build,
+            } => {
                 write(&mut buffer, b"8BIM", b"vers", |buffer| {
-					buffer.write_u32::<LittleEndian>(pf_version(a, b, c, d, e))
-				})?;
-            },
+                    buffer.write_u32::<ByteOrder>(pf_version(
+                        version, subversion, bugversion, stage, build,
+                    ))
+                })?;
+            }
             Property::Priority(x) => {
                 write(&mut buffer, b"8BIM", b"prty", |buffer| {
-					buffer.write_u32::<LittleEndian>(x)
-				})?;
-            },
+                    buffer.write_u32::<ByteOrder>(x)
+                })?;
+            }
             Property::Component((version, uuid)) => {
                 write(&mut buffer, b"8BIM", b"cmpt", |buffer| {
-					buffer.write_u32::<LittleEndian>(version)?;
-					write_cstring(buffer, uuid)
-				})?;
-            },
+                    buffer.write_u32::<ByteOrder>(version)?;
+                    write_cstring(buffer, uuid)
+                })?;
+            }
             Property::RequiredHost(x) => {
                 write(&mut buffer, b"8BIM", b"host", |buffer| {
-					buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*x))
-				})?;
-			},
+                    buffer.write(&fourcc(x))?;
+                    Ok(())
+                })?;
+            }
             Property::Name(x) => {
                 write(&mut buffer, b"8BIM", b"name", |buffer| {
-					write_pstring(buffer, x)
-				})?;
-			},
+                    write_pstring(buffer, x)
+                })?;
+            }
             Property::Category(x) => {
-				// PSHelpMenu = "**Help**";
+                // PSHelpMenu = "**Help**";
                 write(&mut buffer, b"8BIM", b"catg", |buffer| {
-					write_pstring(buffer, x)
-				})?;
-			},
+                    write_pstring(buffer, x)
+                })?;
+            }
             Property::Code68k((type_, x)) => {
                 write(&mut buffer, b"8BIM", b"m68k", |buffer| {
-					buffer.write_u32::<LittleEndian>(type_.as_u32())?;
-					buffer.write_u16::<LittleEndian>(x)
-				})?;
-			},
+                    buffer.write(&type_.as_bytes())?;
+                    buffer.write_u16::<ByteOrder>(x)
+                })?;
+            }
             Property::Code68kFPU((type_, x)) => {
                 write(&mut buffer, b"8BIM", b"68fp", |buffer| {
-					buffer.write_u32::<LittleEndian>(type_.as_u32())?;
-					buffer.write_u16::<LittleEndian>(x)
-				})?;
-			},
+                    buffer.write(&type_.as_bytes())?;
+                    buffer.write_u16::<ByteOrder>(x)
+                })?;
+            }
             Property::CodePowerPC((x, y, entry_point)) => {
                 write(&mut buffer, b"8BIM", b"pwpc", |buffer| {
-					buffer.write_u32::<LittleEndian>(x)?;
-					buffer.write_u32::<LittleEndian>(y)?;
-					write_pstring(buffer, entry_point)
-				})?;
-			},
+                    buffer.write_u32::<ByteOrder>(x)?;
+                    buffer.write_u32::<ByteOrder>(y)?;
+                    write_pstring(buffer, entry_point)
+                })?;
+            }
             Property::CodeCarbonPowerPC((x, y, entry_point)) => {
                 write(&mut buffer, b"8BIM", b"ppcb", |buffer| {
-					buffer.write_u32::<LittleEndian>(x)?;
-					buffer.write_u32::<LittleEndian>(y)?;
-					write_pstring(buffer, entry_point)
-				})?;
-			},
+                    buffer.write_u32::<ByteOrder>(x)?;
+                    buffer.write_u32::<ByteOrder>(y)?;
+                    write_pstring(buffer, entry_point)
+                })?;
+            }
             Property::CodeMachOPowerPC(entry_point) => {
                 write(&mut buffer, b"8BIM", b"mach", |buffer| {
-					write_pstring(buffer, entry_point)
-				})?;
-			},
+                    write_pstring(buffer, entry_point)
+                })?;
+            }
             Property::CodeMacIntel32(entry_point) => {
                 write(&mut buffer, b"8BIM", b"mi32", |buffer| {
-					write_pstring(buffer, entry_point)
-				})?;
-			},
+                    write_pstring(buffer, entry_point)
+                })?;
+            }
             Property::CodeMacIntel64(entry_point) => {
                 write(&mut buffer, b"8BIM", b"mi64", |buffer| {
-					write_pstring(buffer, entry_point)
-				})?;
-			},
+                    write_pstring(buffer, entry_point)
+                })?;
+            }
             Property::CodeMacARM64(entry_point) => {
                 write(&mut buffer, b"8BIM", b"ma64", |buffer| {
-					write_pstring(buffer, entry_point)
-				})?;
-			},
+                    write_pstring(buffer, entry_point)
+                })?;
+            }
             Property::CodeWin32X86(entry_point) => {
                 write(&mut buffer, b"8BIM", b"wx86", |buffer| {
-					write_cstring(buffer, entry_point)
-				})?;
-			},
+                    write_cstring(buffer, entry_point)
+                })?;
+            }
             Property::CodeWin64X86(entry_point) => {
                 write(&mut buffer, b"8BIM", b"8664", |buffer| {
-					write_cstring(buffer, entry_point)
-				})?;
-			},
+                    write_cstring(buffer, entry_point)
+                })?;
+            }
             Property::SupportedModes(flags) => {
                 write(&mut buffer, b"8BIM", b"mode", |buffer| {
-					buffer.write_u32::<LittleEndian>(flags.bits())
-				})?;
-			},
+                    buffer.write_u32::<ByteOrder>(flags.bits())
+                })?;
+            }
             Property::EnableInfo(condition) => {
                 write(&mut buffer, b"8BIM", b"enbl", |buffer| {
-					write_cstring(buffer, condition)
-				})?;
-			},
+                    write_cstring(buffer, condition)
+                })?;
+            }
             //-------------------------------------------------------------------
             // Photoshop Filter PiPL properties
             //-------------------------------------------------------------------
@@ -556,126 +727,138 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                         if let Some(info) = infos.get(i) {
                             buffer.write_u8(info.in_handling as u8)?;
                             buffer.write_u8(info.out_handling as u8)?;
+                            #[rustfmt::skip]
                             let flags = if info.copy_source_to_destination { 0 } else { 1 << 0 } |
-                                           if info.works_with_blank_data      { 1 << 1 } else { 0 } |
-                                           if info.filters_layer_masks        { 1 << 2 } else { 0 } |
-                                           if info.write_outside_selection    { 1 << 3 } else { 0 };
+                                        if info.works_with_blank_data      { 1 << 1 } else { 0 } |
+                                        if info.filters_layer_masks        { 1 << 2 } else { 0 } |
+                                        if info.write_outside_selection    { 1 << 3 } else { 0 };
                             buffer.write_u8(flags)?;
                             buffer.write_u8(0)?;
                         } else {
-                            buffer.write_u32::<LittleEndian>(0)?;
+                            buffer.write_u32::<ByteOrder>(0)?;
                         }
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             //-------------------------------------------------------------------
             // Photoshop Export PiPL properties
             //-------------------------------------------------------------------
-            Property::ExportFlags { supports_transparency } => {
+            Property::ExportFlags {
+                supports_transparency,
+            } => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"expf", |buffer| {
                     buffer.write_u8(if supports_transparency { 1 << 7 } else { 0 })?;
-                    buffer.write_u24::<LittleEndian>(0)
-				})?;
-			},
+                    buffer.write_u24::<ByteOrder>(0)
+                })?;
+            }
             Property::FmtFileType((type_, creator)) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fmTC", |buffer| {
-                    buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_))?;
-                    buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*creator))
-				})?;
-			},
+                    buffer.write(&fourcc(type_))?;
+                    buffer.write(&fourcc(creator))?;
+                    Ok(())
+                })?;
+            }
             // NOTE: If you specify you can READ type 'foo_', then you will never be called with a FilterFile for type 'foo_'.
             Property::ReadTypes(types) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"RdTy", |buffer| {
                     for type_ in types {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                        buffer.write(&fourcc(type_.0))?;
+                        buffer.write(&fourcc(type_.1))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             Property::WriteTypes(types) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"WrTy", |buffer| {
                     for type_ in types {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                        buffer.write(&fourcc(type_.0))?;
+                        buffer.write(&fourcc(type_.1))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             // NOTE: If you specify you want to filter type 'foo_' AND you specify you can read type 'foo_', you will never get a filter call.
             Property::FilteredTypes(types) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fftT", |buffer| {
                     for type_ in types {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                        buffer.write(&fourcc(type_.0))?;
+                        buffer.write(&fourcc(type_.1))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             // Macintosh plug-ins can use Windows file extensions to determine read/write/parseability.
             // NOTE: If you specify you READ extension '.foo' then you won't be called to Filter that type.
             Property::ReadExtensions(exts) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"RdEx", |buffer| {
                     for &ext in exts {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                        buffer.write(&fourcc(ext))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             Property::WriteExtensions(exts) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"WrEx", |buffer| {
                     for &ext in exts {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                        buffer.write(&fourcc(ext))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             // NOTE: If you specify you want to filter extension '.foo' AND you specify you can read extension '.foo', you will never get a filter call.
             Property::FilteredExtensions(exts) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fftE", |buffer| {
                     for &ext in exts {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                        buffer.write(&fourcc(ext))?;
                     }
                     Ok(())
-				})?;
-			},
-            Property::FormatFlags { can_read, can_write, can_write_if_read, saves_image_resources } => {
+                })?;
+            }
+            Property::FormatFlags {
+                can_read,
+                can_write,
+                can_write_if_read,
+                saves_image_resources,
+            } => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fmtf", |buffer| {
+                    #[rustfmt::skip]
                     let flags = if can_write_if_read     { 1 << 3 } else { 0 } |
-                                   if can_write             { 1 << 4 } else { 0 } |
-                                   if can_read              { 1 << 5 } else { 0 } |
-                                   if saves_image_resources { 1 << 6 } else { 0 };
+                                if can_write             { 1 << 4 } else { 0 } |
+                                if can_read              { 1 << 5 } else { 0 } |
+                                if saves_image_resources { 1 << 6 } else { 0 };
                     buffer.write_u8(flags)?;
-                    buffer.write_u24::<LittleEndian>(0)
-				})?;
-			},
+                    buffer.write_u24::<ByteOrder>(0)
+                })?;
+            }
             Property::FormatMaxSize { width, height } => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"mxsz", |buffer| {
-                    buffer.write_u16::<LittleEndian>(width)?;
-                    buffer.write_u16::<LittleEndian>(height)
-				})?;
-			},
+                    buffer.write_u16::<ByteOrder>(width)?;
+                    buffer.write_u16::<ByteOrder>(height)
+                })?;
+            }
             Property::FormatMaxChannels(max_channels) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"mxch", |buffer| {
                     for ch in max_channels {
-                        buffer.write_u16::<LittleEndian>(*ch)?;
+                        buffer.write_u16::<ByteOrder>(*ch)?;
                     }
-                    for _ in 0..padding_4(max_channels.len() as u32 * 2) as usize { buffer.write_u8(0)?; }
+                    for _ in 0..padding_4(max_channels.len() as u32 * 2) as usize {
+                        buffer.write_u8(0)?;
+                    }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             //-------------------------------------------------------------------
             // Photoshop Parser PiPL properties
             //-------------------------------------------------------------------
@@ -684,140 +867,174 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psTY", |buffer| {
                     for type_ in types {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                        buffer.write(&fourcc(type_.0))?;
+                        buffer.write(&fourcc(type_.1))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             Property::ParsableClipboardTypes(types) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psCB", |buffer| {
                     for &type_ in types {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_))?;
+                        buffer.write(&fourcc(type_))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             // NOTE: If you want to filter type 'foo_' and you specify you can parse type 'foo_', you will never get a filter call.
             Property::FilteredParsableTypes(types) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psTy", |buffer| {
                     for type_ in types {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.0))?;
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*type_.1))?;
+                        buffer.write(&fourcc(type_.0))?;
+                        buffer.write(&fourcc(type_.1))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             // Macintosh plug-ins can use Windows file extensions to determine read/write/parseability.
             // NOTE: If you want to filter extension '.foo' and you specify you can parse extension '.foo', you will never get a filter call.
             Property::ParsableExtensions(exts) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psEX", |buffer| {
                     for &ext in exts {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                        buffer.write(&fourcc(ext))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             Property::FilteredParsableExtensions(exts) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psEx", |buffer| {
                     for &ext in exts {
-                        buffer.write_u32::<LittleEndian>(u32::from_be_bytes(*ext))?;
+                        buffer.write(&fourcc(ext))?;
                     }
                     Ok(())
-				})?;
-			},
+                })?;
+            }
             Property::PickerID(id) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"pnme", |buffer| {
-					write_pstring(buffer, id)
-				})?;
-			},
+                    write_pstring(buffer, id)
+                })?;
+            }
             //-------------------------------------------------------------------
             // Photoshop Actions/Scripting PiPL properties (Photoshop 4.0 and later)
             //-------------------------------------------------------------------
-            Property::HasTerminology { class_id, event_id, dictionary_resource_id, unique_scope_string } => {
+            Property::HasTerminology {
+                class_id,
+                event_id,
+                dictionary_resource_id,
+                unique_scope_string,
+            } => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"hstm", |buffer| {
-                    buffer.write_u32::<LittleEndian>(0)?; // Version.
-                    buffer.write_u32::<LittleEndian>(class_id)?; // Class ID, always required.  Can be Suite ID.
-                    buffer.write_u32::<LittleEndian>(event_id)?; // Event ID, or typeNULL if not Filter/Color Picker/Selection.
-                    buffer.write_u16::<LittleEndian>(dictionary_resource_id)?; // Dictionary ('AETE') resource ID.
-					write_cstring(buffer, unique_scope_string)
+                    buffer.write_u32::<ByteOrder>(0)?; // Version.
+                    buffer.write_u32::<ByteOrder>(class_id)?; // Class ID, always required.  Can be Suite ID.
+                    buffer.write_u32::<ByteOrder>(event_id)?; // Event ID, or typeNULL if not Filter/Color Picker/Selection.
+                    buffer.write_u16::<ByteOrder>(dictionary_resource_id)?; // Dictionary ('AETE') resource ID.
+                    write_cstring(buffer, unique_scope_string)
                     // TODO: Padding?
-				})?;
-			},
+                })?;
+            }
             // If this property is present, then its on. No parameters are required:
             Property::Persistent => {
                 write(&mut buffer, b"8BIM", b"prst", |buffer| {
-                    buffer.write_u32::<LittleEndian>(1)
-				})?;
-			},
+                    buffer.write_u32::<ByteOrder>(1)
+                })?;
+            }
             //-------------------------------------------------------------------
             // After Effects and Premiere specific PiPL properties
             //-------------------------------------------------------------------
             Property::AE_PiPL_Version { major, minor } => {
-				write(&mut buffer, b"8BIM", b"ePVR", |buffer| {
-					buffer.write_u16::<LittleEndian>(major)?;
-					buffer.write_u16::<LittleEndian>(minor)
-				})?;
-			},
+                write(&mut buffer, b"8BIM", b"ePVR", |buffer| {
+                    buffer.write_u16::<ByteOrder>(major)?;
+                    buffer.write_u16::<ByteOrder>(minor)
+                })?;
+            }
             Property::AE_Effect_Spec_Version { major, minor } => {
-				write(&mut buffer, b"8BIM", b"eSVR", |buffer| {
-					buffer.write_u16::<LittleEndian>(major)?;
-					buffer.write_u16::<LittleEndian>(minor)
-				})?;
-			},
-            Property::AE_Effect_Version((a, b, c, d, e)) => {
-				write(&mut buffer, b"8BIM", b"eVER", |buffer| {
-					buffer.write_u32::<LittleEndian>(pf_version(a, b, c, d, e))
-				})?;
-			},
+                write(&mut buffer, b"8BIM", b"eSVR", |buffer| {
+                    buffer.write_u16::<ByteOrder>(major)?;
+                    buffer.write_u16::<ByteOrder>(minor)
+                })?;
+            }
+            Property::AE_Effect_Version {
+                version,
+                subversion,
+                bugversion,
+                stage,
+                build,
+            } => {
+                write(&mut buffer, b"8BIM", b"eVER", |buffer| {
+                    buffer.write_u32::<ByteOrder>(pf_version(
+                        version, subversion, bugversion, stage, build,
+                    ))
+                })?;
+            }
             Property::AE_Effect_Match_Name(name) => {
-				write(&mut buffer, b"8BIM", b"eMNA", |buffer| {
-					write_pstring(buffer, name)
-				})?;
-			},
+                write(&mut buffer, b"8BIM", b"eMNA", |buffer| {
+                    write_pstring(buffer, name)
+                })?;
+            }
             Property::AE_Effect_Support_URL(name) => {
-				write(&mut buffer, b"8BIM", b"eURL", |buffer| {
-					write_pstring(buffer, name)
-				})?;
-			},
+                write(&mut buffer, b"8BIM", b"eURL", |buffer| {
+                    write_pstring(buffer, name)
+                })?;
+            }
             Property::AE_Effect_Info_Flags(x) => {
-				write(&mut buffer, b"8BIM", b"eINF", |buffer| {
-					buffer.write_u32::<LittleEndian>(x)
-				})?;
-			},
+                write(&mut buffer, b"8BIM", b"eINF", |buffer| {
+                    // This shouldn't make a difference, but let's keep it consistent with the native tools
+                    if cfg!(target_os = "windows") {
+                        buffer.write_u32::<ByteOrder>(x)
+                    } else {
+                        buffer.write_u16::<ByteOrder>(x as u16)
+                    }
+                })?;
+            }
             Property::AE_Effect_Global_OutFlags(x) => {
-				write(&mut buffer, b"8BIM", b"eGLO", |buffer| {
-					buffer.write_u32::<LittleEndian>(x.bits())
-				})?;
-			},
+                write(&mut buffer, b"8BIM", b"eGLO", |buffer| {
+                    buffer.write_u32::<ByteOrder>(x.bits())
+                })?;
+            }
             Property::AE_Effect_Global_OutFlags_2(x) => {
-				write(&mut buffer, b"8BIM", b"eGL2", |buffer| {
-					buffer.write_u32::<LittleEndian>(x.bits())
-				})?;
-			},
+                write(&mut buffer, b"8BIM", b"eGL2", |buffer| {
+                    buffer.write_u32::<ByteOrder>(x.bits())
+                })?;
+            }
             Property::AE_Reserved(x) => {
-				write(&mut buffer, b"8BIM", b"aeRD", |buffer| {
-					buffer.write_u32::<LittleEndian>(x)
-				})?;
-			},
+                write(&mut buffer, b"8BIM", b"aeRD", |buffer| {
+                    buffer.write_u32::<ByteOrder>(x)
+                })?;
+            }
             Property::AE_Reserved_Info(x) => {
-				write(&mut buffer, b"8BIM", b"aeFL", |buffer| {
-					buffer.write_u32::<LittleEndian>(x)
-				})?;
-			},
+                write(&mut buffer, b"8BIM", b"aeFL", |buffer| {
+                    buffer.write_u32::<ByteOrder>(x)
+                })?;
+            }
             //-------------------------------------------------------------------
             // After Effects Image Format Extension PiPL properties
             //-------------------------------------------------------------------
-            Property::AE_ImageFormat_Extension_Info { major_version, minor_version, has_options, sequential_only, must_interact, has_interact_put, has_interact_get, has_time, has_video, still, has_file, output, input, signature } => {
-				write(&mut buffer, b"8BIM", b"FXMF", |buffer| {
-					buffer.write_u16::<LittleEndian>(major_version)?;
-					buffer.write_u16::<LittleEndian>(minor_version)?;
+            Property::AE_ImageFormat_Extension_Info {
+                major_version,
+                minor_version,
+                has_options,
+                sequential_only,
+                must_interact,
+                has_interact_put,
+                has_interact_get,
+                has_time,
+                has_video,
+                still,
+                has_file,
+                output,
+                input,
+                signature,
+            } => {
+                write(&mut buffer, b"8BIM", b"FXMF", |buffer| {
+                    buffer.write_u16::<ByteOrder>(major_version)?;
+                    buffer.write_u16::<ByteOrder>(minor_version)?;
+                    #[rustfmt::skip]
                     let flags: u32 = if input            { 1u32 << 0 } else { 0 } |
                                      if output           { 1u32 << 1 } else { 0 } |
                                      if has_file         { 1u32 << 2 } else { 0 } |
@@ -829,19 +1046,40 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                                      if must_interact    { 1u32 << 8 } else { 0 } |
                                      if !sequential_only { 1u32 << 9 } else { 0 } |
                                      if !has_options     { 1u32 << 10 } else { 0 };
-                    buffer.write_u32::<LittleEndian>(flags)?;
-                    buffer.write_u32::<LittleEndian>(0)?; // Reserved.
-                    buffer.write_u32::<LittleEndian>(u32::from_be_bytes(signature))
-				})?;
-			},
+                    buffer.write_u32::<ByteOrder>(flags)?;
+                    buffer.write_u32::<ByteOrder>(0)?; // Reserved.
+                    buffer.write(&fourcc(&signature))?;
+                    Ok(())
+                })?;
+            }
             //-------------------------------------------------------------------
             // After Effects and Premiere ANIM PiPL properties
             //-------------------------------------------------------------------
-            Property::ANIM_FilterInfo { spec_version_major, spec_version_minor, filter_params_version, unity_pixel_aspec_tratio, any_pixel_aspect_ratio, drive_me, needs_dialog, params_pointer, params_handle, params_mac_handle, dialog_in_render, params_in_globals, bg_animatable, fg_animatable, geometric, randomness, number_of_parameters, match_name } => {
-				write(&mut buffer, b"8BIM", b"aFLT", |buffer| {
-                    buffer.write_u32::<LittleEndian>(spec_version_major)?;
-                    buffer.write_u32::<LittleEndian>(spec_version_minor)?;
-                    buffer.write_u32::<LittleEndian>(filter_params_version)?;
+            Property::ANIM_FilterInfo {
+                spec_version_major,
+                spec_version_minor,
+                filter_params_version,
+                unity_pixel_aspec_tratio,
+                any_pixel_aspect_ratio,
+                drive_me,
+                needs_dialog,
+                params_pointer,
+                params_handle,
+                params_mac_handle,
+                dialog_in_render,
+                params_in_globals,
+                bg_animatable,
+                fg_animatable,
+                geometric,
+                randomness,
+                number_of_parameters,
+                match_name,
+            } => {
+                write(&mut buffer, b"8BIM", b"aFLT", |buffer| {
+                    buffer.write_u32::<ByteOrder>(spec_version_major)?;
+                    buffer.write_u32::<ByteOrder>(spec_version_minor)?;
+                    buffer.write_u32::<ByteOrder>(filter_params_version)?;
+                    #[rustfmt::skip]
                     let flags: u32 = if randomness               { 1u32 << 0 } else { 0 } |  // ANIM_FF_HAS_RANDOMNESS (AE only)
                                      if !geometric               { 1u32 << 1 } else { 0 } |  // ANIM_FF_NON_GEOMETRIC (AE only)
                                      if fg_animatable            { 1u32 << 2 } else { 0 } |  // ANIM_FF_FG_ANIMATABLE (AE only)
@@ -859,64 +1097,101 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                                      if false                    { 1u32 << 14 } else { 0 } | // ANIM_FF_RESERVED3 (spare)
                                      if false                    { 1u32 << 15 } else { 0 } | // ANIM_FF_RESERVED4 (spare)
                                      if any_pixel_aspect_ratio   { 1u32 << 16 } else { 0 } | // ANIM_FF_ANY_PAR
-                                     if unity_pixel_aspec_tratio { 1u32 << 17 } else { 0 };  // ANIM_FF_UNITY_PAR
+                                     if unity_pixel_aspec_tratio { 1u32 << 17 } else { 0 }; // ANIM_FF_UNITY_PAR
 
-                    buffer.write_u32::<LittleEndian>(flags)?;
-                    buffer.write_u32::<LittleEndian>(number_of_parameters)?;
+                    buffer.write_u32::<ByteOrder>(flags)?;
+                    buffer.write_u32::<ByteOrder>(number_of_parameters)?;
 
                     let match_name_buf = match_name.as_bytes();
                     assert!(match_name_buf.len() < 32);
                     buffer.extend(match_name_buf);
-                    for _ in 0..(32 - match_name_buf.len()) { buffer.push(0); }
+                    for _ in 0..(32 - match_name_buf.len()) {
+                        buffer.push(0);
+                    }
 
-                    buffer.write_u32::<LittleEndian>(0)?; // Operates in place - not currently implemented
-                    buffer.write_u32::<LittleEndian>(0)?; // reserved
-                    buffer.write_u32::<LittleEndian>(0)?; // reserved
-                    buffer.write_u32::<LittleEndian>(0)   // reserved
-				})?;
-			},
-            Property::ANIM_ParamAtom { external_name, match_id, data_type, ui_type, valid_min, valid_max, ui_min, ui_max, scale_ui_range, animate_param, restrict_bounds, space_is_relative, res_dependant, property_size }  => {
-				write(&mut buffer, b"8BIM", b"aPAR", |buffer| {
+                    buffer.write_u32::<ByteOrder>(0)?; // Operates in place - not currently implemented
+                    buffer.write_u32::<ByteOrder>(0)?; // reserved
+                    buffer.write_u32::<ByteOrder>(0)?; // reserved
+                    buffer.write_u32::<ByteOrder>(0) // reserved
+                })?;
+            }
+            Property::ANIM_ParamAtom {
+                external_name,
+                match_id,
+                data_type,
+                ui_type,
+                valid_min,
+                valid_max,
+                ui_min,
+                ui_max,
+                scale_ui_range,
+                animate_param,
+                restrict_bounds,
+                space_is_relative,
+                res_dependant,
+                property_size,
+            } => {
+                write(&mut buffer, b"8BIM", b"aPAR", |buffer| {
                     // TODO: MUST SPECIFY THE FIRST 0 u32 - buffer[4..8]
 
                     let external_name = external_name.as_bytes();
                     assert!(external_name.len() < 32);
                     buffer.extend(external_name);
-                    for _ in 0..(32 - external_name.len()) { buffer.push(0); }
-                    buffer.write_u32::<LittleEndian>(match_id)?;
-                    buffer.write_u32::<LittleEndian>(data_type as u32)?; // obsolete, don't use OPAQUE with Premiere
-                    buffer.write_u32::<LittleEndian>(ui_type as u32)?; // UI types are only used by AE
-                    buffer.write_f64::<LittleEndian>(valid_min)?; // used for UI type slider - AE only
-                    buffer.write_f64::<LittleEndian>(valid_max)?; // used for UI type slider - AE only
-                    buffer.write_f64::<LittleEndian>(ui_min)?; // used for UI type slider - AE only
-                    buffer.write_f64::<LittleEndian>(ui_max)?; // used for UI type slider - AE only
-
+                    for _ in 0..(32 - external_name.len()) {
+                        buffer.push(0);
+                    }
+                    buffer.write_u32::<ByteOrder>(match_id)?;
+                    buffer.write_u32::<ByteOrder>(data_type as u32)?; // obsolete, don't use OPAQUE with Premiere
+                    buffer.write_u32::<ByteOrder>(ui_type as u32)?; // UI types are only used by AE
+                    buffer.write_f64::<ByteOrder>(valid_min)?; // used for UI type slider - AE only
+                    buffer.write_f64::<ByteOrder>(valid_max)?; // used for UI type slider - AE only
+                    buffer.write_f64::<ByteOrder>(ui_min)?; // used for UI type slider - AE only
+                    buffer.write_f64::<ByteOrder>(ui_max)?; // used for UI type slider - AE only
+                    #[rustfmt::skip]
                     let flags: u32 = if res_dependant     { 1u32 << 0 } else { 0 } |
                                      if space_is_relative { 1u32 << 1 } else { 0 } |
                                      if restrict_bounds   { 1u32 << 2 } else { 0 } |
                                      if animate_param     { 1u32 << 3 } else { 0 } |
                                      if scale_ui_range    { 1u32 << 4 } else { 0 };
-                    buffer.write_u32::<LittleEndian>(flags)?;
+                    buffer.write_u32::<ByteOrder>(flags)?;
 
-                    buffer.write_u32::<LittleEndian>(property_size)?; // size of property described in bytes (short = 2, long = 4, etc.)
+                    buffer.write_u32::<ByteOrder>(property_size)?; // size of property described in bytes (short = 2, long = 4, etc.)
 
-                    buffer.write_u32::<LittleEndian>(0)?; // reserved0
-                    buffer.write_u32::<LittleEndian>(0)?; // reserved1
-                    buffer.write_u32::<LittleEndian>(0)?; // reserved2
-                    buffer.write_u32::<LittleEndian>(0)   // reserved3
-				})?;
-			},
+                    buffer.write_u32::<ByteOrder>(0)?; // reserved0
+                    buffer.write_u32::<ByteOrder>(0)?; // reserved1
+                    buffer.write_u32::<ByteOrder>(0)?; // reserved2
+                    buffer.write_u32::<ByteOrder>(0) // reserved3
+                })?;
+            }
             //-------------------------------------------------------------------
             // Premiere Transition Effect PiPL properties
             //-------------------------------------------------------------------
-            Property::Pr_Effect_Info { version, valid_corners_mask, initial_corners, exclusive_dialog, needs_callbacks_at_setup, direct_comp_data, want_initial_setup_call, treat_as_transition, has_custom_dialog, highlight_opposite_corners, exclusive, reversible, have_edges, have_start_point, have_end_point, more_flags }  => {
-				write(&mut buffer, b"PrMr", b"pOPT", |buffer| {
-                    buffer.write_u32::<LittleEndian>(version)?;
+            Property::Pr_Effect_Info {
+                version,
+                valid_corners_mask,
+                initial_corners,
+                exclusive_dialog,
+                needs_callbacks_at_setup,
+                direct_comp_data,
+                want_initial_setup_call,
+                treat_as_transition,
+                has_custom_dialog,
+                highlight_opposite_corners,
+                exclusive,
+                reversible,
+                have_edges,
+                have_start_point,
+                have_end_point,
+                more_flags,
+            } => {
+                write(&mut buffer, b"PrMr", b"pOPT", |buffer| {
+                    buffer.write_u32::<ByteOrder>(version)?;
 
                     // Valid corners mask and initial corners (lsb to msb):
                     // bitTop | bitRight | bitBottom | bitLeft | bitUpperRight | bitLowerRight | bitLowerLeft | bitUpperLeft
                     buffer.write_u8(valid_corners_mask as u8)?;
                     buffer.write_u8(initial_corners as u8)?;
+                    #[rustfmt::skip]
                     let flags: u8 = if highlight_opposite_corners { 1 << 0 } else { 0 } |
                                     if has_custom_dialog          { 1 << 1 } else { 0 } |
                                     if !treat_as_transition       { 1 << 2 } else { 0 } |
@@ -931,161 +1206,223 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                     buffer.write_u8(have_start_point as u8)?;
                     buffer.write_u8(have_end_point as u8)?;
 
-                    buffer.write_u32::<LittleEndian>(more_flags)
-				})?;
-			},
+                    buffer.write_u32::<ByteOrder>(more_flags)
+                })?;
+            }
             // The text description of the transition.
             Property::Pr_Effect_Description(desc) => {
                 write(&mut buffer, b"PrMr", b"TEXT", |buffer| {
                     write_pstring(buffer, desc)
                 })?;
-            },
+            }
             //-------------------------------------------------------------------
             // Illustrator/SweetPea PiPL properties
             //-------------------------------------------------------------------
             Property::InterfaceVersion(x) => {
                 write(&mut buffer, b"ADBE", b"ivrs", |buffer| {
-                    buffer.write_u32::<LittleEndian>(x)
+                    buffer.write_u32::<ByteOrder>(x)
                 })?;
-            },
+            }
             Property::AdapterVersion(x) => {
                 write(&mut buffer, b"ADBE", b"adpt", |buffer| {
-                    buffer.write_u32::<LittleEndian>(x)
+                    buffer.write_u32::<ByteOrder>(x)
                 })?;
-            },
+            }
             Property::SP_STSP(x) => {
                 write(&mut buffer, b"ADBE", b"STSP", |buffer| {
-                    buffer.write_u32::<LittleEndian>(x)
+                    buffer.write_u32::<ByteOrder>(x)
                 })?;
-            },
+            }
             Property::InternalName(name) => {
                 write(&mut buffer, b"ADBE", b"pinm", |buffer| {
                     write_cstring(buffer, name)
                 })?;
-            },
+            }
             Property::Imports(imports) => {
                 write(&mut buffer, b"ADBE", b"impt", |buffer| {
-                    buffer.write_u32::<LittleEndian>(imports.len() as u32)?;
+                    buffer.write_u32::<ByteOrder>(imports.len() as u32)?;
                     for import in imports {
                         let len = buffer.len();
 
-                        buffer.write_u32::<LittleEndian>(0)?;
+                        buffer.write_u32::<ByteOrder>(0)?;
                         write_cstring(buffer, import.0)?;
-                        buffer.write_u32::<LittleEndian>(import.1)?; // Suite version.
+                        buffer.write_u32::<ByteOrder>(import.1)?; // Suite version.
 
                         let new_len = (buffer.len() - len) as u32;
-                        buffer[len..len+4].clone_from_slice(&new_len.to_le_bytes());
+                        buffer[len..len + 4].clone_from_slice(&u32_bytes(new_len));
                     }
                     Ok(())
                 })?;
-            },
+            }
             Property::Exports(exports) => {
                 write(&mut buffer, b"ADBE", b"expt", |buffer| {
-                    buffer.write_u32::<LittleEndian>(exports.len() as u32)?;
+                    buffer.write_u32::<ByteOrder>(exports.len() as u32)?;
                     for export in exports {
                         let len = buffer.len();
 
-                        buffer.write_u32::<LittleEndian>(0)?;
+                        buffer.write_u32::<ByteOrder>(0)?;
                         write_cstring(buffer, export.0)?;
-                        buffer.write_u32::<LittleEndian>(export.1)?; // Suite version.
+                        buffer.write_u32::<ByteOrder>(export.1)?; // Suite version.
 
                         let new_len = (buffer.len() - len) as u32;
-                        buffer[len..len+4].clone_from_slice(&new_len.to_le_bytes());
+                        buffer[len..len + 4].clone_from_slice(&u32_bytes(new_len));
                     }
                     Ok(())
                 })?;
-            },
+            }
             Property::Description(desc) => {
                 write(&mut buffer, b"ADBE", b"desc", |buffer| {
                     write_cstring(buffer, desc)
                 })?;
-            },
+            }
             Property::Keywords(keywords) => {
                 write(&mut buffer, b"ADBE", b"keyw", |buffer| {
-                    buffer.write_u32::<LittleEndian>(keywords.len() as u32)?;
+                    buffer.write_u32::<ByteOrder>(keywords.len() as u32)?;
                     for keyword in keywords {
                         let len = buffer.len();
 
-                        buffer.write_u32::<LittleEndian>(0)?;
+                        buffer.write_u32::<ByteOrder>(0)?;
                         write_cstring(buffer, keyword)?;
 
                         let new_len = (buffer.len() - len) as u32;
-                        buffer[len..len+4].clone_from_slice(&new_len.to_le_bytes());
+                        buffer[len..len + 4].clone_from_slice(&u32_bytes(new_len));
                     }
                     Ok(())
                 })?;
-            },
+            }
             Property::Title(title) => {
                 write(&mut buffer, b"ADBE", b"titl", |buffer| {
                     write_cstring(buffer, title)
                 })?;
-            },
-            Property::Messages { startup_required, purge_cache, shutdown_required, accept_property } => {
+            }
+            Property::Messages {
+                startup_required,
+                purge_cache,
+                shutdown_required,
+                accept_property,
+            } => {
                 write(&mut buffer, b"ADBE", b"AcpM", |buffer| {
+                    #[rustfmt::skip]
                     let flags: u32 = if accept_property   { 1u32 << 0 } else { 0 } |
                                      if shutdown_required { 1u32 << 1 } else { 0 } | // Default is to give shutdown msg.
                                      if purge_cache       { 1u32 << 2 } else { 0 } |
                                      if startup_required  { 1u32 << 3 } else { 0 };
-                    buffer.write_u32::<LittleEndian>(flags)
+                    buffer.write_u32::<ByteOrder>(flags)
                 })?;
-            },
+            }
             //-------------------------------------------------------------------
             // PhotoDeluxe PiPL properties
             //-------------------------------------------------------------------
-            Property::ButtonIcon { version, mac_icon_type, win_icon_type, resource_id, icon_name } => {
+            Property::ButtonIcon {
+                version,
+                mac_icon_type,
+                win_icon_type,
+                resource_id,
+                icon_name,
+            } => {
                 write(&mut buffer, b"8BIM", b"btni", |buffer| {
-                    buffer.write_u32::<LittleEndian>(version)?; // version
+                    buffer.write_u32::<ByteOrder>(version)?; // version
                     match mac_icon_type {
-                        ButtonIconType::None    => buffer.write_u32::<LittleEndian>(0)?,
-                        ButtonIconType::MacCICN => buffer.write_u32::<LittleEndian>(1)?,
+                        ButtonIconType::None => buffer.write_u32::<ByteOrder>(0)?,
+                        ButtonIconType::MacCICN => buffer.write_u32::<ByteOrder>(1)?,
                         _ => {}
                     }
                     match win_icon_type {
-                        ButtonIconType::None        => buffer.write_u32::<LittleEndian>(0)?,
-                        ButtonIconType::WindowsICON => buffer.write_u32::<LittleEndian>(1)?,
+                        ButtonIconType::None => buffer.write_u32::<ByteOrder>(0)?,
+                        ButtonIconType::WindowsICON => buffer.write_u32::<ByteOrder>(1)?,
                         _ => {}
                     }
-                    buffer.write_u32::<LittleEndian>(resource_id)?;
+                    buffer.write_u32::<ByteOrder>(resource_id)?;
                     write_cstring(buffer, icon_name)
                 })?;
-            },
+            }
             //-------------------------------------------------------------------
             // PhotoDeluxe extension to Import plug-in PiPL properties
             //-------------------------------------------------------------------
             Property::Class { version, class } => {
                 write(&mut buffer, b"8BIM", b"clas", |buffer| {
-                    buffer.write_u32::<LittleEndian>(version)?; // version
-                    buffer.write_u32::<LittleEndian>(class as u32)
+                    buffer.write_u32::<ByteOrder>(version)?; // version
+                    buffer.write_u32::<ByteOrder>(class as u32)
                 })?;
-            },
+            }
             Property::PreviewFile { version, filename } => {
                 write(&mut buffer, b"8BIM", b"prvw", |buffer| {
-                    buffer.write_u32::<LittleEndian>(version)?; // version
+                    buffer.write_u32::<ByteOrder>(version)?; // version
                     write_cstring(buffer, filename)
                 })?;
             }
         }
     }
 
-	Ok(buffer)
+    Ok(buffer)
 }
 
 pub fn plugin_build(properties: Vec<Property>) {
     for prop in properties.iter() {
         match prop {
-            Property::AE_Effect_Version((a, b, c, d, e)) => {
-                println!("cargo:rustc-env=PIPL_VERSION={}", pf_version(*a, *b, *c, *d, *e));
-            },
+            Property::Kind(x) => {
+                println!(
+                    "cargo:rustc-env=PIPL_KIND={}",
+                    u32::from_le_bytes(x.as_bytes())
+                );
+            }
+            Property::Name(x) => {
+                println!("cargo:rustc-env=PIPL_NAME={x}");
+            }
+            Property::Category(x) => {
+                println!("cargo:rustc-env=PIPL_CATEGORY={x}");
+            }
+            Property::AE_Effect_Match_Name(x) => {
+                println!("cargo:rustc-env=PIPL_MATCH_NAME={x}");
+            }
+            Property::AE_Effect_Support_URL(x) => {
+                println!("cargo:rustc-env=PIPL_SUPPORT_URL={x}");
+            }
+            Property::CodeWin64X86(x) => {
+                println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
+            }
+            Property::CodeMacIntel64(x) => {
+                println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
+            }
+            Property::CodeMacARM64(x) => {
+                println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
+            }
+            Property::AE_Effect_Spec_Version { major, minor } => {
+                println!("cargo:rustc-env=PIPL_AE_SPEC_VER_MAJOR={major}");
+                println!("cargo:rustc-env=PIPL_AE_SPEC_VER_MINOR={minor}");
+            }
+            Property::AE_Reserved_Info(x) => {
+                println!("cargo:rustc-env=PIPL_AE_RESERVED={}", x);
+            }
+            Property::AE_Effect_Version {
+                version,
+                subversion,
+                bugversion,
+                stage,
+                build,
+            } => {
+                println!(
+                    "cargo:rustc-env=PIPL_VERSION={}",
+                    pf_version(*version, *subversion, *bugversion, *stage, *build)
+                );
+            }
             Property::AE_Effect_Global_OutFlags(x) => {
                 println!("cargo:rustc-env=PIPL_OUTFLAGS={}", x.bits());
-            },
+            }
             Property::AE_Effect_Global_OutFlags_2(x) => {
                 println!("cargo:rustc-env=PIPL_OUTFLAGS2={}", x.bits());
-            },
-            _ => { }
+            }
+            _ => {}
         }
     }
     let pipl = build_pipl(properties).unwrap();
 
-	resource::produce_resource(&pipl, Some(&format!("{}/../../../{}.rsrc", std::env::var("OUT_DIR").unwrap(), std::env::var("CARGO_PKG_NAME").unwrap())));
+    resource::produce_resource(
+        &pipl,
+        Some(&format!(
+            "{}/../../../{}.rsrc",
+            std::env::var("OUT_DIR").unwrap(),
+            std::env::var("CARGO_PKG_NAME").unwrap()
+        )),
+    );
 }

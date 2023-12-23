@@ -178,9 +178,7 @@ impl Drop for PicaBasicSuite {
     }
 }
 
-#[derive(
-    Copy, Clone, Debug, Eq, PartialEq, UnsafeFromPrimitive
-)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, UnsafeFromPrimitive)]
 #[cfg_attr(target_os = "windows", repr(i32))]
 #[cfg_attr(target_os = "macos", repr(u32))]
 pub enum Error {

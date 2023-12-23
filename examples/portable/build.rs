@@ -1,10 +1,10 @@
-
 use pipl::*;
 
-pub const PF_PLUG_IN_VERSION: u16 = 13;
-pub const PF_PLUG_IN_SUBVERS: u16 = 28;
+const PF_PLUG_IN_VERSION: u16 = 13;
+const PF_PLUG_IN_SUBVERS: u16 = 28;
 
 fn main() {
+    #[rustfmt::skip]
     pipl::plugin_build(vec![
         Property::Kind(PIPLType::AEEffect),
         Property::Name("Portable"),
@@ -19,7 +19,13 @@ fn main() {
 
         Property::AE_PiPL_Version { major: 2, minor: 0 },
         Property::AE_Effect_Spec_Version { major: PF_PLUG_IN_VERSION, minor: PF_PLUG_IN_SUBVERS },
-        Property::AE_Effect_Version((3, 3, 0, 0, 1)),
+        Property::AE_Effect_Version {
+            version: 3,
+            subversion: 3,
+            bugversion: 0,
+            stage: Stage::Develop,
+            build: 1,
+        },
         Property::AE_Effect_Info_Flags(0),
         Property::AE_Effect_Global_OutFlags(
             OutFlags::PixIndependent |
