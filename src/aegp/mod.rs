@@ -590,7 +590,7 @@ impl IOInSuite {
     pub fn in_spec_options_handle(
         &self,
         in_spec_handle: aeio::InSpecHandle,
-    ) -> Result<aeio::AEIOHandle, Error> {
+    ) -> Result<aeio::Handle, Error> {
         let mut in_spec_options_handle = std::mem::MaybeUninit::<ae_sys::AEIO_Handle>::uninit();
 
         match ae_call_suite_fn!(
@@ -599,7 +599,7 @@ impl IOInSuite {
             in_spec_handle.as_ptr(),
             in_spec_options_handle.as_mut_ptr() as _
         ) {
-            Ok(()) => Ok(aeio::AEIOHandle::from_raw(unsafe {
+            Ok(()) => Ok(aeio::Handle::from_raw(unsafe {
                 in_spec_options_handle.assume_init()
             })),
             Err(e) => Err(e),

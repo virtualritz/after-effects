@@ -3,8 +3,8 @@ use pipl::*;
 const PF_PLUG_IN_VERSION: u16 = 13;
 const PF_PLUG_IN_SUBVERS: u16 = 28;
 
+#[rustfmt::skip]
 fn main() {
-    #[rustfmt::skip]
     pipl::plugin_build(vec![
         Property::Kind(PIPLType::AEEffect),
         Property::Name("Portable"),
