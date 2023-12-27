@@ -1407,9 +1407,27 @@ pub fn plugin_build(properties: Vec<Property>) {
                 );
             }
             Property::AE_Effect_Global_OutFlags(x) => {
+                if x.contains(OutFlags::IDoDialog) {
+                    println!("cargo:rustc-cfg=does_dialog");
+                }
+                if x.contains(OutFlags::IUseAudio) || x.contains(OutFlags::AudioEffectToo) || x.contains(OutFlags::AudioEffectOnly) {
+                    println!("cargo:rustc-cfg=uses_audio");
+                }
+                if x.contains(OutFlags::SendUpdateParamsUI) {
+                    println!("cargo:rustc-cfg=sends_update_params_ui");
+                }
                 println!("cargo:rustc-env=PIPL_OUTFLAGS={}", x.bits());
             }
             Property::AE_Effect_Global_OutFlags_2(x) => {
+                if x.contains(OutFlags2::SupportsGpuRenderF32) {
+                    println!("cargo:rustc-cfg=gpu_render");
+                }
+                if x.contains(OutFlags2::SupportsSmartRender) {
+                    println!("cargo:rustc-cfg=smart_render");
+                }
+                if x.contains(OutFlags2::SupportsThreadedRendering) {
+                    println!("cargo:rustc-cfg=threaded_rendering");
+                }
                 println!("cargo:rustc-env=PIPL_OUTFLAGS2={}", x.bits());
             }
             _ => {}

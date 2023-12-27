@@ -13,8 +13,8 @@ name = "pipl"
 byteorder = "1.5"
 bitflags = "2.4"
 winres = "0.1"
-pretty-hex = "0.3"
+pretty-hex = "0.4"
 
 [dev-dependencies]
 similar-asserts = "1.5.0"
-pretty-hex = "0.3"
+pretty-hex = "0.4"

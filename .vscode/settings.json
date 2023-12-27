@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "chrono": "cpp",
+        "xlocale": "cpp"
+    },
+    "rust-analyzer.linkedProjects": [
+        "./Cargo.toml",
+        "./after-effects-sys/Cargo.toml",
+        "./pipl/Cargo.toml",
+        "./examples/portable/Cargo.toml",
+        "./examples/simplest/Cargo.toml"
+    ]
+}

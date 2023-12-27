@@ -86,6 +86,10 @@ pub type EnumIntType = i32;
 #[macro_use]
 mod macros;
 
+#[macro_use]
+mod plugin_base;
+pub use plugin_base::*;
+
 pub mod aegp;
 pub use aegp::*;
 pub mod aeio;

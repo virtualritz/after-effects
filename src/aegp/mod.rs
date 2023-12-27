@@ -639,7 +639,7 @@ impl EffectSuite {
         plugin_id: PluginID,
         effect_ref: EffectRefHandle,
         time: Time,
-        command: pf::Command,
+        command: &pf::Command,
         extra_payload: Option<&T>,
     ) -> Result<(), Error> {
         match ae_call_suite_fn!(
@@ -648,7 +648,7 @@ impl EffectSuite {
             plugin_id,
             effect_ref.as_ptr(),
             &time as *const _ as *const ae_sys::A_Time,
-            command as ae_sys::PF_Cmd,
+            command.as_raw(),
             // T is Sized so it can never be a fat pointer
             // which means we are safe to transmute here.
             // Alternatively we could write

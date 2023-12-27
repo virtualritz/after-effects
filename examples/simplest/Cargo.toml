@@ -1,5 +1,5 @@
 [package]
-name = "portable"
+name = "simplest"
 version = "0.0.1"
 authors = ["Adrian <adrian.eddy@gmail.com>"]
 edition = "2021"
