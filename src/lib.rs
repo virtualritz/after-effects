@@ -474,15 +474,13 @@ impl Add<Time> for Time {
 
 /// Note that this has a different ordering
 /// of values than [`LegacyRect`]!!!
-#[derive(Debug, Copy, Clone, Hash)]
-#[repr(C)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
 pub struct Rect {
     pub left: i32,
     pub top: i32,
     pub right: i32,
     pub bottom: i32,
 }
-
 impl From<ae_sys::PF_LRect> for Rect {
     fn from(rect: ae_sys::PF_LRect) -> Self {
         Rect {
@@ -493,7 +491,6 @@ impl From<ae_sys::PF_LRect> for Rect {
         }
     }
 }
-
 impl From<Rect> for ae_sys::PF_LRect {
     fn from(rect: Rect) -> Self {
         ae_sys::PF_LRect {
@@ -508,6 +505,12 @@ impl From<Rect> for ae_sys::PF_LRect {
 impl Rect {
     pub fn is_empty(&self) -> bool {
         (self.left >= self.right) || (self.top >= self.bottom)
+    }
+    pub fn width(&self) -> i32 {
+        self.right - self.left
+    }
+    pub fn height(&self) -> i32 {
+        self.bottom - self.top
     }
 
     pub fn union<'a>(&'a mut self, other: &Rect) -> &'a mut Rect {

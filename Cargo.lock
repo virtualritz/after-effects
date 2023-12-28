@@ -15,6 +15,7 @@ dependencies = [
  "nalgebra",
  "num-traits",
  "num_enum",
+ "paste",
  "serde",
  "serde_json",
  "ultraviolet",

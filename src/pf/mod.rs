@@ -18,6 +18,10 @@ mod command;
 pub use command::*;
 mod layer;
 pub use layer::*;
+mod gpu;
+pub use gpu::*;
+mod render;
+pub use render::*;
 
 #[derive(Debug, Copy, Clone, Default)]
 #[repr(C)]
@@ -1028,146 +1032,12 @@ impl<'a> Drop for FlatHandle<'a> {
 define_handle_wrapper!(ProgressInfo, PF_ProgPtr);
 
 #[derive(Copy, Clone, Debug)]
-pub struct SmartRenderCallbacks {
-    pub(crate) rc_ptr: *const ae_sys::PF_SmartRenderCallbacks,
-}
-
-impl SmartRenderCallbacks {
-    pub fn from_raw(rc_ptr: *const ae_sys::PF_SmartRenderCallbacks) -> Self {
-        Self { rc_ptr }
-    }
-
-    pub fn as_ptr(&self) -> *const ae_sys::PF_SmartRenderCallbacks {
-        self.rc_ptr
-    }
-
-    pub fn checkout_layer_pixels(
-        &self,
-        effect_ref: ProgressInfo,
-        checkout_id: u32,
-    ) -> Result<EffectWorld, Error> {
-        if let Some(checkout_layer_pixels) = unsafe { *self.rc_ptr }.checkout_layer_pixels {
-            let mut effect_world_ptr =
-                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
-
-            match unsafe {
-                checkout_layer_pixels(
-                    effect_ref.as_ptr(),
-                    checkout_id as i32,
-                    effect_world_ptr.as_mut_ptr(),
-                )
-            } as EnumIntType
-            {
-                ae_sys::PF_Err_NONE => Ok(EffectWorld {
-                    effect_world: unsafe { *effect_world_ptr.assume_init() },
-                }),
-                e => Err(Error::from(e)),
-            }
-        } else {
-            Err(Error::InvalidCallback)
-        }
-    }
-
-    pub fn checkin_layer_pixels(
-        &self,
-        effect_ref: ProgressInfo,
-        checkout_id: u32,
-    ) -> Result<(), Error> {
-        if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
-            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) }
-                as EnumIntType
-            {
-                ae_sys::PF_Err_NONE => Ok(()),
-                e => Err(Error::from(e)),
-            }
-        } else {
-            Err(Error::InvalidCallback)
-        }
-    }
-
-    pub fn checkout_output(&self, effect_ref: ProgressInfo) -> Result<EffectWorld, Error> {
-        if let Some(checkout_output) = unsafe { *self.rc_ptr }.checkout_output {
-            let mut effect_world_ptr =
-                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
-
-            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) }
-                as EnumIntType
-            {
-                ae_sys::PF_Err_NONE => Ok(EffectWorld {
-                    effect_world: unsafe { *effect_world_ptr.assume_init() },
-                }),
-                e => Err(Error::from(e)),
-            }
-        } else {
-            Err(Error::InvalidCallback)
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
 #[repr(i32)]
 pub enum ParamIndex {
     None = ae_sys::PF_ParamIndex_NONE,
     CheckAll = ae_sys::PF_ParamIndex_CHECK_ALL,
     CheckAllExceptLayerParams = ae_sys::PF_ParamIndex_CHECK_ALL_EXCEPT_LAYER_PARAMS,
     CheckAllHonorExclude = ae_sys::PF_ParamIndex_CHECK_ALL_HONOR_EXCLUDE,
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct PreRenderCallbacks {
-    pub(crate) rc_ptr: *const ae_sys::PF_PreRenderCallbacks,
-}
-
-impl PreRenderCallbacks {
-    pub fn from_raw(rc_ptr: *const ae_sys::PF_PreRenderCallbacks) -> Self {
-        Self { rc_ptr }
-    }
-
-    pub fn as_ptr(&self) -> *const ae_sys::PF_PreRenderCallbacks {
-        self.rc_ptr
-    }
-
-    pub fn checkout_layer(
-        &self,
-        effect_ref: ProgressInfo,
-        index: i32,
-        checkout_id: i32,
-        // FIXME: warp this struct
-        req: &ae_sys::PF_RenderRequest,
-        what_time: i32,
-        time_step: i32,
-        time_scale: u32,
-    ) -> Result<ae_sys::PF_CheckoutResult, Error> {
-        if let Some(checkout_layer) = unsafe { *self.rc_ptr }.checkout_layer {
-            let mut checkout_result = std::mem::MaybeUninit::<ae_sys::PF_CheckoutResult>::uninit();
-
-            match unsafe {
-                checkout_layer(
-                    effect_ref.as_ptr(),
-                    index,
-                    checkout_id,
-                    req,
-                    what_time,
-                    time_step,
-                    time_scale,
-                    checkout_result.as_mut_ptr(),
-                )
-            } as EnumIntType
-            {
-                ae_sys::PF_Err_NONE => Ok(unsafe { checkout_result.assume_init() }),
-                e => Err(Error::from(e)),
-            }
-        } else {
-            Err(Error::InvalidCallback)
-        }
-    }
-
-    /* FIXME
-    pub fn guid_mix_in_ptr(
-            effect_ref: ProgressInfo,
-            buf: [u8],
-        ) -> PF_Err,
-    >,*/
 }
 
 pub type ProgPtr = ae_sys::PF_ProgPtr;
@@ -1539,14 +1409,78 @@ impl PixelFormatSuite {
     pub fn add_supported_pixel_format(
         &self,
         effect_ref: ProgressInfo,
-        pixel_format: ae_sys::PF_PixelFormat,
+        pixel_format: pf::PixelFormat,
     ) -> Result<(), Error> {
+        let pixel_format: ae_sys::PF_PixelFormat = pixel_format.into();
         ae_call_suite_fn!(
             self.suite_ptr,
             AddSupportedPixelFormat,
             effect_ref.as_ptr(),
             pixel_format as EnumIntType
         )
+    }
+    pub fn add_pr_supported_pixel_format(
+        &self,
+        effect_ref: ProgressInfo,
+        pixel_format: pr::PixelFormat,
+    ) -> Result<(), Error> {
+        let pixel_format: ae_sys::PrPixelFormat = pixel_format.into();
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            AddSupportedPixelFormat,
+            effect_ref.as_ptr(),
+            pixel_format as EnumIntType
+        )
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum PixelFormat {
+    Argb32,
+    Argb64,
+    Argb128,
+    GpuBgra128,
+    Reserved,
+    Bgra32,
+    Vuya32,
+    NtscDv25,
+    PalDv25,
+    Invalid,
+    ForceLongInt,
+}
+impl From<after_effects_sys::PF_PixelFormat> for PixelFormat {
+    fn from(x: after_effects_sys::PF_PixelFormat) -> Self {
+        match x {
+            ae_sys::PF_PixelFormat_ARGB32         => PixelFormat::Argb32,
+            ae_sys::PF_PixelFormat_ARGB64         => PixelFormat::Argb64,
+            ae_sys::PF_PixelFormat_ARGB128        => PixelFormat::Argb128,
+            ae_sys::PF_PixelFormat_GPU_BGRA128    => PixelFormat::GpuBgra128,
+            ae_sys::PF_PixelFormat_RESERVED       => PixelFormat::Reserved,
+            ae_sys::PF_PixelFormat_BGRA32         => PixelFormat::Bgra32,
+            ae_sys::PF_PixelFormat_VUYA32         => PixelFormat::Vuya32,
+            ae_sys::PF_PixelFormat_NTSCDV25       => PixelFormat::NtscDv25,
+            ae_sys::PF_PixelFormat_PALDV25        => PixelFormat::PalDv25,
+            ae_sys::PF_PixelFormat_INVALID        => PixelFormat::Invalid,
+            ae_sys::PF_PixelFormat_FORCE_LONG_INT => PixelFormat::ForceLongInt,
+            _ => PixelFormat::Invalid,
+        }
+    }
+}
+impl Into<after_effects_sys::PF_PixelFormat> for PixelFormat {
+    fn into(self) -> after_effects_sys::PF_PixelFormat {
+        match self {
+            PixelFormat::Argb32       => ae_sys::PF_PixelFormat_ARGB32,
+            PixelFormat::Argb64       => ae_sys::PF_PixelFormat_ARGB64,
+            PixelFormat::Argb128      => ae_sys::PF_PixelFormat_ARGB128,
+            PixelFormat::GpuBgra128   => ae_sys::PF_PixelFormat_GPU_BGRA128,
+            PixelFormat::Reserved     => ae_sys::PF_PixelFormat_RESERVED,
+            PixelFormat::Bgra32       => ae_sys::PF_PixelFormat_BGRA32,
+            PixelFormat::Vuya32       => ae_sys::PF_PixelFormat_VUYA32,
+            PixelFormat::NtscDv25     => ae_sys::PF_PixelFormat_NTSCDV25,
+            PixelFormat::PalDv25      => ae_sys::PF_PixelFormat_PALDV25,
+            PixelFormat::Invalid      => ae_sys::PF_PixelFormat_INVALID,
+            PixelFormat::ForceLongInt => ae_sys::PF_PixelFormat_FORCE_LONG_INT,
+        }
     }
 }
 
@@ -1564,7 +1498,7 @@ impl WorldSuite2 {
     pub fn get_pixel_format(
         &self,
         effect_world: EffectWorld,
-    ) -> Result<ae_sys::PF_PixelFormat, Error> {
+    ) -> Result<PixelFormat, Error> {
         let mut pixel_format = ae_sys::PF_PixelFormat_INVALID;
 
         ae_call_suite_fn!(
@@ -1573,53 +1507,7 @@ impl WorldSuite2 {
             effect_world.as_ptr(),
             &mut pixel_format
         )?;
-        Ok(pixel_format)
-    }
-}
-
-define_suite!(
-    GPUDeviceSuite1,
-    PF_GPUDeviceSuite1,
-    kPFGPUDeviceSuite,
-    kPFGPUDeviceSuiteVersion1
-);
-impl GPUDeviceSuite1 {
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
-    pub fn get_device_info(
-        &self,
-        in_data_handle: InData,
-        device_index: u32,
-    ) -> Result<ae_sys::PF_GPUDeviceInfo, Error> {
-        let mut device_info = std::mem::MaybeUninit::<ae_sys::PF_GPUDeviceInfo>::uninit();
-
-        match ae_call_suite_fn!(
-            self.suite_ptr,
-            GetDeviceInfo,
-            in_data_handle.effect_ref().as_ptr(),
-            device_index,
-            device_info.as_mut_ptr() as _
-        ) {
-            Ok(()) => Ok(unsafe { device_info.assume_init() }),
-            Err(e) => Err(e),
-        }
-    }
-    pub fn get_gpu_world_data(
-        &self,
-        in_data_handle: InData,
-        mut world: EffectWorld,
-    ) -> Result<*mut std::ffi::c_void, Error> {
-        let mut data = std::ptr::null_mut();
-
-        ae_call_suite_fn!(
-            self.suite_ptr,
-            GetGPUWorldData,
-            in_data_handle.effect_ref().as_ptr(),
-            world.as_mut_ptr(),
-            &mut data
-        )?;
-        Ok(data)
+        Ok(pixel_format.into())
     }
 }
 

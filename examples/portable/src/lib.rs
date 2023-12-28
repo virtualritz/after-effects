@@ -1,19 +1,18 @@
-use ae::register_plugin;
 use after_effects as ae;
 use after_effects_sys as ae_sys;
 
-#[derive(Eq, PartialEq, Hash)]
-enum MyParams {
-    Slider,
+#[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
+enum Params {
+    MixChannels,
 }
 
 #[derive(Default)]
-struct PortablePlugin {}
+struct Plugin {}
 
 #[derive(Default)]
-struct PortableInstance {}
+struct Instance {}
 
-register_plugin!(PortablePlugin, PortableInstance, MyParams);
+ae::register_plugin!(Plugin, Instance, Params);
 
 fn detect_host(in_data: ae::InData) -> String {
     use ae_sys::*;
@@ -85,16 +84,16 @@ fn detect_host(in_data: ae::InData) -> String {
     format!("Running in {app}")
 }
 
-impl AdobePluginGlobal for PortablePlugin {
+impl AdobePluginGlobal for Plugin {
     fn can_load(_host_name: &str, _host_version: &str) -> bool {
         true
     }
 
-    fn params_setup(&self, params: &mut ae::Parameters<MyParams>) -> Result<(), Error> {
+    fn params_setup(&self, params: &mut ae::Parameters<Params>) -> Result<(), Error> {
         params.add_param(
-            MyParams::Slider,
+            Params::MixChannels,
             "Mix channels",
-            *ae::FloatSliderDef::new()
+            ae::FloatSliderDef::new()
                 .set_valid_min(0.0)
                 .set_slider_min(0.0)
                 .set_valid_max(200.0)
@@ -126,7 +125,7 @@ impl AdobePluginGlobal for PortablePlugin {
     }
 }
 
-impl AdobePluginInstance for PortableInstance {
+impl AdobePluginInstance for Instance {
     fn flatten(&self) -> Result<Vec<u8>, Error> {
         Ok(Vec::new())
     }
@@ -134,19 +133,16 @@ impl AdobePluginInstance for PortableInstance {
         Ok(Self {})
     }
 
+    fn user_changed_param(&mut self, _: Params, _: &ae::Parameters<Params>) -> Result<(), ae::Error> { Ok(()) }
+
     fn render(
         &self,
         in_data: ae::InData,
         in_layer: &Layer,
         out_layer: &mut Layer,
-        params: &ae::Parameters<MyParams>,
+        params: &ae::Parameters<Params>,
     ) -> Result<(), ae::Error> {
-        let slider_value =
-            if let Some(ae::Param::FloatSlider(slider)) = params.get(MyParams::Slider) {
-                slider.value()
-            } else {
-                0.0
-            };
+        let slider_value = params.get_float_slider(Params::MixChannels).value();
 
         // If the slider is 0 just make a direct copy.
         if slider_value < 0.001 {
@@ -155,18 +151,13 @@ impl AdobePluginInstance for PortableInstance {
             let extent_hint = in_data.extent_hint();
             let out_extent_hint = out_layer.extent_hint();
             // clear all pixels outside extent_hint.
-            if extent_hint.left != out_extent_hint.left
-                || extent_hint.top != out_extent_hint.top
-                || extent_hint.right != out_extent_hint.right
-                || extent_hint.bottom != out_extent_hint.bottom
-            {
+            if extent_hint != out_extent_hint {
                 out_layer.fill(Pixel::default(), Some(out_extent_hint))?;
             }
 
             // iterate over image data.
-            let progress_height = extent_hint.top - extent_hint.bottom;
             #[rustfmt::skip]
-            in_layer.iterate(out_layer, 0, progress_height, extent_hint, |_x: i32, _y: i32, pixel: ae::Pixel| -> Result<ae::Pixel, Error> {
+            in_layer.iterate(out_layer, 0, extent_hint.height(), extent_hint, |_x: i32, _y: i32, pixel: ae::Pixel| -> Result<ae::Pixel, Error> {
                 // Mix the values. The higher the slider, the more we blend the channel with the average of all channels
                 let average = (pixel.red as f64 + pixel.green as f64 + pixel.blue as f64) / 3.0;
                 // let midway_calc = (slider_value * average) + (200.0 - slider_value) * pixel.red as f64;

@@ -16,7 +16,7 @@ pub enum Command {
     FrameSetup,
     Render,
     FrameSetdown,
-    UserChangedParam         { extra: *mut ae_sys::PF_UserChangedParamExtra },
+    UserChangedParam         { param_index: usize },
     UpdateParamsUi,
     Event,
     GetExternalDependencies  { extra: *mut ae_sys::PF_ExtDependenciesExtra },
@@ -26,21 +26,21 @@ pub enum Command {
     AudioSetup,
     AudioSetdown,
     ArbitraryCallback        { extra: *mut ae_sys::PF_ArbParamsExtra },
-    SmartPreRender           { extra: *mut ae_sys::PF_PreRenderExtra },
-    SmartRender              { extra: *mut ae_sys::PF_SmartRenderExtra },
+    SmartPreRender           { extra: PreRenderExtra },
+    SmartRender              { extra: SmartRenderExtra },
     GetFlattenedSequenceData,
     TranslateParamsToPrefs   { extra: *mut ae_sys::PF_TranslateParamsToPrefsExtra },
-    SmartRenderGpu,
-    GpuDeviceSetup           { extra: *mut ae_sys::PF_GPUDeviceSetupExtra },
-    GpuDeviceSetdown         { extra: *mut ae_sys::PF_GPUDeviceSetdownExtra },
+    SmartRenderGpu           { extra: SmartRenderExtra },
+    GpuDeviceSetup           { extra: GpuDeviceSetupExtra },
+    GpuDeviceSetdown         { extra: GpuDeviceSetdownExtra },
 }
 
 impl Command {
     pub fn from_entry_point(
         cmd: ae_sys::PF_Cmd,
-        in_data_ptr: *const ae_sys::PF_InData,
-        params: *mut *mut ae_sys::PF_ParamDef,
-        output: *mut ae_sys::PF_LayerDef,
+        _in_data_ptr: *const ae_sys::PF_InData,
+        _params: *mut *mut ae_sys::PF_ParamDef,
+        _output: *mut ae_sys::PF_LayerDef,
         extra: *mut std::ffi::c_void
     ) -> Self {
         match cmd {
@@ -56,7 +56,7 @@ impl Command {
             ae_sys::PF_Cmd_FRAME_SETUP                 => Command::FrameSetup,
             ae_sys::PF_Cmd_RENDER                      => Command::Render,
             ae_sys::PF_Cmd_FRAME_SETDOWN               => Command::FrameSetdown,
-            ae_sys::PF_Cmd_USER_CHANGED_PARAM          => Command::UserChangedParam         { extra: extra as *mut ae_sys::PF_UserChangedParamExtra },
+            ae_sys::PF_Cmd_USER_CHANGED_PARAM          => Command::UserChangedParam         { param_index: unsafe { (*(extra as *mut ae_sys::PF_UserChangedParamExtra)).param_index as usize } },
             ae_sys::PF_Cmd_UPDATE_PARAMS_UI            => Command::UpdateParamsUi,
             ae_sys::PF_Cmd_EVENT                       => Command::Event,
             ae_sys::PF_Cmd_GET_EXTERNAL_DEPENDENCIES   => Command::GetExternalDependencies  { extra: extra as *mut ae_sys::PF_ExtDependenciesExtra },
@@ -66,13 +66,13 @@ impl Command {
             ae_sys::PF_Cmd_AUDIO_SETUP                 => Command::AudioSetup,
             ae_sys::PF_Cmd_AUDIO_SETDOWN               => Command::AudioSetdown,
             ae_sys::PF_Cmd_ARBITRARY_CALLBACK          => Command::ArbitraryCallback        { extra: extra as *mut ae_sys::PF_ArbParamsExtra },
-            ae_sys::PF_Cmd_SMART_PRE_RENDER            => Command::SmartPreRender           { extra: extra as *mut ae_sys::PF_PreRenderExtra },
-            ae_sys::PF_Cmd_SMART_RENDER                => Command::SmartRender              { extra: extra as *mut ae_sys::PF_SmartRenderExtra },
+            ae_sys::PF_Cmd_SMART_PRE_RENDER            => Command::SmartPreRender           { extra: PreRenderExtra::from_raw(extra as *mut _) },
+            ae_sys::PF_Cmd_SMART_RENDER                => Command::SmartRender              { extra: SmartRenderExtra::from_raw(extra as *mut _) },
             ae_sys::PF_Cmd_GET_FLATTENED_SEQUENCE_DATA => Command::GetFlattenedSequenceData,
             ae_sys::PF_Cmd_TRANSLATE_PARAMS_TO_PREFS   => Command::TranslateParamsToPrefs   { extra: extra as *mut ae_sys::PF_TranslateParamsToPrefsExtra },
-            ae_sys::PF_Cmd_SMART_RENDER_GPU            => Command::SmartRenderGpu,
-            ae_sys::PF_Cmd_GPU_DEVICE_SETUP            => Command::GpuDeviceSetup           { extra: extra as *mut ae_sys::PF_GPUDeviceSetupExtra },
-            ae_sys::PF_Cmd_GPU_DEVICE_SETDOWN          => Command::GpuDeviceSetdown         { extra: extra as *mut ae_sys::PF_GPUDeviceSetdownExtra },
+            ae_sys::PF_Cmd_SMART_RENDER_GPU            => Command::SmartRenderGpu           { extra: SmartRenderExtra::from_raw(extra as *mut _) },
+            ae_sys::PF_Cmd_GPU_DEVICE_SETUP            => Command::GpuDeviceSetup           { extra: GpuDeviceSetupExtra::from_raw(extra as *mut _) },
+            ae_sys::PF_Cmd_GPU_DEVICE_SETDOWN          => Command::GpuDeviceSetdown         { extra: GpuDeviceSetdownExtra::from_raw(extra as *mut _) },
             _ => panic!("Unknown command: {}", cmd), // TODO: make this an error
         }
     }

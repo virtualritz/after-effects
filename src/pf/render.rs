@@ -1,0 +1,226 @@
+use super::*;
+use std::any::Any;
+
+/*
+pub const PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS: _bindgen_ty_30 = 1;
+pub const PF_RenderOutputFlag_GPU_RENDER_POSSIBLE: _bindgen_ty_30 = 2;
+pub struct PF_RenderRequest {
+    pub rect: PF_LRect,
+    pub field: PF_Field,
+    pub channel_mask: PF_ChannelMask,
+    pub preserve_rgb_of_zero_alpha: PF_Boolean,
+    pub unused: [::std::os::raw::c_char; 3usize],
+    pub reserved: [A_long; 4usize],
+}
+pub struct PF_PreRenderInput {
+    pub output_request: PF_RenderRequest,
+    pub bitdepth: ::std::os::raw::c_short,
+    pub gpu_data: *const ::std::os::raw::c_void,
+    pub what_gpu: PF_GPU_Framework,
+    pub device_index: A_u_long,
+}
+pub struct PF_PreRenderOutput {
+    pub result_rect: PF_LRect,
+    pub max_result_rect: PF_LRect,
+    pub solid: PF_Boolean,
+    pub reserved: PF_Boolean,
+    pub flags: PF_RenderOutputFlags,
+    pub pre_render_data: *mut ::std::os::raw::c_void,
+    pub delete_pre_render_data_func: PF_DeletePreRenderDataFunc,
+}
+pub input: *mut PF_PreRenderInput,
+pub output: *mut PF_PreRenderOutput,
+pub cb: *mut PF_PreRenderCallbacks,
+*/
+
+#[derive(Clone, Copy, Debug)]
+pub struct PreRenderExtra {
+    pub(crate) ptr: *mut ae_sys::PF_PreRenderExtra,
+}
+impl AsRef<ae_sys::PF_PreRenderExtra> for PreRenderExtra {
+    fn as_ref(&self) -> &ae_sys::PF_PreRenderExtra {
+        unsafe { &*self.ptr }
+    }
+}
+impl PreRenderExtra {
+    pub fn from_raw(ptr: *mut ae_sys::PF_PreRenderExtra) -> Self {
+        assert!(!ptr.is_null());
+        Self { ptr }
+    }
+    pub fn as_ptr(&self) -> *mut ae_sys::PF_PreRenderExtra {
+        self.ptr
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct SmartRenderExtra {
+    pub(crate) ptr: *mut ae_sys::PF_SmartRenderExtra,
+}
+impl AsRef<ae_sys::PF_SmartRenderExtra> for SmartRenderExtra {
+    fn as_ref(&self) -> &ae_sys::PF_SmartRenderExtra {
+        unsafe { &*self.ptr }
+    }
+}
+impl SmartRenderExtra {
+    pub fn from_raw(ptr: *mut ae_sys::PF_SmartRenderExtra) -> Self {
+        assert!(!ptr.is_null());
+        Self { ptr }
+    }
+    pub fn as_ptr(&self) -> *mut ae_sys::PF_SmartRenderExtra {
+        self.ptr
+    }
+    pub fn callbacks(&self) -> SmartRenderCallbacks {
+        unsafe { SmartRenderCallbacks::from_raw((*self.ptr).cb) }
+    }
+    pub fn what_gpu(&self) -> GpuFramework {
+        assert!(!self.as_ref().input.is_null());
+        unsafe { (*self.as_ref().input).what_gpu.into() }
+    }
+    pub fn device_index(&self) -> usize {
+        assert!(!self.as_ref().input.is_null());
+        unsafe { (*self.as_ref().input).device_index as usize }
+    }
+    pub fn gpu_data<'a, T: Any>(&'a self) -> &'a T {
+        assert!(!self.as_ref().input.is_null());
+        let data = unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
+        let data = Box::<Box<dyn Any>>::leak(data);
+        match data.downcast_ref::<T>() {
+            Some(data) => data,
+            None => panic!("Invalid type for gpu_data"),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct PreRenderCallbacks {
+    pub(crate) rc_ptr: *const ae_sys::PF_PreRenderCallbacks,
+}
+
+impl PreRenderCallbacks {
+    pub fn from_raw(rc_ptr: *const ae_sys::PF_PreRenderCallbacks) -> Self {
+        Self { rc_ptr }
+    }
+
+    pub fn as_ptr(&self) -> *const ae_sys::PF_PreRenderCallbacks {
+        self.rc_ptr
+    }
+
+    pub fn checkout_layer(
+        &self,
+        effect_ref: ProgressInfo,
+        index: i32,
+        checkout_id: i32,
+        // FIXME: warp this struct
+        req: &ae_sys::PF_RenderRequest,
+        what_time: i32,
+        time_step: i32,
+        time_scale: u32,
+    ) -> Result<ae_sys::PF_CheckoutResult, Error> {
+        if let Some(checkout_layer) = unsafe { *self.rc_ptr }.checkout_layer {
+            let mut checkout_result = std::mem::MaybeUninit::<ae_sys::PF_CheckoutResult>::uninit();
+
+            match unsafe {
+                checkout_layer(
+                    effect_ref.as_ptr(),
+                    index,
+                    checkout_id,
+                    req,
+                    what_time,
+                    time_step,
+                    time_scale,
+                    checkout_result.as_mut_ptr(),
+                )
+            } as EnumIntType
+            {
+                ae_sys::PF_Err_NONE => Ok(unsafe { checkout_result.assume_init() }),
+                e => Err(Error::from(e)),
+            }
+        } else {
+            Err(Error::InvalidCallback)
+        }
+    }
+
+    /* FIXME
+    pub fn guid_mix_in_ptr(
+            effect_ref: ProgressInfo,
+            buf: [u8],
+        ) -> PF_Err,
+    >,*/
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct SmartRenderCallbacks {
+    pub(crate) rc_ptr: *const ae_sys::PF_SmartRenderCallbacks,
+}
+
+impl SmartRenderCallbacks {
+    pub fn from_raw(rc_ptr: *const ae_sys::PF_SmartRenderCallbacks) -> Self {
+        Self { rc_ptr }
+    }
+
+    pub fn as_ptr(&self) -> *const ae_sys::PF_SmartRenderCallbacks {
+        self.rc_ptr
+    }
+
+    pub fn checkout_layer_pixels(
+        &self,
+        effect_ref: ProgressInfo,
+        checkout_id: u32,
+    ) -> Result<EffectWorld, Error> {
+        if let Some(checkout_layer_pixels) = unsafe { *self.rc_ptr }.checkout_layer_pixels {
+            let mut effect_world_ptr =
+                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
+
+            match unsafe {
+                checkout_layer_pixels(
+                    effect_ref.as_ptr(),
+                    checkout_id as i32,
+                    effect_world_ptr.as_mut_ptr(),
+                )
+            } as EnumIntType
+            {
+                ae_sys::PF_Err_NONE => Ok(EffectWorld {
+                    effect_world: unsafe { *effect_world_ptr.assume_init() },
+                }),
+                e => Err(Error::from(e)),
+            }
+        } else {
+            Err(Error::InvalidCallback)
+        }
+    }
+
+    pub fn checkin_layer_pixels(
+        &self,
+        effect_ref: ProgressInfo,
+        checkout_id: u32,
+    ) -> Result<(), Error> {
+        if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
+            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) }
+                as EnumIntType
+            {
+                ae_sys::PF_Err_NONE => Ok(()),
+                e => Err(Error::from(e)),
+            }
+        } else {
+            Err(Error::InvalidCallback)
+        }
+    }
+
+    pub fn checkout_output(&self, effect_ref: ProgressInfo) -> Result<EffectWorld, Error> {
+        if let Some(checkout_output) = unsafe { *self.rc_ptr }.checkout_output {
+            let mut effect_world_ptr =
+                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
+
+            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) }
+                as EnumIntType
+            {
+                ae_sys::PF_Err_NONE => Ok(EffectWorld {
+                    effect_world: unsafe { *effect_world_ptr.assume_init() },
+                }),
+                e => Err(Error::from(e)),
+            }
+        } else {
+            Err(Error::InvalidCallback)
+        }
+    }
+}

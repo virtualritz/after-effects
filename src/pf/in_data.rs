@@ -1,7 +1,6 @@
 
 use super::*;
-
-//define_struct_wrapper!(InData, PF_InData);
+use std::any::Any;
 
 // struct PF_InData {
 //     pub inter: PF_InteractCallbacks,          // Callbacks used for user interaction, adding parameters, checking whether the user has interrupted the effect, displaying a progress bar, and obtaining source frames and parameter values at times other than the current time being rendered. This very useful function suite is described in Interaction Callback Functions.
@@ -113,76 +112,34 @@ impl InData {
         }
     }
 
-}
-/*
-impl InData {
-    pub fn width(&self) -> u32 {
-        self.width as u32
+    pub fn frame_data_mut<'a, T: Any>(&'a mut self) -> &'a mut T {
+        unsafe { assert!(!(*self.ptr).frame_data.is_null()); }
+        let data = unsafe { Box::<Box<dyn Any>>::from_raw((*self.ptr).frame_data as *mut _) };
+        let data = Box::<Box<dyn Any>>::leak(data);
+        match data.downcast_mut::<T>() {
+            Some(data) => data,
+            None => panic!("Invalid type for frame_data"),
+        }
     }
-    pub fn height(&self) -> u32 {
-        self.height as u32
+    pub fn frame_data<'a, T: Any>(&'a self) -> &'a T {
+        unsafe { assert!(!(*self.ptr).frame_data.is_null()); }
+        let data = unsafe { Box::<Box<dyn Any>>::from_raw((*self.ptr).frame_data as *mut _) };
+        let data = Box::<Box<dyn Any>>::leak(data);
+        match data.downcast_ref::<T>() {
+            Some(data) => data,
+            None => panic!("Invalid type for frame_data"),
+        }
     }
-    pub fn origin(&self) -> Point {
-        Point::from_raw(self.origin)
-    }
-    pub fn from_raw(in_data_ptr: *const ae_sys::PF_InData) -> Self {
-        Self { in_data_ptr }
-    }
-
-    pub fn as_ptr(&self) -> *const ae_sys::PF_InData {
-        self.in_data_ptr
-    }
-
-    pub fn is_null(&self) -> bool {
-        self.in_data_ptr.is_null()
-    }
-
-    #[inline]
-    pub fn application_id(&self) -> [u8; 4] {
-        let bytes: [u8; 4] = unsafe { std::mem::transmute((*self.in_data_ptr).appl_id) };
-        [bytes[3], bytes[2], bytes[1], bytes[0]]
-    }
-
-    #[inline]
-    pub fn extent_hint(&self) -> Rect {
-        Rect::from(unsafe { (*self.in_data_ptr).extent_hint })
-    }
-
-    #[inline]
-    pub fn effect_ref(&self) -> ProgressInfo {
-        pf::ProgressInfo(unsafe { (*self.in_data_ptr).effect_ref })
-    }
-
-    pub fn width(&self) -> i32 {
-        unsafe { (*self.in_data_ptr).width }
-    }
-    pub fn height(&self) -> i32 {
-        unsafe { (*self.in_data_ptr).height }
-    }
-    pub fn current_frame(&self) -> f32 {
-        unsafe { (*self.in_data_ptr).current_time as f32 / (*self.in_data_ptr).time_step as f32 }
-    }
-    pub fn current_timestamp(&self) -> f32 {
-        unsafe { (*self.in_data_ptr).current_time as f32 / (*self.in_data_ptr).time_scale as f32 }
-    }
-    pub fn current_time(&self) -> i32 {
-        unsafe { (*self.in_data_ptr).current_time }
-    }
-    pub fn time_step(&self) -> i32 {
-        unsafe { (*self.in_data_ptr).time_step }
-    }
-    pub fn time_scale(&self) -> u32 {
-        unsafe { (*self.in_data_ptr).time_scale }
-    }
-
-    #[inline]
-    pub fn version(&self) -> (i16, i16) {
+    // Only valid at Command::FrameSetdown
+    pub fn destroy_frame_data<T: Any>(&mut self) {
         unsafe {
-            (
-                (*self.in_data_ptr).version.major,
-                (*self.in_data_ptr).version.minor,
-            )
+            if !(*self.ptr).frame_data.is_null() {
+                let data = Box::<Box<dyn Any>>::from_raw((*self.ptr).frame_data as *mut _);
+                match data.downcast::<T>() {
+                    Ok(_) => { },
+                    Err(e) => panic!("Invalid type for frame_data: {e:?}"),
+                }
+            }
         }
     }
 }
-*/

@@ -8,6 +8,7 @@ macro_rules! empty_impl_for {
             fn flatten(&self) -> Result<Vec<u8>, Error> { Ok(Vec::new()) }
             fn unflatten(_: &[u8]) -> Result<Self, Error> { Ok(Default::default()) }
             fn render(&self, in_data: InData, in_layer: &Layer, out_layer: &mut Layer, params: &ae::Parameters<$params_type>) -> Result<(), ae::Error> { Ok(()) }
+            fn user_changed_param(&mut self, param: $params_type, params: &ae::Parameters<$params_type>) -> Result<(), ae::Error> { Ok(()) }
             fn handle_command(&mut self, _: Command, _: InData, _: OutData) -> Result<(), Error> { Ok(()) }
         }
     };
@@ -18,8 +19,8 @@ macro_rules! register_plugin {
 	($global_type:ty, $sequence_type:ty, $params_type:ty) => {
         use $crate::*;
 
-        struct GlobalData {
-            params: Parameters<$params_type>,
+        struct GlobalData<'a> {
+            params: Parameters<'a, $params_type>,
             plugin_instance: $global_type
         }
 
@@ -27,6 +28,7 @@ macro_rules! register_plugin {
             fn can_load(host_name: &str, host_version: &str) -> bool;
 
             fn params_setup(&self, params: &mut Parameters<$params_type>) -> Result<(), Error>;
+
             fn handle_command(&self, command: Command, in_data: InData, out_data: OutData, ) -> Result<(), Error>;
         }
         trait AdobePluginInstance : Default {
@@ -34,6 +36,8 @@ macro_rules! register_plugin {
             fn unflatten(serialized: &[u8]) -> Result<Self, Error>;
 
             fn render(&self, in_data: InData, in_layer: &Layer, out_layer: &mut Layer, params: &ae::Parameters<$params_type>) -> Result<(), ae::Error>;
+
+            fn user_changed_param(&mut self, param: $params_type, params: &ae::Parameters<$params_type>) -> Result<(), ae::Error>;
 
             fn handle_command(&mut self, command: Command, in_data: InData, out_data: OutData) -> Result<(), Error>;
         }
@@ -98,7 +102,7 @@ macro_rules! register_plugin {
             let mut global_handle = if cmd == after_effects_sys::PF_Cmd_GLOBAL_SETUP {
                 // Allocate global data
                 pf::Handle::new(GlobalData {
-                    params: Parameters::<$params_type>::from_in_data_ptr(in_data_ptr),
+                    params: Parameters::<$params_type>::new(),
                     plugin_instance: <$global_type>::default()
                 })?
             } else {
@@ -114,20 +118,17 @@ macro_rules! register_plugin {
 
             let global_lock = global_handle.lock()?;
             let global_inst = global_lock.as_ref_mut()?;
-            global_inst.params.set_params(in_data_ptr, params);
+
+            if cmd == after_effects_sys::PF_Cmd_PARAMS_SETUP {
+                global_inst.params.set_in_data(in_data_ptr);
+                global_inst.plugin_instance.params_setup(&mut global_inst.params)?;
+                (*out_data_ptr).num_params = global_inst.params.num_params() as i32;
+            }
 
             let command = Command::from_entry_point(cmd, in_data_ptr, params, output, extra);
 
             let global_err = global_inst.plugin_instance.handle_command(command, in_data, out_data);
             let mut sequence_err = None;
-
-            match cmd {
-                after_effects_sys::PF_Cmd_PARAMS_SETUP => {
-                    global_inst.plugin_instance.params_setup(&mut global_inst.params)?;
-                    (*out_data_ptr).num_params = global_inst.params.num_params() as i32;
-                }
-                _ => { }
-            }
 
             if let Some((mut sequence_handle, needs_lock)) = sequence_handle {
                 let (lock, inst) = if needs_lock {
@@ -145,9 +146,16 @@ macro_rules! register_plugin {
 
                 match cmd {
                     after_effects_sys::PF_Cmd_RENDER => {
+                        let params_registry = Parameters::<$params_type>::with_params(in_data_ptr, params, &global_inst.params);
                         let in_layer = $crate::Layer::from_raw(in_data_ptr, &mut (*(*params)).u.ld);
                         let mut out_layer = $crate::Layer::from_raw(in_data_ptr, output);
-                        sequence_err = Some(inst.render(InData::from_raw(in_data_ptr), &in_layer, &mut out_layer, &global_inst.params));
+                        sequence_err = Some(inst.render(InData::from_raw(in_data_ptr), &in_layer, &mut out_layer, &params_registry));
+                    }
+                    after_effects_sys::PF_Cmd_USER_CHANGED_PARAM => {
+                        let params_registry = Parameters::<$params_type>::with_params(in_data_ptr, params, &global_inst.params);
+                        let extra = extra as *mut after_effects_sys::PF_UserChangedParamExtra;
+                        let param = params_registry.type_for_index((*extra).param_index as usize);
+                        sequence_err = Some(inst.user_changed_param(param, &params_registry));
                     }
                     _ => { }
                 }

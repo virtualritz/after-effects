@@ -219,12 +219,12 @@ macro_rules! define_param_wrapper {
 macro_rules! define_param_basic_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident, $value_type:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn set_value(&mut self, value: $value_type) -> &mut $wrapper_pretty_name {
+            pub fn set_value(mut self, value: $value_type) -> $wrapper_pretty_name {
                 self.0.value = value;
                 self
             }
 
-            pub fn set_default(&mut self, default: $value_type_ui) -> &mut $wrapper_pretty_name {
+            pub fn set_default(mut self, default: $value_type_ui) -> $wrapper_pretty_name {
                 self.0.dephault = default as _;
                 self
             }
@@ -236,17 +236,17 @@ macro_rules! define_param_valid_min_max_wrapper {
     ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
             pub fn set_valid_min(
-                &mut self,
+                mut self,
                 valid_min: $value_type_ui,
-            ) -> &mut $wrapper_pretty_name {
+            ) -> $wrapper_pretty_name {
                 self.0.valid_min = valid_min;
                 self
             }
 
             pub fn set_valid_max(
-                &mut self,
+                mut self,
                 valid_max: $value_type_ui,
-            ) -> &mut $wrapper_pretty_name {
+            ) -> $wrapper_pretty_name {
                 self.0.valid_max = valid_max;
                 self
             }
@@ -258,17 +258,17 @@ macro_rules! define_param_slider_min_max_wrapper {
     ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
             pub fn set_slider_min(
-                &mut self,
+                mut self,
                 slider_min: $value_type_ui,
-            ) -> &mut $wrapper_pretty_name {
+            ) -> $wrapper_pretty_name {
                 self.0.slider_min = slider_min;
                 self
             }
 
             pub fn set_slider_max(
-                &mut self,
+                mut self,
                 slider_max: $value_type_ui,
-            ) -> &mut $wrapper_pretty_name {
+            ) -> $wrapper_pretty_name {
                 self.0.slider_max = slider_max;
                 self
             }
