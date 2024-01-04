@@ -235,18 +235,12 @@ macro_rules! define_param_basic_wrapper {
 macro_rules! define_param_valid_min_max_wrapper {
     ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn set_valid_min(
-                mut self,
-                valid_min: $value_type_ui,
-            ) -> $wrapper_pretty_name {
+            pub fn set_valid_min(mut self, valid_min: $value_type_ui) -> $wrapper_pretty_name {
                 self.0.valid_min = valid_min;
                 self
             }
 
-            pub fn set_valid_max(
-                mut self,
-                valid_max: $value_type_ui,
-            ) -> $wrapper_pretty_name {
+            pub fn set_valid_max(mut self, valid_max: $value_type_ui) -> $wrapper_pretty_name {
                 self.0.valid_max = valid_max;
                 self
             }
@@ -257,18 +251,12 @@ macro_rules! define_param_valid_min_max_wrapper {
 macro_rules! define_param_slider_min_max_wrapper {
     ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
         impl $wrapper_pretty_name {
-            pub fn set_slider_min(
-                mut self,
-                slider_min: $value_type_ui,
-            ) -> $wrapper_pretty_name {
+            pub fn set_slider_min(mut self, slider_min: $value_type_ui) -> $wrapper_pretty_name {
                 self.0.slider_min = slider_min;
                 self
             }
 
-            pub fn set_slider_max(
-                mut self,
-                slider_max: $value_type_ui,
-            ) -> $wrapper_pretty_name {
+            pub fn set_slider_max(mut self, slider_max: $value_type_ui) -> $wrapper_pretty_name {
                 self.0.slider_max = slider_max;
                 self
             }

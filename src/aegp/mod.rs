@@ -669,13 +669,16 @@ define_suite!(
 );
 
 impl PFInterfaceSuite {
-    pub fn effect_layer(&self, effect_ref: pf::ProgPtr) -> Result<LayerHandle, Error> {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    pub fn effect_layer(&self, effect_ref: impl Into<pf::ProgPtr>) -> Result<LayerHandle, Error> {
         let mut layer_handle = std::mem::MaybeUninit::<ae_sys::AEGP_LayerH>::uninit();
 
         match ae_call_suite_fn!(
             self.suite_ptr,
             AEGP_GetEffectLayer,
-            effect_ref,
+            effect_ref.into(),
             layer_handle.as_mut_ptr()
         ) {
             Ok(()) => Ok(LayerHandle(unsafe { layer_handle.assume_init() })),
@@ -1043,12 +1046,29 @@ define_handle_wrapper!(LayerHandle, AEGP_LayerH);
 
 define_suite!(
     LayerSuite,
-    AEGP_LayerSuite8,
+    AEGP_LayerSuite9,
     kAEGPLayerSuite,
-    kAEGPLayerSuiteVersion8
+    kAEGPLayerSuiteVersion9
 );
 
 impl LayerSuite {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    #[inline]
+    pub fn layer_source_item(&self, layer_handle: LayerHandle) -> Result<ItemHandle, Error> {
+        let mut source_item_handle = MaybeUninit::<ae_sys::AEGP_ItemH>::uninit();
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetLayerSourceItem,
+            layer_handle.as_ptr(),
+            source_item_handle.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok(unsafe { ItemHandle::from_raw(source_item_handle.assume_init()) }),
+            Err(e) => Err(e),
+        }
+    }
+
     #[inline]
     pub fn layer_parent_comp(&self, layer_handle: LayerHandle) -> Result<CompHandle, Error> {
         let mut parent_comp_handle = MaybeUninit::<ae_sys::AEGP_CompH>::uninit();
@@ -1840,6 +1860,68 @@ impl ItemSuite {
             ratio.as_mut_ptr() as _,
         ) {
             Ok(()) => Ok(unsafe { ratio.assume_init() }),
+            Err(e) => Err(e),
+        }
+    }
+}
+
+define_handle_wrapper!(FootageHandle, AEGP_FootageH);
+
+define_suite!(
+    FootageSuite,
+    AEGP_FootageSuite5,
+    kAEGPFootageSuite,
+    kAEGPFootageSuiteVersion5
+);
+
+impl FootageSuite {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    #[inline]
+    pub fn main_footage_from_item(&self, item_handle: ItemHandle) -> Result<FootageHandle, Error> {
+        let mut footage_handle = MaybeUninit::<ae_sys::AEGP_FootageH>::uninit();
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetMainFootageFromItem,
+            item_handle.as_ptr(),
+            footage_handle.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok(unsafe { FootageHandle::from_raw(footage_handle.assume_init()) }),
+            Err(e) => Err(e),
+        }
+    }
+    #[inline]
+    pub fn footage_path(
+        &self,
+        footage_handle: FootageHandle,
+        frame_num: usize,
+        file_index: usize,
+    ) -> Result<String, Error> {
+        let mut footage_path_mem_handle = MaybeUninit::<ae_sys::AEGP_MemHandle>::uninit();
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            AEGP_GetFootagePath,
+            footage_handle.as_ptr(),
+            frame_num as i32,
+            file_index as i32,
+            footage_path_mem_handle.as_mut_ptr(),
+        ) {
+            Ok(()) => Ok(
+                // Create a mem handle each and lock it.
+                // When the lock goes out of scope itr
+                // uinlocks and when the handle goes out
+                // of scope it gives the memory back to Ae.
+                unsafe {
+                    U16CString::from_ptr_str(
+                        MemHandle::<u16>::from_raw(footage_path_mem_handle.assume_init())?
+                            .lock()?
+                            .as_ptr(),
+                    )
+                    .to_string_lossy()
+                },
+            ),
             Err(e) => Err(e),
         }
     }

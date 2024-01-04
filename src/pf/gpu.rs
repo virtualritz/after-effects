@@ -6,16 +6,19 @@ pub enum GpuFramework {
     None = 0,
     OpenCl = 1,
     Metal = 2,
-    Cuda = 3
+    Cuda = 3,
 }
 impl From<ae_sys::PF_GPU_Framework> for GpuFramework {
     fn from(framework: ae_sys::PF_GPU_Framework) -> Self {
         match framework {
-            ae_sys::PF_GPU_Framework_NONE   => Self::None,
+            ae_sys::PF_GPU_Framework_NONE => Self::None,
             ae_sys::PF_GPU_Framework_OPENCL => Self::OpenCl,
-            ae_sys::PF_GPU_Framework_METAL  => Self::Metal,
-            ae_sys::PF_GPU_Framework_CUDA   => Self::Cuda,
-            _ => panic!("Unknown framework: {framework}") // TODO panic
+            ae_sys::PF_GPU_Framework_METAL => Self::Metal,
+            ae_sys::PF_GPU_Framework_CUDA => Self::Cuda,
+            _ => {
+                log::error!("Unknown framework: {framework}");
+                Self::None
+            }
         }
     }
 }
@@ -48,7 +51,9 @@ impl GpuDeviceSetupExtra {
     pub fn set_gpu_data<T: Any>(&mut self, val: T) {
         assert!(!self.as_ref().output.is_null());
         let boxed: Box<Box<dyn Any>> = Box::new(Box::new(val));
-        unsafe { (*self.as_ref().output).gpu_data = Box::<Box<dyn Any>>::into_raw(boxed) as *mut _; }
+        unsafe {
+            (*self.as_ref().output).gpu_data = Box::<Box<dyn Any>>::into_raw(boxed) as *mut _;
+        }
     }
 }
 
@@ -79,7 +84,8 @@ impl GpuDeviceSetdownExtra {
     }
     pub fn gpu_data_mut<'a, T: Any>(&'a mut self) -> &'a mut T {
         assert!(!self.as_ref().input.is_null());
-        let data = unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
+        let data =
+            unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
         let data = Box::<Box<dyn Any>>::leak(data);
         match data.downcast_mut::<T>() {
             Some(data) => data,
@@ -88,7 +94,8 @@ impl GpuDeviceSetdownExtra {
     }
     pub fn gpu_data<'a, T: Any>(&'a self) -> &'a T {
         assert!(!self.as_ref().input.is_null());
-        let data = unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
+        let data =
+            unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
         let data = Box::<Box<dyn Any>>::leak(data);
         match data.downcast_ref::<T>() {
             Some(data) => data,
@@ -103,7 +110,7 @@ impl GpuDeviceSetdownExtra {
                 Ok(_) => {
                     (*(*self.ptr).input).gpu_data = std::ptr::null_mut();
                     // data will be dropped here
-                },
+                }
                 Err(e) => panic!("Invalid type for gpu_data: {e:?}"),
             }
         }

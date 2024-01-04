@@ -91,7 +91,7 @@ mod plugin_base;
 pub use plugin_base::*;
 
 pub mod aegp;
-pub use aegp::*;
+// pub use aegp::*;
 pub mod aeio;
 pub use aeio::*;
 pub mod drawbot;

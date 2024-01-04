@@ -42,6 +42,11 @@ impl AsRef<ae_sys::PF_PreRenderExtra> for PreRenderExtra {
         unsafe { &*self.ptr }
     }
 }
+impl AsMut<ae_sys::PF_PreRenderExtra> for PreRenderExtra {
+    fn as_mut(&mut self) -> &mut ae_sys::PF_PreRenderExtra {
+        unsafe { &mut *self.ptr }
+    }
+}
 impl PreRenderExtra {
     pub fn from_raw(ptr: *mut ae_sys::PF_PreRenderExtra) -> Self {
         assert!(!ptr.is_null());
@@ -49,6 +54,96 @@ impl PreRenderExtra {
     }
     pub fn as_ptr(&self) -> *mut ae_sys::PF_PreRenderExtra {
         self.ptr
+    }
+    pub fn what_gpu(&self) -> GpuFramework {
+        assert!(!self.as_ref().input.is_null());
+        unsafe { (*self.as_ref().input).what_gpu.into() }
+    }
+    pub fn bit_depth(&self) -> i16 {
+        assert!(!self.as_ref().input.is_null());
+        unsafe { (*self.as_ref().input).bitdepth as i16 }
+    }
+    pub fn device_index(&self) -> usize {
+        assert!(!self.as_ref().input.is_null());
+        unsafe { (*self.as_ref().input).device_index as usize }
+    }
+    pub fn set_pre_render_data<T: Any>(&mut self, val: T) {
+        let boxed: Box<Box<dyn Any>> = Box::new(Box::new(val));
+        unsafe {
+            (*self.as_mut().output).pre_render_data =
+                Box::<Box<dyn Any>>::into_raw(boxed) as *mut _;
+        }
+        unsafe {
+            (*self.as_mut().output).delete_pre_render_data_func = Some(delete_pre_render_data);
+        }
+    }
+    pub fn callbacks(&self) -> PreRenderCallbacks {
+        unsafe { PreRenderCallbacks::from_raw((*self.ptr).cb) }
+    }
+
+    pub fn output_request(&self) -> ae_sys::PF_RenderRequest {
+        assert!(!self.as_ref().input.is_null());
+        unsafe { (*self.as_ref().input).output_request }
+    }
+    pub fn set_gpu_render_possible(&mut self, val: bool) {
+        assert!(!self.as_mut().output.is_null());
+        unsafe {
+            if val {
+                (*self.as_mut().output).flags |=
+                    ae_sys::PF_RenderOutputFlag_GPU_RENDER_POSSIBLE as i16;
+            } else {
+                (*self.as_mut().output).flags &=
+                    !ae_sys::PF_RenderOutputFlag_GPU_RENDER_POSSIBLE as i16;
+            }
+        }
+    }
+    pub fn set_returns_extra_pixels(&mut self, val: bool) {
+        assert!(!self.as_mut().output.is_null());
+        unsafe {
+            if val {
+                (*self.as_mut().output).flags |=
+                    ae_sys::PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS as i16;
+            } else {
+                (*self.as_mut().output).flags &=
+                    !ae_sys::PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS as i16;
+            }
+        }
+    }
+
+    pub fn result_rect(&self) -> Rect {
+        assert!(!self.as_ref().output.is_null());
+        unsafe { (*self.as_ref().output).result_rect.into() }
+    }
+    pub fn max_result_rect(&self) -> Rect {
+        assert!(!self.as_ref().output.is_null());
+        unsafe { (*self.as_ref().output).max_result_rect.into() }
+    }
+    pub fn set_result_rect(&mut self, rect: Rect) {
+        assert!(!self.as_mut().output.is_null());
+        unsafe {
+            (*self.as_mut().output).result_rect = rect.into();
+        }
+    }
+    pub fn set_max_result_rect(&mut self, rect: Rect) {
+        assert!(!self.as_mut().output.is_null());
+        unsafe {
+            (*self.as_mut().output).max_result_rect = rect.into();
+        }
+    }
+    pub fn union_result_rect(&mut self, rect: Rect) -> Rect {
+        let rect = *self.result_rect().union(&rect);
+        self.set_result_rect(rect);
+        rect
+    }
+    pub fn union_max_result_rect(&mut self, rect: Rect) -> Rect {
+        let rect = *self.max_result_rect().union(&rect);
+        self.set_max_result_rect(rect);
+        rect
+    }
+}
+unsafe extern "C" fn delete_pre_render_data(data: *mut std::ffi::c_void) {
+    if !data.is_null() {
+        let _ = Box::<Box<dyn Any>>::from_raw(data as *mut _);
     }
 }
 
@@ -80,13 +175,31 @@ impl SmartRenderExtra {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).device_index as usize }
     }
-    pub fn gpu_data<'a, T: Any>(&'a self) -> &'a T {
+    pub fn gpu_data<'a, T: Any>(&'a self) -> Option<&'a T> {
         assert!(!self.as_ref().input.is_null());
-        let data = unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
+        if unsafe { (*(*self.ptr).input).gpu_data.is_null() } {
+            return None;
+        }
+        let data =
+            unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
         let data = Box::<Box<dyn Any>>::leak(data);
         match data.downcast_ref::<T>() {
-            Some(data) => data,
+            Some(data) => Some(data),
             None => panic!("Invalid type for gpu_data"),
+        }
+    }
+    pub fn pre_render_data<'a, T: Any>(&'a self) -> Option<&'a T> {
+        assert!(!self.as_ref().input.is_null());
+        if unsafe { (*(*self.ptr).input).pre_render_data.is_null() } {
+            return None;
+        }
+        let data = unsafe {
+            Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).pre_render_data as *mut _)
+        };
+        let data = Box::<Box<dyn Any>>::leak(data);
+        match data.downcast_ref::<T>() {
+            Some(data) => Some(data),
+            None => panic!("Invalid type for pre_render_data"),
         }
     }
 }

@@ -1,4 +1,3 @@
-
 use super::*;
 use std::any::Any;
 
@@ -88,6 +87,9 @@ impl OutData {
     }
     pub fn add_out_flag2(&mut self, v: i32) {
         self.as_mut().out_flags2 |= v as ae_sys::PF_OutFlags2;
+    }
+    pub fn set_force_rerender(&mut self) {
+        self.add_out_flag(ae_sys::PF_OutFlag_FORCE_RERENDER);
     }
 
     pub fn set_frame_data<T: Any>(&mut self, val: T) {

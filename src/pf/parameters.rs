@@ -1,8 +1,7 @@
-use crate::*;
 use super::*;
-use std::ffi::CString;
-use std::ffi::CStr;
 use c_vec::CVec;
+use std::ffi::CStr;
+use std::ffi::CString;
 
 #[derive(Clone, Copy, Debug)]
 #[repr(i32)]
@@ -933,6 +932,10 @@ impl ParamDef {
         self.param_def_boxed.uu.id = id;
         self
     }
+
+    pub fn set_value_has_changed(&mut self) {
+        self.param_def_boxed.uu.change_flags = ChangeFlag::CHANGED_VALUE.bits();
+    }
 }
 
 impl Drop for ParamDef {
@@ -975,8 +978,8 @@ macro_rules! define_get_param {
         }
     };
 }
-use std::collections::HashMap;
 use std::borrow::Cow;
+use std::collections::HashMap;
 pub struct Parameters<'a, P: Eq + PartialEq + std::hash::Hash + Copy> {
     num_params: usize,
     in_data: *const ae_sys::PF_InData,
@@ -995,14 +998,21 @@ impl<'a, P: Eq + PartialEq + std::hash::Hash + Copy> Parameters<'a, P> {
             params: Vec::new(),
         }
     }
-    pub fn with_params(in_data: *const ae_sys::PF_InData, params: *mut *mut ae_sys::PF_ParamDef, setup: &'a Self) -> Self {
+    pub fn with_params(
+        in_data: *const ae_sys::PF_InData,
+        params: *mut *mut ae_sys::PF_ParamDef,
+        setup: &'a Self,
+    ) -> Self {
         Self {
             in_data,
             params: if params.is_null() {
                 Vec::new()
             } else {
                 let params = unsafe { std::slice::from_raw_parts(params, setup.num_params) };
-                params.iter().map(|p| ParamDef::from_raw(in_data, *p)).collect::<Vec<_>>()
+                params
+                    .iter()
+                    .map(|p| ParamDef::from_raw(in_data, *p))
+                    .collect::<Vec<_>>()
             },
             num_params: setup.num_params,
             map: Cow::Borrowed(setup.map.as_ref()),
@@ -1020,16 +1030,37 @@ impl<'a, P: Eq + PartialEq + std::hash::Hash + Copy> Parameters<'a, P> {
         self.num_params += 1;
         param_def
     }
+    pub fn add_param_with_flags(
+        &mut self,
+        type_: P,
+        name: &str,
+        def: impl Into<Param>,
+        flags: ParamFlag,
+    ) -> ParamDef {
+        assert!(!self.in_data.is_null());
 
-    define_get_param!("popup",        Popup,       PopupDef);
-    define_get_param!("angle",        Angle,       AngleDef);
-    define_get_param!("checkbox",     CheckBox,    CheckBoxDef);
-    define_get_param!("color",        Color,       ColorDef);
-    define_get_param!("slider",       Slider,      SliderDef);
+        let mut param_def = ParamDef::new_from_ptr(self.in_data);
+        param_def.name(name);
+        param_def.param(def.into());
+        param_def.flags(flags);
+        param_def.add(-1);
+        self.map.to_mut().insert(type_, self.num_params);
+        self.num_params += 1;
+        param_def
+    }
+
+    define_get_param!("popup", Popup, PopupDef);
+    define_get_param!("angle", Angle, AngleDef);
+    define_get_param!("checkbox", CheckBox, CheckBoxDef);
+    define_get_param!("color", Color, ColorDef);
+    define_get_param!("slider", Slider, SliderDef);
     define_get_param!("float_slider", FloatSlider, FloatSliderDef);
-    define_get_param!("button",       Button,      ButtonDef);
-    define_get_param!("arbitrary",    Arbitrary,   ArbitraryDef);
+    define_get_param!("button", Button, ButtonDef);
+    define_get_param!("arbitrary", Arbitrary, ArbitraryDef);
 
+    pub fn get_param_def(&mut self, type_: P) -> &mut ParamDef {
+        self.params.get_mut(*self.map.get(&type_).unwrap()).unwrap() // TODO: unwrap
+    }
     pub fn num_params(&self) -> usize {
         self.num_params
     }

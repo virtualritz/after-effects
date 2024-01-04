@@ -474,8 +474,8 @@ unsafe impl Sync for EffectWorld {}
 
 impl EffectWorld {
     #[inline]
-    pub fn new(world_handle: WorldHandle) -> Result<Self, crate::Error> {
-        WorldSuite::new()?.fill_out_pf_effect_world(world_handle)
+    pub fn new(world_handle: aegp::WorldHandle) -> Result<Self, crate::Error> {
+        aegp::WorldSuite::new()?.fill_out_pf_effect_world(world_handle)
     }
 
     pub fn from_raw(effect_world_ptr: *const ae_sys::PF_EffectWorld) -> Result<Self, crate::Error> {
@@ -523,10 +523,10 @@ impl EffectWorld {
             - self.width()
                 * 4
                 * match self.world_type() {
-                    WorldType::U15 => 2,
-                    WorldType::U8 => 1,
-                    WorldType::F32 => 4,
-                    WorldType::None => panic!(),
+                    aegp::WorldType::U15 => 2,
+                    aegp::WorldType::U8 => 1,
+                    aegp::WorldType::F32 => 4,
+                    aegp::WorldType::None => panic!(),
                 }
     }
 
@@ -573,15 +573,15 @@ impl EffectWorld {
     }
 
     #[inline]
-    pub fn world_type(&self) -> WorldType {
+    pub fn world_type(&self) -> aegp::WorldType {
         let flags = self.effect_world.world_flags as EnumIntType;
         // Most frequent case is 16bit integer.
         if ae_sys::PF_WorldFlag_DEEP & flags != 0 {
-            WorldType::U15
+            aegp::WorldType::U15
         } else if ae_sys::PF_WorldFlag_RESERVED1 & flags != 0 {
-            WorldType::F32
+            aegp::WorldType::F32
         } else {
-            WorldType::U8
+            aegp::WorldType::U8
         }
     }
 
@@ -1449,6 +1449,7 @@ pub enum PixelFormat {
     ForceLongInt,
 }
 impl From<after_effects_sys::PF_PixelFormat> for PixelFormat {
+    #[rustfmt::skip]
     fn from(x: after_effects_sys::PF_PixelFormat) -> Self {
         match x {
             ae_sys::PF_PixelFormat_ARGB32         => PixelFormat::Argb32,
@@ -1467,6 +1468,7 @@ impl From<after_effects_sys::PF_PixelFormat> for PixelFormat {
     }
 }
 impl Into<after_effects_sys::PF_PixelFormat> for PixelFormat {
+    #[rustfmt::skip]
     fn into(self) -> after_effects_sys::PF_PixelFormat {
         match self {
             PixelFormat::Argb32       => ae_sys::PF_PixelFormat_ARGB32,
@@ -1495,10 +1497,7 @@ impl WorldSuite2 {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
-    pub fn get_pixel_format(
-        &self,
-        effect_world: EffectWorld,
-    ) -> Result<PixelFormat, Error> {
+    pub fn get_pixel_format(&self, effect_world: EffectWorld) -> Result<PixelFormat, Error> {
         let mut pixel_format = ae_sys::PF_PixelFormat_INVALID;
 
         ae_call_suite_fn!(
@@ -1558,4 +1557,27 @@ state.assume::<PlayState>()
 pub trait AssumeFrom<T> {
     fn assume(x: &T) -> &Self;
     fn assume_mut(x: &mut T) -> &mut Self;
+}
+
+define_suite!(
+    UtilitySuite,
+    PF_UtilitySuite,
+    kPFUtilitySuite,
+    kPFUtilitySuiteVersion9
+);
+impl UtilitySuite {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    pub fn filter_instance_id(&self, in_data_handle: InData) -> Result<i32, Error> {
+        let mut instance_id: ae_sys::A_long = 0;
+
+        ae_call_suite_fn!(
+            self.suite_ptr,
+            GetFilterInstanceID,
+            in_data_handle.effect_ref().as_ptr(),
+            &mut instance_id
+        )?;
+        Ok(instance_id as i32)
+    }
 }

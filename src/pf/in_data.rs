@@ -1,4 +1,3 @@
-
 use super::*;
 use std::any::Any;
 
@@ -104,29 +103,30 @@ impl InData {
 
     #[inline]
     pub fn version(&self) -> (i16, i16) {
-        unsafe {
-            (
-                (*self.ptr).version.major,
-                (*self.ptr).version.minor,
-            )
-        }
+        unsafe { ((*self.ptr).version.major, (*self.ptr).version.minor) }
     }
 
-    pub fn frame_data_mut<'a, T: Any>(&'a mut self) -> &'a mut T {
-        unsafe { assert!(!(*self.ptr).frame_data.is_null()); }
+    pub fn frame_data_mut<'a, T: Any>(&'a mut self) -> Option<&'a mut T> {
+        assert!(!self.ptr.is_null());
+        if unsafe { (*self.ptr).frame_data.is_null() } {
+            return None;
+        }
         let data = unsafe { Box::<Box<dyn Any>>::from_raw((*self.ptr).frame_data as *mut _) };
         let data = Box::<Box<dyn Any>>::leak(data);
         match data.downcast_mut::<T>() {
-            Some(data) => data,
+            Some(data) => Some(data),
             None => panic!("Invalid type for frame_data"),
         }
     }
-    pub fn frame_data<'a, T: Any>(&'a self) -> &'a T {
-        unsafe { assert!(!(*self.ptr).frame_data.is_null()); }
+    pub fn frame_data<'a, T: Any>(&'a self) -> Option<&'a T> {
+        assert!(!self.ptr.is_null());
+        if unsafe { (*self.ptr).frame_data.is_null() } {
+            return None;
+        }
         let data = unsafe { Box::<Box<dyn Any>>::from_raw((*self.ptr).frame_data as *mut _) };
         let data = Box::<Box<dyn Any>>::leak(data);
         match data.downcast_ref::<T>() {
-            Some(data) => data,
+            Some(data) => Some(data),
             None => panic!("Invalid type for frame_data"),
         }
     }
@@ -136,7 +136,7 @@ impl InData {
             if !(*self.ptr).frame_data.is_null() {
                 let data = Box::<Box<dyn Any>>::from_raw((*self.ptr).frame_data as *mut _);
                 match data.downcast::<T>() {
-                    Ok(_) => { },
+                    Ok(_) => {}
                     Err(e) => panic!("Invalid type for frame_data: {e:?}"),
                 }
             }
