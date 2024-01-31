@@ -82,14 +82,14 @@ impl OutData {
     pub fn set_out_flags2(&mut self, v: i32) {
         self.as_mut().out_flags2 = v as ae_sys::PF_OutFlags2;
     }
-    pub fn set_out_flag(&mut self, flag: i32, enabled: bool) {
+    pub fn set_out_flag(&mut self, flag: EnumIntType, enabled: bool) {
         if enabled {
             self.as_mut().out_flags |= flag as ae_sys::PF_OutFlags;
         } else {
             self.as_mut().out_flags &= !(flag as ae_sys::PF_OutFlags);
         }
     }
-    pub fn set_out_flag2(&mut self, flag: i32, enabled: bool) {
+    pub fn set_out_flag2(&mut self, flag: EnumIntType, enabled: bool) {
         if enabled {
             self.as_mut().out_flags2 |= flag as ae_sys::PF_OutFlags2;
         } else {

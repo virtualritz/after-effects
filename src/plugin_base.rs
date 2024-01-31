@@ -52,6 +52,7 @@ macro_rules! register_plugin {
         }
 
         unsafe fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: after_effects_sys::PF_Cmd, in_data_ptr: *mut after_effects_sys::PF_InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
+            let cmd = cmd as EnumIntType;
             Ok(if std::any::type_name::<S>() == "()" {
                 // Don't allocate sequence data
                 None
@@ -61,7 +62,7 @@ macro_rules! register_plugin {
             } else if cmd == after_effects_sys::PF_Cmd_SEQUENCE_RESETUP {
                 // Restore from flat handle
                 if (*in_data_ptr).sequence_data.is_null() {
-                    log::error!("Sequence data pointer is null in cmd: {:?}!", PfCmd(cmd));
+                    log::error!("Sequence data pointer is null in cmd: {:?}!", PfCmd(cmd as after_effects_sys::PF_Cmd));
                     Some((pf::Handle::new(S::default())?, true))
                 } else {
                     let instance = FlatHandle::from_raw((*in_data_ptr).sequence_data as after_effects_sys::PF_Handle)?;
@@ -89,12 +90,12 @@ macro_rules! register_plugin {
                     let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _)?;
                     Some((instance_handle, false))
                 } else {
-                    log::error!("Sequence data pointer got through EffectSequenceDataSuite1 is null in cmd: {:?}!", PfCmd(cmd));
+                    log::error!("Sequence data pointer got through EffectSequenceDataSuite1 is null in cmd: {:?}!", PfCmd(cmd as after_effects_sys::PF_Cmd));
                     None
                 }
             } else {
                 if (*in_data_ptr).sequence_data.is_null() {
-                    log::error!("Sequence data pointer is null in cmd: {:?}!", PfCmd(cmd));
+                    log::error!("Sequence data pointer is null in cmd: {:?}!", PfCmd(cmd as after_effects_sys::PF_Cmd));
                     None
                 } else {
                     let instance_handle = pf::Handle::<S>::from_raw((*in_data_ptr).sequence_data)?;
@@ -117,7 +118,7 @@ macro_rules! register_plugin {
             let out_data = OutData::from_raw(out_data_ptr);
 
             // Allocate or restore global data pointer
-            let mut global_handle = if cmd == after_effects_sys::PF_Cmd_GLOBAL_SETUP {
+            let mut global_handle = if cmd as EnumIntType == after_effects_sys::PF_Cmd_GLOBAL_SETUP {
                 // Allocate global data
                 pf::Handle::new(GlobalData {
                     params_map: Rc::new(RefCell::new(HashMap::new())),
@@ -138,7 +139,7 @@ macro_rules! register_plugin {
             let global_lock = global_handle.lock()?;
             let global_inst = global_lock.as_ref_mut()?;
 
-            if cmd == after_effects_sys::PF_Cmd_PARAMS_SETUP {
+            if cmd as EnumIntType == after_effects_sys::PF_Cmd_PARAMS_SETUP {
                 let mut params = Parameters::<$params_type>::new(global_inst.params_map.clone());
                 params.set_in_data(in_data_ptr);
                 global_inst.plugin_instance.params_setup(&mut params)?;
@@ -173,7 +174,7 @@ macro_rules! register_plugin {
 
                 sequence_err = Some(inst.handle_command(&mut plugin_state, command));
 
-                match cmd {
+                match cmd as EnumIntType {
                     #[cfg(does_dialog)]
                     after_effects_sys::PF_Cmd_DO_DIALOG => {
                         sequence_err = Some(inst.do_dialog(&mut plugin_state));
@@ -191,7 +192,7 @@ macro_rules! register_plugin {
                     _ => { }
                 }
 
-                match cmd {
+                match cmd as EnumIntType {
                     after_effects_sys::PF_Cmd_SEQUENCE_SETUP | after_effects_sys::PF_Cmd_SEQUENCE_RESETUP => {
                         drop(lock);
                         (*out_data_ptr).sequence_data = pf::Handle::into_raw(sequence_handle);
@@ -199,7 +200,7 @@ macro_rules! register_plugin {
                     after_effects_sys::PF_Cmd_SEQUENCE_FLATTEN | after_effects_sys::PF_Cmd_GET_FLATTENED_SEQUENCE_DATA => {
                         let serialized = inst.flatten().map_err(|_| Error::InternalStructDamaged)?;
                         drop(lock);
-                        if cmd == after_effects_sys::PF_Cmd_GET_FLATTENED_SEQUENCE_DATA {
+                        if cmd as EnumIntType == after_effects_sys::PF_Cmd_GET_FLATTENED_SEQUENCE_DATA {
                             let _ = pf::Handle::into_raw(sequence_handle); // don't deallocate
                         } else {
                             drop(sequence_handle);
@@ -219,7 +220,7 @@ macro_rules! register_plugin {
                 }
             }
 
-            match cmd {
+            match cmd as EnumIntType {
                 after_effects_sys::PF_Cmd_GLOBAL_SETUP => {
                     drop(global_lock);
                     (*out_data_ptr).global_data = pf::Handle::into_raw(global_handle);
@@ -292,7 +293,7 @@ macro_rules! register_plugin {
             output: *mut after_effects_sys::PF_LayerDef,
             extra: *mut std::ffi::c_void) -> after_effects_sys::PF_Err
         {
-            if cmd == after_effects_sys::PF_Cmd_GLOBAL_SETUP {
+            if cmd == after_effects_sys::PF_Cmd_GLOBAL_SETUP as after_effects_sys::PF_Cmd {
                 (*out_data_ptr).my_version = env!("PIPL_VERSION")  .parse::<u32>().unwrap();
                 (*out_data_ptr).out_flags  = env!("PIPL_OUTFLAGS") .parse::<i32>().unwrap();
                 (*out_data_ptr).out_flags2 = env!("PIPL_OUTFLAGS2").parse::<i32>().unwrap();
@@ -305,12 +306,12 @@ macro_rules! register_plugin {
                 assert_impl::<$sequence_type>();
             }
 
-            log::info!("EffectMain start {:?} {:?}", PfCmd(cmd), std::thread::current().id());
-            struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", PfCmd(self.cmd), std::thread::current().id()); } }
-            let _x = X { cmd: cmd as i32 };
+            //log::info!("EffectMain start {:?} {:?}", PfCmd(cmd), std::thread::current().id());
+            //struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", PfCmd(self.cmd), std::thread::current().id()); } }
+            //let _x = X { cmd: cmd as i32 };
 
             match handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra) {
-                Ok(_) => after_effects_sys::PF_Err_NONE,
+                Ok(_) => after_effects_sys::PF_Err_NONE as after_effects_sys::PF_Err,
                 Err(e) => {
                     log::error!("EffectMain returned error: {e:?}");
                     e as after_effects_sys::PF_Err

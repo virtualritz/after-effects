@@ -1471,7 +1471,7 @@ pub enum PixelFormat {
 impl From<after_effects_sys::PF_PixelFormat> for PixelFormat {
     #[rustfmt::skip]
     fn from(x: after_effects_sys::PF_PixelFormat) -> Self {
-        match x {
+        match x as EnumIntType {
             ae_sys::PF_PixelFormat_ARGB32         => PixelFormat::Argb32,
             ae_sys::PF_PixelFormat_ARGB64         => PixelFormat::Argb64,
             ae_sys::PF_PixelFormat_ARGB128        => PixelFormat::Argb128,
@@ -1490,7 +1490,7 @@ impl From<after_effects_sys::PF_PixelFormat> for PixelFormat {
 impl Into<after_effects_sys::PF_PixelFormat> for PixelFormat {
     #[rustfmt::skip]
     fn into(self) -> after_effects_sys::PF_PixelFormat {
-        match self {
+        (match self {
             PixelFormat::Argb32       => ae_sys::PF_PixelFormat_ARGB32,
             PixelFormat::Argb64       => ae_sys::PF_PixelFormat_ARGB64,
             PixelFormat::Argb128      => ae_sys::PF_PixelFormat_ARGB128,
@@ -1502,7 +1502,7 @@ impl Into<after_effects_sys::PF_PixelFormat> for PixelFormat {
             PixelFormat::PalDv25      => ae_sys::PF_PixelFormat_PALDV25,
             PixelFormat::Invalid      => ae_sys::PF_PixelFormat_INVALID,
             PixelFormat::ForceLongInt => ae_sys::PF_PixelFormat_FORCE_LONG_INT,
-        }
+        }) as  after_effects_sys::PF_PixelFormat
     }
 }
 
@@ -1518,7 +1518,7 @@ impl WorldSuite2 {
         crate::Suite::new()
     }
     pub fn get_pixel_format(&self, effect_world: EffectWorld) -> Result<PixelFormat, Error> {
-        let mut pixel_format = ae_sys::PF_PixelFormat_INVALID;
+        let mut pixel_format = ae_sys::PF_PixelFormat_INVALID as ae_sys::PF_PixelFormat;
 
         ae_call_suite_fn!(
             self.suite_ptr,

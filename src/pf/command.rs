@@ -42,7 +42,7 @@ impl Command {
         output: *mut ae_sys::PF_LayerDef,
         extra: *mut std::ffi::c_void,
     ) -> Self {
-        match cmd {
+        match cmd as EnumIntType {
             ae_sys::PF_Cmd_ABOUT => Command::About,
             ae_sys::PF_Cmd_GLOBAL_SETUP => Command::GlobalSetup,
             ae_sys::PF_Cmd_GLOBAL_SETDOWN => Command::GlobalSetdown,
@@ -105,7 +105,7 @@ impl Command {
 
     #[rustfmt::skip]
     pub fn as_raw(&self) -> ae_sys::PF_Cmd {
-        match self {
+        (match self {
             Command::About                    { .. } => ae_sys::PF_Cmd_ABOUT,
             Command::GlobalSetup              { .. } => ae_sys::PF_Cmd_GLOBAL_SETUP,
             Command::GlobalSetdown            { .. } => ae_sys::PF_Cmd_GLOBAL_SETDOWN,
@@ -135,7 +135,7 @@ impl Command {
             Command::SmartRenderGpu           { .. } => ae_sys::PF_Cmd_SMART_RENDER_GPU,
             Command::GpuDeviceSetup           { .. } => ae_sys::PF_Cmd_GPU_DEVICE_SETUP,
             Command::GpuDeviceSetdown         { .. } => ae_sys::PF_Cmd_GPU_DEVICE_SETDOWN,
-        }
+        }) as ae_sys::PF_Cmd
     }
 }
 
@@ -144,7 +144,7 @@ pub struct PfCmd(pub ae_sys::PF_Cmd);
 impl Debug for PfCmd {
     #[rustfmt::skip]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.0 {
+        match self.0 as EnumIntType {
             ae_sys::PF_Cmd_ABOUT                       => write!(f, "PF_Cmd_ABOUT"),
             ae_sys::PF_Cmd_GLOBAL_SETUP                => write!(f, "PF_Cmd_GLOBAL_SETUP"),
             ae_sys::PF_Cmd_GLOBAL_SETDOWN              => write!(f, "PF_Cmd_GLOBAL_SETDOWN"),

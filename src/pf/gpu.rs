@@ -10,7 +10,7 @@ pub enum GpuFramework {
 }
 impl From<ae_sys::PF_GPU_Framework> for GpuFramework {
     fn from(framework: ae_sys::PF_GPU_Framework) -> Self {
-        match framework {
+        match framework as EnumIntType {
             ae_sys::PF_GPU_Framework_NONE => Self::None,
             ae_sys::PF_GPU_Framework_OPENCL => Self::OpenCl,
             ae_sys::PF_GPU_Framework_METAL => Self::Metal,
