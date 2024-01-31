@@ -175,6 +175,10 @@ impl SmartRenderExtra {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).device_index as usize }
     }
+    pub fn bit_depth(&self) -> i16 {
+        assert!(!self.as_ref().input.is_null());
+        unsafe { (*self.as_ref().input).bitdepth }
+    }
     pub fn gpu_data<'a, T: Any>(&'a self) -> Option<&'a T> {
         assert!(!self.as_ref().input.is_null());
         if unsafe { (*(*self.ptr).input).gpu_data.is_null() } {

@@ -82,14 +82,22 @@ impl OutData {
     pub fn set_out_flags2(&mut self, v: i32) {
         self.as_mut().out_flags2 = v as ae_sys::PF_OutFlags2;
     }
-    pub fn add_out_flag(&mut self, v: i32) {
-        self.as_mut().out_flags |= v as ae_sys::PF_OutFlags;
+    pub fn set_out_flag(&mut self, flag: i32, enabled: bool) {
+        if enabled {
+            self.as_mut().out_flags |= flag as ae_sys::PF_OutFlags;
+        } else {
+            self.as_mut().out_flags &= !(flag as ae_sys::PF_OutFlags);
+        }
     }
-    pub fn add_out_flag2(&mut self, v: i32) {
-        self.as_mut().out_flags2 |= v as ae_sys::PF_OutFlags2;
+    pub fn set_out_flag2(&mut self, flag: i32, enabled: bool) {
+        if enabled {
+            self.as_mut().out_flags2 |= flag as ae_sys::PF_OutFlags2;
+        } else {
+            self.as_mut().out_flags2 &= !(flag as ae_sys::PF_OutFlags2);
+        }
     }
     pub fn set_force_rerender(&mut self) {
-        self.add_out_flag(ae_sys::PF_OutFlag_FORCE_RERENDER);
+        self.set_out_flag(ae_sys::PF_OutFlag_FORCE_RERENDER, true);
     }
 
     pub fn set_frame_data<T: Any>(&mut self, val: T) {

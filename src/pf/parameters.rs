@@ -449,6 +449,16 @@ pub trait ArbitraryData<T> {
 
 define_struct_wrapper!(ArbParamsExtra, PF_ArbParamsExtra);
 
+impl std::fmt::Debug for ArbParamsExtra {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ArbParamsExtra")
+            .field("id", &self.id())
+            .field("refcon", &self.refcon())
+            .field("which_function", &self.which_function())
+            .finish()
+    }
+}
+
 impl ArbParamsExtra {
     pub fn id(&self) -> isize {
         self.0.id as _
@@ -718,10 +728,10 @@ pub enum Param {
 }
 
 #[derive(Clone)]
-#[repr(C)]
 pub struct ParamDef {
     param_def_boxed: std::mem::ManuallyDrop<Box<ae_sys::PF_ParamDef>>,
     drop: bool,
+    index: Option<i32>,
     in_data_ptr: *const ae_sys::PF_InData,
 }
 
@@ -746,6 +756,7 @@ impl ParamDef {
             param_def_boxed: std::mem::ManuallyDrop::new(Box::new(zeroed_raw_param_def())),
             drop: true,
             in_data_ptr,
+            index: None,
         }
     }
     pub fn new(in_data_handle: InData) -> Self {
@@ -753,18 +764,43 @@ impl ParamDef {
             param_def_boxed: std::mem::ManuallyDrop::new(Box::new(zeroed_raw_param_def())),
             drop: true,
             in_data_ptr: in_data_handle.as_ptr(),
+            index: None,
         }
+    }
+    pub fn as_ptr(&self) -> *const ae_sys::PF_ParamDef {
+        self.param_def_boxed.as_ref()
+    }
+
+    pub fn update_param_ui(&self) {
+        if let Ok(suite) = crate::ParamUtilsSuite::new() {
+            if let Some(index) = self.index {
+                suite.update_param_ui(InData::from_raw(self.in_data_ptr).effect_ref(), index, self);
+            }
+        } else {
+            log::error!("failed to get params suite");
+        }
+    }
+    pub fn keyframe_count(&self) -> i32 {
+        (|| -> Option<i32> {
+            crate::ParamUtilsSuite::new()
+                .ok()?
+                .get_keyframe_count(InData::from_raw(self.in_data_ptr).effect_ref(), self.index?)
+                .ok()
+        })()
+        .unwrap_or(0)
     }
 
     pub fn from_raw(
         in_data_ptr: *const ae_sys::PF_InData,
         param_def: *mut ae_sys::PF_ParamDef,
+        index: Option<i32>,
     ) -> Self {
         debug_assert!(!param_def.is_null());
         Self {
             param_def_boxed: unsafe { std::mem::ManuallyDrop::new(Box::from_raw(param_def)) },
             drop: false,
             in_data_ptr,
+            index,
         }
     }
 
@@ -779,6 +815,9 @@ impl ParamDef {
         // Parameters we just added are not checked out
         // so they do not need to be checked in.
         self.drop = false;
+        if index != -1 {
+            self.index = Some(index);
+        }
     }
 
     pub fn checkout(
@@ -804,6 +843,7 @@ impl ParamDef {
             param_def_boxed,
             drop: true,
             in_data_ptr,
+            index: Some(index),
         }
     }
 
@@ -882,14 +922,29 @@ impl ParamDef {
         }
     }
 
+    pub fn is_valid(&self) -> bool {
+        matches!(
+            self.param_def_boxed.param_type,
+            ae_sys::PF_Param_ANGLE
+                | ae_sys::PF_Param_ARBITRARY_DATA
+                | ae_sys::PF_Param_BUTTON
+                | ae_sys::PF_Param_CHECKBOX
+                | ae_sys::PF_Param_COLOR
+                | ae_sys::PF_Param_FLOAT_SLIDER
+                | ae_sys::PF_Param_GROUP_START
+                | ae_sys::PF_Param_GROUP_END
+                | ae_sys::PF_Param_POPUP
+                | ae_sys::PF_Param_SLIDER
+        )
+    }
     pub fn param_type(&self) -> ParamType {
         unsafe { std::mem::transmute(self.param_def_boxed.param_type) }
     }
 
-    /*pub fn set_param_type(&mut self, param_type: ParamType) -> &mut ParamDef {
+    pub fn set_param_type(&mut self, param_type: ParamType) -> &mut Self {
         self.param_def_boxed.param_type = param_type as i32;
         self
-    }*/
+    }
 
     pub unsafe fn layer_def(&mut self) -> *mut ae_sys::PF_LayerDef {
         &mut self.param_def_boxed.u.ld
@@ -906,6 +961,9 @@ impl ParamDef {
     pub fn ui_flags(&mut self, flags: ParamUIFlags) -> &mut Self {
         self.param_def_boxed.ui_flags = flags.bits() as _;
         self
+    }
+    pub fn get_ui_flags(&self) -> ParamUIFlags {
+        ParamUIFlags::from_bits(self.param_def_boxed.ui_flags).unwrap()
     }
 
     pub fn ui_width(&mut self, width: u16) -> &mut Self {
@@ -933,8 +991,9 @@ impl ParamDef {
         self
     }
 
-    pub fn set_value_has_changed(&mut self) {
+    pub fn set_value_has_changed(&mut self) -> &mut Self {
         self.param_def_boxed.uu.change_flags = ChangeFlag::CHANGED_VALUE.bits();
+        self
     }
 }
 
@@ -965,86 +1024,273 @@ impl Debug for ParamDef {
     }
 }
 
+define_suite!(
+    ParamUtilsSuite,
+    PF_ParamUtilsSuite3,
+    kPFParamUtilsSuite,
+    kPFParamUtilsSuiteVersion3
+);
+
+impl ParamUtilsSuite {
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    pub fn update_param_ui(
+        &self,
+        effect_ref: ProgressInfo,
+        param_index: i32,
+        param_def: &ParamDef,
+    ) -> Result<(), Error> {
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            PF_UpdateParamUI,
+            effect_ref.as_ptr(),
+            param_index,
+            param_def.as_ptr()
+        ) {
+            Ok(()) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+    pub fn get_keyframe_count(
+        &self,
+        effect_ref: ProgressInfo,
+        param_index: i32,
+    ) -> Result<i32, Error> {
+        let mut count: ae_sys::PF_KeyIndex = ae_sys::PF_KeyIndex_NONE;
+
+        match ae_call_suite_fn!(
+            self.suite_ptr,
+            PF_GetKeyframeCount,
+            effect_ref.as_ptr(),
+            param_index,
+            &mut count
+        ) {
+            Ok(()) => Ok(count as i32),
+            Err(e) => Err(e),
+        }
+    }
+    /*
+        // IMPORTANT: as of 13.5 to avoid threading deadlock problems, PF_GetCurrentState() returns a random state
+        // if used in the context of UPDATE_PARAMS_UI only. In other selectors this will behave normally.
+        SPAPI PF_Err	(*PF_GetCurrentState)(
+                                    PF_ProgPtr			effect_ref,
+                                    PF_ParamIndex		param_index,
+                                    const A_Time		*startPT0,		// NULL for both start & duration means over all of time
+                                    const A_Time		*durationPT0,
+                                    PF_State			*stateP);		/* << */
+
+        SPAPI PF_Err	(*PF_AreStatesIdentical)(
+                                    PF_ProgPtr			effect_ref,
+                                    const PF_State		*state1P,
+                                    const PF_State		*state2P,
+                                    A_Boolean			*samePB);		/* << */
+
+        SPAPI PF_Err	(*PF_IsIdenticalCheckout)(
+                                    PF_ProgPtr			effect_ref,
+                                    PF_ParamIndex		param_index,
+                                    A_long				what_time1,
+                                    A_long				time_step1,
+                                    A_u_long			time_scale1,
+                                    A_long				what_time2,
+                                    A_long				time_step2,
+                                    A_u_long			time_scale2,
+                                    PF_Boolean			*identicalPB);		/* << */
+
+        SPAPI PF_Err	(*PF_FindKeyframeTime)(
+                                    PF_ProgPtr			effect_ref,
+                                    PF_ParamIndex		param_index,
+                                    A_long				what_time,
+                                    A_u_long		time_scale,
+                                    PF_TimeDir			time_dir,
+                                    PF_Boolean			*foundPB,			/* << */
+                                    PF_KeyIndex			*key_indexP0,		/* << */
+                                    A_long				*key_timeP0,		/* << */	// you can ask for either:
+                                    A_u_long		*key_timescaleP0);	/* << */	// time&timescale OR neither
+
+        SPAPI PF_Err	(*PF_CheckoutKeyframe)(
+                                    PF_ProgPtr			effect_ref,
+                                    PF_ParamIndex		param_index,
+                                    PF_KeyIndex			key_index,			// zero-based
+                                    A_long				*key_timeP0,		/* << */	// you can ask for either:
+                                    A_u_long		*key_timescaleP0,	/* << */	// time&timescale OR neither
+                                    PF_ParamDef			*paramP0);			/* << */
+
+        SPAPI PF_Err	(*PF_CheckinKeyframe)(
+                                    PF_ProgPtr			effect_ref,
+                                    PF_ParamDef			*paramP);
+
+        SPAPI PF_Err	(*PF_KeyIndexToTime)(
+                                    PF_ProgPtr			effect_ref,
+                                    PF_ParamIndex		param_index,
+                                    PF_KeyIndex			key_indexP,			/* >> */
+                                    A_long				*key_timeP,			/* >> */
+                                    A_u_long		*key_timescaleP);	/* << */
+
+    */
+}
+
 macro_rules! define_get_param {
     ($name:tt, $enm:ident, $type:ty) => {
         paste::item! {
-            pub fn [<get_ $name>](&self, type_: P) -> $type {
-                let param = self.params.get(*self.map.get(&type_).unwrap()); // TODO: unwrap
+            pub fn [<get_ $name>](&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Option<$type> {
+                let param = self.get_param_def(type_, time, time_step, time_scale);
                 match param.map(|x| x.to_param()) {
-                    Some(Param::$enm(pd)) => pd,
-                    _ => panic!("Invalid parameter type, expected {}, got {}", $name, param.map(|x| format!("{:?}", x.param_type())).unwrap_or("Invalid".to_owned())),
+                    Some(Param::$enm(pd)) => Some(pd),
+                    _ => panic!("Invalid parameter type, expected {}, got {}. type: {type_:?}, params_len: {:?}, map: {:?}", $name, self.get_param_def(type_, time, time_step, time_scale).map(|x| format!("{:?}", x.param_type())).unwrap_or("Invalid".to_owned()), self.params.len(), self.map.borrow()),
                 }
             }
         }
     };
 }
+
 use std::borrow::Cow;
+use std::cell::RefCell;
 use std::collections::HashMap;
-pub struct Parameters<'a, P: Eq + PartialEq + std::hash::Hash + Copy> {
+use std::fmt::Debug;
+use std::hash::Hash;
+use std::rc::Rc;
+
+#[derive(Clone)]
+pub struct Parameters<P: Eq + PartialEq + Hash + Copy + Debug> {
     num_params: usize,
     in_data: *const ae_sys::PF_InData,
-    map: Cow<'a, HashMap<P, usize>>,
+    pub map: Rc<RefCell<HashMap<P, usize>>>,
     params: Vec<ParamDef>,
 }
-impl<'a, P: Eq + PartialEq + std::hash::Hash + Copy> Parameters<'a, P> {
+impl<P: Eq + PartialEq + Hash + Copy + Debug> Default for Parameters<P> {
+    fn default() -> Self {
+        Self::new(Default::default())
+    }
+}
+impl<P: Eq + PartialEq + Hash + Copy + Debug> Parameters<P> {
+    pub fn len(&self) -> usize {
+        self.map.borrow().len()
+    }
     pub fn set_in_data(&mut self, in_data: *const ae_sys::PF_InData) {
         self.in_data = in_data;
     }
-    pub fn new() -> Self {
+    pub fn in_data(&self) -> InData {
+        InData::from_raw(self.in_data)
+    }
+    pub fn new(map: Rc<RefCell<HashMap<P, usize>>>) -> Self {
         Self {
             in_data: std::ptr::null(),
             num_params: 1,
-            map: Cow::Owned(HashMap::new()),
+            map,
             params: Vec::new(),
         }
     }
     pub fn with_params(
         in_data: *const ae_sys::PF_InData,
         params: *mut *mut ae_sys::PF_ParamDef,
-        setup: &'a Self,
+        map: Rc<RefCell<HashMap<P, usize>>>,
+        num_params: usize,
     ) -> Self {
         Self {
             in_data,
             params: if params.is_null() {
                 Vec::new()
             } else {
-                let params = unsafe { std::slice::from_raw_parts(params, setup.num_params) };
+                let params = unsafe { std::slice::from_raw_parts(params, num_params) };
                 params
                     .iter()
-                    .map(|p| ParamDef::from_raw(in_data, *p))
+                    .enumerate()
+                    .map(|(i, p)| ParamDef::from_raw(in_data, *p, Some(i as i32)))
                     .collect::<Vec<_>>()
             },
-            num_params: setup.num_params,
-            map: Cow::Borrowed(setup.map.as_ref()),
+            num_params,
+            map,
         }
     }
 
-    pub fn add_param(&mut self, type_: P, name: &str, def: impl Into<Param>) -> ParamDef {
+    fn param_id(type_: P) -> i32 {
+        use hash32::Murmur3Hasher;
+        use std::hash::Hasher;
+        let mut hasher = Murmur3Hasher::default();
+        format!("{type_:?}").hash(&mut hasher);
+        hasher.finish() as i32
+    }
+
+    pub fn add_group<F: FnOnce(&mut Self)>(
+        &mut self,
+        type_start: P,
+        type_end: P,
+        name: &str,
+        inner_cb: F,
+    ) {
+        assert!(!self.in_data.is_null());
+
+        let mut param_def = ParamDef::new_from_ptr(self.in_data);
+        param_def.name(name);
+        param_def.set_param_type(ParamType::GroupStart);
+        param_def.set_id(Self::param_id(type_start));
+        param_def.add(-1);
+        self.map.borrow_mut().insert(type_start, self.num_params);
+        self.num_params += 1;
+
+        inner_cb(self);
+
+        let mut param_def = ParamDef::new_from_ptr(self.in_data);
+        param_def.set_param_type(ParamType::GroupEnd);
+        param_def.set_id(Self::param_id(type_end));
+        param_def.add(-1);
+        self.map.borrow_mut().insert(type_end, self.num_params);
+        self.num_params += 1;
+    }
+
+    pub fn add_param(&mut self, type_: P, name: &str, def: impl Into<Param>) {
         assert!(!self.in_data.is_null());
 
         let mut param_def = ParamDef::new_from_ptr(self.in_data);
         param_def.name(name);
         param_def.param(def.into());
+        param_def.set_id(Self::param_id(type_));
         param_def.add(-1);
-        self.map.to_mut().insert(type_, self.num_params);
+        self.map.borrow_mut().insert(type_, self.num_params);
         self.num_params += 1;
-        param_def
     }
+
     pub fn add_param_with_flags(
         &mut self,
         type_: P,
         name: &str,
         def: impl Into<Param>,
         flags: ParamFlag,
+        ui_flags: ParamUIFlags,
+    ) {
+        assert!(!self.in_data.is_null());
+
+        let mut param_def = ParamDef::new_from_ptr(self.in_data);
+        param_def.name(name);
+        param_def.param(def.into());
+        param_def.set_id(Self::param_id(type_));
+        param_def.flags(flags);
+        param_def.ui_flags(ui_flags);
+        param_def.add(-1);
+        self.map.borrow_mut().insert(type_, self.num_params);
+        self.num_params += 1;
+    }
+
+    pub fn add_param_customized<F: FnOnce(&mut ParamDef) -> i32>(
+        &mut self,
+        type_: P,
+        name: &str,
+        def: impl Into<Param>,
+        cb: F,
     ) -> ParamDef {
         assert!(!self.in_data.is_null());
 
         let mut param_def = ParamDef::new_from_ptr(self.in_data);
         param_def.name(name);
         param_def.param(def.into());
-        param_def.flags(flags);
-        param_def.add(-1);
-        self.map.to_mut().insert(type_, self.num_params);
+        param_def.set_id(Self::param_id(type_));
+        let mut index = cb(&mut param_def);
+        param_def.add(index);
+        if index == -1 {
+            index = self.num_params as i32;
+        }
+        self.map.borrow_mut().insert(type_, index as usize);
         self.num_params += 1;
         param_def
     }
@@ -1058,14 +1304,69 @@ impl<'a, P: Eq + PartialEq + std::hash::Hash + Copy> Parameters<'a, P> {
     define_get_param!("button", Button, ButtonDef);
     define_get_param!("arbitrary", Arbitrary, ArbitraryDef);
 
-    pub fn get_param_def(&mut self, type_: P) -> &mut ParamDef {
-        self.params.get_mut(*self.map.get(&type_).unwrap()).unwrap() // TODO: unwrap
+    pub fn get_param_def(
+        &self,
+        type_: P,
+        time: Option<i32>,
+        time_step: Option<i32>,
+        time_scale: Option<u32>,
+    ) -> Option<Cow<ParamDef>> {
+        let index = self.index_for_type(type_)?;
+        if self.params.is_empty() || time.is_some() {
+            let in_data = self.in_data();
+            let param = ParamDef::checkout(
+                in_data,
+                index as i32,
+                time.unwrap_or(in_data.current_time()),
+                time_step.unwrap_or(in_data.time_step()),
+                time_scale.unwrap_or(in_data.time_scale()),
+            );
+            if !param.is_valid() {
+                return None;
+            }
+            return Some(Cow::Owned(param));
+        }
+        Some(Cow::Borrowed(self.params.get(index)?))
     }
+    pub fn get_param_def_mut(
+        &mut self,
+        type_: P,
+        time: Option<i32>,
+        time_step: Option<i32>,
+        time_scale: Option<u32>,
+    ) -> Option<mucow::MuCow<ParamDef>> {
+        let index = self.index_for_type(type_)?;
+        if self.params.is_empty() || time.is_some() {
+            let in_data = self.in_data();
+            let param = ParamDef::checkout(
+                in_data,
+                index as i32,
+                time.unwrap_or(in_data.current_time()),
+                time_step.unwrap_or(in_data.time_step()),
+                time_scale.unwrap_or(in_data.time_scale()),
+            );
+            if !param.is_valid() {
+                return None;
+            }
+            return Some(mucow::MuCow::Owned(param));
+        }
+        Some(mucow::MuCow::Borrowed(self.params.get_mut(index)?))
+    }
+
     pub fn num_params(&self) -> usize {
         self.num_params
     }
 
+    pub fn index_for_type(&self, type_: P) -> Option<usize> {
+        self.map.borrow().get(&type_).copied()
+    }
     pub fn type_for_index(&self, index: usize) -> P {
-        *self.map.iter().find(|(_, v)| **v == index).unwrap().0
+        *self
+            .map
+            .borrow()
+            .iter()
+            .find(|(_, v)| **v == index)
+            .unwrap()
+            .0
     }
 }

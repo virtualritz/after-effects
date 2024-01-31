@@ -17,14 +17,14 @@ pub enum Command {
     FrameSetdown,
     UserChangedParam         { param_index: usize },
     UpdateParamsUi,
-    Event,
+    Event                    { extra: EventExtra },
     GetExternalDependencies  { extra: *mut ae_sys::PF_ExtDependenciesExtra },
     CompletelyGeneral,
     QueryDynamicFlags,
     AudioRender,
     AudioSetup,
     AudioSetdown,
-    ArbitraryCallback        { extra: *mut ae_sys::PF_ArbParamsExtra },
+    ArbitraryCallback        { extra: ArbParamsExtra },
     SmartPreRender           { extra: PreRenderExtra },
     SmartRender              { extra: SmartRenderExtra },
     GetFlattenedSequenceData,
@@ -64,7 +64,9 @@ impl Command {
                 },
             },
             ae_sys::PF_Cmd_UPDATE_PARAMS_UI => Command::UpdateParamsUi,
-            ae_sys::PF_Cmd_EVENT => Command::Event,
+            ae_sys::PF_Cmd_EVENT => Command::Event {
+                extra: unsafe { EventExtra::from_raw(*(extra as *mut ae_sys::PF_EventExtra)) },
+            },
             ae_sys::PF_Cmd_GET_EXTERNAL_DEPENDENCIES => Command::GetExternalDependencies {
                 extra: extra as *mut ae_sys::PF_ExtDependenciesExtra,
             },
@@ -74,7 +76,9 @@ impl Command {
             ae_sys::PF_Cmd_AUDIO_SETUP => Command::AudioSetup,
             ae_sys::PF_Cmd_AUDIO_SETDOWN => Command::AudioSetdown,
             ae_sys::PF_Cmd_ARBITRARY_CALLBACK => Command::ArbitraryCallback {
-                extra: extra as *mut ae_sys::PF_ArbParamsExtra,
+                extra: unsafe {
+                    ArbParamsExtra::from_raw(*(extra as *mut ae_sys::PF_ArbParamsExtra))
+                },
             },
             ae_sys::PF_Cmd_SMART_PRE_RENDER => Command::SmartPreRender {
                 extra: PreRenderExtra::from_raw(extra as *mut _),

@@ -1,26 +1,22 @@
-use crate::*;
-pub use cstr_literal; // re-export
-
-#[macro_export]
-macro_rules! empty_impl_for {
-    ($t:ty, $params_type:ty) => {
-        impl AdobePluginInstance for $t {
-            fn flatten(&self) -> Result<Vec<u8>, Error> { Ok(Vec::new()) }
-            fn unflatten(_: &[u8]) -> Result<Self, Error> { Ok(Default::default()) }
-            fn render(&self, in_data: InData, in_layer: &Layer, out_layer: &mut Layer, params: &ae::Parameters<$params_type>) -> Result<(), ae::Error> { Ok(()) }
-            fn user_changed_param(&mut self, param: $params_type, params: &ae::Parameters<$params_type>) -> Result<(), ae::Error> { Ok(()) }
-            fn handle_command(&mut self, _: Command, _: InData, _: OutData) -> Result<(), Error> { Ok(()) }
-        }
-    };
-}
-
 #[macro_export]
 macro_rules! register_plugin {
 	($global_type:ty, $sequence_type:ty, $params_type:ty) => {
         use $crate::*;
+        use std::collections::HashMap;
+        use std::rc::Rc;
+        use std::cell::RefCell;
 
-        struct GlobalData<'a> {
-            params: Parameters<'a, $params_type>,
+        struct PluginState<'global, 'sequence, 'params> {
+            global: &'global mut $global_type,
+            sequence: Option<&'sequence mut $sequence_type>,
+            params: &'params mut $crate::Parameters<$params_type>,
+            in_data: $crate::InData,
+            out_data: $crate::OutData
+        }
+
+        struct GlobalData {
+            params_map: Rc<RefCell<HashMap<$params_type, usize>>>,
+            params_num: usize,
             plugin_instance: $global_type
         }
 
@@ -29,19 +25,31 @@ macro_rules! register_plugin {
 
             fn params_setup(&self, params: &mut Parameters<$params_type>) -> Result<(), Error>;
 
-            fn handle_command(&self, command: Command, in_data: InData, out_data: OutData, ) -> Result<(), Error>;
+            fn handle_command(&mut self, command: Command, in_data: InData, out_data: OutData, ) -> Result<(), Error>;
         }
         trait AdobePluginInstance : Default {
-            fn flatten(&self) -> Result<Vec<u8>, Error>;
-            fn unflatten(serialized: &[u8]) -> Result<Self, Error>;
+            fn flatten(&self) -> Result<(u16, Vec<u8>), Error>;
+            fn unflatten(version: u16, serialized: &[u8]) -> Result<Self, Error>;
 
-            fn render(&self, in_data: InData, in_layer: &Layer, out_layer: &mut Layer, params: &ae::Parameters<$params_type>) -> Result<(), ae::Error>;
+            fn render(&self, plugin: &mut PluginState, in_layer: &Layer, out_layer: &mut Layer) -> Result<(), ae::Error>;
 
-            fn user_changed_param(&mut self, param: $params_type, params: &ae::Parameters<$params_type>) -> Result<(), ae::Error>;
+            #[cfg(does_dialog)]
+            fn do_dialog(&mut self, plugin: &mut PluginState) -> Result<(), ae::Error>;
 
-            fn handle_command(&mut self, command: Command, in_data: InData, out_data: OutData) -> Result<(), Error>;
+            fn user_changed_param(&mut self, plugin: &mut PluginState, param: $params_type) -> Result<(), ae::Error>;
+
+            fn handle_command(&mut self, plugin: &mut PluginState, command: Command) -> Result<(), Error>;
         }
-        empty_impl_for!((), $params_type);
+        impl AdobePluginInstance for () {
+            fn flatten(&self) -> Result<(u16, Vec<u8>), Error> { Ok((0, Vec::new())) }
+            fn unflatten(_: u16, _: &[u8]) -> Result<Self, Error> { Ok(Default::default()) }
+            fn render(&self, _: &mut PluginState, _: &Layer, _: &mut Layer) -> Result<(), ae::Error> { Ok(()) }
+            fn user_changed_param(&mut self, _: &mut PluginState, _: $params_type) -> Result<(), ae::Error> { Ok(()) }
+            fn handle_command(&mut self, _: &mut PluginState, _: Command) -> Result<(), Error> { Ok(()) }
+
+            #[cfg(does_dialog)]
+            fn do_dialog(&mut self, _: &mut PluginState) -> Result<(), ae::Error> { Ok(()) }
+        }
 
         unsafe fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: after_effects_sys::PF_Cmd, in_data_ptr: *mut after_effects_sys::PF_InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
             Ok(if std::any::type_name::<S>() == "()" {
@@ -58,11 +66,21 @@ macro_rules! register_plugin {
                 } else {
                     let instance = FlatHandle::from_raw((*in_data_ptr).sequence_data as after_effects_sys::PF_Handle)?;
                     let bytes = instance.as_slice().ok_or(Error::InvalidIndex)?;
+                    if bytes.len() < 2 {
+                        return Ok(None);
+                    }
+                    let version = u16::from_le_bytes(bytes[0..2].try_into().unwrap());
 
-                    let handle = pf::Handle::new(S::unflatten(bytes).map_err(|_| Error::Struct)?)?;
+                    let handle = pf::Handle::new(S::unflatten(version, &bytes[2..]).map_err(|_| Error::Struct)?)?;
                     Some((handle, true))
                 }
-            } else if cmd == after_effects_sys::PF_Cmd_RENDER || cmd == after_effects_sys::PF_Cmd_SMART_RENDER || cmd == after_effects_sys::PF_Cmd_FRAME_SETUP || cmd == after_effects_sys::PF_Cmd_FRAME_SETDOWN {
+            } else if cmd == after_effects_sys::PF_Cmd_RENDER
+                   || cmd == after_effects_sys::PF_Cmd_SMART_RENDER
+                   || cmd == after_effects_sys::PF_Cmd_SMART_RENDER_GPU
+                   || cmd == after_effects_sys::PF_Cmd_SMART_PRE_RENDER
+                   || cmd == after_effects_sys::PF_Cmd_FRAME_SETUP
+                   || cmd == after_effects_sys::PF_Cmd_ARBITRARY_CALLBACK
+                   || cmd == after_effects_sys::PF_Cmd_FRAME_SETDOWN {
                 // Read-only sequence data available through a suite only
                 let seq_ptr = pf::EffectSequenceDataSuite1::new()
                     .and_then(|x| x.get_const_sequence_data(InData::from_raw(in_data_ptr)))
@@ -102,7 +120,8 @@ macro_rules! register_plugin {
             let mut global_handle = if cmd == after_effects_sys::PF_Cmd_GLOBAL_SETUP {
                 // Allocate global data
                 pf::Handle::new(GlobalData {
-                    params: Parameters::<$params_type>::new(),
+                    params_map: Rc::new(RefCell::new(HashMap::new())),
+                    params_num: 1,
                     plugin_instance: <$global_type>::default()
                 })?
             } else {
@@ -114,20 +133,30 @@ macro_rules! register_plugin {
             };
 
             // Allocate or restore sequence data pointer
-            let sequence_handle = get_sequence_handle::<S>(cmd, in_data_ptr).unwrap_or(None);
+            let sequence_handle = get_sequence_handle::<$sequence_type>(cmd, in_data_ptr).unwrap_or(None);
 
             let global_lock = global_handle.lock()?;
             let global_inst = global_lock.as_ref_mut()?;
 
             if cmd == after_effects_sys::PF_Cmd_PARAMS_SETUP {
-                global_inst.params.set_in_data(in_data_ptr);
-                global_inst.plugin_instance.params_setup(&mut global_inst.params)?;
-                (*out_data_ptr).num_params = global_inst.params.num_params() as i32;
+                let mut params = Parameters::<$params_type>::new(global_inst.params_map.clone());
+                params.set_in_data(in_data_ptr);
+                global_inst.plugin_instance.params_setup(&mut params)?;
+                global_inst.params_num = params.num_params();
+                (*out_data_ptr).num_params = params.num_params() as i32;
             }
+
+            let mut plugin_state = PluginState {
+                global: &mut global_inst.plugin_instance,
+                sequence: sequence_handle.as_ref().map(|x| x.0.as_mut().unwrap()),
+                params: &mut Parameters::<$params_type>::with_params(in_data_ptr, params, global_inst.params_map.clone(), global_inst.params_num),
+                in_data,
+                out_data
+            };
 
             let command = Command::from_entry_point(cmd, in_data_ptr, params, output, extra);
 
-            let global_err = global_inst.plugin_instance.handle_command(command, in_data, out_data);
+            let global_err = plugin_state.global.handle_command(command, in_data, out_data);
             let mut sequence_err = None;
 
             if let Some((mut sequence_handle, needs_lock)) = sequence_handle {
@@ -142,20 +171,22 @@ macro_rules! register_plugin {
                 let out_data = OutData::from_raw(out_data_ptr);
                 let command = Command::from_entry_point(cmd, in_data_ptr, params, output, extra);
 
-                sequence_err = Some(inst.handle_command(command, in_data, out_data));
+                sequence_err = Some(inst.handle_command(&mut plugin_state, command));
 
                 match cmd {
+                    #[cfg(does_dialog)]
+                    after_effects_sys::PF_Cmd_DO_DIALOG => {
+                        sequence_err = Some(inst.do_dialog(&mut plugin_state));
+                    }
                     after_effects_sys::PF_Cmd_RENDER => {
-                        let params_registry = Parameters::<$params_type>::with_params(in_data_ptr, params, &global_inst.params);
                         let in_layer = $crate::Layer::from_raw(in_data_ptr, &mut (*(*params)).u.ld);
                         let mut out_layer = $crate::Layer::from_raw(in_data_ptr, output);
-                        sequence_err = Some(inst.render(InData::from_raw(in_data_ptr), &in_layer, &mut out_layer, &params_registry));
+                        sequence_err = Some(inst.render(&mut plugin_state, &in_layer, &mut out_layer));
                     }
                     after_effects_sys::PF_Cmd_USER_CHANGED_PARAM => {
-                        let params_registry = Parameters::<$params_type>::with_params(in_data_ptr, params, &global_inst.params);
                         let extra = extra as *mut after_effects_sys::PF_UserChangedParamExtra;
-                        let param = params_registry.type_for_index((*extra).param_index as usize);
-                        sequence_err = Some(inst.user_changed_param(param, &params_registry));
+                        let param = plugin_state.params.type_for_index((*extra).param_index as usize);
+                        sequence_err = Some(inst.user_changed_param(&mut plugin_state, param));
                     }
                     _ => { }
                 }
@@ -173,7 +204,9 @@ macro_rules! register_plugin {
                         } else {
                             drop(sequence_handle);
                         }
-                        (*out_data_ptr).sequence_data = pf::FlatHandle::into_raw(FlatHandle::new(serialized)?) as *mut _;
+                        let mut final_bytes = serialized.0.to_le_bytes().to_vec(); // version
+                        final_bytes.extend(&serialized.1);
+                        (*out_data_ptr).sequence_data = pf::FlatHandle::into_raw(FlatHandle::new(final_bytes)?) as *mut _;
                     }
                     after_effects_sys::PF_Cmd_SEQUENCE_SETDOWN => {
                         (*out_data_ptr).sequence_data = std::ptr::null_mut();
@@ -272,9 +305,16 @@ macro_rules! register_plugin {
                 assert_impl::<$sequence_type>();
             }
 
+            log::info!("EffectMain start {:?} {:?}", PfCmd(cmd), std::thread::current().id());
+            struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", PfCmd(self.cmd), std::thread::current().id()); } }
+            let _x = X { cmd: cmd as i32 };
+
             match handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra) {
                 Ok(_) => after_effects_sys::PF_Err_NONE,
-                Err(e) => e as after_effects_sys::PF_Err
+                Err(e) => {
+                    log::error!("EffectMain returned error: {e:?}");
+                    e as after_effects_sys::PF_Err
+                }
             }
         }
 	};

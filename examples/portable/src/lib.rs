@@ -107,7 +107,7 @@ impl AdobePluginGlobal for Plugin {
     }
 
     fn handle_command(
-        &self,
+        &mut self,
         cmd: ae::Command,
         in_data: ae::InData,
         mut out_data: ae::OutData,
@@ -126,29 +126,28 @@ impl AdobePluginGlobal for Plugin {
 }
 
 impl AdobePluginInstance for Instance {
-    fn flatten(&self) -> Result<Vec<u8>, Error> {
-        Ok(Vec::new())
+    fn flatten(&self) -> Result<(u16, Vec<u8>), Error> {
+        Ok((1, Vec::new()))
     }
-    fn unflatten(_bytes: &[u8]) -> Result<Self, Error> {
+    fn unflatten(_version: u16, _bytes: &[u8]) -> Result<Self, Error> {
         Ok(Self {})
     }
 
-    fn user_changed_param(&mut self, _: Params, _: &ae::Parameters<Params>) -> Result<(), ae::Error> { Ok(()) }
+    fn user_changed_param(&mut self, _: &mut PluginState, _: Params) -> Result<(), ae::Error> { Ok(()) }
 
     fn render(
         &self,
-        in_data: ae::InData,
+        plugin: &mut PluginState,
         in_layer: &Layer,
         out_layer: &mut Layer,
-        params: &ae::Parameters<Params>,
     ) -> Result<(), ae::Error> {
-        let slider_value = params.get_float_slider(Params::MixChannels).value();
+        let slider_value = plugin.params.get_float_slider(Params::MixChannels, None, None, None).unwrap().value();
 
         // If the slider is 0 just make a direct copy.
         if slider_value < 0.001 {
             out_layer.copy_from(in_layer, None, None)?;
         } else {
-            let extent_hint = in_data.extent_hint();
+            let extent_hint = plugin.in_data.extent_hint();
             let out_extent_hint = out_layer.extent_hint();
             // clear all pixels outside extent_hint.
             if extent_hint != out_extent_hint {
@@ -176,9 +175,8 @@ impl AdobePluginInstance for Instance {
 
     fn handle_command(
         &mut self,
-        _cmd: ae::Command,
-        _in_data: ae::InData,
-        _out_data: ae::OutData,
+        _plugin: &mut PluginState,
+        _cmd: ae::Command
     ) -> Result<(), ae::Error> {
         Ok(())
     }

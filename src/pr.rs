@@ -54,6 +54,7 @@ impl RenderContextHandle {
     }
 }*/
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PixelFormat {
     Bgra4444_8u,
     Vuya4444_8u,

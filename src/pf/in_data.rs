@@ -88,6 +88,9 @@ impl InData {
     pub fn current_frame(&self) -> f32 {
         unsafe { (*self.ptr).current_time as f32 / (*self.ptr).time_step as f32 }
     }
+    pub fn current_frame_local(&self) -> f32 {
+        unsafe { (*self.ptr).current_time as f32 / (*self.ptr).local_time_step as f32 }
+    }
     pub fn current_timestamp(&self) -> f32 {
         unsafe { (*self.ptr).current_time as f32 / (*self.ptr).time_scale as f32 }
     }

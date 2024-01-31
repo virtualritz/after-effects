@@ -88,17 +88,23 @@ mod macros;
 
 #[macro_use]
 mod plugin_base;
-pub use plugin_base::*;
+
+#[macro_use]
+mod cross_thread_type;
 
 pub mod aegp;
-// pub use aegp::*;
 pub mod aeio;
-pub use aeio::*;
 pub mod drawbot;
 pub use drawbot::*;
 pub mod pf;
 pub use pf::*;
 pub mod pr;
+
+// re-exports
+pub use cstr_literal;
+pub use fastrand;
+pub use parking_lot;
+pub use paste;
 
 thread_local!(
     pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> =

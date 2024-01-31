@@ -135,6 +135,23 @@ pub enum Event {
 }
 
 define_struct_wrapper!(EventExtra, PF_EventExtra);
+
+impl std::fmt::Debug for EventExtra {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EventExtra")
+            .field("event", &self.event())
+            .field("window_type", &self.window_type())
+            .field("param_index", &self.param_index())
+            .field("effect_area", &self.effect_area())
+            .field("current_frame", &self.current_frame())
+            .field("param_title_frame", &self.param_title_frame())
+            .field("horiz_offset", &self.horiz_offset())
+            .field("modifiers", &self.modifiers())
+            .field("last_time", &self.last_time())
+            .finish()
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, IntoPrimitive, TryFromPrimitive)]
 #[cfg_attr(target_os = "windows", repr(i32))]
 #[cfg_attr(target_os = "macos", repr(u32))]
@@ -1043,6 +1060,7 @@ pub enum ParamIndex {
 pub type ProgPtr = ae_sys::PF_ProgPtr;
 
 bitflags! {
+    #[derive(Copy, Clone, Debug)]
     pub struct CustomEventFlags: ae_sys::A_long {
         const NONE    = ae_sys::PF_CustomEFlag_NONE    as ae_sys::A_long;
         const COMP    = ae_sys::PF_CustomEFlag_COMP    as ae_sys::A_long;
@@ -1053,6 +1071,7 @@ bitflags! {
 }
 
 bitflags! {
+    #[derive(Copy, Clone, Debug)]
     struct _UIAlignment: ae_sys::A_long {
         // No values other than PF_UIAlignment_NONE are honored, in Ae or PPro.
         const NONE   = ae_sys::PF_UIAlignment_NONE   as ae_sys::A_long;
@@ -1064,6 +1083,7 @@ bitflags! {
 }
 
 bitflags! {
+    #[derive(Copy, Clone, Debug)]
     pub struct Modifiers: ae_sys::A_long {
         const NONE            = ae_sys::PF_Mod_NONE            as ae_sys::A_long;
         /// Cmd on macOS, Ctrl on Windows.

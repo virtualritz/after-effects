@@ -5,11 +5,8 @@ use std::{
     env,
     path::{Path, PathBuf},
 };
-//use std::process::Command;
 
 fn main() {
-    // TODO: make this generic & work on bot macOS & Windows
-
     println!("cargo:rerun-if-changed=wrapper.hpp");
 
     let ae_sdk_path = &env::var("AESDK_ROOT").expect(

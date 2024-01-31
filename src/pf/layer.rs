@@ -34,38 +34,56 @@ impl Layer {
     pub fn height(&self) -> i32 {
         unsafe { (*self.layer_ptr).height }
     }
-    pub fn stride(&self) -> i32 {
+    pub fn buffer_stride(&self) -> usize {
+        unsafe { (*self.layer_ptr).rowbytes }.abs() as usize
+    }
+    pub fn rowbytes(&self) -> i32 {
         unsafe { (*self.layer_ptr).rowbytes }
     }
     pub fn extent_hint(&self) -> Rect {
         unsafe { (*self.layer_ptr).extent_hint.into() }
     }
+    pub fn bit_depth(&self) -> i16 {
+        unsafe {
+            if ((*self.layer_ptr).world_flags & ae_sys::PF_WorldFlag_DEEP) != 0 {
+                16
+            } else if ((*self.layer_ptr).world_flags & ae_sys::PF_WorldFlag_RESERVED1) != 0 {
+                32
+            } else {
+                (self.rowbytes().abs() as f32 / self.width() as f32).floor() as i16 / 4 * 8
+            }
+        }
+    }
 
     pub fn buffer(&self) -> &[u8] {
         // Stride can be negative, so we need to offset the pointer to get to the real beginning of the buffer
-        let offset = if self.stride() < 0 {
-            (self.stride() * self.height()) as isize
+        let offset = if self.rowbytes() < 0 {
+            (self.rowbytes() * (self.height() - 1)) as isize
         } else {
             0
         };
         unsafe {
+            assert!(self.rowbytes().abs() > 0);
+            assert!(!(*self.layer_ptr).data.is_null());
             std::slice::from_raw_parts(
                 ((*self.layer_ptr).data as *const u8).offset(offset),
-                (self.height() * self.stride().abs()) as usize,
+                (self.height() * self.rowbytes().abs()) as usize,
             )
         }
     }
     pub fn buffer_mut(&mut self) -> &mut [u8] {
         // Stride can be negative, so we need to offset the pointer to get to the real beginning of the buffer
-        let offset = if self.stride() < 0 {
-            (self.stride() * self.height()) as isize
+        let offset = if self.rowbytes() < 0 {
+            (self.rowbytes() * (self.height() - 1)) as isize
         } else {
             0
         };
         unsafe {
+            assert!(self.rowbytes().abs() > 0);
+            assert!(!(*self.layer_ptr).data.is_null());
             std::slice::from_raw_parts_mut(
                 ((*self.layer_ptr).data as *mut u8).offset(offset),
-                (self.height() * self.stride().abs()) as usize,
+                (self.height() * self.rowbytes().abs()) as usize,
             )
         }
     }
