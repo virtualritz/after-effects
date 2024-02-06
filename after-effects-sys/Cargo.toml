@@ -15,4 +15,4 @@ repository = "https://github.com/virtualritz/after-effects/"
 artisan-2-api = []
 
 [build-dependencies]
-bindgen = "0.69.2"
+bindgen = "0.69.4"
