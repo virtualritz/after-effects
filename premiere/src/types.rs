@@ -1,4 +1,45 @@
+
 use crate::*;
+
+define_enum! {
+    pr_sys::PrPPixBufferAccess,
+    PPixBufferAccess {
+        ReadOnly      = pr_sys::PrPPixBufferAccess_PrPPixBufferAccess_ReadOnly,
+        WriteOnly     = pr_sys::PrPPixBufferAccess_PrPPixBufferAccess_WriteOnly,
+        ReadWrite     = pr_sys::PrPPixBufferAccess_PrPPixBufferAccess_ReadWrite,
+        ForceEnumSize = pr_sys::PrPPixBufferAccess_PrPPixBufferAccess_ForceEnumSize,
+    }
+}
+define_enum! {
+    pr_sys::PrGPUDeviceFramework,
+    GPUDeviceFramework {
+        Cuda      = pr_sys::PrGPUDeviceFramework_PrGPUDeviceFramework_CUDA,
+        OpenCl    = pr_sys::PrGPUDeviceFramework_PrGPUDeviceFramework_OpenCL,
+        Metal     = pr_sys::PrGPUDeviceFramework_PrGPUDeviceFramework_Metal,
+    }
+}
+
+define_enum! {
+    pr_sys::PrRenderQuality,
+    RenderQuality {
+        Max           = pr_sys::PrRenderQuality_kPrRenderQuality_Max,
+        High          = pr_sys::PrRenderQuality_kPrRenderQuality_High,
+        Medium        = pr_sys::PrRenderQuality_kPrRenderQuality_Medium,
+        Low           = pr_sys::PrRenderQuality_kPrRenderQuality_Low,
+        Draft         = pr_sys::PrRenderQuality_kPrRenderQuality_Draft,
+        Invalid       = pr_sys::PrRenderQuality_kPrRenderQuality_Invalid,
+    }
+}
+
+define_enum! {
+    pr_sys::pmFieldDisplay,
+    FieldDisplay {
+        ShowFirstField  = pr_sys::pmFieldDisplay_pmFieldDisplay_ShowFirstField,
+        ShowSecondField = pr_sys::pmFieldDisplay_pmFieldDisplay_ShowSecondField,
+        ShowBothFields  = pr_sys::pmFieldDisplay_pmFieldDisplay_ShowBothFields,
+        ForceSize       = pr_sys::pmFieldDisplay_pmFieldDisplay_ForceSize,
+    }
+}
 
 define_enum! {
     pr_sys::PrPixelFormat,
