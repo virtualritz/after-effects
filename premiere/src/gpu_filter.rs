@@ -76,6 +76,14 @@ impl GpuFilterData {
         assert!(!self.instance_ptr.is_null());
         unsafe { (*self.instance_ptr).inDeviceIndex as u32 }
     }
+    pub fn get_param(&self, mut index: i32, time: i64) -> Result<crate::Param, Error> {
+        index -= 1; // GPU filters don't include the input frame as first paramter
+
+        self.video_segment_suite.get_param(self.node_id(), index, time)
+    }
+    pub fn get_property(&self, property: Property) -> Result<PropertyData, Error> {
+        self.video_segment_suite.get_node_property(self.node_id(), property)
+    }
 }
 
 pub trait GpuFilter : Default {
@@ -153,6 +161,9 @@ macro_rules! define_gpu_filter {
         }
 
         unsafe extern "C" fn gpu_filter_dispose_instance(instance_data: *mut pr_sys::PrGPUFilterInstance) -> pr_sys::prSuiteError {
+            let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
+            let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
+
             let _ = Box::<$crate::GpuFilterInstance<$struct_name>>::from_raw((*instance_data).ioPrivatePluginData as *mut _);
 
             log::info!("xGPUFilterEntry: gpu_filter_dispose_instance");
@@ -168,6 +179,9 @@ macro_rules! define_gpu_filter {
             io_query_index: *mut pr_sys::csSDK_int32,
             out_frame_dependencies: *mut pr_sys::PrGPUFilterFrameDependency,
         ) -> pr_sys::prSuiteError {
+            let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
+            let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
+
             let mut instance = Box::<$crate::GpuFilterInstance<$struct_name>>::from_raw((*instance_data).ioPrivatePluginData as *mut _);
 
             instance.data.instance_ptr = instance_data;
@@ -192,6 +206,9 @@ macro_rules! define_gpu_filter {
             index: pr_sys::csSDK_int32,
             frame: pr_sys::PPixHand,
         ) -> pr_sys::prSuiteError {
+            let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
+            let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
+
             let mut instance = Box::<$crate::GpuFilterInstance<$struct_name>>::from_raw((*instance_data).ioPrivatePluginData as *mut _);
 
             instance.data.instance_ptr = instance_data;
@@ -214,6 +231,9 @@ macro_rules! define_gpu_filter {
             frame_count: pr_sys::csSDK_size_t,
             out_frame: *mut pr_sys::PPixHand,
         ) -> pr_sys::prSuiteError {
+            let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
+            let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
+
             let mut instance = Box::<$crate::GpuFilterInstance<$struct_name>>::from_raw((*instance_data).ioPrivatePluginData as *mut _);
 
             instance.data.instance_ptr = instance_data;

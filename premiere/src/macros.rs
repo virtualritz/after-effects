@@ -3,6 +3,10 @@ macro_rules! pr_acquire_suite_ptr {
         unsafe {
             let mut suite_ptr = std::mem::MaybeUninit::<*const premiere_sys::$type>::uninit();
 
+            if $pica.is_null() {
+                return Err($crate::Error::NotImplemented);
+            }
+
             let aquire_suite_func = (*($pica)).AcquireSuite.unwrap_or_else(|| unreachable!());
             match aquire_suite_func(
                 premiere_sys::$name.as_ptr() as *const i8,
@@ -20,6 +24,9 @@ macro_rules! pr_acquire_suite_ptr {
 macro_rules! pr_release_suite_ptr {
     ($pica:expr, $name:ident, $version:ident) => {{
         unsafe {
+            if $pica.is_null() {
+                return;
+            }
             let release_suite_func = (*($pica)).ReleaseSuite.unwrap_or_else(|| unreachable!());
             release_suite_func(
                 premiere_sys::$name.as_ptr() as *const i8,
@@ -47,6 +54,14 @@ macro_rules! pr_call_suite_fn {
     }};
 }
 
+// Call a function from a suite and return the value.
+macro_rules! pr_call_suite_fn_no_err {
+    ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
+        unsafe {
+            pr_get_suite_fn!(($suite_ptr), $function)($($arg)*)
+        }
+    }};
+}
 
 #[macro_export]
 macro_rules! pr_acquire_suite_and_call_suite_fn_no_err {

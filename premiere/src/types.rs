@@ -32,6 +32,42 @@ define_enum! {
 }
 
 define_enum! {
+    pr_sys::PrPlaybackQuality,
+    PlaybackQuality {
+        Max           = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_Auto,
+        High          = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_High,
+        Draft         = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_Draft,
+        Invalid       = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_Invalid,
+    }
+}
+
+define_enum! {
+    pr_sys::PrPlaybackFractionalResolution,
+    PlaybackFractionalResolution {
+        Full      = pr_sys::PrPlaybackFractionalResolution_kPrPlaybackFractionalResolution_Full,
+        Half      = pr_sys::PrPlaybackFractionalResolution_kPrPlaybackFractionalResolution_Half,
+        Quarter   = pr_sys::PrPlaybackFractionalResolution_kPrPlaybackFractionalResolution_Quarter,
+        Eighth    = pr_sys::PrPlaybackFractionalResolution_kPrPlaybackFractionalResolution_Eighth,
+        Sixteenth = pr_sys::PrPlaybackFractionalResolution_kPrPlaybackFractionalResolution_Sixteenth,
+        Invalid   = pr_sys::PrPlaybackFractionalResolution_kPrPlaybackFractionalResolution_Invalid,
+    }
+}
+
+define_enum! {
+    pr_sys::PrVideoFrameRates,
+    VideoFrameRates {
+        FrameRate24Drop       = pr_sys::PrVideoFrameRates_kVideoFrameRate_24Drop,
+        FrameRate24           = pr_sys::PrVideoFrameRates_kVideoFrameRate_24,
+        FrameRatePal          = pr_sys::PrVideoFrameRates_kVideoFrameRate_PAL,
+        FrameRateNtsc         = pr_sys::PrVideoFrameRates_kVideoFrameRate_NTSC,
+        FrameRate30           = pr_sys::PrVideoFrameRates_kVideoFrameRate_30,
+        FrameRatePalHd        = pr_sys::PrVideoFrameRates_kVideoFrameRate_PAL_HD,
+        FrameRateNtscHd       = pr_sys::PrVideoFrameRates_kVideoFrameRate_NTSC_HD,
+        FrameRate60           = pr_sys::PrVideoFrameRates_kVideoFrameRate_60,
+    }
+}
+
+define_enum! {
     pr_sys::pmFieldDisplay,
     FieldDisplay {
         ShowFirstField  = pr_sys::pmFieldDisplay_pmFieldDisplay_ShowFirstField,
@@ -120,5 +156,76 @@ define_enum! {
         Raw                                         = pr_sys::PrPixelFormat_PrPixelFormat_Raw,
         Invalid                                     = pr_sys::PrPixelFormat_PrPixelFormat_Invalid,
         Any                                         = pr_sys::PrPixelFormat_PrPixelFormat_Any,
+        GpuBgra4444_32f                             = pr_sys::PrPixelFormatGpu_GPU_BGRA_4444_32f,
+        GpuBgra4444_16f                             = pr_sys::PrPixelFormatGpu_GPU_BGRA_4444_16f,
+    }
+}
+
+define_enum! {
+    pr_sys::PrKeyframeInterpolationModeFlag,
+    KeyframeInterpolationMode {
+        Linear                = pr_sys::PrKeyframeInterpolationModeFlag_kPrInterpolationModeFlag_Linear,
+        Hold                  = pr_sys::PrKeyframeInterpolationModeFlag_kPrInterpolationModeFlag_Hold,
+        Bezier                = pr_sys::PrKeyframeInterpolationModeFlag_kPrInterpolationModeFlag_Bezier,
+        Time                  = pr_sys::PrKeyframeInterpolationModeFlag_kPrInterpolationModeFlag_Time,
+        TimeTransitionStart   = pr_sys::PrKeyframeInterpolationModeFlag_kPrInterpolationModeFlag_TimeTransitionStart,
+        TimeTransitionEnd     = pr_sys::PrKeyframeInterpolationModeFlag_kPrInterpolationModeFlag_TimeTransitionEnd,
+        MaxSize               = pr_sys::PrKeyframeInterpolationModeFlag_kPrInterpolationModeFlag_MaxSize,
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum Param {
+    Int8(i8),
+    Int16(i16),
+    Int32(i32),
+    Int64(i64),
+    Float32(f32),
+    Float64(f64),
+    Bool(bool),
+    Point(pr_sys::prFPoint64),
+    Guid(pr_sys::prPluginID),
+    MemoryPtr(*mut std::ffi::c_char),
+}
+
+impl From<pr_sys::PrParam> for Param {
+    fn from(value: pr_sys::PrParam) -> Self {
+        use pr_sys::*;
+        #[allow(non_upper_case_globals)]
+        match value.mType {
+            PrParamType_kPrParamType_Int8        => Param::Int8     (unsafe { value.__bindgen_anon_1.mInt8 }),
+            PrParamType_kPrParamType_Int16       => Param::Int16    (unsafe { value.__bindgen_anon_1.mInt16 }),
+            PrParamType_kPrParamType_Int32       => Param::Int32    (unsafe { value.__bindgen_anon_1.mInt32 }),
+            PrParamType_kPrParamType_Int64       => Param::Int64    (unsafe { value.__bindgen_anon_1.mInt64 }),
+            PrParamType_kPrParamType_Float32     => Param::Float32  (unsafe { value.__bindgen_anon_1.mFloat32 }),
+            PrParamType_kPrParamType_Float64     => Param::Float64  (unsafe { value.__bindgen_anon_1.mFloat64 }),
+            PrParamType_kPrParamType_Bool        => Param::Bool     (unsafe { value.__bindgen_anon_1.mBool == 1 }),
+            PrParamType_kPrParamType_Point       => Param::Point    (unsafe { value.__bindgen_anon_1.mPoint }),
+            PrParamType_kPrParamType_Guid        => Param::Guid     (unsafe { value.__bindgen_anon_1.mGuid }),
+            PrParamType_kPrParamType_PrMemoryPtr => Param::MemoryPtr(unsafe { value.__bindgen_anon_1.mMemoryPtr }),
+            _ => panic!("Invalid PrParamType"),
+        }
+    }
+}
+impl Into<pr_sys::PrParam> for Param {
+    fn into(self) -> pr_sys::PrParam {
+        use pr_sys::*;
+        let mut param = PrParam {
+            mType: PrParamType_kPrParamType_MaxSize,
+            __bindgen_anon_1: PrParam__bindgen_ty_1 { mInt8: 0 },
+        };
+        match self {
+            Param::Int8     (value) => { param.mType = PrParamType_kPrParamType_Int8;        param.__bindgen_anon_1.mInt8 = value; },
+            Param::Int16    (value) => { param.mType = PrParamType_kPrParamType_Int16;       param.__bindgen_anon_1.mInt16 = value; },
+            Param::Int32    (value) => { param.mType = PrParamType_kPrParamType_Int32;       param.__bindgen_anon_1.mInt32 = value; },
+            Param::Int64    (value) => { param.mType = PrParamType_kPrParamType_Int64;       param.__bindgen_anon_1.mInt64 = value; },
+            Param::Float32  (value) => { param.mType = PrParamType_kPrParamType_Float32;     param.__bindgen_anon_1.mFloat32 = value; },
+            Param::Float64  (value) => { param.mType = PrParamType_kPrParamType_Float64;     param.__bindgen_anon_1.mFloat64 = value; },
+            Param::Bool     (value) => { param.mType = PrParamType_kPrParamType_Bool;        param.__bindgen_anon_1.mBool = if value { 1 } else { 0 }; },
+            Param::Point    (value) => { param.mType = PrParamType_kPrParamType_Point;       param.__bindgen_anon_1.mPoint = value; },
+            Param::Guid     (value) => { param.mType = PrParamType_kPrParamType_Guid;        param.__bindgen_anon_1.mGuid = value; },
+            Param::MemoryPtr(value) => { param.mType = PrParamType_kPrParamType_PrMemoryPtr; param.__bindgen_anon_1.mMemoryPtr = value; },
+        }
+        param
     }
 }

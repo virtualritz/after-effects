@@ -23,6 +23,7 @@ fn main() {
         .allowlist_item("kPF.*")
         .allowlist_item("PR_.*")
         .allowlist_item("kPr.*")
+        .allowlist_item("kVideo.*")
         .allowlist_item("Pr.*")
         .allowlist_item("cs.*")
         .allowlist_item("kSP.*")

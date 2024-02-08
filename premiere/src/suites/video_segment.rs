@@ -19,8 +19,9 @@ impl VideoSegmentSuite {
 
     /// From a sequence, get an ID to its video segments ID. This is a ref-counted
     /// object, and must be released when no longer needed.
-    /// @param  inTimelineID         The plugin timeline ID for the sequence
-    /// @param  outVideoSegmentsID   Receives the ID for the Video Segments
+    /// * `timeline_id` - The plugin timeline ID for the sequence
+    ///
+    /// Returns the ID for the Video Segments
     pub fn acquire_video_segments_id(&self, timeline_data: pr_sys::PrTimelineID) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, AcquireVideoSegmentsID, timeline_data, &mut val)?;
@@ -29,8 +30,9 @@ impl VideoSegmentSuite {
 
     /// From a sequence, get an ID to its video segments ID with preview files substituted. This is a ref-counted
     /// object, and must be released when no longer needed.
-    /// @param  inTimelineID         The plugin timeline ID for the sequence
-    /// @param  outVideoSegmentsID   Receives the ID for the Video Segments with Previews.
+    /// * `timeline_id` - The plugin timeline ID for the sequence
+    ///
+    /// Returns the ID for the Video Segments with Previews.
     pub fn acquire_video_segments_with_previews_id(&self, timeline_data: pr_sys::PrTimelineID) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, AcquireVideoSegmentsWithPreviewsID, timeline_data, &mut val)?;
@@ -40,8 +42,9 @@ impl VideoSegmentSuite {
     /// From a sequence, get an ID to its video segments ID with preview files substituted, but only previews
     /// for sections that are opaque. This is appropriate for use when using previews for nested sequences. This is a ref-counted
     /// object, and must be released when no longer needed.
-    /// @param  inTimelineID        The plugin timeline ID for the sequence
-    /// @param  outVideoSegmentsID  Recevies the ID for the Video Segments with Previews.
+    /// * `timeline_id` - The plugin timeline ID for the sequence
+    ///
+    /// Returns the ID for the Video Segments with Previews.
     pub fn acquire_video_segments_with_opaque_previews_id(&self, timeline_data: pr_sys::PrTimelineID) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, AcquireVideoSegmentsWithOpaquePreviewsID, timeline_data, &mut val)?;
@@ -49,14 +52,15 @@ impl VideoSegmentSuite {
     }
 
     /// Release a Video Segments ID
-    /// @param  inVideoSegmentsID   The Video Segments ID to release
+    /// * `video_segments_id` - The Video Segments ID to release
     pub fn release_video_segments_id(&self, video_segments_id: i32) -> Result<(), Error> {
         pr_call_suite_fn!(self.suite_ptr, ReleaseVideoSegmentsID, video_segments_id)?;
         Ok(())
     }
     /// Get the hash of a Video Segments object
-    /// @param  inVideoSegmentsID   The Video Segments ID
-    /// @param  outHash             The GUID hash of the segments
+    /// * `video_segments_id` - The Video Segments ID
+    ///
+    /// Returns the GUID hash of the segments
     pub fn get_hash(&self, video_segments_id: i32) -> Result<pr_sys::prPluginID, Error> {
         let mut val: pr_sys::prPluginID = unsafe { std::mem::zeroed() };
         pr_call_suite_fn!(self.suite_ptr, GetHash, video_segments_id, &mut val)?;
@@ -64,8 +68,9 @@ impl VideoSegmentSuite {
     }
 
     /// Get the number of segments in the segments object
-    /// @param  inVideoSegmentsID  The Video Segments ID
-    /// @param  outNumSegments     The number of segments
+    /// * `video_segments_id` - The Video Segments ID
+    ///
+    /// Returns the number of segments
     pub fn get_segment_count(&self, video_segments_id: i32) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, GetSegmentCount, video_segments_id, &mut val)?;
@@ -73,12 +78,14 @@ impl VideoSegmentSuite {
     }
 
     /// Get the details of the Nth Node.
-    /// @param  inVideoSegmentsID  The Video Segments ID
-    /// @param  inIndex            Which segment?
-    /// @param  outStartTime       The start time of the segment
-    /// @param  outEndTime         The end time of the segment
-    /// @param  outSegmentOffset   The offset value for the segment
-    /// @param  outHash            The hash for the segment
+    /// * `video_segments_id` - The Video Segments ID
+    /// * `inIndex` - Which segment?
+    ///
+    /// Returns a tuple containing:
+    /// * `start_time` - The start time of the segment
+    /// * `end_time` - The end time of the segment
+    /// * `segment_offset` - The offset value for the segment
+    /// * `hash` - The hash for the segment
     pub fn get_segment_info(&self, video_segments_id: i32, index: i32) -> Result<(i64, i64, i64, pr_sys::prPluginID), Error> {
         let mut start_time = 0;
         let mut end_time = 0;
@@ -89,9 +96,10 @@ impl VideoSegmentSuite {
     }
 
     /// Get a segment node. This object is ref-counted and must be released.
-    /// @param  inVideoSegmentsID  The Video Segments ID
-    /// @param  inHash             The hash for the segment
-    /// @param  outVideoNodeID     The video node ID.
+    /// * `video_segments_id` - The Video Segments ID
+    /// * `hash` - The hash for the segment
+    ///
+    /// Returns the video node ID.
     pub fn acquire_node_id(&self, video_segments_id: i32, hash: *mut pr_sys::prPluginID) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, AcquireNodeID, video_segments_id, hash, &mut val)?;
@@ -99,16 +107,18 @@ impl VideoSegmentSuite {
     }
 
     /// Release a Video Node ID
-    /// @param  inVideoNodeID  The Video Node ID to release
+    /// * `video_node_id` - The Video Node ID to release
     pub fn release_video_node_id(&self, video_node_id: i32) -> Result<(), Error> {
         pr_call_suite_fn!(self.suite_ptr, ReleaseVideoNodeID, video_node_id)?;
         Ok(())
     }
     /// Get details about a node.
-    /// @param  inVideoNodeID   The Video Node ID
-    /// @param  outNodeType     A string of size kMaxNodeTypeStringSize holding the node type
-    /// @param  outHash         The hash for the node (may be different than the hash used to get the node)
-    /// @param  outInfoFlags    The flags for this node (see enum above)
+    /// * `video_node_id` - The Video Node ID
+    ///
+    /// Returns a tuple containing:
+    /// * `node_type` - A string of size kMaxNodeTypeStringSize holding the node type
+    /// * `hash` - The hash for the node (may be different than the hash used to get the node)
+    /// * `info_flags` - The flags for this node (see enum above)
     pub fn get_node_info(&self, video_node_id: i32) -> Result<(String, pr_sys::prPluginID, i32), Error> {
         let mut node_type = [0; pr_sys::kMaxNodeTypeStringSize as usize];
         let mut hash: pr_sys::prPluginID = unsafe { std::mem::zeroed() };
@@ -118,8 +128,9 @@ impl VideoSegmentSuite {
     }
 
     /// Get the number of inputs on the node object
-    /// @param  inVideoNodeID  The Video Node ID
-    /// @param  outNumInputs   The number of inputs
+    /// * `video_node_id` - The Video Node ID
+    ///
+    /// Returns the number of inputs
     pub fn get_node_input_count(&self, video_node_id: i32) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, GetNodeInputCount, video_node_id, &mut val)?;
@@ -127,20 +138,23 @@ impl VideoSegmentSuite {
     }
 
     /// Get a segment node that is an input to another node. This object is ref-counted and must be released.
-    /// @param  inVideoNodeID         The Video Node ID
-    /// @param  inIndex               The index of the input
-    /// @param  outOffset             The time offset relative to it's parent node
-    /// @param  outInputVideoNodeID   The video node ID of the input node.
-    pub fn acquire_input_node_id(&self, video_node_id: i32, index: i32) -> Result<(i64, i32), Error> {
+    /// * `video_node_id` - The Video Node ID
+    /// * `inIndex` - The index of the input
+    ///
+    /// Returns a tuple containing:
+    /// * `input_video_node_id` - The video node ID of the input node.
+    /// * `offset` - The time offset relative to it's parent node
+    pub fn acquire_input_node_id(&self, video_node_id: i32, index: i32) -> Result<(i32, i64), Error> {
         let mut offset = 0;
         let mut input_video_node_id = 0;
         pr_call_suite_fn!(self.suite_ptr, AcquireInputNodeID, video_node_id, index, &mut offset, &mut input_video_node_id)?;
-        Ok((offset, input_video_node_id))
+        Ok((input_video_node_id, offset))
     }
 
     /// Get the number of inputs on the node object
-    /// @param  inVideoNodeID      The Video Node ID
-    /// @param  outNumOperators    The number of operators
+    /// * `video_node_id` - The Video Node ID
+    ///
+    /// Returns the number of operators
     pub fn get_node_operator_count(&self, video_node_id: i32) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, GetNodeOperatorCount, video_node_id, &mut val)?;
@@ -148,9 +162,10 @@ impl VideoSegmentSuite {
     }
 
     /// Get a segment node that is an operator on another node. This object is ref-counted and must be released.
-    /// @param  inVideoNodeID            The Video Node ID
-    /// @param  inIndex                  The index of the operator
-    /// @param  outOperatorVideoNodeID   The video node ID of the input node.
+    /// * `video_node_id` - The Video Node ID
+    /// * `inIndex` - The index of the operator
+    ///
+    /// Returns the video node ID of the input node.
     pub fn acquire_operator_node_id(&self, video_node_id: i32, index: i32) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, AcquireOperatorNodeID, video_node_id, index, &mut val)?;
@@ -158,29 +173,31 @@ impl VideoSegmentSuite {
     }
 
     /// Iterate all of the properties on a node.
-    /// @param  inVideoNodeID    The Video Node ID
-    /// @param  inCallback       The callback function to return the properties
-    /// @param  inPluginObject   The plugin object returned in the callback.
-    pub fn iterate_node_properties<F: Fn(&str, &str) + Send + Sync + 'static>(&self, video_node_id: i32, callback: F) -> Result<(), Error> {
+    /// * `video_node_id` - The Video Node ID
+    /// * `callback` - The callback function to return the properties
+    pub fn iterate_node_properties<F: Fn(Property, PropertyData) + Send + Sync + 'static>(&self, video_node_id: i32, callback: F) -> Result<(), Error> {
         use std::sync::OnceLock;
         use std::collections::HashMap;
         use parking_lot::RwLock;
-        static MAP: OnceLock<RwLock<HashMap<i32, Box<dyn Fn(&str, &str) + Send + Sync + 'static>>>> = OnceLock::new();
+        static MAP: OnceLock<RwLock<HashMap<i32, Box<dyn Fn(Property, PropertyData) + Send + Sync + 'static>>>> = OnceLock::new();
 
         let map = MAP.get_or_init(|| RwLock::new(HashMap::new()));
 
         unsafe extern "C" fn cb(plugin_object: pr_sys::csSDK_int32, in_key: *const std::ffi::c_char, in_value: *const pr_sys::prUTF8Char) -> pr_sys::prSuiteError {
-            let key = std::ffi::CStr::from_ptr(in_key as *const _).to_str().unwrap();
-            let value = std::ffi::CStr::from_ptr(in_value as *const _).to_str().unwrap();
-
             if let Some(callback) = MAP.get().unwrap().read().get(&plugin_object) {
+                let key   = std::ffi::CStr::from_ptr(in_key   as *const _).to_str().unwrap();
+                let value = std::ffi::CStr::from_ptr(in_value as *const _).to_str().unwrap();
+
+                let key = Property::from_id(key.as_bytes());
+                let value = key.parse_result(value);
+
                 callback(key, value);
             }
 
             pr_sys::suiteError_NoError
         }
 
-        let id = fastrand::i32(..);
+        let id = fastrand::i32(..).overflowing_add(video_node_id).0;
         map.write().insert(id, Box::new(callback));
 
         pr_call_suite_fn!(self.suite_ptr, IterateNodeProperties, video_node_id, Some(cb), id)?;
@@ -190,25 +207,32 @@ impl VideoSegmentSuite {
     }
 
     /// Get the value of a single property on a node
-    /// @param  inVideoNodeID   The Video Node ID
-    /// @param  inKey           The key of the property
-    /// @param  outValue        A string holding the value. This UTF8 string is allocated using PrNewPtr, and ownership is transferred to the plugin and must be disposed by the plugin.
-    pub fn get_node_property(&self, video_node_id: i32, key: &str) -> Result<String, Error> {
+    /// * `video_node_id` - The Video Node ID
+    /// * `key` - The key of the property
+    ///
+    /// Returns the property value
+    pub fn get_node_property(&self, video_node_id: i32, key: Property) -> Result<PropertyData, Error> {
         let mut ptr: pr_sys::PrMemoryPtr = std::ptr::null_mut();
 
-        let key_c = std::ffi::CString::new(key).unwrap();
-        let key_c = key_c.as_bytes_with_nul();
+        let key_bytes: &[u8] = key.as_id();
 
-        pr_call_suite_fn!(self.suite_ptr, GetNodeProperty, video_node_id, key_c.as_ptr() as *const _, &mut ptr)?;
-        let value = unsafe { std::ffi::CStr::from_ptr(ptr).to_str().unwrap().to_string() };
+        pr_call_suite_fn!(self.suite_ptr, GetNodeProperty, video_node_id, key_bytes.as_ptr() as *const _, &mut ptr)?;
+        let value = unsafe { std::ffi::CStr::from_ptr(ptr).to_str().unwrap() };
 
-        // TODO: dispose memory
-        Ok(value)
+        let result = key.parse_result(value);
+
+        match crate::MemoryManagerSuite::new() {
+            Ok(mem) => mem.dispose_ptr(ptr),
+            Err(e) => log::error!("Failed to dispose pointer in get_node_property. Failed to acquire memory suite: {e:?}")
+        }
+
+        Ok(result)
     }
 
     /// Get the number of params
-    /// @param  inVideoNodeID   The Video Node ID
-    /// @param  outParamCount   The number of params
+    /// * `video_node_id` - The Video Node ID
+    ///
+    /// Returns the number of params
     pub fn get_param_count(&self, video_node_id: i32) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, GetParamCount, video_node_id, &mut val)?;
@@ -216,32 +240,37 @@ impl VideoSegmentSuite {
     }
 
     /// Get a specific param value at a specific time
-    /// @param  inVideoNodeID  The Video Node ID
-    /// @param  inIndex        The index of the param
-    /// @param  inTime         The time requested (in Media time)
-    /// @param  outParam       The param
-    pub fn get_param(&self, video_node_id: i32, index: i32, time: i64) -> Result<pr_sys::PrParam, Error> {
+    /// * `video_node_id` - The Video Node ID
+    /// * `index` - The index of the param
+    /// * `time` - The time requested (in Media time)
+    ///
+    /// Returns the param
+    pub fn get_param(&self, video_node_id: i32, index: i32, time: i64) -> Result<crate::Param, Error> {
         let mut val: pr_sys::PrParam = unsafe { std::mem::zeroed() };
         pr_call_suite_fn!(self.suite_ptr, GetParam, video_node_id, index, time, &mut val)?;
-        Ok(val)
+        Ok(val.into())
     }
 
     /// Get the next keyframe time after the specified time.
     /// Example: Keyframes at 0 and 10
-    /// inTime = -1, outKeyframeTime = 0
-    /// inTime = 0, outKeyframeTime = 10
-    /// inTime = 9, outKeyframeTime = 10
-    /// inTime = 10, returns suiteError_NoKeyframeAfterInTime
-    /// @param  inVideoNodeID                 The Video Node ID
-    /// @param  inIndex                       The index of the param
-    /// @param  inTime                        The lower bound time
-    /// @param  outKeyframeTime               The time of the next keyframe > inTime
-    /// @param  outKeyframeInterpolationMode  The temporal interpolation mode of the keyframe, see the enum for PrKeyframeInterpolationModeFlag above
-    pub fn get_next_keyframe_time(&self, video_node_id: i32, index: i32, time: i64) -> Result<(i64, i32), Error> {
+    /// - `time` = -1, keyframe_time = 0
+    /// - `time` = 0, keyframe_time = 10
+    /// - `time` = 9, keyframe_time = 10
+    /// - `time` = 10, returns [`Error::NoKeyframeAfterInTime`]
+    ///
+    /// Parameters:
+    /// * `video_node_id` - The Video Node ID
+    /// * `index` - The index of the param
+    /// * `time` - The lower bound time
+    ///
+    /// Returns a tuple containing:
+    /// * `keyframe_time` - The time of the next keyframe > inTime
+    /// * `keyframe_interpolation_mode` - The temporal interpolation mode of the keyframe
+    pub fn get_next_keyframe_time(&self, video_node_id: i32, index: i32, time: i64) -> Result<(i64, KeyframeInterpolationMode), Error> {
         let mut keyframe_time = 0;
-        let mut keyframe_interpolation_mode = 0;
+        let mut keyframe_interpolation_mode: pr_sys::PrKeyframeInterpolationModeFlag = 0;
         pr_call_suite_fn!(self.suite_ptr, GetNextKeyframeTime, video_node_id, index, time, &mut keyframe_time, &mut keyframe_interpolation_mode)?;
-        Ok((keyframe_time, keyframe_interpolation_mode))
+        Ok((keyframe_time, keyframe_interpolation_mode.into()))
     }
 
     /// Transform a node local time into a time appropriate for node inputs and
@@ -257,13 +286,15 @@ impl VideoSegmentSuite {
     }
 
     /// Retrieve general properties of a sequence (video segments). I.e. width/height, par and framerate.
-    /// @param  inTimelineID                    The plugin timeline ID for the sequence
-    /// @param  outWidth                        Receives width of the sequence
-    /// @param  outHeight                       Receives height of the sequence
-    /// @param  outPixelAspectRatioNumerator    Receives the pixel aspect ratio numerator of the sequence
-    /// @param  outPixelAspectRatioDenominator  Receives the pixel aspect ratio denominator of the sequence
-    /// @param  outFrameRateNumerator           Receives the frame rate numerator of the sequence
-    /// @param  outFrameRateDenominator         Receives the frame rate denominator of the sequence
+    /// * `timeline_id` - The plugin timeline ID for the sequence
+    ///
+    /// Returns [`VideoSegmentProperties`] which contains:
+    /// * `width` - Width of the sequence
+    /// * `height` - Height of the sequence
+    /// * `par_num` - Pixel aspect ratio numerator of the sequence
+    /// * `par_den` - Pixel aspect ratio denominator of the sequence
+    /// * `frame_rate` - Frame rate of the sequence
+    /// * `field_type` - Field type of the sequence
     pub fn get_video_segments_properties(&self, timeline_data: pr_sys::PrTimelineID) -> Result<VideoSegmentProperties, Error> {
         let mut p: VideoSegmentProperties = unsafe { std::mem::zeroed() };
         pr_call_suite_fn!(self.suite_ptr, GetVideoSegmentsProperties, timeline_data, &mut p.bounds, &mut p.par_num, &mut p.par_den, &mut p.frame_rate, &mut p.field_type)?;
@@ -271,10 +302,12 @@ impl VideoSegmentSuite {
     }
     /// From a sequence, get a segment node for a requested time. This is a ref-counted
     /// object, and must be released when no longer needed.
-    /// @param  inVideoSegmentsID   The Video Segments ID
-    /// @param  inTime              Requested segment time
-    /// @param  outVideoNodeID      The video node ID
-    /// @param  outSegmentOffset    Offset of retrieved segment
+    /// * `video_segments_id` - The Video Segments ID
+    /// * `time` - Requested segment time
+    ///
+    /// Returns a tuple containing:
+    /// * `video_node_id` - The video node ID
+    /// * `segment_offset` - Offset of retrieved segment
     pub fn acquire_node_for_time(&self, video_segments_id: i32, time: i64) -> Result<(i32, i64), Error> {
         let mut video_node_id = 0;
         let mut segment_offset = 0;
@@ -284,8 +317,9 @@ impl VideoSegmentSuite {
 
     /// From a sequence, get an ID to its video segments ID. This is a ref-counted
     /// object, and must be released when no longer needed.
-    /// @param  inTimelineID         The plugin timeline ID for the sequence
-    /// @param  outVideoSegmentsID   Receives the ID for the Video Segments
+    /// * `timeline_id` - The plugin timeline ID for the sequence
+    ///
+    /// Returns the ID for the Video Segments
     pub fn acquire_video_segments_id_with_stream_label(&self, timeline_data: pr_sys::PrTimelineID, stream_label: &str) -> Result<i32, Error> {
         let mut val = 0;
         let stream_label_c = std::ffi::CString::new(stream_label).unwrap();
@@ -296,8 +330,9 @@ impl VideoSegmentSuite {
 
     /// From a sequence, get an ID to its video segments ID with preview files substituted. This is a ref-counted
     /// object, and must be released when no longer needed.
-    /// @param  inTimelineID         The plugin timeline ID for the sequence
-    /// @param  outVideoSegmentsID   Receives the ID for the Video Segments with Previews.
+    /// * `timeline_id` - The plugin timeline ID for the sequence
+    ///
+    /// Returns the ID for the Video Segments with Previews.
     pub fn acquire_video_segments_with_previews_id_with_stream_label(&self, timeline_data: pr_sys::PrTimelineID, stream_label: &str) -> Result<i32, Error> {
         let mut val = 0;
         let stream_label_c = std::ffi::CString::new(stream_label).unwrap();
@@ -309,8 +344,9 @@ impl VideoSegmentSuite {
     /// From a sequence, get an ID to its video segments ID with preview files substituted, but only previews
     /// for sections that are opaque. This is appropriate for use when using previews for nested sequences. This is a ref-counted
     /// object, and must be released when no longer needed.
-    /// @param  inTimelineID         The plugin timeline ID for the sequence
-    /// @param  outVideoSegmentsID   Recevies the ID for the Video Segments with Previews.
+    /// * `timeline_id` - The plugin timeline ID for the sequence
+    ///
+    /// Returns the ID for the Video Segments with Previews.
     pub fn acquire_video_segments_with_opaque_previews_id_with_stream_label(&self, timeline_data: pr_sys::PrTimelineID, stream_label: &str) -> Result<i32, Error> {
         let mut val = 0;
         let stream_label_c = std::ffi::CString::new(stream_label).unwrap();
@@ -319,12 +355,15 @@ impl VideoSegmentSuite {
         Ok(val)
     }
 
-    /// From a sequence, get the first segment node that intersects with a range of times.\n  This is a ref-counted object, and must be released when no longer needed.
-    /// @param  inVideoSegmentsID    The Video Segments ID
-    /// @param  inStartTime          The start of the requested segment time range
-    /// @param  inEndTime            The end of the requested segment time range
-    /// @param  outVideoNodeID       The video node ID
-    /// @param  outSegmentOffset     Offset of retrieved segment
+    /// From a sequence, get the first segment node that intersects with a range of times.
+    /// This is a ref-counted object, and must be released when no longer needed.
+    /// * `video_segments_id` - The Video Segments ID
+    /// * `start_time` - The start of the requested segment time range
+    /// * `end_time` - The end of the requested segment time range
+    ///
+    /// Returns a tuple containing:
+    /// * `video_node_id` - The video node ID
+    /// * `segment_offset` - Offset of retrieved segment
     pub fn acquire_first_node_in_time_range(&self, video_segments_id: i32, start_time: i64, end_time: i64) -> Result<(i32, i64), Error> {
         let mut video_node_id = 0;
         let mut segment_offset = 0;
@@ -333,8 +372,9 @@ impl VideoSegmentSuite {
     }
 
     /// Acquire the node owning an operator
-    /// @param  inVideoNodeID       The operator
-    /// @param  outOwnerNodeID      The owner
+    /// * `video_node_id` - The operator
+    ///
+    /// Returns the owner
     pub fn acquire_operator_owner_node_id(&self, video_node_id: i32) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, AcquireOperatorOwnerNodeID, video_node_id, &mut val)?;
@@ -342,8 +382,8 @@ impl VideoSegmentSuite {
     }
 
     /// Get graphic layer params at a specific time
-    /// @param  inVideoNodeID      The Video Node ID
-    /// @param  inTime             The time requested (in Media time)
+    /// * `video_node_id` - The Video Node ID
+    /// * `time` - The time requested (in Media time)
     pub fn get_graphics_transformed_params(&self, video_node_id: i32, time: i64) -> Result<(pr_sys::prFPoint64, pr_sys::prFPoint64, pr_sys::prFPoint64, f32), Error> {
         let mut position = pr_sys::prFPoint64 { x: 0.0, y: 0.0 };
         let mut anchor = pr_sys::prFPoint64 { x: 0.0, y: 0.0 };
@@ -354,7 +394,7 @@ impl VideoSegmentSuite {
     }
 
     /// Get graphic layer group ID
-    /// @param  inVideoNodeID   The Video Node ID
+    /// * `video_node_id` - The Video Node ID
     pub fn has_graphics_group(&self, video_node_id: i32) -> Result<bool, Error> {
         let mut val: bool = false;
         pr_call_suite_fn!(self.suite_ptr, HasGraphicsGroup, video_node_id, &mut val)?;
@@ -362,7 +402,7 @@ impl VideoSegmentSuite {
     }
 
     /// Get graphic layer group ID
-    /// @param  inVideoNodeID    The Video Node ID
+    /// * `video_node_id` - The Video Node ID
     pub fn get_graphics_group_id(&self, video_node_id: i32) -> Result<i32, Error> {
         let mut val = 0;
         pr_call_suite_fn!(self.suite_ptr, GetGraphicsGroupID, video_node_id, &mut val)?;
@@ -371,14 +411,16 @@ impl VideoSegmentSuite {
 
     /// Color managed version of GetVideoSegmentsProperties
     /// Retrieve general properties of a sequence (video segments). I.e. width/height, par and framerate and color space
-    /// @param  inTimelineID                     The plugin timeline ID for the sequence
-    /// @param  outWidth                         Receives width of the sequence
-    /// @param  outHeight                        Receives height of the sequence
-    /// @param  outPixelAspectRatioNumerator     Receives the pixel aspect ratio numerator of the sequence
-    /// @param  outPixelAspectRatioDenominator   Receives the pixel aspect ratio denominator of the sequence
-    /// @param  outFrameRateNumerator            Receives the frame rate numerator of the sequence
-    /// @param  outFrameRateDenominator          Receives the frame rate denominator of the sequence
-    /// @param  outColorSpaceID                   Receives the opaque ID of the sequence's working color space
+    /// * `timeline_id` - The plugin timeline ID for the sequence
+    ///
+    /// Returns [`VideoSegmentProperties`]:
+    /// * `width` - Width of the sequence
+    /// * `height` - Height of the sequence
+    /// * `par_num` - Pixel aspect ratio numerator of the sequence
+    /// * `par_den` - Pixel aspect ratio denominator of the sequence
+    /// * `frame_rate` - Frame rate of the sequence
+    /// * `field_type` - Field type of the sequence
+    /// * `color_space` - Opaque ID of the sequence's working color space
     pub fn get_video_segments_properties_ext(&self, timeline_data: pr_sys::PrTimelineID) -> Result<VideoSegmentProperties, Error> {
         let mut p: VideoSegmentProperties = unsafe { std::mem::zeroed() };
         let mut color_space: pr_sys::PrSDKColorSpaceID = unsafe { std::mem::zeroed() };
@@ -389,13 +431,15 @@ impl VideoSegmentSuite {
 
     /// From a sequence, get the first segment node that intersects with a range of times.
     /// This is a ref-counted object, and must be released when no longer needed.
-    /// @param  inVideoSegmentsID       The Video Segments ID
-    /// @param  inStartTime             The start of the requested segment time range
-    /// @param  inEndTime               The end of the requested segment time range
-    /// @param  outVideoNodeID          The video node ID
-    /// @param  outSegmentStartTime     Start time of retrieved segment
-    /// @param  outSegmentEndTime       End time of retrieved segment
-    /// @param  outSegmentOffset        Offset of retrieved segment
+    /// * `video_segments_id` - The Video Segments ID
+    /// * `start_time` - The start of the requested segment time range
+    /// * `end_time` - The end of the requested segment time range
+    ///
+    /// Returns a tuple containing:
+    /// * `video_node_id` - The video node ID
+    /// * `segment_start_time` - Start time of retrieved segment
+    /// * `segment_end_time` - End time of retrieved segment
+    /// * `segment_offset` - Offset of retrieved segment
     pub fn acquire_first_node_in_time_range_ext(&self, video_segments_id: i32, start_time: i64, end_time: i64) -> Result<(i32, i64, i64, i64), Error> {
         let mut video_node_id = 0;
         let mut segment_start_time = 0;
@@ -408,9 +452,10 @@ impl VideoSegmentSuite {
     /// Returns the relative time rate of a node at a given point in time.
     /// Node time rate varies with e.g. time remapping but not the playback speed of the sequence
     /// Can be thought of as the instantaneous rate of change of TransformNodeTime()
-    /// @param  inVideoNodeID   The Video Node ID
-    /// @param  inTime          The time requested (in Media time - untransformed)
-    /// @param  outRate         The node rate relative to the containing sequence
+    /// * `video_node_id` - The Video Node ID
+    /// * `time` - The time requested (in Media time - untransformed)
+    ///
+    /// Returns the node rate relative to the containing sequence
     pub fn get_node_time_scale(&self, video_node_id: i32, time: i64) -> Result<f64, Error> {
         let mut val = 0.0;
         pr_call_suite_fn!(self.suite_ptr, GetNodeTimeScale, video_node_id, time, &mut val)?;

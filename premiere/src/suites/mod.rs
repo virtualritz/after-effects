@@ -4,15 +4,17 @@ mod gpu_device;           pub use gpu_device::*;
 mod gpu_image_processing; pub use gpu_image_processing::*;
 mod memory_manager;       pub use memory_manager::*;
 mod ppix;                 pub use ppix::*;
+mod time;                 pub use time::*;
+mod sequence_info;        pub use sequence_info::*;
 mod video_segment;        pub use video_segment::*;
+mod video_segment_properties; pub use video_segment_properties::*;
 
 use std::ptr;
 use std::cell::RefCell;
 
-thread_local!(
-    pub(crate) static PICA_BASIC_SUITE: RefCell<*const pr_sys::SPBasicSuite> =
-        RefCell::new(ptr::null_mut())
-);
+thread_local! {
+    pub(crate) static PICA_BASIC_SUITE: RefCell<*const pr_sys::SPBasicSuite> = RefCell::new(ptr::null_mut());
+}
 
 #[inline]
 pub(crate) fn borrow_pica_basic_as_ptr() -> *const pr_sys::SPBasicSuite {
@@ -65,34 +67,6 @@ impl Drop for PicaBasicSuite {
         PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
             pica_basic_ptr_cell.replace(self.previous_pica_basic_suite_ptr);
         });
-    }
-}
-
-// This is confusing: for some structs Ae expects the caller to
-// manage the memory and for others it doesn't (the caller only
-// deals with a pointer that gets dereferenced for actually
-// calling into the suite). In this case the struct ends
-// with a `H` (for handle).
-// When the struct misses the trailing `H`, Ae does expect us to
-// manage the memory. We then use a Box<T>.
-pub struct PicaBasicSuiteHandle {
-    pica_basic_suite_ptr: *const pr_sys::SPBasicSuite,
-}
-
-impl PicaBasicSuiteHandle {
-    #[inline]
-    pub fn from_raw(pica_basic_suite_ptr: *const pr_sys::SPBasicSuite) -> PicaBasicSuiteHandle {
-        /*if pica_basic_suite_ptr == ptr::null() {
-            panic!()
-        }*/
-        PicaBasicSuiteHandle {
-            pica_basic_suite_ptr,
-        }
-    }
-
-    #[inline]
-    pub fn as_ptr(&self) -> *const pr_sys::SPBasicSuite {
-        self.pica_basic_suite_ptr
     }
 }
 
