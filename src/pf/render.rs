@@ -247,7 +247,7 @@ impl PreRenderCallbacks {
                     time_scale,
                     checkout_result.as_mut_ptr(),
                 )
-            } as EnumIntType
+            } as ae_sys::PF_Err
             {
                 ae_sys::PF_Err_NONE => Ok(unsafe { checkout_result.assume_init() }),
                 e => Err(Error::from(e)),
@@ -294,7 +294,7 @@ impl SmartRenderCallbacks {
                     checkout_id as i32,
                     effect_world_ptr.as_mut_ptr(),
                 )
-            } as EnumIntType
+            } as ae_sys::PF_Err
             {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
@@ -313,7 +313,7 @@ impl SmartRenderCallbacks {
     ) -> Result<(), Error> {
         if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
             match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) }
-                as EnumIntType
+                as ae_sys::PF_Err
             {
                 ae_sys::PF_Err_NONE => Ok(()),
                 e => Err(Error::from(e)),
@@ -329,7 +329,7 @@ impl SmartRenderCallbacks {
                 std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
             match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) }
-                as EnumIntType
+                as ae_sys::PF_Err
             {
                 ae_sys::PF_Err_NONE => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },

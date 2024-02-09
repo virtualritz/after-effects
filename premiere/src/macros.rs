@@ -43,9 +43,9 @@ macro_rules! pr_get_suite_fn {
     }};
 }
 
-macro_rules! pr_call_suite_fn {
-    ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
-        let err = unsafe { pr_get_suite_fn!(($suite_ptr), $function)($($arg)*) };
+macro_rules! call_suite_fn {
+    ($self:expr, $function:ident, $($arg:tt)* ) => {{
+        let err = unsafe { pr_get_suite_fn!(($self.suite_ptr), $function)($($arg)*) };
 
         match err {
             0 => Ok(()),
@@ -53,38 +53,32 @@ macro_rules! pr_call_suite_fn {
         }
     }};
 }
+macro_rules! call_suite_fn_single {
+    ($self:expr, $function:ident -> $typ:ty, $($arg:tt)* ) => {{
+        let mut val: $typ = unsafe { std::mem::zeroed() };
+        let err = unsafe { pr_get_suite_fn!($self.suite_ptr, $function)($($arg)*, &mut val) };
+
+        match err {
+            0 => Ok(val),
+            _ => Err(Error::from(err))
+        }
+    }};
+    ($self:expr, $function:ident -> $typ:ty) => {{
+        let mut val: $typ = unsafe { std::mem::zeroed() };
+        let err = unsafe { pr_get_suite_fn!($self.suite_ptr, $function)(&mut val) };
+
+        match err {
+            0 => Ok(val),
+            _ => Err(Error::from(err))
+        }
+    }};
+}
 
 // Call a function from a suite and return the value.
-macro_rules! pr_call_suite_fn_no_err {
-    ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
+macro_rules! call_suite_fn_no_err {
+    ($self:expr, $function:ident, $($arg:tt)* ) => {{
         unsafe {
-            pr_get_suite_fn!(($suite_ptr), $function)($($arg)*)
-        }
-    }};
-}
-
-#[macro_export]
-macro_rules! pr_acquire_suite_and_call_suite_fn_no_err {
-    ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
-        match pr_acquire_suite_ptr!( $pica, $type, $name, $version) {
-            Ok(suite_ptr) =>
-                pr_call_suite_fn_no_err!(suite_ptr, $function, $($arg)*),
-            Err(e) => {
-                Err(e)
-            },
-        }
-    }};
-}
-
-#[macro_export]
-macro_rules! pr_acquire_suite_and_call_suite_fn {
-    ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
-        match pr_acquire_suite_ptr!( $pica, $type, $name, $version) {
-            Ok(suite_ptr) =>
-                pr_call_suite_fn!(suite_ptr, $function, $($arg)*),
-            Err(e) => {
-                Err(e)
-            },
+            pr_get_suite_fn!(($self.suite_ptr), $function)($($arg)*)
         }
     }};
 }

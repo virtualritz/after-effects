@@ -64,7 +64,6 @@
 //!
 //! * Better error handling. Possibly using [`color`](https://crates.io/crates/color-eyre)`-`[`eyre`](https://crates.io/crates/eyre)?
 use after_effects_sys as ae_sys;
-use num_enum::UnsafeFromPrimitive;
 use num_traits::identities::Zero;
 use std::{
     cell::RefCell,
@@ -77,11 +76,6 @@ use std::{
 };
 #[cfg(feature = "ultraviolet")]
 use ultraviolet as uv;
-
-#[cfg(target_os = "macos")]
-pub type EnumIntType = u32;
-#[cfg(target_os = "windows")]
-pub type EnumIntType = i32;
 
 #[macro_use]
 mod macros;
@@ -188,70 +182,62 @@ impl Drop for PicaBasicSuite {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, UnsafeFromPrimitive)]
-#[cfg_attr(target_os = "windows", repr(i32))]
-#[cfg_attr(target_os = "macos", repr(u32))]
-pub enum Error {
-    Generic = ae_sys::A_Err_GENERIC as EnumIntType,
-    Struct = ae_sys::A_Err_STRUCT as EnumIntType,
-    Parameter = ae_sys::A_Err_PARAMETER as EnumIntType,
-    // Also called A_Err_ALLOC in Ae.
-    OutOfMemory = ae_sys::A_Err_ALLOC as EnumIntType,
-    // Some calls can only be used on UI (Main) or Render threads.
-    // Also, calls back to Ae can only be made from the same thread Ae
-    // called you on.
-    WrongThread = ae_sys::A_Err_WRONG_THREAD as EnumIntType,
-    // An attempt was made to write to a read only copy of an Ae
-    // project. Project changes must originate in the UI/Main thread.
-    ConstProjectModification = ae_sys::A_Err_CONST_PROJECT_MODIFICATION as EnumIntType,
-    // Acquire suite failed on a required suite.
-    MissingSuite = ae_sys::A_Err_MISSING_SUITE as EnumIntType,
+define_enum! {
+    ae_sys::PF_Err,
+    Error {
+        Generic                  = ae_sys::A_Err_GENERIC,
+        Struct                   = ae_sys::A_Err_STRUCT,
+        Parameter                = ae_sys::A_Err_PARAMETER,
+        // Also called A_Err_ALLOC in Ae.
+        OutOfMemory              = ae_sys::A_Err_ALLOC,
+        // Some calls can only be used on UI (Main) or Render threads.
+        // Also, calls back to Ae can only be made from the same thread Ae called you on.
+        WrongThread              = ae_sys::A_Err_WRONG_THREAD,
+        // An attempt was made to write to a read only copy of an Ae project.
+        // Project changes must originate in the UI/Main thread.
+        ConstProjectModification = ae_sys::A_Err_CONST_PROJECT_MODIFICATION,
+        // Acquire suite failed on a required suite.
+        MissingSuite             = ae_sys::A_Err_MISSING_SUITE,
+        InternalStructDamaged    = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED,
+        // Out of range, or action not allowed on this index.
+        InvalidIndex             = ae_sys::PF_Err_INVALID_INDEX,
+        UnrecogizedParameterType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE,
+        InvalidCallback          = ae_sys::PF_Err_INVALID_CALLBACK,
+        BadCallbackParameter     = ae_sys::PF_Err_BAD_CALLBACK_PARAM,
+        // Returned when user interrupts rendering.
+        InterruptCancel          = ae_sys::PF_Interrupt_CANCEL,
+        // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse arbitrary data from text
+        CannotParseKeyframeText  = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT,
 
-    InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as EnumIntType,
-    // Out of range, or action not allowed on this index.
-    InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as EnumIntType,
-    UnrecogizedParameterType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as EnumIntType,
-    InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as EnumIntType,
-    BadCallbackParameter = ae_sys::PF_Err_BAD_CALLBACK_PARAM as EnumIntType,
-    // Returned when user interrupts rendering.
-    InterruptCancel = ae_sys::PF_Interrupt_CANCEL as EnumIntType,
-    // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
-    // arbitrary data from text
-    CannotParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as EnumIntType,
+        StringNotFound           = ae_sys::suiteError_StringNotFound,
+        StringBufferTooSmall     = ae_sys::suiteError_StringBufferTooSmall,
+        InvalidParms             = ae_sys::suiteError_InvalidParms,
 
-    None = ae_sys::PF_Err_NONE as EnumIntType,
-}
-impl From<i32> for Error {
-    fn from(value: i32) -> Self {
-        unsafe { Self::unchecked_transmute_from(value as EnumIntType) }
-    }
-}
-impl From<u32> for Error {
-    fn from(value: u32) -> Self {
-        unsafe { Self::unchecked_transmute_from(value as EnumIntType) }
+        None = ae_sys::PF_Err_NONE,
     }
 }
 
 impl From<Error> for &'static str {
     fn from(error: Error) -> &'static str {
         match error {
-            Error::Generic => "Generic error.",
-            Error::Struct => "Wrong struct.",
-            Error::Parameter => "Wrong parameter.",
-            Error::OutOfMemory => "Out of memory.",
-            Error::WrongThread => "Call made from wrong thread.",
-            Error::ConstProjectModification => {
-                " Project changes must originate in the UI/Main thread."
-            }
-            Error::MissingSuite => "Could no aquire suite.",
-            Error::InternalStructDamaged => "Internal struct is damaged.",
-            Error::InvalidIndex => "Out of range, or action not allowed on this index.",
+            Error::Generic                  => "Generic error.",
+            Error::Struct                   => "Wrong struct.",
+            Error::Parameter                => "Wrong parameter.",
+            Error::OutOfMemory              => "Out of memory.",
+            Error::WrongThread              => "Call made from wrong thread.",
+            Error::ConstProjectModification => "Project changes must originate in the UI/Main thread.",
+            Error::MissingSuite             => "Could no aquire suite.",
+            Error::InternalStructDamaged    => "Internal struct is damaged.",
+            Error::InvalidIndex             => "Out of range, or action not allowed on this index.",
             Error::UnrecogizedParameterType => "Unrecognized parameter type",
-            Error::InvalidCallback => "Invalid callback.",
-            Error::BadCallbackParameter => "Bad callback parameter.",
-            Error::InterruptCancel => "Rendering interrupted.",
-            Error::CannotParseKeyframeText => "Keyframe data damaged.",
-            Error::None => "No error – wtf?",
+            Error::InvalidCallback          => "Invalid callback.",
+            Error::BadCallbackParameter     => "Bad callback parameter.",
+            Error::InterruptCancel          => "Rendering interrupted.",
+            Error::CannotParseKeyframeText  => "Keyframe data damaged.",
+            Error::None                     => "No error",
+            Error::StringNotFound           => "StringNotFound",
+            Error::StringBufferTooSmall     => "StringBufferTooSmall",
+            Error::InvalidParms             => "InvalidParms",
         }
     }
 }

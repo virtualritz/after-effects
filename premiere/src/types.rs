@@ -13,31 +13,31 @@ define_enum! {
 define_enum! {
     pr_sys::PrGPUDeviceFramework,
     GPUDeviceFramework {
-        Cuda      = pr_sys::PrGPUDeviceFramework_PrGPUDeviceFramework_CUDA,
-        OpenCl    = pr_sys::PrGPUDeviceFramework_PrGPUDeviceFramework_OpenCL,
-        Metal     = pr_sys::PrGPUDeviceFramework_PrGPUDeviceFramework_Metal,
+        Cuda   = pr_sys::PrGPUDeviceFramework_PrGPUDeviceFramework_CUDA,
+        OpenCl = pr_sys::PrGPUDeviceFramework_PrGPUDeviceFramework_OpenCL,
+        Metal  = pr_sys::PrGPUDeviceFramework_PrGPUDeviceFramework_Metal,
     }
 }
 
 define_enum! {
     pr_sys::PrRenderQuality,
     RenderQuality {
-        Max           = pr_sys::PrRenderQuality_kPrRenderQuality_Max,
-        High          = pr_sys::PrRenderQuality_kPrRenderQuality_High,
-        Medium        = pr_sys::PrRenderQuality_kPrRenderQuality_Medium,
-        Low           = pr_sys::PrRenderQuality_kPrRenderQuality_Low,
-        Draft         = pr_sys::PrRenderQuality_kPrRenderQuality_Draft,
-        Invalid       = pr_sys::PrRenderQuality_kPrRenderQuality_Invalid,
+        Max     = pr_sys::PrRenderQuality_kPrRenderQuality_Max,
+        High    = pr_sys::PrRenderQuality_kPrRenderQuality_High,
+        Medium  = pr_sys::PrRenderQuality_kPrRenderQuality_Medium,
+        Low     = pr_sys::PrRenderQuality_kPrRenderQuality_Low,
+        Draft   = pr_sys::PrRenderQuality_kPrRenderQuality_Draft,
+        Invalid = pr_sys::PrRenderQuality_kPrRenderQuality_Invalid,
     }
 }
 
 define_enum! {
     pr_sys::PrPlaybackQuality,
     PlaybackQuality {
-        Max           = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_Auto,
-        High          = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_High,
-        Draft         = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_Draft,
-        Invalid       = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_Invalid,
+        Auto    = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_Auto,
+        High    = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_High,
+        Draft   = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_Draft,
+        Invalid = pr_sys::PrPlaybackQuality_kPrPlaybackQuality_Invalid,
     }
 }
 
@@ -56,14 +56,14 @@ define_enum! {
 define_enum! {
     pr_sys::PrVideoFrameRates,
     VideoFrameRates {
-        FrameRate24Drop       = pr_sys::PrVideoFrameRates_kVideoFrameRate_24Drop,
-        FrameRate24           = pr_sys::PrVideoFrameRates_kVideoFrameRate_24,
-        FrameRatePal          = pr_sys::PrVideoFrameRates_kVideoFrameRate_PAL,
-        FrameRateNtsc         = pr_sys::PrVideoFrameRates_kVideoFrameRate_NTSC,
-        FrameRate30           = pr_sys::PrVideoFrameRates_kVideoFrameRate_30,
-        FrameRatePalHd        = pr_sys::PrVideoFrameRates_kVideoFrameRate_PAL_HD,
-        FrameRateNtscHd       = pr_sys::PrVideoFrameRates_kVideoFrameRate_NTSC_HD,
-        FrameRate60           = pr_sys::PrVideoFrameRates_kVideoFrameRate_60,
+        FrameRate24Drop = pr_sys::PrVideoFrameRates_kVideoFrameRate_24Drop,
+        FrameRate24     = pr_sys::PrVideoFrameRates_kVideoFrameRate_24,
+        FrameRatePal    = pr_sys::PrVideoFrameRates_kVideoFrameRate_PAL,
+        FrameRateNtsc   = pr_sys::PrVideoFrameRates_kVideoFrameRate_NTSC,
+        FrameRate30     = pr_sys::PrVideoFrameRates_kVideoFrameRate_30,
+        FrameRatePalHd  = pr_sys::PrVideoFrameRates_kVideoFrameRate_PAL_HD,
+        FrameRateNtscHd = pr_sys::PrVideoFrameRates_kVideoFrameRate_NTSC_HD,
+        FrameRate60     = pr_sys::PrVideoFrameRates_kVideoFrameRate_60,
     }
 }
 

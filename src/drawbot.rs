@@ -39,29 +39,25 @@ impl DrawbotSuite {
     pub fn supplier(&self, draw_ref: &DrawRef) -> Result<SupplierRef, Error> {
         let mut supplier_ref = std::mem::MaybeUninit::<ae_sys::DRAWBOT_SupplierRef>::uninit();
 
-        match ae_call_suite_fn!(
-            self.suite_ptr,
+        call_suite_fn!(
+            self,
             GetSupplier,
             draw_ref.as_ptr(),
             supplier_ref.as_mut_ptr()
-        ) {
-            Ok(()) => Ok(SupplierRef(unsafe { supplier_ref.assume_init() })),
-            Err(e) => Err(e),
-        }
+        )?;
+        Ok(SupplierRef(unsafe { supplier_ref.assume_init() }))
     }
 
     pub fn surface(&self, draw_ref: &DrawRef) -> Result<SurfaceRef, Error> {
         let mut surface_ref = std::mem::MaybeUninit::<ae_sys::DRAWBOT_SurfaceRef>::uninit();
 
-        match ae_call_suite_fn!(
-            self.suite_ptr,
+        call_suite_fn!(
+            self,
             GetSurface,
             draw_ref.as_ptr(),
             surface_ref.as_mut_ptr()
-        ) {
-            Ok(()) => Ok(SurfaceRef(unsafe { surface_ref.assume_init() })),
-            Err(e) => Err(e),
-        }
+        )?;
+        Ok(SurfaceRef(unsafe { surface_ref.assume_init() }))
     }
 }
 
@@ -86,8 +82,8 @@ impl SupplierSuite {
 
         assert!(row_bytes * height <= pixel_data.len());
 
-        match ae_call_suite_fn!(
-            self.suite_ptr,
+        call_suite_fn!(
+            self,
             NewImageFromBuffer,
             supplier_ref.as_ptr(),
             width as _,
@@ -96,10 +92,8 @@ impl SupplierSuite {
             pixel_layout as _,
             pixel_data.as_ptr() as _,
             image_ref.as_mut_ptr()
-        ) {
-            Ok(()) => Ok(ImageRef::from_raw(unsafe { image_ref.assume_init() })),
-            Err(e) => Err(e),
-        }
+        )?;
+        Ok(ImageRef::from_raw(unsafe { image_ref.assume_init() }))
     }
 }
 
@@ -117,23 +111,17 @@ impl SurfaceSuite {
         color: &ColorRGBA,
         rect: &RectF32,
     ) -> Result<(), Error> {
-        match ae_call_suite_fn!(
-            self.suite_ptr,
+        call_suite_fn!(
+            self,
             PaintRect,
             surface_ref.as_ptr(),
             color as _,
             rect as _,
-        ) {
-            Ok(()) => Ok(()),
-            Err(e) => Err(e),
-        }
+        )
     }
 
     pub fn transform(&self, surface_ref: &SurfaceRef, matrix: &MatrixF32) -> Result<(), Error> {
-        match ae_call_suite_fn!(self.suite_ptr, Transform, surface_ref.as_ptr(), matrix as _,) {
-            Ok(()) => Ok(()),
-            Err(e) => Err(e),
-        }
+        call_suite_fn!(self, Transform, surface_ref.as_ptr(), matrix as _,)
     }
 
     pub fn draw_image(
@@ -143,24 +131,18 @@ impl SurfaceSuite {
         origin: &PointF32,
         alpha: f32,
     ) -> Result<(), Error> {
-        match ae_call_suite_fn!(
-            self.suite_ptr,
+        call_suite_fn!(
+            self,
             DrawImage,
             surface_ref.as_ptr(),
             image_ref.as_ptr(),
             origin as _,
             alpha
-        ) {
-            Ok(()) => Ok(()),
-            Err(e) => Err(e),
-        }
+        )
     }
 
     pub fn flush(&self, surface_ref: &SurfaceRef) -> Result<(), Error> {
-        match ae_call_suite_fn!(self.suite_ptr, Flush, surface_ref.as_ptr(),) {
-            Ok(()) => Ok(()),
-            Err(e) => Err(e),
-        }
+        call_suite_fn!(self, Flush, surface_ref.as_ptr(),)
     }
 }
 

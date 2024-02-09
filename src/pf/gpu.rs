@@ -1,25 +1,13 @@
 use super::*;
 use std::any::Any;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum GpuFramework {
-    None = 0,
-    OpenCl = 1,
-    Metal = 2,
-    Cuda = 3,
-}
-impl From<ae_sys::PF_GPU_Framework> for GpuFramework {
-    fn from(framework: ae_sys::PF_GPU_Framework) -> Self {
-        match framework as EnumIntType {
-            ae_sys::PF_GPU_Framework_NONE => Self::None,
-            ae_sys::PF_GPU_Framework_OPENCL => Self::OpenCl,
-            ae_sys::PF_GPU_Framework_METAL => Self::Metal,
-            ae_sys::PF_GPU_Framework_CUDA => Self::Cuda,
-            _ => {
-                log::error!("Unknown framework: {framework}");
-                Self::None
-            }
-        }
+define_enum! {
+    ae_sys::PF_GPU_Framework,
+    GpuFramework {
+        None   = ae_sys::PF_GPU_Framework_NONE,
+        OpenCl = ae_sys::PF_GPU_Framework_OPENCL,
+        Metal  = ae_sys::PF_GPU_Framework_METAL,
+        Cuda   = ae_sys::PF_GPU_Framework_CUDA,
     }
 }
 
@@ -132,33 +120,23 @@ impl GPUDeviceSuite1 {
         in_data_handle: InData,
         device_index: usize,
     ) -> Result<ae_sys::PF_GPUDeviceInfo, Error> {
-        let mut device_info = std::mem::MaybeUninit::<ae_sys::PF_GPUDeviceInfo>::uninit();
-
-        match ae_call_suite_fn!(
-            self.suite_ptr,
-            GetDeviceInfo,
+        call_suite_fn_single!(
+            self,
+            GetDeviceInfo -> ae_sys::PF_GPUDeviceInfo,
             in_data_handle.effect_ref().as_ptr(),
-            device_index as u32,
-            device_info.as_mut_ptr() as _
-        ) {
-            Ok(()) => Ok(unsafe { device_info.assume_init() }),
-            Err(e) => Err(e),
-        }
+            device_index as u32
+        )
     }
     pub fn get_gpu_world_data(
         &self,
         in_data_handle: InData,
         mut world: EffectWorld,
     ) -> Result<*mut std::ffi::c_void, Error> {
-        let mut data = std::ptr::null_mut();
-
-        ae_call_suite_fn!(
-            self.suite_ptr,
-            GetGPUWorldData,
+        call_suite_fn_single!(
+            self,
+            GetGPUWorldData -> *mut std::ffi::c_void,
             in_data_handle.effect_ref().as_ptr(),
-            world.as_mut_ptr(),
-            &mut data
-        )?;
-        Ok(data)
+            world.as_mut_ptr()
+        )
     }
 }

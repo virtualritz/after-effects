@@ -1,13 +1,18 @@
 use crate::*;
 
-mod gpu_device;           pub use gpu_device::*;
-mod gpu_image_processing; pub use gpu_image_processing::*;
-mod memory_manager;       pub use memory_manager::*;
-mod ppix;                 pub use ppix::*;
-mod time;                 pub use time::*;
-mod sequence_info;        pub use sequence_info::*;
-mod video_segment;        pub use video_segment::*;
+mod gpu_device;               pub use gpu_device::*;
+mod gpu_image_processing;     pub use gpu_image_processing::*;
+mod memory_manager;           pub use memory_manager::*;
+mod ppix;                     pub use ppix::*;
+mod time;                     pub use time::*;
+mod sequence_info;            pub use sequence_info::*;
+mod video_segment;            pub use video_segment::*;
 mod video_segment_properties; pub use video_segment_properties::*;
+
+#[cfg(has_ae_sdk)]
+mod opaque_effect_data;
+#[cfg(has_ae_sdk)]
+pub use opaque_effect_data::*;
 
 use std::ptr;
 use std::cell::RefCell;
@@ -75,9 +80,7 @@ pub(crate) trait Suite {
     where
         Self: Sized;
 
-    fn from_raw(
-        pica_basic_suite_raw_ptr: *const crate::pr_sys::SPBasicSuite,
-    ) -> Result<Self, Error>
+    fn from_raw(pica_basic_suite_raw_ptr: *const crate::pr_sys::SPBasicSuite) -> Result<Self, Error>
     where
         Self: Sized;
 }

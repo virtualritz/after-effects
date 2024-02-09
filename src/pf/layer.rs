@@ -44,7 +44,7 @@ impl Layer {
         unsafe { (*self.layer_ptr).extent_hint.into() }
     }
     pub fn bit_depth(&self) -> i16 {
-        let flags = unsafe { (*self.layer_ptr).world_flags as EnumIntType };
+        let flags = unsafe { (*self.layer_ptr).world_flags as ae_sys::PF_WorldFlags };
         if (flags & ae_sys::PF_WorldFlag_DEEP) != 0 {
             16
         } else if (flags & ae_sys::PF_WorldFlag_RESERVED1) != 0 {
@@ -115,7 +115,7 @@ impl Layer {
                 dst_rect
                     .map(|x| &mut x.into() as *mut _)
                     .unwrap_or(std::ptr::null_mut()),
-            ) as EnumIntType {
+            ) as ae_sys::PF_Err {
                 ae_sys::PF_Err_NONE => Ok(()),
                 e => return Err(e.into()),
             }
@@ -139,7 +139,7 @@ impl Layer {
                 rect.map(|x| &x.into() as *const _)
                     .unwrap_or(std::ptr::null_mut()),
                 self.layer_ptr,
-            ) as EnumIntType {
+            ) as ae_sys::PF_Err {
                 ae_sys::PF_Err_NONE => Ok(()),
                 e => return Err(e.into()),
             }
@@ -181,7 +181,7 @@ impl Layer {
                 refcon as *mut _,
                 Some(iterate_8_func),
                 output.layer_ptr,
-            ) as EnumIntType {
+            ) as ae_sys::PF_Err {
                 ae_sys::PF_Err_NONE => Ok(()),
                 e => return Err(e.into()),
             }

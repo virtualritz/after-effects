@@ -3,7 +3,6 @@
 
 #include "AEConfig.h"
 
-// #include "PrSDKAESupport.h"
 #include "PrSDKClipRenderSuite.h"
 #include "PrSDKDataStreamTypes.h"
 #include "PrSDKDevice.h"
@@ -38,10 +37,14 @@
 #include "PrSDKThreadedWorkSuite.h"
 #include "PrSDKTimeSuite.h"
 #include "PrSDKTypes.h"
-#include "PrSDKVideoSegmentSuite.h"
 #include "PrSDKVideoSegmentProperties.h"
+#include "PrSDKVideoSegmentSuite.h"
 #include "PrSDKWindowSuite.h"
-//#include "Smart_Utils.h"
+#ifdef HAS_AE_SDK
+#	include "PrSDKAESupport.h"
+#	include "PrSDKOpaqueEffectDataSuite.h"
+#	include "Smart_Utils.h"
+#endif
 
 #include "SPBasic.h"
 

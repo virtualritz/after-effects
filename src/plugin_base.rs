@@ -51,18 +51,17 @@ macro_rules! register_plugin {
             fn do_dialog(&mut self, _: &mut PluginState) -> Result<(), ae::Error> { Ok(()) }
         }
 
-        unsafe fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: after_effects_sys::PF_Cmd, in_data_ptr: *mut after_effects_sys::PF_InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
-            let cmd = cmd as EnumIntType;
+        unsafe fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: RawCommand, in_data_ptr: *mut after_effects_sys::PF_InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
             Ok(if std::any::type_name::<S>() == "()" {
                 // Don't allocate sequence data
                 None
-            } else if cmd == after_effects_sys::PF_Cmd_SEQUENCE_SETUP {
+            } else if cmd == RawCommand::SequenceSetup {
                 // Allocate new sequence data
                 Some((pf::Handle::new(S::default())?, true))
-            } else if cmd == after_effects_sys::PF_Cmd_SEQUENCE_RESETUP {
+            } else if cmd == RawCommand::SequenceResetup {
                 // Restore from flat handle
                 if (*in_data_ptr).sequence_data.is_null() {
-                    log::error!("Sequence data pointer is null in cmd: {:?}!", PfCmd(cmd as after_effects_sys::PF_Cmd));
+                    log::error!("Sequence data pointer is null in cmd: {:?}!", cmd);
                     Some((pf::Handle::new(S::default())?, true))
                 } else {
                     let instance = FlatHandle::from_raw((*in_data_ptr).sequence_data as after_effects_sys::PF_Handle)?;
@@ -75,13 +74,13 @@ macro_rules! register_plugin {
                     let handle = pf::Handle::new(S::unflatten(version, &bytes[2..]).map_err(|_| Error::Struct)?)?;
                     Some((handle, true))
                 }
-            } else if cmd == after_effects_sys::PF_Cmd_RENDER
-                   || cmd == after_effects_sys::PF_Cmd_SMART_RENDER
-                   || cmd == after_effects_sys::PF_Cmd_SMART_RENDER_GPU
-                   || cmd == after_effects_sys::PF_Cmd_SMART_PRE_RENDER
-                   || cmd == after_effects_sys::PF_Cmd_FRAME_SETUP
-                   || cmd == after_effects_sys::PF_Cmd_ARBITRARY_CALLBACK
-                   || cmd == after_effects_sys::PF_Cmd_FRAME_SETDOWN {
+            } else if cmd == RawCommand::Render
+                   || cmd == RawCommand::SmartRender
+                   || cmd == RawCommand::SmartRenderGpu
+                   || cmd == RawCommand::SmartPreRender
+                   || cmd == RawCommand::FrameSetup
+                   || cmd == RawCommand::ArbitraryCallback
+                   || cmd == RawCommand::FrameSetdown {
                 // Read-only sequence data available through a suite only
                 let seq_ptr = pf::EffectSequenceDataSuite1::new()
                     .and_then(|x| x.get_const_sequence_data(InData::from_raw(in_data_ptr)))
@@ -90,12 +89,12 @@ macro_rules! register_plugin {
                     let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _)?;
                     Some((instance_handle, false))
                 } else {
-                    log::error!("Sequence data pointer got through EffectSequenceDataSuite1 is null in cmd: {:?}!", PfCmd(cmd as after_effects_sys::PF_Cmd));
+                    log::error!("Sequence data pointer got through EffectSequenceDataSuite1 is null in cmd: {:?}!", cmd);
                     None
                 }
             } else {
                 if (*in_data_ptr).sequence_data.is_null() {
-                    log::error!("Sequence data pointer is null in cmd: {:?}!", PfCmd(cmd as after_effects_sys::PF_Cmd));
+                    log::error!("Sequence data pointer is null in cmd: {:?}!", cmd);
                     None
                 } else {
                     let instance_handle = pf::Handle::<S>::from_raw((*in_data_ptr).sequence_data)?;
@@ -117,8 +116,10 @@ macro_rules! register_plugin {
             let in_data = InData::from_raw(in_data_ptr);
             let out_data = OutData::from_raw(out_data_ptr);
 
+            let cmd = RawCommand::from(cmd);
+
             // Allocate or restore global data pointer
-            let mut global_handle = if cmd as EnumIntType == after_effects_sys::PF_Cmd_GLOBAL_SETUP {
+            let mut global_handle = if cmd == RawCommand::GlobalSetup {
                 // Allocate global data
                 pf::Handle::new(GlobalData {
                     params_map: Rc::new(RefCell::new(HashMap::new())),
@@ -127,7 +128,7 @@ macro_rules! register_plugin {
                 })?
             } else {
                 if (*in_data_ptr).global_data.is_null() {
-                    log::error!("Global data pointer is null in cmd: {:?}!", PfCmd(cmd));
+                    log::error!("Global data pointer is null in cmd: {:?}!", cmd);
                     return Err(Error::BadCallbackParameter);
                 }
                 pf::Handle::<GlobalData>::from_raw((*in_data_ptr).global_data)?
@@ -139,7 +140,7 @@ macro_rules! register_plugin {
             let global_lock = global_handle.lock()?;
             let global_inst = global_lock.as_ref_mut()?;
 
-            if cmd as EnumIntType == after_effects_sys::PF_Cmd_PARAMS_SETUP {
+            if cmd == RawCommand::ParamsSetup {
                 let mut params = Parameters::<$params_type>::new(global_inst.params_map.clone());
                 params.set_in_data(in_data_ptr);
                 global_inst.plugin_instance.params_setup(&mut params)?;
@@ -174,17 +175,17 @@ macro_rules! register_plugin {
 
                 sequence_err = Some(inst.handle_command(&mut plugin_state, command));
 
-                match cmd as EnumIntType {
+                match cmd {
                     #[cfg(does_dialog)]
-                    after_effects_sys::PF_Cmd_DO_DIALOG => {
+                    RawCommand::DoDialog => {
                         sequence_err = Some(inst.do_dialog(&mut plugin_state));
                     }
-                    after_effects_sys::PF_Cmd_RENDER => {
+                    RawCommand::Render => {
                         let in_layer = $crate::Layer::from_raw(in_data_ptr, &mut (*(*params)).u.ld);
                         let mut out_layer = $crate::Layer::from_raw(in_data_ptr, output);
                         sequence_err = Some(inst.render(&mut plugin_state, &in_layer, &mut out_layer));
                     }
-                    after_effects_sys::PF_Cmd_USER_CHANGED_PARAM => {
+                    RawCommand::UserChangedParam => {
                         let extra = extra as *mut after_effects_sys::PF_UserChangedParamExtra;
                         let param = plugin_state.params.type_for_index((*extra).param_index as usize);
                         sequence_err = Some(inst.user_changed_param(&mut plugin_state, param));
@@ -192,15 +193,15 @@ macro_rules! register_plugin {
                     _ => { }
                 }
 
-                match cmd as EnumIntType {
-                    after_effects_sys::PF_Cmd_SEQUENCE_SETUP | after_effects_sys::PF_Cmd_SEQUENCE_RESETUP => {
+                match cmd {
+                    RawCommand::SequenceSetup | RawCommand::SequenceResetup => {
                         drop(lock);
                         (*out_data_ptr).sequence_data = pf::Handle::into_raw(sequence_handle);
                     }
-                    after_effects_sys::PF_Cmd_SEQUENCE_FLATTEN | after_effects_sys::PF_Cmd_GET_FLATTENED_SEQUENCE_DATA => {
+                    RawCommand::SequenceFlatten | RawCommand::GetFlattenedSequenceData => {
                         let serialized = inst.flatten().map_err(|_| Error::InternalStructDamaged)?;
                         drop(lock);
-                        if cmd as EnumIntType == after_effects_sys::PF_Cmd_GET_FLATTENED_SEQUENCE_DATA {
+                        if cmd == RawCommand::GetFlattenedSequenceData {
                             let _ = pf::Handle::into_raw(sequence_handle); // don't deallocate
                         } else {
                             drop(sequence_handle);
@@ -209,7 +210,7 @@ macro_rules! register_plugin {
                         final_bytes.extend(&serialized.1);
                         (*out_data_ptr).sequence_data = pf::FlatHandle::into_raw(FlatHandle::new(final_bytes)?) as *mut _;
                     }
-                    after_effects_sys::PF_Cmd_SEQUENCE_SETDOWN => {
+                    RawCommand::SequenceSetdown => {
                         (*out_data_ptr).sequence_data = std::ptr::null_mut();
                         // sequence will be dropped and deallocated here
                     }
@@ -220,12 +221,12 @@ macro_rules! register_plugin {
                 }
             }
 
-            match cmd as EnumIntType {
-                after_effects_sys::PF_Cmd_GLOBAL_SETUP => {
+            match cmd {
+                RawCommand::GlobalSetup => {
                     drop(global_lock);
                     (*out_data_ptr).global_data = pf::Handle::into_raw(global_handle);
                 }
-                after_effects_sys::PF_Cmd_GLOBAL_SETDOWN => {
+                RawCommand::GlobalSetdown => {
                     (*out_data_ptr).global_data = std::ptr::null_mut();
                     // global will be dropped and de-allocated here
                 }

@@ -62,33 +62,66 @@ macro_rules! define_cross_thread_type {
             }
             impl serde::Serialize for [<CrossThread $type_name>] {
                 fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-                    #[derive(serde::Serialize)]
-                    struct Helper<'a, $type_name> {
-                        id: u64,
-                        data: &'a $type_name,
-                    };
+                    use serde::ser::SerializeStruct;
                     let rwlock = self.get().ok_or(serde::ser::Error::custom("Instance not found in static map"))?;
-                    let locked = rwlock.read();
-                    Helper {
-                        id: self.id,
-                        data: &*locked
-                    }.serialize(serializer)
+
+                    let mut state = serializer.serialize_struct(stringify!($type_name), 2)?;
+                    state.serialize_field("id", &self.id)?;
+                    state.serialize_field("data", &*rwlock.read())?;
+                    state.end()
                 }
             }
             impl<'de> serde::Deserialize<'de> for [<CrossThread $type_name>] {
                 fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: serde::Deserializer<'de> {
                     #[derive(serde::Deserialize)]
-                    struct Helper<$type_name> {
-                        id: u64,
-                        data: $type_name,
-                    };
-                    let helper = Helper::deserialize(deserializer)?;
-                    if let Some(inner) = Self::map().read().get(&helper.id) {
-                        return Ok(Self { id: helper.id });
+                    #[serde(field_identifier, rename_all = "lowercase")]
+                    enum Field { Id, Data }
+
+                    struct HelperVisitor;
+                    impl<'de> serde::de::Visitor<'de> for HelperVisitor {
+                        type Value = [<CrossThread $type_name>];
+
+                        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                            formatter.write_str(stringify!($type_name))
+                        }
+
+                        fn visit_seq<V>(self, mut seq: V) -> Result<[<CrossThread $type_name>], V::Error> where V: serde::de::SeqAccess<'de> {
+                            let id: u64 = seq.next_element()?.ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+                            if let Some(inner) = [<CrossThread $type_name>]::map().read().get(&id) {
+                                return Ok([<CrossThread $type_name>] { id });
+                            }
+
+                            let data: $type_name = seq.next_element()?.ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+                            [<CrossThread $type_name>]::map().write().insert(id, std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
+
+                            Ok([<CrossThread $type_name>] { id })
+                        }
+
+                        fn visit_map<V>(self, mut map: V) -> Result<[<CrossThread $type_name>], V::Error> where V: serde::de::MapAccess<'de> {
+                            let mut id = None;
+                            let mut data = None;
+                            while let Some(key) = map.next_key()? {
+                                match key {
+                                    Field::Id => {
+                                        let _id = map.next_value()?;
+                                        if let Some(inner) = [<CrossThread $type_name>]::map().read().get(&_id) {
+                                            return Ok([<CrossThread $type_name>] { id: _id });
+                                        }
+                                        id = Some(_id);
+                                    }
+                                    Field::Data => {
+                                        data = Some(map.next_value()?);
+                                    }
+                                }
+                            }
+                            let id: u64 = id.ok_or_else(|| serde::de::Error::missing_field("id"))?;
+                            let data: $type_name = data.ok_or_else(|| serde::de::Error::missing_field("data"))?;
+                            [<CrossThread $type_name>]::map().write().insert(id, std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
+                            Ok([<CrossThread $type_name>] { id })
+                        }
                     }
 
-                    Self::map().write().insert(helper.id, std::sync::Arc::new($crate::parking_lot::RwLock::new(helper.data)));
-                    Ok(Self { id: helper.id })
+                    deserializer.deserialize_struct(stringify!($type_name), &["id", "data"], HelperVisitor)
                 }
             }
         }

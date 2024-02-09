@@ -18,9 +18,7 @@ impl GPUImageProcessingSuite {
         height: u32,
         quality: RenderQuality
     ) -> Result<(), Error> {
-
-        pr_call_suite_fn!(self.suite_ptr, PixelFormatConvert, device_index, src, src_stride, src_format.into(), dst, dst_stride, dst_format.into(), width, height, quality.into())?;
-        Ok(())
+        call_suite_fn!(self, PixelFormatConvert, device_index, src, src_stride, src_format.into(), dst, dst_stride, dst_format.into(), width, height, quality.into())
     }
 
     /// Scale a frame on the GPU
@@ -34,9 +32,7 @@ impl GPUImageProcessingSuite {
         scale_y: f32,
         quality: RenderQuality
     ) -> Result<(), Error> {
-
-        pr_call_suite_fn!(self.suite_ptr, Scale, device_index, src, src_stride, src_width, src_height, dst, dst_stride, dst_width, dst_height, format.into(), scale_x, scale_y, quality.into())?;
-        Ok(())
+        call_suite_fn!(self, Scale, device_index, src, src_stride, src_width, src_height, dst, dst_stride, dst_width, dst_height, format.into(), scale_x, scale_y, quality.into())
     }
 
     /// Gaussian blur on the GPU
@@ -53,8 +49,6 @@ impl GPUImageProcessingSuite {
         blur_vertically: bool,
         quality: RenderQuality
     ) -> Result<(), Error> {
-
-        pr_call_suite_fn!(self.suite_ptr, GaussianBlur, device_index, src, src_stride, src_width, src_height, dst, dst_stride, dst_width, dst_height, format.into(), sigma_x, sigma_y, if repeat_edge_pixels { 1 } else { 0 }, if blur_horizontally { 1 } else { 0 }, if blur_vertically { 1 } else { 0 }, quality.into())?;
-        Ok(())
+        call_suite_fn!(self, GaussianBlur, device_index, src, src_stride, src_width, src_height, dst, dst_stride, dst_width, dst_height, format.into(), sigma_x, sigma_y, if repeat_edge_pixels { 1 } else { 0 }, if blur_horizontally { 1 } else { 0 }, if blur_vertically { 1 } else { 0 }, quality.into())
     }
 }

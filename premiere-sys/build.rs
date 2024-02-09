@@ -29,6 +29,7 @@ fn main() {
         .allowlist_item("kSP.*")
         .allowlist_item("kMax.*")
         .allowlist_item("suiteError_.*")
+        .layout_tests(false)
         //.clang_arg("-include stdint.h")
         .clang_arg(format!(
             "-I{}",
@@ -39,6 +40,17 @@ fn main() {
         ));
     if cfg!(target_os = "windows") {
         pr_bindings = pr_bindings.clang_arg("-D_WINDOWS");
+    }
+
+    if let Ok(ae_sdk) = env::var("AESDK_ROOT") {
+        pr_bindings = pr_bindings.clang_arg(format!(
+            "-I{}",
+            Path::new(&ae_sdk)
+                .join("Examples")
+                .join("Headers")
+                .display()
+        ))
+        .clang_arg("--define-macro=HAS_AE_SDK");
     }
 
     if cfg!(target_os = "macos") {

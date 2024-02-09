@@ -1041,16 +1041,13 @@ impl ParamUtilsSuite {
         param_index: i32,
         param_def: &ParamDef,
     ) -> Result<(), Error> {
-        match ae_call_suite_fn!(
-            self.suite_ptr,
+        call_suite_fn!(
+            self,
             PF_UpdateParamUI,
             effect_ref.as_ptr(),
             param_index,
             param_def.as_ptr()
-        ) {
-            Ok(()) => Ok(()),
-            Err(e) => Err(e),
-        }
+        )
     }
     pub fn get_keyframe_count(
         &self,
@@ -1059,16 +1056,15 @@ impl ParamUtilsSuite {
     ) -> Result<i32, Error> {
         let mut count: ae_sys::PF_KeyIndex = ae_sys::PF_KeyIndex_NONE;
 
-        match ae_call_suite_fn!(
-            self.suite_ptr,
+        call_suite_fn!(
+            self,
             PF_GetKeyframeCount,
             effect_ref.as_ptr(),
             param_index,
             &mut count
-        ) {
-            Ok(()) => Ok(count as i32),
-            Err(e) => Err(e),
-        }
+        )?;
+
+        Ok(count as i32)
     }
     /*
         // IMPORTANT: as of 13.5 to avoid threading deadlock problems, PF_GetCurrentState() returns a random state

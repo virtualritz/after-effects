@@ -36,12 +36,32 @@ macro_rules! ae_get_suite_fn {
     }};
 }
 
-macro_rules! ae_call_suite_fn {
-    ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
-        let err = unsafe { ae_get_suite_fn!(($suite_ptr), $function)($($arg)*) };
+macro_rules! call_suite_fn {
+    ($self:expr, $function:ident, $($arg:tt)* ) => {{
+        let err = unsafe { ae_get_suite_fn!(($self.suite_ptr), $function)($($arg)*) };
 
         match err {
             0 => Ok(()),
+            _ => Err(Error::from(err))
+        }
+    }};
+}
+macro_rules! call_suite_fn_single {
+    ($self:expr,  $function:ident -> $typ:ty, $($arg:tt)* ) => {{
+        let mut val: $typ = unsafe { std::mem::zeroed() };
+        let err = unsafe { ae_get_suite_fn!($self.suite_ptr, $function)($($arg)*, &mut val) };
+
+        match err {
+            0 => Ok(val),
+            _ => Err(Error::from(err))
+        }
+    }};
+    ($self:expr,  $function:ident -> $typ:ty) => {{
+        let mut val: $typ = unsafe { std::mem::zeroed() };
+        let err = unsafe { ae_get_suite_fn!($self.suite_ptr, $function)(&mut val) };
+
+        match err {
+            0 => Ok(val),
             _ => Err(Error::from(err))
         }
     }};
@@ -51,10 +71,10 @@ macro_rules! ae_call_suite_fn {
 // Some new functions in AE_Scene3D_Private.h abandon suite API design
 // practices and return a value instead of an error. E.g. the
 // AEGP_*BufferElementSize() ones.
-macro_rules! ae_call_suite_fn_no_err {
-    ($suite_ptr:expr, $function:ident, $($arg:tt)* ) => {{
+macro_rules! call_suite_fn_no_err {
+    ($self:expr, $function:ident, $($arg:tt)* ) => {{
         unsafe {
-            ae_get_suite_fn!(($suite_ptr), $function)($($arg)*)
+            ae_get_suite_fn!(($self.suite_ptr), $function)($($arg)*)
         }
     }};
 }
@@ -77,7 +97,7 @@ macro_rules! ae_acquire_suite_and_call_suite_fn {
     ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
         match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
             Ok(suite_ptr) =>
-                ae_call_suite_fn!(suite_ptr, $function, $($arg)*),
+                call_suite_fn!(suite_ptr, $function, $($arg)*),
             Err(e) => {
                 Err(e)
             },
@@ -107,6 +127,39 @@ macro_rules! define_handle_wrapper_v2 {
         }
     };
 }*/
+
+macro_rules! define_enum {
+    ($raw_type:ty, $name:ident { $( $variant:ident = $value:path ),*, }) => {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        pub enum $name {
+            $(
+                $variant,
+            )*
+        }
+
+        impl From<$name> for $raw_type {
+            fn from(v: $name) -> Self {
+                match v {
+                    $(
+                        $name::$variant => $value as _,
+                    )*
+                }
+            }
+        }
+        impl From<$raw_type> for $name {
+            fn from(v: $raw_type) -> Self {
+                match v as _ {
+                    $(
+                        $value => Self::$variant,
+                    )*
+                    _ => {
+                        panic!("Unknown enum value {}: {v}", stringify!($name));
+                    }
+                }
+            }
+        }
+    };
+}
 
 macro_rules! define_handle_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident) => {
