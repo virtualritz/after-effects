@@ -23,19 +23,19 @@ impl AdobePluginGlobal for Plugin {
         );
         Ok(())
     }
-    fn handle_command(&self, _: ae::Command, _: ae::InData, _: ae::OutData) -> Result<(), ae::Error> { Ok(()) }
+    fn handle_command(&mut self, _: ae::Command, _: ae::InData, _: ae::OutData) -> Result<(), ae::Error> { Ok(()) }
 }
 
 impl AdobePluginInstance for Instance {
-    fn flatten(&self) -> Result<Vec<u8>, Error> { Ok(Vec::new()) }
-    fn unflatten(_: &[u8]) -> Result<Self, Error> { Ok(Self { }) }
+    fn flatten(&self) -> Result<(u16, Vec<u8>), Error> { Ok((1, Vec::new())) }
+    fn unflatten(_version: u16, _bytes: &[u8]) -> Result<Self, Error> { Ok(Self {}) }
 
-    fn user_changed_param(&mut self, _: Params, _: &ae::Parameters<Params>) -> Result<(), ae::Error> { Ok(()) }
+    fn user_changed_param(&mut self, _: &mut PluginState, _: Params) -> Result<(), ae::Error> { Ok(()) }
 
-    fn render(&self, in_data: ae::InData, in_layer: &ae::Layer, out_layer: &mut ae::Layer, params: &ae::Parameters<Params>) -> Result<(), ae::Error> {
-        let slider_value = params.get_float_slider(Params::Opacity).value();
+    fn render(&self, plugin: &mut PluginState, in_layer: &Layer, out_layer: &mut Layer) -> Result<(), ae::Error> {
+        let slider_value = plugin.params.get_float_slider(Params::Opacity, None, None, None).unwrap().value();
 
-        let extent_hint = in_data.extent_hint();
+        let extent_hint = plugin.in_data.extent_hint();
 
         in_layer.iterate(out_layer, 0, extent_hint.height(), extent_hint, |_x: i32, _y: i32, mut pixel: ae::Pixel| -> Result<ae::Pixel, Error> {
             pixel.alpha = (pixel.alpha as f64 * slider_value / 100.0) as u8;
@@ -43,5 +43,5 @@ impl AdobePluginInstance for Instance {
             Ok(pixel)
         })
     }
-    fn handle_command(&mut self, _: ae::Command, _: ae::InData, _: ae::OutData) -> Result<(), ae::Error> { Ok(()) }
+    fn handle_command(&mut self, _: &mut PluginState, _: ae::Command) -> Result<(), ae::Error> { Ok(()) }
 }
