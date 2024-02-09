@@ -12,7 +12,7 @@ struct Plugin {}
 #[derive(Default)]
 struct Instance {}
 
-ae::register_plugin!(Plugin, Instance, Params);
+ae::define_plugin!(Plugin, Instance, Params);
 
 fn detect_host(in_data: ae::InData) -> String {
     use ae_sys::*;

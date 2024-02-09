@@ -186,7 +186,7 @@ define_properties! {
     (Clip_AllowLinearCompositing,                    Bool,          kVideoSegmentProperty_Clip_AllowLinearCompositing),         // only set if false
     (Clip_HasCaptions,                               Bool,          kVideoSegmentProperty_Clip_HasCaptions),                    // only set if true
     (Clip_UntrimmedDuration,                         Int64,         kVideoSegmentProperty_Clip_UntrimmedDuration),              // the untrimmed duration of the clip in ticks
-    (Clip_ToneMapSettings,                           String,        kVideoSegmentProperty_Clip_ToneMapSettings),
+    (Clip_ToneMapSettings,                           String,        kVideoSegmentProperty_Clip_ToneMapSettings),                // in JSON format
 
     (Multicam_SelectedTrack,                         Int32,         kVideoSegmentProperty_Multicam_SelectedTrack),
     (Multicam_CameraOrder,                           String,        kVideoSegmentProperty_Multicam_CameraOrder),

@@ -79,6 +79,10 @@ impl InData {
         pf::ProgressInfo(unsafe { (*self.ptr).effect_ref })
     }
 
+    pub fn pica_basic_suite_ptr(&self) -> *mut ae_sys::SPBasicSuite {
+        unsafe { (*self.ptr).pica_basicP }
+    }
+
     pub fn width(&self) -> i32 {
         unsafe { (*self.ptr).width }
     }

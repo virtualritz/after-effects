@@ -1,5 +1,5 @@
 #[macro_export]
-macro_rules! register_plugin {
+macro_rules! define_plugin {
 	($global_type:ty, $sequence_type:ty, $params_type:ty) => {
         use $crate::*;
         use std::collections::HashMap;

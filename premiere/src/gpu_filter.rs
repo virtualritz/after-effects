@@ -50,7 +50,6 @@ impl RenderParams {
         assert!(!self.ptr.is_null());
         unsafe { (*self.ptr).inRenderField.into() }
     }
-
 }
 
 pub struct GpuFilterData {
@@ -76,8 +75,8 @@ impl GpuFilterData {
         assert!(!self.instance_ptr.is_null());
         unsafe { (*self.instance_ptr).inDeviceIndex as u32 }
     }
-    pub fn get_param(&self, mut index: i32, time: i64) -> Result<crate::Param, Error> {
-        index -= 1; // GPU filters don't include the input frame as first paramter
+    pub fn get_param(&self, index: usize, time: i64) -> Result<crate::Param, Error> {
+        let index = index as i32 - 1; // GPU filters don't include the input frame as first paramter
 
         self.video_segment_suite.get_param(self.node_id(), index, time)
     }
@@ -87,8 +86,17 @@ impl GpuFilterData {
 }
 
 pub trait GpuFilter : Default {
-	/// Return dependency information about a render, or nothing if
-    /// only the current frame is required.
+	/// Called once at startup to initialize any global state.
+    /// * Note that the instances are created and destroyed many times during the same render,
+    /// so don't rely on `Default` or `Drop` for any global state
+    fn global_init();
+
+    /// Called once at shutdown to clean up any global state.
+    /// * Note that the instances are created and destroyed many times during the same render,
+    /// so don't rely on `Default` or `Drop` for any global state
+    fn global_destroy();
+
+	/// Return dependency information about a render, or nothing if only the current frame is required.
     fn get_frame_dependencies(&self, filter: &GpuFilterData, render_params: RenderParams, query_index: &mut i32) -> Result<pr_sys::PrGPUFilterFrameDependency, Error>;
 
 	/// Precompute a result into preallocated uninitialized host (pinned) memory.
@@ -119,12 +127,6 @@ macro_rules! define_gpu_filter {
         unsafe extern "C" fn gpu_filter_create_instance(instance_data: *mut pr_sys::PrGPUFilterInstance) -> pr_sys::prSuiteError {
             assert!(!instance_data.is_null());
 
-            let _ = log::set_logger(&win_dbg_logger::DEBUGGER_LOGGER);
-            log::set_max_level(log::LevelFilter::Debug);
-            log_panics::init();
-
-            log::info!("xGPUFilterEntry: gpu_filter_create_instance");
-
             let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
             let sp_basic_suite = (util_funcs.getSPBasicSuite.unwrap())();
 
@@ -154,7 +156,6 @@ macro_rules! define_gpu_filter {
                     pr_sys::suiteError_NoError
                 }
                 Err(e) => {
-                    log::error!("Failed to create GPU filter instance: {e:?}");
                     e as pr_sys::prSuiteError
                 }
             }
@@ -165,8 +166,6 @@ macro_rules! define_gpu_filter {
             let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
 
             let _ = Box::<$crate::GpuFilterInstance<$struct_name>>::from_raw((*instance_data).ioPrivatePluginData as *mut _);
-
-            log::info!("xGPUFilterEntry: gpu_filter_dispose_instance");
 
             (*instance_data).ioPrivatePluginData = std::ptr::null_mut();
 
@@ -262,12 +261,6 @@ macro_rules! define_gpu_filter {
             let util_funcs = (*(*pi_suites).utilFuncs);
             let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
 
-            let _ = log::set_logger(&win_dbg_logger::DEBUGGER_LOGGER);
-            log::set_max_level(log::LevelFilter::Debug);
-            log_panics::init();
-
-            log::info!("xGPUFilterEntry: {:?}, {:?}, {:?}, {:?}, {:?}, {:?}", host_interface_version, io_index, is_startup, pi_suites, out_filter, out_filter_info);
-
             if is_startup == 1 {
                 (*out_filter).CreateInstance       = Some(gpu_filter_create_instance);
                 (*out_filter).DisposeInstance      = Some(gpu_filter_dispose_instance);
@@ -288,9 +281,12 @@ macro_rules! define_gpu_filter {
                 // let match_name = pr_sys::PrSDKString::default();
                 (*out_filter_info).outMatchName = unsafe { std::mem::zeroed() };
                 (*out_filter_info).outInterfaceVersion = pr_sys::PrSDKGPUFilterInterfaceVersion;
-            } else {
 
+                <$struct_name>::global_init();
+            } else {
+                <$struct_name>::global_destroy();
             }
+
             pr_sys::suiteError_NoError
         }
     };

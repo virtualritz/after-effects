@@ -9,7 +9,7 @@ struct Plugin { }
 #[derive(Default)]
 struct Instance { }
 
-ae::register_plugin!(Plugin, Instance, Params);
+ae::define_plugin!(Plugin, Instance, Params);
 
 impl AdobePluginGlobal for Plugin {
     fn can_load(_host_name: &str, _host_version: &str) -> bool { true }
