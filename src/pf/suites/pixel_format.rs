@@ -33,11 +33,7 @@ impl PixelFormatSuite {
         call_suite_fn!(self, ClearSupportedPixelFormats, effect_ref.as_ptr())
     }
 
-    pub fn add_supported_pixel_format(&self, effect_ref: ProgressInfo, pixel_format: pf::PixelFormat) -> Result<(), Error> {
-        call_suite_fn!(self, AddSupportedPixelFormat, effect_ref.as_ptr(), pixel_format.into())
-    }
-
-    pub fn add_pr_supported_pixel_format(&self, effect_ref: ProgressInfo, pixel_format: pr::PixelFormat) -> Result<(), Error> {
+    pub fn add_supported_pixel_format(&self, effect_ref: ProgressInfo, pixel_format: pr::PixelFormat) -> Result<(), Error> {
         call_suite_fn!(self, AddSupportedPixelFormat, effect_ref.as_ptr(), pixel_format.into())
     }
 }

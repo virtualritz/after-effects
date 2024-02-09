@@ -81,9 +81,11 @@
 // This is a copy from Premiere SDK.
 // After effects returns a PrSDKString from a few functions, but the PrSDKStringSuite is not included in the AfterEffects SDK
 typedef csSDK_int32 prSuiteError;
-const prSuiteError suiteError_InvalidParms         = 0x80000001; // A parameter to this method is invalid
-const prSuiteError suiteError_StringNotFound       = 0x800A0000;
-const prSuiteError suiteError_StringBufferTooSmall = 0x800A0001;
+enum {
+    suiteError_InvalidParms         = 0x80000001, // A parameter to this method is invalid
+    suiteError_StringNotFound       = 0x800A0000,
+    suiteError_StringBufferTooSmall = 0x800A0001
+};
 #define kPrSDKStringSuite			"MediaCore StringSuite"
 #define kPrSDKStringSuiteVersion	1
 

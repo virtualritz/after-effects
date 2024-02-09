@@ -27,14 +27,6 @@ bitflags::bitflags! {
     }
 }
 
-#[cfg_attr(target_os = "windows", repr(i32))]
-#[cfg_attr(target_os = "macos", repr(u32))]
-pub enum MemFlag {
-    None = ae_sys::AEGP_MemFlag_NONE,
-    Clear = ae_sys::AEGP_MemFlag_CLEAR,
-    Quiet = ae_sys::AEGP_MemFlag_QUIET,
-}
-
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 #[repr(i32)]
 pub enum LayerStream {

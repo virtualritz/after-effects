@@ -373,7 +373,7 @@ impl Scene3DNodeSuite {
             mesh_handle.as_mut_ptr() as *mut *mut _
         )?;
 
-        Ok(Scene3DMeshHandle(unsafe { mesh_handle.assume_init() })),
+        Ok(Scene3DMeshHandle(unsafe { mesh_handle.assume_init() }))
     }
 
     #[inline]

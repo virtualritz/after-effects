@@ -44,10 +44,10 @@ impl Layer {
         unsafe { (*self.layer_ptr).extent_hint.into() }
     }
     pub fn bit_depth(&self) -> i16 {
-        let flags = unsafe { (*self.layer_ptr).world_flags as ae_sys::PF_WorldFlags };
-        if (flags & ae_sys::PF_WorldFlag_DEEP) != 0 {
+        let flags = WorldFlags::from_bits(unsafe { (*self.layer_ptr).world_flags } as _).unwrap();
+        if flags.contains(WorldFlags::DEEP) {
             16
-        } else if (flags & ae_sys::PF_WorldFlag_RESERVED1) != 0 {
+        } else if flags.contains(WorldFlags::RESERVED1) {
             32
         } else {
             (self.rowbytes().abs() as f32 / self.width() as f32).floor() as i16 / 4 * 8
@@ -115,8 +115,8 @@ impl Layer {
                 dst_rect
                     .map(|x| &mut x.into() as *mut _)
                     .unwrap_or(std::ptr::null_mut()),
-            ) as ae_sys::PF_Err {
-                ae_sys::PF_Err_NONE => Ok(()),
+            ) {
+                0 => Ok(()),
                 e => return Err(e.into()),
             }
         }
@@ -139,8 +139,8 @@ impl Layer {
                 rect.map(|x| &x.into() as *const _)
                     .unwrap_or(std::ptr::null_mut()),
                 self.layer_ptr,
-            ) as ae_sys::PF_Err {
-                ae_sys::PF_Err_NONE => Ok(()),
+            ) {
+                0 => Ok(()),
                 e => return Err(e.into()),
             }
         }
@@ -181,8 +181,8 @@ impl Layer {
                 refcon as *mut _,
                 Some(iterate_8_func),
                 output.layer_ptr,
-            ) as ae_sys::PF_Err {
-                ae_sys::PF_Err_NONE => Ok(()),
+            ) {
+                0 => Ok(()),
                 e => return Err(e.into()),
             }
         }

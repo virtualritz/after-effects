@@ -80,7 +80,4 @@ pub(crate) trait Suite {
     where
         Self: Sized;
 
-    fn from_raw(pica_basic_suite_raw_ptr: *const crate::pr_sys::SPBasicSuite) -> Result<Self, Error>
-    where
-        Self: Sized;
 }

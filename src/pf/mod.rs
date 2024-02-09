@@ -313,11 +313,11 @@ impl EffectWorld {
 
     #[inline]
     pub fn world_type(&self) -> aegp::WorldType {
-        let flags = self.effect_world.world_flags as ae_sys::PF_WorldFlags;
+        let flags = WorldFlags::from_bits(self.effect_world.world_flags as _).unwrap();
         // Most frequent case is 16bit integer.
-        if ae_sys::PF_WorldFlag_DEEP & flags != 0 {
+        if flags.contains(WorldFlags::DEEP) {
             aegp::WorldType::U15
-        } else if ae_sys::PF_WorldFlag_RESERVED1 & flags != 0 {
+        } else if flags.contains(WorldFlags::RESERVED1) {
             aegp::WorldType::F32
         } else {
             aegp::WorldType::U8
@@ -394,6 +394,22 @@ bitflags! {
         const OPT_ALT_KEY     = ae_sys::PF_Mod_OPT_ALT_KEY     as ae_sys::A_long;
         // Mac control key only
         const MAC_CONTROL_KEY = ae_sys::PF_Mod_MAC_CONTROL_KEY as ae_sys::A_long;
+    }
+}
+
+bitflags! {
+    #[derive(Copy, Clone, Debug)]
+    pub struct WorldFlags: ae_sys::A_long {
+        const DEEP        = ae_sys::PF_WorldFlag_DEEP as ae_sys::A_long;
+        const WRITEABLE   = ae_sys::PF_WorldFlag_WRITEABLE   as ae_sys::A_long;
+        const RESERVED0   = ae_sys::PF_WorldFlag_RESERVED0   as ae_sys::A_long;
+        const RESERVED1   = ae_sys::PF_WorldFlag_RESERVED1   as ae_sys::A_long;
+        const RESERVED2   = ae_sys::PF_WorldFlag_RESERVED2   as ae_sys::A_long;
+        const RESERVED3   = ae_sys::PF_WorldFlag_RESERVED3   as ae_sys::A_long;
+        const RESERVED4   = ae_sys::PF_WorldFlag_RESERVED4   as ae_sys::A_long;
+        const RESERVED5   = ae_sys::PF_WorldFlag_RESERVED5   as ae_sys::A_long;
+        const RESERVED6   = ae_sys::PF_WorldFlag_RESERVED6   as ae_sys::A_long;
+        const RESERVED    = ae_sys::PF_WorldFlag_RESERVED    as ae_sys::A_long;
     }
 }
 

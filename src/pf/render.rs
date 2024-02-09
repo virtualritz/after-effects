@@ -247,9 +247,8 @@ impl PreRenderCallbacks {
                     time_scale,
                     checkout_result.as_mut_ptr(),
                 )
-            } as ae_sys::PF_Err
-            {
-                ae_sys::PF_Err_NONE => Ok(unsafe { checkout_result.assume_init() }),
+            } {
+                0 => Ok(unsafe { checkout_result.assume_init() }),
                 e => Err(Error::from(e)),
             }
         } else {
@@ -294,9 +293,8 @@ impl SmartRenderCallbacks {
                     checkout_id as i32,
                     effect_world_ptr.as_mut_ptr(),
                 )
-            } as ae_sys::PF_Err
-            {
-                ae_sys::PF_Err_NONE => Ok(EffectWorld {
+            } {
+                0 => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
                 e => Err(Error::from(e)),
@@ -312,10 +310,8 @@ impl SmartRenderCallbacks {
         checkout_id: u32,
     ) -> Result<(), Error> {
         if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
-            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) }
-                as ae_sys::PF_Err
-            {
-                ae_sys::PF_Err_NONE => Ok(()),
+            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) } {
+                0 => Ok(()),
                 e => Err(Error::from(e)),
             }
         } else {
@@ -328,10 +324,8 @@ impl SmartRenderCallbacks {
             let mut effect_world_ptr =
                 std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
-            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) }
-                as ae_sys::PF_Err
-            {
-                ae_sys::PF_Err_NONE => Ok(EffectWorld {
+            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) } {
+                0 => Ok(EffectWorld {
                     effect_world: unsafe { *effect_world_ptr.assume_init() },
                 }),
                 e => Err(Error::from(e)),

@@ -626,10 +626,4 @@ pub(crate) trait Suite {
     fn new() -> Result<Self, Error>
     where
         Self: Sized;
-
-    fn from_raw(
-        pica_basic_suite_raw_ptr: *const crate::ae_sys::SPBasicSuite,
-    ) -> Result<Self, Error>
-    where
-        Self: Sized;
 }

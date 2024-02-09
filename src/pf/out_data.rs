@@ -97,7 +97,7 @@ impl OutData {
         }
     }
     pub fn set_force_rerender(&mut self) {
-        self.set_out_flag(ae_sys::PF_OutFlag_FORCE_RERENDER, true);
+        self.set_out_flag(ae_sys::PF_OutFlag_FORCE_RERENDER as _, true);
     }
 
     pub fn set_frame_data<T: Any>(&mut self, val: T) {

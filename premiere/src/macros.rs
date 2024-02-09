@@ -141,23 +141,6 @@ macro_rules! define_suite {
                     Err(e) => Err(e),
                 }
             }
-
-            fn from_raw(
-                pica_basic_suite_ptr: *const premiere_sys::SPBasicSuite,
-            ) -> Result<Self, Error> {
-                match pr_acquire_suite_ptr!(
-                    pica_basic_suite_ptr,
-                    $suite_name,
-                    $suite_name_string,
-                    $suite_version
-                ) {
-                    Ok(suite_ptr) => Ok(Self {
-                        pica_basic_suite_ptr,
-                        suite_ptr,
-                    }),
-                    Err(e) => Err(e),
-                }
-            }
         }
 
         impl Drop for $suite_pretty_name {

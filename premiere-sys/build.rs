@@ -6,6 +6,11 @@ use std::{
 fn main() {
     println!("cargo:rerun-if-changed=wrapper.hpp");
 
+    if env::var("PRSDK_ROOT").is_err() {
+        println!("cargo:rustc-cfg=builtin_bindings");
+        return;
+    }
+
     let pr_sdk_path = &env::var("PRSDK_ROOT").expect(
         "PRSDK_ROOT environment variable not set – cannot find Adobe Premiere SDK.\n\
         Please set PRSDK_ROOT to the root folder of your Adobe Premiere SDK\n\

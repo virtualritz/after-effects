@@ -109,9 +109,8 @@ impl InteractCallbacks {
                 (*self.0.as_ptr()).effect_ref,
                 custom_ui_info.as_ptr() as _,
             )
-        } as ae_sys::PF_Err
-        {
-            ae_sys::PF_Err_NONE => Ok(()),
+        } {
+            0 => Ok(()),
             e => Err(Error::from(e)),
         }
     }

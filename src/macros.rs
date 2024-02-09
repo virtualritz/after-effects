@@ -79,32 +79,6 @@ macro_rules! call_suite_fn_no_err {
     }};
 }
 
-#[macro_export]
-macro_rules! ae_acquire_suite_and_call_suite_fn_no_err {
-    ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
-        match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
-            Ok(suite_ptr) =>
-                ae_call_suite_fn_no_err!(suite_ptr, $function, $($arg)*),
-            Err(e) => {
-                Err(e)
-            },
-        }
-    }};
-}
-
-#[macro_export]
-macro_rules! ae_acquire_suite_and_call_suite_fn {
-    ($pica:expr, $type:ident, $name:ident, $version:ident, $function:ident, $($arg:tt)* ) => {{
-        match ae_acquire_suite_ptr!( $pica, $type, $name, $version) {
-            Ok(suite_ptr) =>
-                call_suite_fn!(suite_ptr, $function, $($arg)*),
-            Err(e) => {
-                Err(e)
-            },
-        }
-    }};
-}
-
 /*
 macro_rules! define_handle_wrapper_v2 {
     ($wrapper_pretty_name:ident, $data_type:ident,) => {
@@ -378,23 +352,6 @@ macro_rules! define_suite {
                     Err(e) => Err(e),
                 }
             }
-
-            fn from_raw(
-                pica_basic_suite_ptr: *const after_effects_sys::SPBasicSuite,
-            ) -> Result<Self, Error> {
-                match ae_acquire_suite_ptr!(
-                    pica_basic_suite_ptr,
-                    $suite_name,
-                    $suite_name_string,
-                    $suite_version
-                ) {
-                    Ok(suite_ptr) => Ok(Self {
-                        pica_basic_suite_ptr,
-                        suite_ptr,
-                    }),
-                    Err(e) => Err(e),
-                }
-            }
         }
 
         impl Drop for $suite_pretty_name {
@@ -406,15 +363,6 @@ macro_rules! define_suite {
                 );
             }
         }
-    };
-}
-
-#[macro_export]
-macro_rules! add_param {
-    (in_data: expr,
-    index: expr,
-    def: expr) => {
-        in_data.inter.add_param.unwrap()(in_data.effect_ref, (index), &(def))
     };
 }
 

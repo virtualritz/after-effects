@@ -9,6 +9,11 @@ use std::{
 fn main() {
     println!("cargo:rerun-if-changed=wrapper.hpp");
 
+    if env::var("AESDK_ROOT").is_err() {
+        println!("cargo:rustc-cfg=builtin_bindings");
+        return;
+    }
+
     let ae_sdk_path = &env::var("AESDK_ROOT").expect(
         "AESDK_ROOT environment variable not set – cannot find AfterEffcts SDK.\n\
         Please set AESDK_ROOT to the root folder of your AfterEffects SDK\n\
@@ -40,7 +45,7 @@ fn main() {
         .allowlist_item("PR_.*")
         .allowlist_item("Pr.*")
         .allowlist_item("kSP.*")
-        .allowlist_item("suiteError.*")
+        .allowlist_var("suiteError.*")
         .layout_tests(false)
         //.clang_arg("-include stdint.h")
         .clang_arg(format!(
