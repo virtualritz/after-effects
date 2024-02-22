@@ -21,7 +21,7 @@ pub enum PropertyData {
     Unknown(String),
 }
 
-/// ------------------- Float point -------------------
+// ------------------- Float point -------------------
 #[derive(Debug, Clone, Copy)]
 pub struct Point32 { pub x: f32, pub y: f32 }
 
@@ -34,8 +34,8 @@ impl FromStr for Point32 {
         Ok(Point32 { x, y })
     }
 }
-/// ------------------- Float point -------------------
-/// ------------------- Binary data -------------------
+// ------------------- Float point -------------------
+// ------------------- Binary data -------------------
 #[derive(Debug, Clone)]
 pub struct Binary(Vec<u8>);
 impl FromStr for Binary {
@@ -52,8 +52,8 @@ impl Deref for Binary {
 impl DerefMut for Binary {
     fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
 }
-/// ------------------- Binary data -------------------
-/// -------------------- Keyframes --------------------
+// ------------------- Binary data -------------------
+// -------------------- Keyframes --------------------
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Keyframes(String); // TODO: not implemented
@@ -64,7 +64,7 @@ impl FromStr for Keyframes {
         Ok(Self(s.to_owned())) // TODO implement parsing this
     }
 }
-/// -------------------- Keyframes --------------------
+// -------------------- Keyframes --------------------
 
 macro_rules! define_properties {
     ($(($field:ident, $ty:ident, $prop:ident),)*) => {

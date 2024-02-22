@@ -1,7 +1,19 @@
 use crate::*;
 
-define_suite!(PPixSuite,  PrSDKPPixSuite,  kPrSDKPPixSuite,  kPrSDKPPixSuiteVersion);
-define_suite!(PPix2Suite, PrSDKPPix2Suite, kPrSDKPPix2Suite, kPrSDKPPix2SuiteVersion);
+define_suite!(
+    /// Callbacks and enums pertaining to PPixs
+    PPixSuite,
+    PrSDKPPixSuite,
+    kPrSDKPPixSuite,
+    kPrSDKPPixSuiteVersion
+);
+define_suite!(
+    /// Callbacks and enums pertaining to PPixs, version 2
+    PPix2Suite,
+    PrSDKPPix2Suite,
+    kPrSDKPPix2Suite,
+    kPrSDKPPix2SuiteVersion
+);
 
 #[derive(Clone, Copy, Debug)]
 pub struct YUV420PlanarBuffers {
@@ -14,6 +26,8 @@ pub struct YUV420PlanarBuffers {
 }
 
 impl PPixSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
@@ -70,8 +84,7 @@ impl PPixSuite {
     ///
     /// Returns error if the key is not available.
     pub fn get_unique_key(&self, ppix_handle: pr_sys::PPixHand) -> Result<Vec<u8>, Error> {
-        let mut size = 0;
-        call_suite_fn!(self, GetUniqueKeySize, &mut size)?;
+        let size = call_suite_fn_single!(self, GetUniqueKeySize -> usize)?;
         let mut buffer = vec![0; size];
         call_suite_fn!(self, GetUniqueKey, ppix_handle, buffer.as_mut_ptr(), size)?;
         Ok(buffer)
@@ -86,6 +99,8 @@ impl PPixSuite {
 }
 
 impl PPix2Suite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
@@ -98,10 +113,10 @@ impl PPix2Suite {
     }
     /// [Added in CS4]
     /// This will return the planar buffers and rowbytes for a PPixHand if the contained pixels are in a planar format, such as
-    /// - `PixelFormat::Yuv420Mpeg2FramePicturePlanar8u601`
-    /// - `PixelFormat::Yuv420Mpeg2FieldPicturePlanar8u601`
-    /// - `PixelFormat::Yuv420Mpeg2FramePicturePlanar8u709`
-    /// - `PixelFormat::Yuv420Mpeg2FieldPicturePlanar8u709`
+    /// - [`PixelFormat::Yuv420Mpeg2FramePicturePlanar8u601`]
+    /// - [`PixelFormat::Yuv420Mpeg2FieldPicturePlanar8u601`]
+    /// - [`PixelFormat::Yuv420Mpeg2FramePicturePlanar8u709`]
+    /// - [`PixelFormat::Yuv420Mpeg2FieldPicturePlanar8u709`]
     /// * `ppix_handle` - The ppix handle you want to operate on.
     /// * `requested_access` - Will return an error if the source is read-only and the request is for write or read/write.
     ///
@@ -118,10 +133,7 @@ impl PPix2Suite {
         Ok(ret)
     }
     pub fn get_origin(&self, ppix_handle: pr_sys::PPixHand) -> Result<(i32, i32), Error> {
-        let mut x = 0;
-        let mut y = 0;
-        call_suite_fn!(self, GetOrigin, ppix_handle, &mut x, &mut y)?;
-        Ok((x, y))
+        call_suite_fn_double!(self, GetOrigin -> i32, i32, ppix_handle)
     }
     pub fn get_field_order(&self, ppix_handle: pr_sys::PPixHand) -> Result<pr_sys::prFieldType, Error> {
         call_suite_fn_single!(self, GetFieldOrder -> pr_sys::prFieldType, ppix_handle)

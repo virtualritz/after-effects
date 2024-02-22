@@ -10,6 +10,11 @@ define_suite!(
 );
 
 impl EffectCustomUISuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
     pub fn drawing_reference(&self, context_handle: &ContextHandle) -> Result<drawbot::DrawRef, Error> {
         Ok(drawbot::DrawRef::from_raw(
             call_suite_fn_single!(self, PF_GetDrawingReference -> ae_sys::DRAWBOT_DrawRef, context_handle.as_ptr())?
@@ -25,6 +30,11 @@ define_suite!(
 );
 
 impl EffectCustomUIOverlayThemeSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
     pub fn preferred_foreground_color(&self) -> Result<drawbot::ColorRGBA, Error> {
         call_suite_fn_single!(self, PF_GetPreferredForegroundColor -> drawbot::ColorRGBA)
     }

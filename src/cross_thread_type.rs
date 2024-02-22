@@ -1,34 +1,34 @@
-//! Cross-thread type to persist the same object across different rendering threads when MFR (Multi frame rendering) is enabled
-//!
-//! By default, Adobe clones the `Instance` data object for every rendering thread.
-//! This is not ideal for some cases, for example, when you want to share a single `Arc<Mutex<T>>` object across all threads.
-//!
-//! Instead, you could define a cross-thread type, which will be the same across all rendering threads and will persist state on disk as well
-//!
-//! The way it works is that it creates a global static map of RwLocks, and then uses flatten and unflatten to store an instance ID, in addition to the flattened object data
-//! If the instance ID is found in the map, it will return the existing RwLock, otherwise it will create a new one from the serialized data and insert it into the map.
-//!
-//! Example usage:
-//! ```
-//! use serde::{Serialize, Deserialize};
-//! use after_effects as ae;
-//!
-//! #[derive(Serialize, Deserialize)]
-//! struct MyInstance {
-//!     inner_data: String,
-//! }
-//! ae::define_cross_thread_type!(MyInstance);
-//! ```
-//!
-//! This macro will create a new type called `CrossThreadYourType`, in this case `CrossThreadMyInstance`. You can then use that type in your SequenceData (plugin instance).
-//! Then in each of your render threads, you can get the instance using `let instance = my_instance.get().unwrap();`
-//! This will return an Arc<RwLock<MyInstance>>, which you can then use to access and modify the inner data.
-//!
-//! Serialization and deserialization is handled automatically, so you can just use serde's derive macros.
-//!
-//! When you no longer need the instances, you can call `CrossThreadMyInstance::clear_map()` to clear the global static map.
-//! You can do it in `GlobalSetdown`.
-
+/// Cross-thread type to persist the same object across different rendering threads when MFR (Multi frame rendering) is enabled
+///
+/// By default, Adobe clones the `Instance` data object for every rendering thread.
+/// This is not ideal for some cases, for example, when you want to share a single `Arc<Mutex<T>>` object across all threads.
+///
+/// Instead, you could define a cross-thread type, which will be the same across all rendering threads and will persist state on disk as well
+///
+/// The way it works is that it creates a global static map of RwLocks, and then uses flatten and unflatten to store an instance ID in addition to the flattened object data
+///
+/// If the instance ID is found in the map, it will return the existing RwLock, otherwise it will create a new one from the serialized data and insert it into the map.
+///
+/// Example usage:
+/// ```
+/// use serde::{Serialize, Deserialize};
+/// use after_effects as ae;
+///
+/// #[derive(Serialize, Deserialize)]
+/// struct MyInstance {
+///     inner_data: String,
+/// }
+/// ae::define_cross_thread_type!(MyInstance);
+/// ```
+///
+/// This macro will create a new type called `CrossThreadYourType`, in this case `CrossThreadMyInstance`. You can then use that type in your SequenceData (plugin instance).
+/// Then in each of your render threads, you can get the instance using `let instance = my_instance.get().unwrap();`
+/// This will return an `Arc<RwLock<MyInstance>>`, which you can then use to access and modify the inner data.
+///
+/// Serialization and deserialization is handled automatically, so you can just use serde's derive macros.
+///
+/// When you no longer need the instances, you can call `CrossThreadMyInstance::clear_map()` to clear the global static map.
+/// You can do it in `GlobalSetdown`.
 #[macro_export]
 macro_rules! define_cross_thread_type {
 	($type_name:ty) => {

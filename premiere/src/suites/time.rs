@@ -1,8 +1,20 @@
 use crate::*;
 
-define_suite!(TimeSuite, PrSDKTimeSuite, kPrSDKTimeSuite, kPrSDKTimeSuiteVersion);
+define_suite!(
+    /// Time overview:
+    ///
+    /// Premiere uses a tick-based time counter that is stored in a signed 64-bit integer.
+    /// The current number of ticks per second must be retrieved using the callback in this suite,
+    /// but is guaranteed to be constant for the duration of runtime.
+    TimeSuite,
+    PrSDKTimeSuite,
+    kPrSDKTimeSuite,
+    kPrSDKTimeSuiteVersion
+);
 
 impl TimeSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }

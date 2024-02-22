@@ -172,10 +172,10 @@ impl<'a, 'b> Drop for FlatHandleLock<'a, 'b> {
     }
 }
 
-/// A flat handle takes a [Vec<u8>] as data. This is useful when data it passed
+/// A flat handle takes a [`Vec<u8>``] as data. This is useful when data it passed
 /// to Ae permanently or between runs of your plug-in.
-/// You can use something like [bincode::serialize()] to serialize your data
-/// structure into a flat [Vec<u8>].
+/// You can use something like [`bincode::serialize()``] to serialize your data
+/// structure into a flat [`Vec<u8>``].
 #[derive(Debug)]
 pub struct FlatHandle<'a> {
     suite: HandleSuite,

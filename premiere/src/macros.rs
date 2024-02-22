@@ -73,6 +73,28 @@ macro_rules! call_suite_fn_single {
         }
     }};
 }
+macro_rules! call_suite_fn_double {
+    ($self:expr,  $function:ident -> $typ1:ty, $typ2:ty, $($arg:tt)* ) => {{
+        let mut v1: $typ1 = unsafe { std::mem::zeroed() };
+        let mut v2: $typ2 = unsafe { std::mem::zeroed() };
+        let err = unsafe { pr_get_suite_fn!($self.suite_ptr, $function)($($arg)*, &mut v1, &mut v2) };
+
+        match err {
+            0 => Ok((v1, v2)),
+            _ => Err(Error::from(err))
+        }
+    }};
+    ($self:expr,  $function:ident -> $typ1:ty, $typ2:ty) => {{
+        let mut v1: $typ1 = unsafe { std::mem::zeroed() };
+        let mut v2: $typ2 = unsafe { std::mem::zeroed() };
+        let err = unsafe { pr_get_suite_fn!($self.suite_ptr, $function)(&mut v1, &mut v2) };
+
+        match err {
+            0 => Ok((v1, v2)),
+            _ => Err(Error::from(err))
+        }
+    }};
+}
 
 // Call a function from a suite and return the value.
 macro_rules! call_suite_fn_no_err {
@@ -84,10 +106,11 @@ macro_rules! call_suite_fn_no_err {
 }
 
 macro_rules! define_enum {
-    ($raw_type:ty, $name:ident { $( $variant:ident = $value:path ),*, }) => {
+    ($raw_type:ty, $name:ident { $( $(#[$attr:meta])* $variant:ident = $value:path ),*, }) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         pub enum $name {
             $(
+                $(#[$attr])*
                 $variant,
             )*
         }
@@ -96,14 +119,14 @@ macro_rules! define_enum {
             fn from(v: $name) -> Self {
                 match v {
                     $(
-                        $name::$variant => $value,
+                        $name::$variant => $value as _,
                     )*
                 }
             }
         }
         impl From<$raw_type> for $name {
             fn from(v: $raw_type) -> Self {
-                match v {
+                match v as _ {
                     $(
                         $value => Self::$variant,
                     )*
@@ -117,8 +140,9 @@ macro_rules! define_enum {
 }
 
 macro_rules! define_suite {
-    ($suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
+    ($(#[$attr:meta])* $suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
         #[derive(Clone, Debug, Hash)]
+        $(#[$attr])*
         pub struct $suite_pretty_name {
             pica_basic_suite_ptr: *const premiere_sys::SPBasicSuite,
             suite_ptr: *const premiere_sys::$suite_name,

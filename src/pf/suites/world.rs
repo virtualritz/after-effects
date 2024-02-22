@@ -8,6 +8,8 @@ define_suite!(
 );
 
 impl WorldSuite2 {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }

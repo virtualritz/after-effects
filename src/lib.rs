@@ -289,7 +289,40 @@ impl From<AeError> for i32 {
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
+pub struct Matrix3([[f64; 3]; 3]);
+impl Into<ae_sys::A_Matrix3> for Matrix3 {
+    #[inline]
+    fn into(self) -> ae_sys::A_Matrix3 {
+        ae_sys::A_Matrix3 {
+            mat: self.0
+        }
+    }
+}
+impl From<ae_sys::A_Matrix3> for Matrix3 {
+    #[inline]
+    fn from(item: ae_sys::A_Matrix3) -> Self  {
+        Self(item.mat)
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
 pub struct Matrix4([[f64; 4]; 4]);
+
+impl Into<ae_sys::A_Matrix4> for Matrix4 {
+    #[inline]
+    fn into(self) -> ae_sys::A_Matrix4 {
+        ae_sys::A_Matrix4 {
+            mat: self.0
+        }
+    }
+}
+impl From<ae_sys::A_Matrix4> for Matrix4 {
+    #[inline]
+    fn from(item: ae_sys::A_Matrix4) -> Self  {
+        Self(item.mat)
+    }
+}
 
 impl Matrix4 {
     #[inline]
@@ -352,13 +385,14 @@ fn test_from() {
 
 pub type Color = ae_sys::A_Color;
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
-#[repr(C)]
-pub struct Time {
-    pub value: ae_sys::A_long,
-    pub scale: ae_sys::A_u_long,
+define_struct! {
+    ae_sys::A_Time,
+    #[derive(Eq)]
+    Time {
+        value: i32,
+        scale: u32,
+    }
 }
-
 impl From<Time> for f64 {
     #[inline]
     fn from(time: Time) -> Self {
@@ -366,22 +400,11 @@ impl From<Time> for f64 {
         time.value as Self / time.scale as Self
     }
 }
-
 impl From<Time> for f32 {
     #[inline]
     fn from(time: Time) -> Self {
         debug_assert!(time.scale != 0);
         time.value as Self / time.scale as Self
-    }
-}
-
-impl From<Time> for ae_sys::A_Time {
-    #[inline]
-    fn from(time: Time) -> Self {
-        Self {
-            value: time.value,
-            scale: time.scale,
-        }
     }
 }
 
@@ -464,35 +487,19 @@ impl Add<Time> for Time {
     }
 }
 
-/// Note that this has a different ordering
-/// of values than [`LegacyRect`]!!!
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
-pub struct Rect {
-    pub left: i32,
-    pub top: i32,
-    pub right: i32,
-    pub bottom: i32,
-}
-impl From<ae_sys::PF_LRect> for Rect {
-    fn from(rect: ae_sys::PF_LRect) -> Self {
-        Rect {
-            left: rect.left,
-            top: rect.top,
-            right: rect.right,
-            bottom: rect.bottom,
-        }
+define_struct! {
+    ae_sys::A_LRect,
+    #[derive(Eq)]
+    /// Note that this has a different ordering of values than LegacyRect!
+    Rect {
+        left: i32,
+        top: i32,
+        right: i32,
+        bottom: i32,
     }
 }
-impl From<Rect> for ae_sys::PF_LRect {
-    fn from(rect: Rect) -> Self {
-        ae_sys::PF_LRect {
-            left: rect.left,
-            top: rect.top,
-            right: rect.right,
-            bottom: rect.bottom,
-        }
-    }
-}
+define_struct_conv!(ae_sys::A_LegacyRect, Rect { left, top, right, bottom });
+define_struct_conv!(ae_sys::PF_LRect,     Rect { left, top, right, bottom });
 
 impl Rect {
     pub fn is_empty(&self) -> bool {
@@ -535,13 +542,22 @@ impl Rect {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-#[repr(C)]
-pub struct FloatRect {
-    pub left: f64,
-    pub top: f64,
-    pub right: f64,
-    pub bottom: f64,
+define_struct! {
+    ae_sys::A_FloatPoint,
+    FloatPoint {
+        x: f64,
+        y: f64,
+    }
+}
+
+define_struct! {
+    ae_sys::A_FloatRect,
+    FloatRect {
+        left: f64,
+        top: f64,
+        right: f64,
+        bottom: f64,
+    }
 }
 
 impl FloatRect {
@@ -550,31 +566,11 @@ impl FloatRect {
     }
 }
 
-/// Note that this has a different ordering
-/// of values than [`Rect`]!!!
-#[derive(Debug, Copy, Clone, Hash)]
-#[repr(C)]
-pub struct LegacyRect {
-    pub top: i16,
-    pub left: i16,
-    pub bottom: i16,
-    pub right: i16,
-}
-
-#[derive(Debug, Copy, Clone, Hash)]
-#[repr(C)]
-pub struct Ratio {
-    pub num: ae_sys::A_long,
-    pub den: ae_sys::A_u_long,
-}
-
-impl From<Ratio> for ae_sys::A_Ratio {
-    #[inline]
-    fn from(ratio: Ratio) -> Self {
-        Self {
-            num: ratio.num,
-            den: ratio.den,
-        }
+define_struct! {
+    ae_sys::A_Ratio,
+    Ratio {
+        num: i32,
+        den: u32,
     }
 }
 

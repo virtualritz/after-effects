@@ -53,3 +53,12 @@ pub struct Pixel32 {
     pub green: ae_sys::PF_FpShort,
     pub blue: ae_sys::PF_FpShort,
 }
+
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub struct Pixel64 {
+    pub alpha: ae_sys::PF_FpLong,
+    pub red: ae_sys::PF_FpLong,
+    pub green: ae_sys::PF_FpLong,
+    pub blue: ae_sys::PF_FpLong,
+}

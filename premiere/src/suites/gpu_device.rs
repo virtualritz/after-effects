@@ -1,8 +1,24 @@
 use crate::*;
 
-define_suite!(GPUDeviceSuite, PrSDKGPUDeviceSuite, kPrSDKGPUDeviceSuite, kPrSDKGPUDeviceSuiteVersion);
+define_suite!(
+    /// This suite provides info on any GPU devices available. For example, [`get_device_info()`] allows an effect/transition to see if the device supports OpenCL or CUDA.
+    ///
+    /// Use this suite to get exclusive access to a device using [`acquire_exclusive_device_access()`] and [`release_exclusive_device_access()`].
+    /// If needed, you can reconcile devices using the outDeviceHandle passed back from [`get_device_info()`].
+    ///
+    /// Device memory should ideally be allocated through this suite. In some cases you may find it more efficient to use a texture / image object as the source.
+    /// With CUDA, you can bind a texture reference to an existing linear buffer.
+    /// With OpenCL, you can create an image object from an existing 2D buffer object using image_2d_from_buffer.
+    /// Temporary allocations are also fine but may be rather slow.
+    GPUDeviceSuite,
+    PrSDKGPUDeviceSuite,
+    kPrSDKGPUDeviceSuite,
+    kPrSDKGPUDeviceSuiteVersion
+);
 
 impl GPUDeviceSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }

@@ -8,6 +8,8 @@ define_suite!(
 );
 
 impl IterateFloatSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
@@ -57,6 +59,8 @@ define_suite!(
 );
 
 impl Iterate16Suite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
@@ -107,6 +111,8 @@ define_suite!(
 );
 
 impl Iterate8Suite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }

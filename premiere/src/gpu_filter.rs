@@ -1,6 +1,7 @@
 use crate::*;
 
 #[derive(Clone)]
+/// Information about a frame render
 pub struct RenderParams {
     ptr: *const pr_sys::PrGPUFilterRenderParams,
 }
@@ -10,10 +11,12 @@ impl RenderParams {
             ptr
         }
     }
+    /// Clip time of the current render
     pub fn clip_time(&self) -> i64 {
         assert!(!self.ptr.is_null());
         unsafe { (*self.ptr).inClipTime }
     }
+    /// Sequence time of the current render
     pub fn sequence_time(&self) -> i64 {
         assert!(!self.ptr.is_null());
         unsafe { (*self.ptr).inSequenceTime }
@@ -46,6 +49,9 @@ impl RenderParams {
         assert!(!self.ptr.is_null());
         unsafe { (*self.ptr).inRenderTicksPerFrame }
     }
+
+	/// GPU rendering is always on full height progressive frames unless outNeedsFieldSeparation is false.
+	///	`render_field()` indicates which field is being rendered
     pub fn render_field(&self) -> FieldDisplay {
         assert!(!self.ptr.is_null());
         unsafe { (*self.ptr).inRenderField.into() }
@@ -119,6 +125,14 @@ pub struct GpuFilterInstance<T: GpuFilter> {
     pub instance: T,
 }
 
+/// Define a GPU filter entry point and register the `struct_name` as the filter handler.
+///
+/// `struct_name` must implement the [`GpuFilter`] trait.
+///
+/// GPU filter instances are created and destroyed on demand. They work together with the AfterEffects main entry point, where you define
+/// all the parameters and handle other properties. Premiere's GPU filter is an additional layer to just handle the rendering on the GPU.
+///
+/// To share data between AfterEffects plugin interface and GPU filter interface, see [`OpaqueEffectDataSuite`]
 #[macro_export]
 macro_rules! define_gpu_filter {
     ($struct_name:ty) => {

@@ -1,6 +1,36 @@
 use crate::*;
 
-define_suite!(VideoSegmentSuite, PrSDKVideoSegmentSuite, kPrSDKVideoSegmentSuite, kPrSDKVideoSegmentSuiteVersion);
+define_suite!(
+    /// This suite provides calls to parse a sequence and get details on video segments.
+    /// All the queryable node properties are in [`Property`].
+    ///
+    /// The segments provide a hash value that the caller can use to quickly determine whether or not a segment has changed.
+    /// This hash value can be maintained even if a segment is shifted in time
+    ///
+    /// In version 4, new in CS5.5, the new call ``AcquireNodeForTime()`` passes back a segment node for a requested time. There are also a few new properties for media nodes: StreamIsContinuousTime, ColorProfileName, ColorProfileData, and ScanlineOffsetToImproveVerticalCentering.
+    ///
+    /// In version 5, new in CC, a new video segment property is available: Effect_ClipName. In version 6, new in CC 2014, ``AcquireFirstNodeInTimeRange()`` and ``AcquireOperatorOwnerNodeID()`` were added, along with the new node type kVideoSegment_NodeType_AdjustmentEffect.
+    ///
+    /// The basic structure of the video segments is that of a tree structure. There is a Compositor node with n inputs. Each of those inputs is a Clip node, which has one input which is a Media node, and it also has n Operators, which are effects.
+    ///
+    /// So, a simple example, three clips in a stack, the top one with three effects looks like this:
+    /// ```
+    /// Segment
+    ///   Compositor Node
+    ///     Clip Node
+    ///       Media Node (bottom clip) Clip Node
+    ///     Clip Node
+    ///       Media Node (middle clip) Clip Node
+    ///     Clip Node
+    ///       Media Node (top clip)
+    ///       Clip Operators (Blur, Color Corrector, Motion)
+    /// ```
+    /// To get a good idea of the segment structure, try the SDK player, create a sequence using the SDK Editing Mode, and watch the text overlay in the Sequence Monitor as you perform edits.
+    VideoSegmentSuite,
+    PrSDKVideoSegmentSuite,
+    kPrSDKVideoSegmentSuite,
+    kPrSDKVideoSegmentSuiteVersion
+);
 
 #[derive(Debug, Clone, Copy)]
 pub struct VideoSegmentProperties {
@@ -13,6 +43,8 @@ pub struct VideoSegmentProperties {
 }
 
 impl VideoSegmentSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
@@ -126,13 +158,10 @@ impl VideoSegmentSuite {
     /// * `inIndex` - The index of the input
     ///
     /// Returns a tuple containing:
-    /// * `input_video_node_id` - The video node ID of the input node.
     /// * `offset` - The time offset relative to it's parent node
-    pub fn acquire_input_node_id(&self, video_node_id: i32, index: i32) -> Result<(i32, i64), Error> {
-        let mut offset = 0;
-        let mut input_video_node_id = 0;
-        call_suite_fn!(self, AcquireInputNodeID, video_node_id, index, &mut offset, &mut input_video_node_id)?;
-        Ok((input_video_node_id, offset))
+    /// * `input_video_node_id` - The video node ID of the input node.
+    pub fn acquire_input_node_id(&self, video_node_id: i32, index: i32) -> Result<(i64, i32), Error> {
+        call_suite_fn_double!(self, AcquireInputNodeID -> i64, i32, video_node_id, index)
     }
 
     /// Get the number of inputs on the node object

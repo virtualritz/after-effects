@@ -66,6 +66,28 @@ macro_rules! call_suite_fn_single {
         }
     }};
 }
+macro_rules! call_suite_fn_double {
+    ($self:expr,  $function:ident -> $typ1:ty, $typ2:ty, $($arg:tt)* ) => {{
+        let mut v1: $typ1 = unsafe { std::mem::zeroed() };
+        let mut v2: $typ2 = unsafe { std::mem::zeroed() };
+        let err = unsafe { ae_get_suite_fn!($self.suite_ptr, $function)($($arg)*, &mut v1, &mut v2) };
+
+        match err {
+            0 => Ok((v1, v2)),
+            _ => Err(Error::from(err))
+        }
+    }};
+    ($self:expr,  $function:ident -> $typ1:ty, $typ2:ty) => {{
+        let mut v1: $typ1 = unsafe { std::mem::zeroed() };
+        let mut v2: $typ2 = unsafe { std::mem::zeroed() };
+        let err = unsafe { ae_get_suite_fn!($self.suite_ptr, $function)(&mut v1, &mut v2) };
+
+        match err {
+            0 => Ok((v1, v2)),
+            _ => Err(Error::from(err))
+        }
+    }};
+}
 
 // Call a function from a suite and return the value.
 // Some new functions in AE_Scene3D_Private.h abandon suite API design
@@ -101,39 +123,6 @@ macro_rules! define_handle_wrapper_v2 {
         }
     };
 }*/
-
-macro_rules! define_enum {
-    ($raw_type:ty, $name:ident { $( $variant:ident = $value:path ),*, }) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-        pub enum $name {
-            $(
-                $variant,
-            )*
-        }
-
-        impl From<$name> for $raw_type {
-            fn from(v: $name) -> Self {
-                match v {
-                    $(
-                        $name::$variant => $value as _,
-                    )*
-                }
-            }
-        }
-        impl From<$raw_type> for $name {
-            fn from(v: $raw_type) -> Self {
-                match v as _ {
-                    $(
-                        $value => Self::$variant,
-                    )*
-                    _ => {
-                        panic!("Unknown enum value {}: {v}", stringify!($name));
-                    }
-                }
-            }
-        }
-    };
-}
 
 macro_rules! define_handle_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident) => {
@@ -192,19 +181,22 @@ macro_rules! define_struct_wrapper {
 
 macro_rules! define_owned_handle_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident) => {
-        #[derive(Clone, Debug, Hash)]
+        #[derive(Debug, Hash)]
         pub struct $wrapper_pretty_name(after_effects_sys::$data_type, bool);
 
         impl $wrapper_pretty_name {
             pub fn from_raw(raw_handle: after_effects_sys::$data_type) -> Self {
                 Self(raw_handle, false)
             }
+            pub fn from_raw_owned(raw_handle: after_effects_sys::$data_type) -> Self {
+                Self(raw_handle, true)
+            }
 
             pub fn as_ptr(&self) -> after_effects_sys::$data_type {
                 self.0
             }
 
-            pub fn owned(&mut self, is_owned: bool) {
+            pub fn set_owned(&mut self, is_owned: bool) {
                 self.1 = is_owned;
             }
 
@@ -327,9 +319,89 @@ macro_rules! define_param_value_desc_wrapper {
     };
 }
 
+macro_rules! define_struct {
+    ($raw_type:path, $(#[$attr:meta])* $name:ident { $( $(#[$fattr:meta])* $field:ident: $type:ty ),*, }) => {
+        #[derive(Debug, Copy, Clone, PartialEq)]
+        $(#[$attr])*
+        pub struct $name {
+            $(
+                $(#[$fattr])*
+                $field: $type,
+            )*
+        }
+        impl From<$name> for $raw_type {
+            fn from(v: $name) -> Self {
+                Self {
+                    $( $field: v.$field as _, )*
+                }
+            }
+        }
+        impl From<$raw_type> for $name {
+            fn from(v: $raw_type) -> Self {
+                Self {
+                    $( $field: v.$field as _, )*
+                }
+            }
+        }
+    };
+}
+macro_rules! define_struct_conv {
+    ($raw_type:path, $name:ident { $( $field:ident ),* }) => {
+        impl From<$name> for $raw_type {
+            fn from(v: $name) -> Self {
+                Self {
+                    $( $field: v.$field as _, )*
+                }
+            }
+        }
+        impl From<$raw_type> for $name {
+            fn from(v: $raw_type) -> Self {
+                Self {
+                    $( $field: v.$field as _, )*
+                }
+            }
+        }
+    };
+}
+
+macro_rules! define_enum {
+    ($raw_type:ty, $name:ident { $( $(#[$attr:meta])* $variant:ident = $value:path ),*, }) => {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        pub enum $name {
+            $(
+                $(#[$attr])*
+                $variant,
+            )*
+        }
+
+        impl From<$name> for $raw_type {
+            fn from(v: $name) -> Self {
+                match v {
+                    $(
+                        $name::$variant => $value as _,
+                    )*
+                }
+            }
+        }
+        impl From<$raw_type> for $name {
+            fn from(v: $raw_type) -> Self {
+                match v as _ {
+                    $(
+                        $value => Self::$variant,
+                    )*
+                    _ => {
+                        panic!("Unknown enum value {}: {v}", stringify!($name));
+                    }
+                }
+            }
+        }
+    };
+}
+
 macro_rules! define_suite {
-    ($suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
+    ($(#[$attr:meta])* $suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
         #[derive(Clone, Debug, Hash)]
+        $(#[$attr])*
         pub struct $suite_pretty_name {
             pica_basic_suite_ptr: *const after_effects_sys::SPBasicSuite,
             suite_ptr: *const after_effects_sys::$suite_name,
@@ -363,6 +435,59 @@ macro_rules! define_suite {
                 );
             }
         }
+    };
+}
+
+macro_rules! define_suite_item_wrapper {
+    ($raw_handle_type:ty, $handle_type:ty, $( $suite_ident:ident: $suite_type:ty ),*, $(#[$type_attr:meta])* $name:ident {
+        dispose: $( $dispose_suite_fn_ident:ident.$dispose_fun:ident )?;
+        $( $(#[$attr:meta])* $fn_name:ident($($arg:ident: $argt:ty),*) -> $ret:ty => $suite_fn_ident:ident.$suite_fn:ident ),*,
+    }) => {
+        $(#[$type_attr])*
+        pub struct $name {
+            handle: $handle_type,
+            $( $suite_ident: $suite_type, )*
+            #[allow(dead_code)]
+            is_owned: bool,
+        }
+
+        impl $name {
+            pub fn from_handle(handle: $handle_type, owned: bool) -> Result<Self, crate::Error> {
+                Ok(Self {
+                    handle,
+                    $( $suite_ident: <$suite_type>::new()?, )*
+                    is_owned: owned,
+                })
+            }
+            pub fn from_raw(raw_handle: $raw_handle_type) -> Result<Self, crate::Error> {
+                Self::from_handle(<$handle_type>::from_raw(raw_handle), false)
+            }
+            pub fn handle(&self) -> $handle_type {
+                self.handle
+            }
+            pub fn into_raw(item: Self) -> $raw_handle_type {
+                item.handle.into()
+            }
+            pub fn as_ptr(&self) -> $raw_handle_type {
+                self.handle.as_ptr()
+            }
+
+            $(
+                $(#[$attr])*
+                pub fn $fn_name(&self, $($arg: $argt, )*) -> Result<$ret, crate::Error> {
+                    self.$suite_fn_ident.$suite_fn(self.handle, $($arg, )*)
+                }
+            )*
+        }
+        $(
+            impl Drop for $name {
+                fn drop(&mut self) {
+                    if self.is_owned {
+                        self.$dispose_suite_fn_ident.$dispose_fun(self.handle).expect(concat!("Failed to dispose the ", stringify!($name), " handle."));
+                    }
+                }
+            }
+        )?
     };
 }
 

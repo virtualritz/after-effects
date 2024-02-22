@@ -2,9 +2,16 @@ use crate::*;
 use ae_sys::*;
 use std::ffi::CString;
 
-define_suite!(PrStringSuite, PrSDKStringSuite, kPrSDKStringSuite, kPrSDKStringSuiteVersion);
+define_suite!(
+    PrStringSuite,
+    PrSDKStringSuite,
+    kPrSDKStringSuite,
+    kPrSDKStringSuiteVersion
+);
 
 impl PrStringSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
@@ -23,7 +30,7 @@ impl PrStringSuite {
     /// This will allocate an SDKString from a passed in null terminated string.
     /// * `string` - UTF8 string to copy into the SDK string
     ///
-    /// Returns the allocated `PrSDKString` which must be disposed using [`dispose_string`]
+    /// Returns the allocated `PrSDKString` which must be disposed using [`dispose_string()`](Self::dispose_string)
     ///
     /// # Errors
     ///
@@ -78,7 +85,12 @@ impl Drop for PrString {
     }
 }
 
-define_suite!(UtilitySuite, PF_UtilitySuite, kPFUtilitySuite, kPFUtilitySuiteVersion);
+define_suite!(
+    UtilitySuite,
+    PF_UtilitySuite,
+    kPFUtilitySuite,
+    kPFUtilitySuiteVersion
+);
 
 impl UtilitySuite {
     pub fn new() -> Result<Self, Error> {

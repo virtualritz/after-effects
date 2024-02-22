@@ -1,8 +1,15 @@
 use crate::*;
 
-define_suite!(MemoryManagerSuite, PrSDKMemoryManagerSuite, kPrSDKMemoryManagerSuite, kPrSDKMemoryManagerSuiteVersion);
+define_suite!(
+    MemoryManagerSuite,
+    PrSDKMemoryManagerSuite,
+    kPrSDKMemoryManagerSuite,
+    kPrSDKMemoryManagerSuiteVersion
+);
 
 impl MemoryManagerSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
@@ -17,9 +24,7 @@ impl MemoryManagerSuite {
     /// Get the current size of the media cache in this process.
     /// Returns the size of the memory manager in bytes.
     pub fn get_memory_manager_size(&self) -> Result<u64, Error> {
-        let mut size: u64 = 0;
-        call_suite_fn!(self, GetMemoryManagerSize, &mut size)?;
-        Ok(size)
+        call_suite_fn_single!(self, GetMemoryManagerSize -> u64)
     }
 
     /// Add a block of memory to management. This block should not be something entered
@@ -93,7 +98,6 @@ impl MemoryManagerSuite {
     }
 
     pub fn adjust_reserved_memory_size(&self, plugin_id: u32, size: i64) -> Result<(), Error> {
-        call_suite_fn!(self, AdjustReservedMemorySize, plugin_id, size)?;
-        Ok(())
+        call_suite_fn!(self, AdjustReservedMemorySize, plugin_id, size)
     }
 }

@@ -75,7 +75,7 @@ pub struct CompositeMode {
     pub xfer: TransferMode,
     /// For TransferMode::DissolveRandomized.
     pub rand_seed: i32,
-    /// 0–255.
+    /// 0-255.
     pub opacity: u8,
     /// Ignored TransferMode::MutiplyAlpha* modes.
     pub rgb_only: u8,
@@ -214,7 +214,7 @@ unsafe impl Sync for EffectWorld {}
 impl EffectWorld {
     #[inline]
     pub fn new(world_handle: aegp::WorldHandle) -> Result<Self, crate::Error> {
-        aegp::WorldSuite::new()?.fill_out_pf_effect_world(world_handle)
+        aegp::suites::World::new()?.fill_out_pf_effect_world(world_handle)
     }
 
     pub fn from_raw(effect_world_ptr: *const ae_sys::PF_EffectWorld) -> Result<Self, crate::Error> {

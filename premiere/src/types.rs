@@ -56,13 +56,21 @@ define_enum! {
 define_enum! {
     pr_sys::PrVideoFrameRates,
     VideoFrameRates {
+        /// 24000 / 1001
         FrameRate24Drop = pr_sys::PrVideoFrameRates_kVideoFrameRate_24Drop,
+        /// 24
         FrameRate24     = pr_sys::PrVideoFrameRates_kVideoFrameRate_24,
+        /// 25
         FrameRatePal    = pr_sys::PrVideoFrameRates_kVideoFrameRate_PAL,
+        /// 30000 / 1001
         FrameRateNtsc   = pr_sys::PrVideoFrameRates_kVideoFrameRate_NTSC,
+        /// 30
         FrameRate30     = pr_sys::PrVideoFrameRates_kVideoFrameRate_30,
+        /// 50
         FrameRatePalHd  = pr_sys::PrVideoFrameRates_kVideoFrameRate_PAL_HD,
+        /// 60000 / 1001
         FrameRateNtscHd = pr_sys::PrVideoFrameRates_kVideoFrameRate_NTSC_HD,
+        /// 60
         FrameRate60     = pr_sys::PrVideoFrameRates_kVideoFrameRate_60,
     }
 }

@@ -1,15 +1,23 @@
 use crate::*;
 
-define_suite!(GPUImageProcessingSuite, PrSDKGPUImageProcessingSuite, kPrSDKGPUImageProcessingSuite, kPrSDKGPUImageProcessingSuiteVersion);
+define_suite!(
+    /// Access to common GPU image processing algorithms
+    GPUImageProcessingSuite,
+    PrSDKGPUImageProcessingSuite,
+    kPrSDKGPUImageProcessingSuite,
+    kPrSDKGPUImageProcessingSuiteVersion
+);
 
 impl GPUImageProcessingSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
 
     /// Convert between formats on the GPU
     /// One of src_format or dst_format must be a host format,
-    /// the other must be either `PixelFormat::GpuBgra4444_16f` or `PixelFormat::GpuBgra4444_32f`
+    /// the other must be either [`PixelFormat::GpuBgra4444_16f`] or [`PixelFormat::GpuBgra4444_32f`]
     pub fn pixel_format_convert(&self,
         device_index: u32,
         src: *const std::ffi::c_void, src_stride: i32, src_format: PixelFormat,
@@ -22,7 +30,7 @@ impl GPUImageProcessingSuite {
     }
 
     /// Scale a frame on the GPU
-    /// `format` must be `PixelFormat::GpuBgra4444_16f` or `PixelFormat::GpuBgra4444_32f`
+    /// `format` must be [`PixelFormat::GpuBgra4444_16f`] or [`PixelFormat::GpuBgra4444_32f`]
     pub fn scale(&self,
         device_index: u32,
         src: *const std::ffi::c_void, src_stride: i32, src_width: u32, src_height: u32,
@@ -36,7 +44,7 @@ impl GPUImageProcessingSuite {
     }
 
     /// Gaussian blur on the GPU
-    /// `format` must be `PixelFormat::GpuBgra4444_16f` or `PixelFormat::GpuBgra4444_32f`
+    /// `format` must be [`PixelFormat::GpuBgra4444_16f`] or [`PixelFormat::GpuBgra4444_32f`]
     pub fn gaussian_blur(&self,
         device_index: u32,
         src: *const std::ffi::c_void, src_stride: i32, src_width: u32, src_height: u32,

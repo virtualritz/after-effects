@@ -1,9 +1,16 @@
 use crate::*;
 use ae_sys::*;
 
-define_suite!(HandleSuite, PF_HandleSuite1, kPFHandleSuite, kPFHandleSuiteVersion1);
+define_suite!(
+    HandleSuite,
+    PF_HandleSuite1,
+    kPFHandleSuite,
+    kPFHandleSuiteVersion1
+);
 
 impl HandleSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
