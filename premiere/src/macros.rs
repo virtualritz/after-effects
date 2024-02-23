@@ -141,7 +141,7 @@ macro_rules! define_enum {
 
 macro_rules! define_suite {
     ($(#[$attr:meta])* $suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
-        #[derive(Clone, Debug, Hash)]
+        #[derive(Debug, Hash)]
         $(#[$attr])*
         pub struct $suite_pretty_name {
             pica_basic_suite_ptr: *const premiere_sys::SPBasicSuite,
@@ -164,6 +164,12 @@ macro_rules! define_suite {
                     }),
                     Err(e) => Err(e),
                 }
+            }
+        }
+
+        impl Clone for $suite_pretty_name {
+            fn clone(&self) -> Self {
+                Suite::new().unwrap()
             }
         }
 

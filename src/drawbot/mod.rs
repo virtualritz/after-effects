@@ -4,8 +4,8 @@ define_handle_wrapper!(SupplierRef, DRAWBOT_SupplierRef);
 define_handle_wrapper!(SurfaceRef, DRAWBOT_SurfaceRef);
 
 pub mod suites {
-    pub(crate) mod supplier; pub use supplier::*;
-    pub(crate) mod surface;  pub use surface::*;
+    pub(crate) mod supplier; pub use supplier::SupplierSuite as Supplier;
+    pub(crate) mod surface;  pub use surface::SurfaceSuite as Surface;
 }
 
 pub use suites::supplier::{
@@ -67,7 +67,7 @@ define_suite!(
 pub struct Pen {
     pub(crate) handle: ae_sys::DRAWBOT_PenRef,
     pub(crate) suite: PenSuite,
-    pub(crate) supplier_suite: suites::SupplierSuite,
+    pub(crate) supplier_suite: suites::Supplier,
 }
 impl Pen {
     /// Set pen dash pattern.
@@ -85,7 +85,7 @@ impl Drop for Pen {
 
 pub struct Brush {
     pub(crate) handle: ae_sys::DRAWBOT_BrushRef,
-    pub(crate) supplier_suite: suites::SupplierSuite,
+    pub(crate) supplier_suite: suites::Supplier,
 }
 impl Drop for Brush {
     fn drop(&mut self) {
@@ -97,7 +97,7 @@ impl Drop for Brush {
 
 pub struct Font {
     pub(crate) handle: ae_sys::DRAWBOT_FontRef,
-    pub(crate) supplier_suite: suites::SupplierSuite,
+    pub(crate) supplier_suite: suites::Supplier,
 }
 impl Drop for Font {
     fn drop(&mut self) {
@@ -116,7 +116,7 @@ define_suite!(
 pub struct Image {
     pub(crate) handle: ae_sys::DRAWBOT_ImageRef,
     pub(crate) suite: ImageSuite,
-    pub(crate) supplier_suite: suites::SupplierSuite,
+    pub(crate) supplier_suite: suites::Supplier,
 }
 impl Image {
     /// Set image scale factor.
@@ -142,7 +142,7 @@ define_suite!(
 pub struct Path {
     pub(crate) handle: ae_sys::DRAWBOT_PathRef,
     pub(crate) suite: PathSuite,
-    pub(crate) supplier_suite: suites::SupplierSuite,
+    pub(crate) supplier_suite: suites::Supplier,
 }
 impl Path {
     /// Move to a point.

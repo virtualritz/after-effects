@@ -69,7 +69,7 @@ impl SurfaceSuite {
         call_suite_fn!(self, DrawString, surface_ref.as_ptr(), brush.handle, font.handle, string.as_ptr(), origin, alignment_style.into(), truncation_style.into(), truncation_width)
     }
 
-    /// Draw an image created using [`new_image_from_buffer()`](super::SupplierSuite::new_image_from_buffer) on the surface. Alpha = [0.0, 1.0].
+    /// Draw an image created using [`new_image_from_buffer()`](super::Supplier::new_image_from_buffer) on the surface. Alpha = [0.0, 1.0].
     pub fn draw_image(&self, surface_ref: &SurfaceRef, image: &Image, origin: &PointF32, alpha: f32) -> Result<(), Error> {
         call_suite_fn!(self, DrawImage, surface_ref.as_ptr(), image.handle, origin, alpha)
     }
@@ -186,7 +186,7 @@ define_suite_item_wrapper!(
         /// Draw a string.
         draw_string(brush: &Brush, font: &Font, string: &str, origin: &PointF32, alignment_style: TextAlignment, truncation_style: TextTruncation, truncation_width: f32) -> () => suite.draw_string,
 
-        /// Draw an image created using [`new_image_from_buffer()`](super::SupplierSuite::new_image_from_buffer) on the surface. Alpha = [0.0, 1.0].
+        /// Draw an image created using [`new_image_from_buffer()`](super::Supplier::new_image_from_buffer) on the surface. Alpha = [0.0, 1.0].
         draw_image(image: &Image, origin: &PointF32, alpha: f32) -> () => suite.draw_image,
 
         /// Set the interpolation policy.

@@ -4,9 +4,9 @@ define_handle_wrapper!(ContextHandle, PF_ContextH);
 
 define_suite!(
     EffectCustomUISuite,
-    PF_EffectCustomUISuite1,
+    PF_EffectCustomUISuite2,
     kPFEffectCustomUISuite,
-    kPFEffectCustomUISuiteVersion1
+    kPFEffectCustomUISuiteVersion2
 );
 
 impl EffectCustomUISuite {
@@ -21,6 +21,8 @@ impl EffectCustomUISuite {
             handle: call_suite_fn_single!(self, PF_GetDrawingReference -> ae_sys::DRAWBOT_DrawRef, context_handle.as_ptr())?
         })
     }
+
+    // fn PF_GetContextAsyncManager(in_data: *mut PF_InData, extra: *mut PF_EventExtra, managerPP0: *mut PF_AsyncManagerP) -> PF_Err,
 }
 
 define_suite!(
@@ -44,8 +46,6 @@ impl EffectCustomUIOverlayThemeSuite {
         call_suite_fn_single!(self, PF_GetPreferredShadowColor -> drawbot::ColorRgba)
     }
 
-    //PF_GetPreferredShadowOffset
-
     pub fn preferred_stroke_width(&self) -> Result<f32, Error> {
         call_suite_fn_single!(self, PF_GetPreferredStrokeWidth -> f32)
     }
@@ -53,6 +53,20 @@ impl EffectCustomUIOverlayThemeSuite {
     pub fn preferred_vertex_size(&self) -> Result<f32, Error> {
         call_suite_fn_single!(self, PF_GetPreferredVertexSize -> f32)
     }
+
+    pub fn preferred_shadow_offset(&self) -> Result<ae_sys::A_LPoint, Error> {
+        Ok(call_suite_fn_single!(self, PF_GetPreferredShadowOffset -> ae_sys::A_LPoint)?.into())
+    }
+
+    // fn PF_GetPreferredForegroundColor(foreground_colorP: *mut DRAWBOT_ColorRGBA) -> PF_Err,
+    // fn PF_GetPreferredShadowColor(shadow_colorP: *mut DRAWBOT_ColorRGBA) -> PF_Err,
+    // fn PF_GetPreferredStrokeWidth(stroke_widthPF: *mut f32) -> PF_Err>,
+    // fn PF_GetPreferredVertexSize(vertex_sizePF: *mut f32) -> PF_Err>,
+    // fn PF_GetPreferredShadowOffset(shadow_offsetP: *mut A_LPoint) -> PF_Err>,
+
+    // fn PF_StrokePath(drawbot_ref: DRAWBOT_DrawRef, path_ref: DRAWBOT_PathRef, draw_shadowB: PF_Boolean) -> PF_Err,
+    // fn PF_FillPath(drawbot_ref: DRAWBOT_DrawRef, path_ref: DRAWBOT_PathRef, draw_shadowB: PF_Boolean) -> PF_Err,
+    // fn PF_FillVertex(drawbot_ref: DRAWBOT_DrawRef, center_pointP: *const A_FloatPoint, draw_shadowB: PF_Boolean) -> PF_Err,
 }
 
 #[derive(Copy, Clone, Debug)]
