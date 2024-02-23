@@ -27,7 +27,7 @@ impl StreamSuite {
     }
 
     /// Retrieves an [`KeyframeInterpolationMask`] indicating which interpolation types are valid for the [`StreamReferenceHandle`].
-    pub fn get_valid_interpolations(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<KeyframeInterpolationMask, Error> {
+    pub fn valid_interpolations(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<KeyframeInterpolationMask, Error> {
         Ok(KeyframeInterpolationMask::from_bits_truncate(
             call_suite_fn_single!(self, AEGP_GetValidInterpolations -> ae_sys::AEGP_KeyInterpolationMask, stream_reference_handle.as_ptr())?,
         ))
@@ -36,7 +36,7 @@ impl StreamSuite {
     /// Get a layer's data stream.
     ///
     /// Note that this will not provide keyframe access; Use the [`KeyframeSuite`](aegp::suites::Keyframe) instead.
-    pub fn get_new_layer_stream(&self, plugin_id: PluginID, layer_handle: &LayerHandle, stream_name: LayerStream) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_layer_stream(&self, plugin_id: PluginID, layer_handle: &LayerHandle, stream_name: LayerStream) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewLayerStream -> ae_sys::AEGP_StreamRefH, plugin_id, layer_handle.as_ptr(), stream_name as _)?,
             true, // is_owned
@@ -44,12 +44,12 @@ impl StreamSuite {
     }
 
     /// Get number of parameter streams associated with an effect.
-    pub fn get_effect_num_param_streams(&self, effect_ref: &EffectRefHandle) -> Result<i32, Error> {
+    pub fn effect_num_param_streams(&self, effect_ref: &EffectRefHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetEffectNumParamStreams -> ae_sys::A_long, effect_ref.as_ptr())? as i32)
     }
 
     /// Get an effect's parameter stream.
-    pub fn get_new_effect_stream_by_index(&self, plugin_id: PluginID, effect_ref: &EffectRefHandle, index: i32) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_effect_stream_by_index(&self, plugin_id: PluginID, effect_ref: &EffectRefHandle, index: i32) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewEffectStreamByIndex -> ae_sys::AEGP_StreamRefH, plugin_id, effect_ref.as_ptr(), index)?,
             true, // is_owned
@@ -59,7 +59,7 @@ impl StreamSuite {
     /// Get a mask's stream.
     ///
     /// Also see the [`MaskSuite`](aegp::suites::Mask) and [`MaskOutlineSuite`](aegp::suites::MaskOutline) for additional Mask functions.
-    pub fn get_new_mask_stream(&self, plugin_id: PluginID, mask_ref: &MaskRefHandle, stream: MaskStream) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_mask_stream(&self, plugin_id: PluginID, mask_ref: &MaskRefHandle, stream: MaskStream) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewMaskStream -> ae_sys::AEGP_StreamRefH, plugin_id, mask_ref.as_ptr(), stream.into())?,
             true, // is_owned
@@ -76,7 +76,7 @@ impl StreamSuite {
     /// Get name of the stream (localized or forced English).
     ///
     /// NOTE: if `force_english` is `true`, the default name will override any stream renaming which has been done (either programatically, or by the user).
-    pub fn get_stream_name(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, force_english: bool) -> Result<String, Error> {
+    pub fn stream_name(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, force_english: bool) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetStreamName -> ae_sys::AEGP_MemHandle, plugin_id, stream_reference_handle.as_ptr(), force_english as _)?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
@@ -88,7 +88,7 @@ impl StreamSuite {
     }
 
     /// Get stream units, formatted as text (localized or forced English).
-    pub fn get_stream_units_text(&self, stream_reference_handle: &StreamReferenceHandle, force_english: bool) -> Result<String, Error> {
+    pub fn stream_units_text(&self, stream_reference_handle: &StreamReferenceHandle, force_english: bool) -> Result<String, Error> {
         let mut name = [0i8; ae_sys::AEGP_MAX_STREAM_NAME_SIZE as usize + 1];
         call_suite_fn!(self, AEGP_GetStreamUnitsText, stream_reference_handle.as_ptr(), force_english as _, name.as_mut_ptr() as _)?;
         Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }.to_string_lossy().into_owned())
@@ -97,7 +97,7 @@ impl StreamSuite {
     /// Get stream's flags, as well as minimum and maximum values (as floats), if the stream *has* mins and maxes.
     ///
     /// Returns a tuple containing ([`StreamFlags`], `Option<min>`, `Option<max>`).
-    pub fn get_stream_properties(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<(StreamFlags, Option<f64>, Option<f64>), Error> {
+    pub fn stream_properties(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<(StreamFlags, Option<f64>, Option<f64>), Error> {
         let mut flags = 0;
         let mut min = 0.0;
         let mut max = 0.0;
@@ -117,7 +117,7 @@ impl StreamSuite {
     /// Get type (dimension) of a stream.
     ///
     /// NOTE: always returns [`StreamType::ThreeDSpatial`] for position, regardless of whether or not the layer is 3D.
-    pub fn get_stream_type(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamType, Error> {
+    pub fn stream_type(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetStreamType -> ae_sys::AEGP_StreamType, stream_reference_handle.as_ptr())?.into())
     }
 
@@ -127,8 +127,8 @@ impl StreamSuite {
     // is wasteful and potentially slow.
     /// Get value, at a time you specify, of stream. `value` must be disposed by the plug-in.
     /// The `time_mode` indicates whether the time is in compositions or layer time.
-    pub fn get_new_stream_value(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, time_mode: TimeMode, time: Time, sample_stream_pre_expression: bool) -> Result<StreamValue, Error> {
-        let type_ = self.get_stream_type(stream_reference_handle)?;
+    pub fn new_stream_value(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, time_mode: TimeMode, time: Time, sample_stream_pre_expression: bool) -> Result<StreamValue, Error> {
+        let type_ = self.stream_type(stream_reference_handle)?;
 
         let mut stream_value2 = call_suite_fn_single!(self,
             AEGP_GetNewStreamValue -> ae_sys::AEGP_StreamValue2,
@@ -151,8 +151,8 @@ impl StreamSuite {
     }
 
     /// NOTE: This convenience function is only valid for streams with primitive data types, and not for `StreamType::ArbBlock`, `StreamType::Marker` or `StreamType::MaskOutline`.
-    /// For these and other complex types, use [`get_new_stream_value()`](Self::get_new_stream_value), described above.
-    pub fn get_layer_stream_value(&self, layer_handle: &LayerHandle, stream: LayerStream, time_mode: TimeMode, time: Time, pre_expression: bool) -> Result<StreamValue, Error> {
+    /// For these and other complex types, use [`new_stream_value()`](Self::new_stream_value), described above.
+    pub fn layer_stream_value(&self, layer_handle: &LayerHandle, stream: LayerStream, time_mode: TimeMode, time: Time, pre_expression: bool) -> Result<StreamValue, Error> {
         let (stream_value, stream_type) = call_suite_fn_double!(self,
             AEGP_GetLayerStreamValue -> ae_sys::AEGP_StreamVal2, ae_sys::AEGP_StreamType,
             layer_handle.as_ptr(),
@@ -166,7 +166,7 @@ impl StreamSuite {
     }
 
     /// Determines whether expressions are enabled on the given [`StreamReferenceHandle`].
-    pub fn get_expression_state(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<bool, Error> {
+    pub fn expression_state(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetExpressionState -> ae_sys::A_Boolean, plugin_id, stream_reference_handle.as_ptr())? != 0)
     }
 
@@ -176,7 +176,7 @@ impl StreamSuite {
     }
 
     /// Get the expression string for the given [`StreamReferenceHandle`].
-    pub fn get_expression_string(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<String, Error> {
+    pub fn expression_string(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetExpression -> ae_sys::AEGP_MemHandle, plugin_id, stream_reference_handle.as_ptr())?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
@@ -201,7 +201,7 @@ impl StreamSuite {
         ))
     }
 
-    pub fn get_unique_stream_id(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
+    pub fn unique_stream_id(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
         call_suite_fn_single!(self, AEGP_GetUniqueStreamID -> i32, stream_reference_handle.as_ptr())
     }
 }
@@ -209,7 +209,7 @@ impl StreamSuite {
 define_suite!(
     /// This suite accesses and manipulates paint and text streams.
     ///
-    /// Use [`get_stream_grouping_type()`](Self::get_stream_grouping_type) and [`get_dynamic_stream_flags()`](Self::get_dynamic_stream_flags) to identify the stream before attempting to use functions which only work on certain stream types.
+    /// Use [`stream_grouping_type()`](Self::stream_grouping_type) and [`dynamic_stream_flags()`](Self::dynamic_stream_flags) to identify the stream before attempting to use functions which only work on certain stream types.
     ///
     /// Also note that, often, you can simply use [`StreamSuite`] calls to work with dynamic streams. On the other hand, only those functions specific to dynamic streams are in this suite.
     DynamicStreamSuite,
@@ -226,7 +226,7 @@ impl DynamicStreamSuite {
     }
 
     /// Retrieves the [`StreamReferenceHandle`] corresponding to the layer. This function is used to initiate a recursive walk of the layer's streams.
-    pub fn get_new_stream_ref_for_layer(&self, plugin_id: PluginID, layer_handle: &LayerHandle) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_stream_ref_for_layer(&self, plugin_id: PluginID, layer_handle: &LayerHandle) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewStreamRefForLayer -> ae_sys::AEGP_StreamRefH, plugin_id, layer_handle.as_ptr())?,
             true, // is_owned
@@ -234,7 +234,7 @@ impl DynamicStreamSuite {
     }
 
     /// Retrieves the [`StreamReferenceHandle`] corresponding to the mask.
-    pub fn get_new_stream_ref_for_mask(&self, plugin_id: PluginID, mask_ref: &MaskRefHandle) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_stream_ref_for_mask(&self, plugin_id: PluginID, mask_ref: &MaskRefHandle) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewStreamRefForMask -> ae_sys::AEGP_StreamRefH, plugin_id, mask_ref.as_ptr())?,
             true, // is_owned
@@ -244,24 +244,24 @@ impl DynamicStreamSuite {
     /// Retrieves the number of sub-streams associated with the given [`StreamReferenceHandle`].
     ///
     /// The initial layer has a depth of 0.
-    pub fn get_stream_depth(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
+    pub fn stream_depth(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetStreamDepth -> ae_sys::A_long, stream_reference_handle.as_ptr())? as i32)
     }
 
     /// Retrieves the grouping type for the given [`StreamReferenceHandle`].
-    pub fn get_stream_grouping_type(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamGroupingType, Error> {
+    pub fn stream_grouping_type(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamGroupingType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetStreamGroupingType -> ae_sys::AEGP_StreamGroupingType, stream_reference_handle.as_ptr())?.into())
     }
 
     /// Retrieves the number of streams associated with the given [`StreamReferenceHandle`].
     ///
     /// This function will return an error if called with an [`StreamReferenceHandle`] with type [`StreamGroupingType::Leaf`].
-    pub fn get_num_streams_in_group(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
+    pub fn num_streams_in_group(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetNumStreamsInGroup -> ae_sys::A_long, stream_reference_handle.as_ptr())? as i32)
     }
 
     /// Retrieves the flags for a given [`StreamReferenceHandle`].
-    pub fn get_dynamic_stream_flags(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<DynamicStreamFlags, Error> {
+    pub fn dynamic_stream_flags(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<DynamicStreamFlags, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetDynamicStreamFlags -> ae_sys::AEGP_DynStreamFlags, stream_reference_handle.as_ptr())?.into())
     }
 
@@ -276,7 +276,7 @@ impl DynamicStreamSuite {
     }
 
     /// Retrieves a sub-stream by index from a given [`StreamReferenceHandle`]. Cannot be used on streams of type [`StreamGroupingType::Leaf`].
-    pub fn get_new_stream_ref_by_index(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, index: i32) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_stream_ref_by_index(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, index: i32) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewStreamRefByIndex -> ae_sys::AEGP_StreamRefH, plugin_id, stream_reference_handle.as_ptr(), index)?,
             true, // is_owned
@@ -302,7 +302,7 @@ impl DynamicStreamSuite {
     /// * `"ADBE Transform Group"`
     /// * `"ADBE Light Options Group"`
     /// * `"ADBE Camera Options Group"`
-    pub fn get_new_stream_ref_by_match_name(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, match_name: &str) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_stream_ref_by_match_name(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, match_name: &str) -> Result<StreamReferenceHandle, Error> {
         let match_name = CString::new(match_name).map_err(|_| Error::InvalidParms)?;
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewStreamRefByMatchname -> ae_sys::AEGP_StreamRefH, plugin_id, stream_reference_handle.as_ptr(), match_name.as_ptr())?,
@@ -360,8 +360,8 @@ impl DynamicStreamSuite {
 
     /// Retrieves the match name for the specified [`StreamReferenceHandle`].
     ///
-    /// Note that this may differ from the display name, which can be retrieves using [`StreamSuite::get_stream_name()`].
-    pub fn get_match_name(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<String, Error> {
+    /// Note that this may differ from the display name, which can be retrieves using [`StreamSuite::stream_name()`].
+    pub fn match_name(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<String, Error> {
         let mut buffer = [0u8; ae_sys::AEGP_MAX_STREAM_MATCH_NAME_SIZE as usize];
 
         call_suite_fn!(self, AEGP_GetMatchName, stream_reference_handle.as_ptr(), buffer.as_mut_ptr() as _)?;
@@ -370,7 +370,7 @@ impl DynamicStreamSuite {
     }
 
     /// Retrieves an [`StreamReferenceHandle`] for the parent of the specified [`StreamReferenceHandle`].
-    pub fn get_new_parent_stream_ref(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_parent_stream_ref(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewParentStreamRef -> ae_sys::AEGP_StreamRefH, plugin_id, stream_reference_handle.as_ptr())?,
             true, // is_owned
@@ -380,7 +380,7 @@ impl DynamicStreamSuite {
     /// Returns whether or not the specified [`StreamReferenceHandle`] has been modified.
     ///
     /// Note: the same result is available through the After Effect user interface by typing "UU" with the composition selected.
-    pub fn get_stream_is_modified(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<bool, Error> {
+    pub fn stream_is_modified(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetStreamIsModified -> ae_sys::A_Boolean, stream_reference_handle.as_ptr())? != 0)
     }
 
@@ -390,7 +390,7 @@ impl DynamicStreamSuite {
     ///
     /// NOTE: As mentioned *elsewhere*, [`StreamReferenceHandle`]s don't persist across function calls.
     /// If streams are re-ordered, added or removed, all [`StreamReferenceHandle`]s previously retrieved may be invalidated.
-    pub fn get_stream_index_in_parent(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
+    pub fn stream_index_in_parent(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetStreamIndexInParent -> ae_sys::A_long, stream_reference_handle.as_ptr())? as i32)
     }
 
@@ -405,7 +405,7 @@ impl DynamicStreamSuite {
         Ok(call_suite_fn_single!(self, AEGP_IsSeparationLeader -> ae_sys::A_Boolean, stream_reference_handle.as_ptr())? != 0)
     }
 
-    /// Methods such as [`get_new_keyframe_value()`](aegp::suites::Keyframe::get_new_keyframe_value) that work on keyframe indices will most definitely *not* work on the Leader property, you will need to retrieve and operate on the Followers explicitly.
+    /// Methods such as [`new_keyframe_value()`](aegp::suites::Keyframe::new_keyframe_value) that work on keyframe indices will most definitely *not* work on the Leader property, you will need to retrieve and operate on the Followers explicitly.
     pub fn are_dimensions_separated(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_AreDimensionsSeparated -> ae_sys::A_Boolean, stream_reference_handle.as_ptr())? != 0)
     }
@@ -418,7 +418,7 @@ impl DynamicStreamSuite {
     /// Retrieve the Follower stream corresponding to a given dimension of the Leader stream.
     ///
     /// `dim` can range from `0` to `AEGP_GetStreamValueDimensionality(leader_streamH) - 1`.
-    pub fn get_separation_follower(&self, stream_reference_handle: &StreamReferenceHandle, dimension: i16) -> Result<StreamReferenceHandle, Error> {
+    pub fn separation_follower(&self, stream_reference_handle: &StreamReferenceHandle, dimension: i16) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetSeparationFollower -> ae_sys::AEGP_StreamRefH, stream_reference_handle.as_ptr(), dimension)?,
             true, // is_owned
@@ -427,13 +427,13 @@ impl DynamicStreamSuite {
 
     /// Valid on leaf streams only.
     /// Returns `true` if this stream is a one dimensional property that represents one of the dimensions of a Leader.
-    /// You can retrieve stream from the Leader using [`get_separation_follower()`](Self::get_separation_follower).
+    /// You can retrieve stream from the Leader using [`separation_follower()`](Self::separation_follower).
     pub fn is_separation_follower(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_IsSeparationFollower -> ae_sys::A_Boolean, stream_reference_handle.as_ptr())? != 0)
     }
 
     /// Valid on separation Followers only, returns the Leader it is part of.
-    pub fn get_separation_leader(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamReferenceHandle, Error> {
+    pub fn separation_leader(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetSeparationLeader -> ae_sys::AEGP_StreamRefH, stream_reference_handle.as_ptr())?,
             true, // is_owned
@@ -441,7 +441,7 @@ impl DynamicStreamSuite {
     }
 
     /// Valid on separation Followers only, returns which dimension of the Leader it corresponds to.
-    pub fn get_separation_dimension(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i16, Error> {
+    pub fn separation_dimension(&self, stream_reference_handle: &StreamReferenceHandle) -> Result<i16, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetSeparationDimension -> i16, stream_reference_handle.as_ptr())?)
     }
 }

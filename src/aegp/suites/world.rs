@@ -29,12 +29,12 @@ impl WorldSuite {
     }
 
     /// Returns the type of a given [`WorldHandle`]
-    pub fn get_type(&self, world: WorldHandle) -> Result<WorldType, Error> {
+    pub fn world_type(&self, world: WorldHandle) -> Result<WorldType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetType -> ae_sys::AEGP_WorldType, world.as_ptr())?.into())
     }
 
     /// Returns the width and height of the given [`WorldHandle`].
-    pub fn get_size(&self, world: WorldHandle) -> Result<(i32, i32), Error> {
+    pub fn size(&self, world: WorldHandle) -> Result<(i32, i32), Error> {
         let (width, height) = call_suite_fn_double!(self, AEGP_GetSize -> ae_sys::A_long, ae_sys::A_long, world.as_ptr())?;
         Ok((
             width as i32,
@@ -43,36 +43,36 @@ impl WorldSuite {
     }
 
     /// Returns the rowbytes for the given [`WorldHandle`].
-    pub fn get_row_bytes(&self, world: WorldHandle) -> Result<usize, Error> {
+    pub fn row_bytes(&self, world: WorldHandle) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetRowBytes -> ae_sys::A_u_long, world.as_ptr())? as usize)
     }
 
     /// Returns the base address of the [`WorldHandle`] for use in pixel iteration functions.
     ///
     /// Will return an error if used on a non-8bpc world.
-    pub fn get_base_addr8(&self, world_handle: WorldHandle) -> Result<*mut pf::Pixel8, Error> {
+    pub fn base_addr8(&self, world_handle: WorldHandle) -> Result<*mut pf::Pixel8, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetBaseAddr8 -> *mut ae_sys::PF_Pixel8, world_handle.as_ptr())? as _)
     }
 
     /// Returns the base address of the [`WorldHandle`] for use in pixel iteration functions.
     ///
     /// Will return an error if used on a non-16bpc world.
-    pub fn get_base_addr16(&self, world_handle: WorldHandle) -> Result<*mut pf::Pixel16, Error> {
+    pub fn base_addr16(&self, world_handle: WorldHandle) -> Result<*mut pf::Pixel16, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetBaseAddr16 -> *mut ae_sys::PF_Pixel16, world_handle.as_ptr())? as _)
     }
 
     /// Returns the base address of the [`WorldHandle`] for use in pixel iteration functions.
     ///
     /// Will return an error if used on a non-32bpc world.
-    pub fn get_base_addr32(&self, world_handle: WorldHandle) -> Result<*mut pf::Pixel32, Error> {
+    pub fn base_addr32(&self, world_handle: WorldHandle) -> Result<*mut pf::Pixel32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetBaseAddr32 -> *mut ae_sys::PF_PixelFloat, world_handle.as_ptr())? as _)
     }
 
     /// Populates and returns a [`EffectWorld`] representing the given [`WorldHandle`], for use with numerous pixel processing callbacks.
     ///
     /// NOTE: This does not give your plug-in ownership of the world referenced; destroy the source [`WorldHandle`] only if you allocated it.
-    /// It just fills out the provided [`EffectWorld`] to point to the same pixel buffer.
-    pub fn fill_out_pf_effect_world(&self, world: WorldHandle) -> Result<EffectWorld, Error> {
+    /// It just returns an [`EffectWorld`] that points to the same pixel buffer.
+    pub fn effect_world(&self, world: WorldHandle) -> Result<EffectWorld, Error> {
         Ok(EffectWorld {
             effect_world: call_suite_fn_single!(self, AEGP_FillOutPFEffectWorld -> ae_sys::PF_EffectWorld, world.as_ptr())?
         })
@@ -130,28 +130,28 @@ define_suite_item_wrapper!(
         dispose: suite.dispose_world;
 
         /// Returns the type of this world
-        r#type() -> WorldType => suite.get_type,
+        world_type() -> WorldType => suite.world_type,
 
         /// Returns the width and height of this world
-        size() -> (i32, i32) => suite.get_size,
+        size() -> (i32, i32) => suite.size,
 
         /// Returns the rowbytes of this world
-        row_bytes() -> usize => suite.get_row_bytes,
+        row_bytes() -> usize => suite.row_bytes,
 
         /// Returns the base address of this world for use in pixel iteration functions.
         ///
         /// Will return an error if used on a non-8bpc world.
-        base_addr8() -> *mut pf::Pixel8 => suite.get_base_addr8,
+        base_addr8() -> *mut pf::Pixel8 => suite.base_addr8,
 
         /// Returns the base address of this world for use in pixel iteration functions.
         ///
         /// Will return an error if used on a non-16bpc world.
-        base_addr16() -> *mut pf::Pixel16 => suite.get_base_addr16,
+        base_addr16() -> *mut pf::Pixel16 => suite.base_addr16,
 
         /// Returns the base address of this world for use in pixel iteration functions.
         ///
         /// Will return an error if used on a non-32bpc world.
-        base_addr32() -> *mut pf::Pixel32 => suite.get_base_addr32,
+        base_addr32() -> *mut pf::Pixel32 => suite.base_addr32,
 
         /// Performs a fast blur on this world.
         fast_blur(radius: f64, mode: ModeFlags, quality: Quality) -> () => suite.fast_blur,
@@ -159,8 +159,8 @@ define_suite_item_wrapper!(
         /// Returns a [`EffectWorld`] representing this world, for use with numerous pixel processing callbacks.
         ///
         /// NOTE: This does not give your plug-in ownership of the world referenced; destroy the source [`WorldHandle`] only if you allocated it.
-        /// It just fills out the provided [`EffectWorld`] to point to the same pixel buffer.
-        pf_effect_world() -> EffectWorld => suite.fill_out_pf_effect_world,
+        /// It just returns an [`EffectWorld`] that points to the same pixel buffer.
+        effect_world() -> EffectWorld => suite.effect_world,
     }
 );
 

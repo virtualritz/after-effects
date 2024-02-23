@@ -21,14 +21,14 @@ impl PFInterfaceSuite {
     }
 
     /// Obtain the layer handle of the layer to which the effect is applied.
-    pub fn get_effect_layer(&self, effect_ref: impl Into<pf::ProgPtr>) -> Result<LayerHandle, Error> {
+    pub fn effect_layer(&self, effect_ref: impl Into<pf::ProgPtr>) -> Result<LayerHandle, Error> {
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetEffectLayer -> ae_sys::AEGP_LayerH, effect_ref.into())?
         ))
     }
 
     /// Obtain the [`EffectRefHandle`] corresponding to the effect.
-    pub fn get_new_effect_for_effect(&self, plugin_id: PluginID, effect_ref: pf::ProgPtr) -> Result<EffectRefHandle, Error> {
+    pub fn new_effect_for_effect(&self, plugin_id: PluginID, effect_ref: pf::ProgPtr) -> Result<EffectRefHandle, Error> {
         Ok(EffectRefHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetNewEffectForEffect -> ae_sys::AEGP_EffectRefH, plugin_id, effect_ref.into())?
         ))
@@ -40,7 +40,7 @@ impl PFInterfaceSuite {
     }
 
     /// Obtain the camera (if any) being used by After Effects to view the effect's layer.
-    pub fn get_effect_camera(&self, effect_ref: pf::ProgPtr, time: Time) -> Result<Option<LayerHandle>, Error> {
+    pub fn effect_camera(&self, effect_ref: pf::ProgPtr, time: Time) -> Result<Option<LayerHandle>, Error> {
         let camera_handle = call_suite_fn_single!(self, AEGP_GetEffectCamera -> ae_sys::AEGP_LayerH, effect_ref.into(), &time.into() as *const _)?;
         if camera_handle.is_null() {
             Ok(None)
@@ -54,12 +54,12 @@ impl PFInterfaceSuite {
     /// NOTE: In cases where the effect's input layer has square pixels, but is in a non-square pixel composition,
     /// you must correct for the pixel aspect ratio by premultiplying the matrix by `(1/parF, 1, 1)`.
     ///
-    /// The model view for the camera matrix is inverse of the matrix obtained from [`get_effect_camera_matrix()`](Self::get_effect_camera_matrix).
+    /// The model view for the camera matrix is inverse of the matrix obtained from [`effect_camera_matrix()`](Self::effect_camera_matrix).
     ///
     /// Also note that our matrix is row-based; OpenGL's is column-based.
     ///
     /// Returns a tuple containing: (matrix, dist_to_image_plane, image_plane_width, image_plane_height)
-    pub fn get_effect_camera_matrix(&self, effect_ref: pf::ProgPtr, time: Time) -> Result<(Matrix4, f64, i16, i16), Error> {
+    pub fn effect_camera_matrix(&self, effect_ref: pf::ProgPtr, time: Time) -> Result<(Matrix4, f64, i16, i16), Error> {
         let mut matrix: ae_sys::A_Matrix4 = unsafe { std::mem::zeroed() };
         let mut dist_to_image_plane: f64 = 0.0;
         let mut image_plane_width = 0;

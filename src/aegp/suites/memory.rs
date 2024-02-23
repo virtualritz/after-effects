@@ -48,7 +48,7 @@ impl MemorySuite {
     }
 
     /// Returns the allocated size of the handle.
-    pub fn get_mem_handle_size(&self, mem_handle: AEGP_MemHandle) -> Result<usize, Error> {
+    pub fn mem_handle_size(&self, mem_handle: AEGP_MemHandle) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMemHandleSize -> AEGP_MemSize, mem_handle)? as usize)
     }
 
@@ -70,7 +70,7 @@ impl MemorySuite {
     ///
     /// Only memory allocated using this suite is tracked and reported using this call,
     /// so for example memory allocated using [`HandleSuite`] will not be reported here.
-    pub fn get_mem_stats(&self, plugin_id: PluginID) -> Result<(i32, i32), Error> {
+    pub fn mem_stats(&self, plugin_id: PluginID) -> Result<(i32, i32), Error> {
         let (count, size) = call_suite_fn_double!(self, AEGP_GetMemStats -> ae_sys::A_long, ae_sys::A_long, plugin_id)?;
         Ok((
             count as _,
@@ -105,7 +105,7 @@ impl<'a, T: 'a> MemHandle<'a, T> {
     }
 
     pub fn len(&self) -> Result<usize, Error> {
-        self.suite.get_mem_handle_size(self.handle)
+        self.suite.mem_handle_size(self.handle)
     }
 
     #[inline]

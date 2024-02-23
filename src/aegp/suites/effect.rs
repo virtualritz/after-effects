@@ -23,29 +23,29 @@ impl EffectSuite {
     }
 
     /// Get the number of effects applied to a layer.
-    pub fn get_layer_num_effects(&self, layer: LayerHandle) -> Result<i32, Error> {
+    pub fn layer_num_effects(&self, layer: LayerHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerNumEffects -> ae_sys::A_long, layer.as_ptr())? as i32)
     }
 
     /// Retrieves (by index) a reference to an effect applied to the layer.
-    pub fn get_layer_effect_by_index(&self, plugin_id: PluginID, layer: LayerHandle, index: i32) -> Result<EffectRefHandle, Error> {
+    pub fn layer_effect_by_index(&self, plugin_id: PluginID, layer: LayerHandle, index: i32) -> Result<EffectRefHandle, Error> {
         Ok(EffectRefHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetLayerEffectByIndex -> ae_sys::AEGP_EffectRefH, plugin_id, layer.as_ptr(), index)?
         ))
     }
 
     /// Given an [`EffectRefHandle`], retrieves its associated [`InstalledEffectKey`].
-    pub fn get_installed_key_from_layer_effect(&self, effect_ref: EffectRefHandle) -> Result<InstalledEffectKey, Error> {
+    pub fn installed_key_from_layer_effect(&self, effect_ref: EffectRefHandle) -> Result<InstalledEffectKey, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetInstalledKeyFromLayerEffect -> ae_sys::AEGP_InstalledEffectKey, effect_ref.as_ptr())?.into())
     }
 
     /// Returns description of effect parameter.
     ///
-    /// Do not use the value(s) in the Param returned by this function (Use [`suites::Stream::get_new_stream_value()`](aegp::suites::Stream::get_new_stream_value) instead);
+    /// Do not use the value(s) in the Param returned by this function (Use [`suites::Stream::new_stream_value()`](aegp::suites::Stream::new_stream_value) instead);
     /// it's provided so AEGPs can access parameter defaults, checkbox names, and pop-up strings.
     ///
-    /// Use [`suites::Stream::get_effect_num_param_streams()`](aegp::suites::Stream::get_effect_num_param_streams) to get the stream count, useful for determining the maximum `param_index`.
-    pub fn get_effect_param_union_by_index(&self, plugin_id: PluginID, effect_ref: EffectRefHandle, param_index: i32) -> Result<pf::Param, Error> {
+    /// Use [`suites::Stream::effect_num_param_streams()`](aegp::suites::Stream::effect_num_param_streams) to get the stream count, useful for determining the maximum `param_index`.
+    pub fn effect_param_union_by_index(&self, plugin_id: PluginID, effect_ref: EffectRefHandle, param_index: i32) -> Result<pf::Param, Error> {
         let (param_type, u) = call_suite_fn_double!(self, AEGP_GetEffectParamUnionByIndex -> ae_sys::PF_ParamType, ae_sys::PF_ParamDefUnion, plugin_id, effect_ref.as_ptr(), param_index)?;
 
         unsafe {
@@ -64,7 +64,7 @@ impl EffectSuite {
     }
 
     /// Obtains the flags for the given [`EffectRefHandle`].
-    pub fn get_effect_flags(&self, effect_ref: EffectRefHandle) -> Result<EffectFlags, Error> {
+    pub fn effect_flags(&self, effect_ref: EffectRefHandle) -> Result<EffectFlags, Error> {
         Ok(EffectFlags::from_bits_truncate(call_suite_fn_single!(self, AEGP_GetEffectFlags -> ae_sys::AEGP_EffectFlags, effect_ref.as_ptr())?))
     }
 
@@ -107,21 +107,21 @@ impl EffectSuite {
     }
 
     /// Returns the count of effects installed in After Effects.
-    pub fn get_num_installed_effects(&self) -> Result<i32, Error> {
+    pub fn num_installed_effects(&self) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetNumInstalledEffects -> ae_sys::A_long)? as i32)
     }
 
     /// Returns the [`InstalledEffectKey`] of the next installed effect.
     ///
     /// Pass [`InstalledEffectKey::None`] as the first parameter to obtain the first [`InstalledEffectKey`].
-    pub fn get_next_installed_effect(&self, installed_effect_key: InstalledEffectKey) -> Result<InstalledEffectKey, Error> {
+    pub fn next_installed_effect(&self, installed_effect_key: InstalledEffectKey) -> Result<InstalledEffectKey, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetNextInstalledEffect -> ae_sys::AEGP_InstalledEffectKey, installed_effect_key.into())?.into())
     }
 
     /// Get name of the effect. `name` can be up to `48` characters long.
     ///
     /// Note: use [`suites::DynamicStream::set_stream_name()`](aegp::suites::DynamicStream::set_stream_name) to change the display name of an effect.
-    pub fn get_effect_name(&self, installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
+    pub fn effect_name(&self, installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
         let mut name = [0i8; ae_sys::AEGP_MAX_EFFECT_NAME_SIZE as usize + 1];
         call_suite_fn!(self, AEGP_GetEffectName, installed_effect_key.into(), name.as_mut_ptr() as _)?;
         Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }.to_string_lossy().into_owned())
@@ -131,7 +131,7 @@ impl EffectSuite {
     ///
     /// Match names are in 7-bit ASCII. UI names are in the current application runtime encoding;
     /// for example, ISO 8859-1 for most languages on Windows.
-    pub fn get_effect_match_name(&self, installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
+    pub fn effect_match_name(&self, installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
         let mut name = [0i8; ae_sys::AEGP_MAX_EFFECT_MATCH_NAME_SIZE as usize + 1];
         call_suite_fn!(self, AEGP_GetEffectMatchName, installed_effect_key.into(), name.as_mut_ptr() as _)?;
         // TODO: It's not UTF-8
@@ -139,7 +139,7 @@ impl EffectSuite {
     }
 
     /// Menu category of effect. `category` can be up to `48` characters long.
-    pub fn get_effect_category(&self, installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
+    pub fn effect_category(&self, installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
         let mut name = [0i8; ae_sys::AEGP_MAX_EFFECT_CATEGORY_NAME_SIZE as usize + 1];
         call_suite_fn!(self, AEGP_GetEffectCategory, installed_effect_key.into(), name.as_mut_ptr() as _)?;
         Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }.to_string_lossy().into_owned())
@@ -158,7 +158,7 @@ impl EffectSuite {
     }
 
     /// New in CC 2014. For a given mask_indexL, returns the corresponding `AEGP_MaskIDVal` for use in uniquely identifying the mask.
-    pub fn get_effect_mask_id(&self, effect_ref: EffectRefHandle, mask_index: usize) -> Result<ae_sys::AEGP_MaskIDVal, Error> {
+    pub fn effect_mask_id(&self, effect_ref: EffectRefHandle, mask_index: usize) -> Result<ae_sys::AEGP_MaskIDVal, Error> {
         call_suite_fn_single!(self, AEGP_GetEffectMaskID -> ae_sys::AEGP_MaskIDVal, effect_ref.as_ptr(), mask_index as ae_sys::A_u_long)
     }
 

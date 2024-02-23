@@ -18,12 +18,12 @@ impl MaskSuite {
     }
 
     /// Counts the masks applied to a layer.
-    pub fn get_layer_num_masks(&self, layer: &LayerHandle) -> Result<i32, Error> {
+    pub fn layer_num_masks(&self, layer: &LayerHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerNumMasks -> A_long, layer.as_ptr())? as i32)
     }
 
     /// Given a layer handle and mask index, returns a pointer to the mask handle.
-    pub fn get_layer_mask_by_index(&self, layer: &LayerHandle, mask_index: i32) -> Result<MaskRefHandle, Error> {
+    pub fn layer_mask_by_index(&self, layer: &LayerHandle, mask_index: i32) -> Result<MaskRefHandle, Error> {
         Ok(MaskRefHandle::from_raw_owned(
             call_suite_fn_single!(self, AEGP_GetLayerMaskByIndex -> ae_sys::AEGP_MaskRefH, layer.as_ptr(), mask_index as _)?
         ))
@@ -35,7 +35,7 @@ impl MaskSuite {
     }
 
     /// Given a mask handle, determines if the mask is inverted or not.
-    pub fn get_mask_invert(&self, mask: &MaskRefHandle) -> Result<bool, Error> {
+    pub fn mask_invert(&self, mask: &MaskRefHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskInvert -> ae_sys::A_Boolean, mask.as_ptr())? != 0)
     }
 
@@ -48,7 +48,7 @@ impl MaskSuite {
     ///
     /// * [`MaskMode::None`] does nothing.
     /// * [`MaskMode::Add`] is the default behavior.
-    pub fn get_mask_mode(&self, mask: &MaskRefHandle) -> Result<MaskMode, Error> {
+    pub fn mask_mode(&self, mask: &MaskRefHandle) -> Result<MaskMode, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskMode -> ae_sys::PF_MaskMode, mask.as_ptr())?.into())
     }
 
@@ -58,7 +58,7 @@ impl MaskSuite {
     }
 
     /// Retrieves the motion blur setting for the given mask.
-    pub fn get_mask_motion_blur_state(&self, mask: &MaskRefHandle) -> Result<MaskMBlur, Error> {
+    pub fn mask_motion_blur_state(&self, mask: &MaskRefHandle) -> Result<MaskMBlur, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskMotionBlurState -> ae_sys::AEGP_MaskMBlur, mask.as_ptr())?.into())
     }
 
@@ -69,7 +69,7 @@ impl MaskSuite {
 
     /// New in CS6. Gets the type of feather falloff for the given mask, either
     /// [`MaskFeatherFalloff::Smooth`] or [`MaskFeatherFalloff::Linear`].
-    pub fn get_mask_feather_falloff(&self, mask: &MaskRefHandle) -> Result<MaskFeatherFalloff, Error> {
+    pub fn mask_feather_falloff(&self, mask: &MaskRefHandle) -> Result<MaskFeatherFalloff, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskFeatherFalloff -> ae_sys::AEGP_MaskFeatherFalloff, mask.as_ptr())?.into())
     }
 
@@ -79,7 +79,7 @@ impl MaskSuite {
     }
 
     /// Retrieves the color of the specified mask.
-    pub fn get_mask_color(&self, mask: &MaskRefHandle) -> Result<pf::Pixel64, Error> {
+    pub fn mask_color(&self, mask: &MaskRefHandle) -> Result<pf::Pixel64, Error> {
         let color_val = call_suite_fn_single!(self, AEGP_GetMaskColor -> ae_sys::AEGP_ColorVal, mask.as_ptr())?;
         Ok(unsafe { std::mem::transmute(color_val) })
     }
@@ -90,7 +90,7 @@ impl MaskSuite {
     }
 
     /// Retrieves the lock state of the specified mask.
-    pub fn get_mask_lock_state(&self, mask: &MaskRefHandle) -> Result<bool, Error> {
+    pub fn mask_lock_state(&self, mask: &MaskRefHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskLockState -> ae_sys::A_Boolean, mask.as_ptr())? != 0)
     }
 
@@ -100,7 +100,7 @@ impl MaskSuite {
     }
 
     /// Returns whether or not the given mask is used as a rotobezier.
-    pub fn get_mask_is_roto_bezier(&self, mask: &MaskRefHandle) -> Result<bool, Error> {
+    pub fn mask_is_roto_bezier(&self, mask: &MaskRefHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskIsRotoBezier -> ae_sys::A_Boolean, mask.as_ptr())? != 0)
     }
 
@@ -128,7 +128,7 @@ impl MaskSuite {
     }
 
     /// Retrieves the ``AEGP_MaskIDVal`` for the given [`MaskRefHandle`], for use in uniquely identifying the mask.
-    pub fn get_mask_id(&self, mask: &MaskRefHandle) -> Result<i32, Error> {
+    pub fn mask_id(&self, mask: &MaskRefHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskID -> ae_sys::AEGP_MaskIDVal, mask.as_ptr())? as i32)
     }
 }
@@ -161,7 +161,7 @@ define_suite!(
     ///
     /// This suite enables AEGPs to get and set the text associated with text layers.
     ///
-    /// Note: to get started, retrieve an [`TextDocumentHandle`] by calling [`suites::Stream::get_layer_stream_value()`](aegp::suites::Stream::get_layer_stream_value), above, and passing [`StreamType::TextDocument`] as the `StreamType`.
+    /// Note: to get started, retrieve an [`TextDocumentHandle`] by calling [`suites::Stream::layer_stream_value()`](aegp::suites::Stream::layer_stream_value), above, and passing [`StreamType::TextDocument`] as the `StreamType`.
     MaskOutlineSuite,
     AEGP_MaskOutlineSuite3,
     kAEGPMaskOutlineSuite,
@@ -186,12 +186,12 @@ impl MaskOutlineSuite {
     }
 
     /// Given a mask outline pointer, returns the number of segments in the path.
-    pub fn get_mask_outline_num_segments(&self, mask_outline: &MaskOutlineHandle) -> Result<i32, Error> {
+    pub fn mask_outline_num_segments(&self, mask_outline: &MaskOutlineHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskOutlineNumSegments -> A_long, mask_outline.as_ptr())? as i32)
     }
 
     /// Given a mask outline pointer and a point between 0 and the total number of segments.
-    pub fn get_mask_outline_vertex_info(&self, mask_outline: &MaskOutlineHandle, point: i32) -> Result<ae_sys::AEGP_MaskVertex, Error> {
+    pub fn mask_outline_vertex_info(&self, mask_outline: &MaskOutlineHandle, point: i32) -> Result<ae_sys::AEGP_MaskVertex, Error> {
         call_suite_fn_single!(self, AEGP_GetMaskOutlineVertexInfo -> ae_sys::AEGP_MaskVertex, mask_outline.as_ptr(), point as _)
     }
 
@@ -211,12 +211,12 @@ impl MaskOutlineSuite {
     }
 
     /// Given a mask outline pointer, returns the number of feathers in the path.
-    pub fn get_mask_outline_num_feathers(&self, mask_outline: &MaskOutlineHandle) -> Result<i32, Error> {
+    pub fn mask_outline_num_feathers(&self, mask_outline: &MaskOutlineHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskOutlineNumFeathers -> A_long, mask_outline.as_ptr())? as i32)
     }
 
     /// Given a mask outline pointer and a feather index, returns the feather information.
-    pub fn get_mask_outline_feather_info(&self, mask_outline: &MaskOutlineHandle, feather_index: i32) -> Result<ae_sys::AEGP_MaskFeather, Error> {
+    pub fn mask_outline_feather_info(&self, mask_outline: &MaskOutlineHandle, feather_index: i32) -> Result<ae_sys::AEGP_MaskFeather, Error> {
         call_suite_fn_single!(self, AEGP_GetMaskOutlineFeatherInfo -> ae_sys::AEGP_MaskFeather, mask_outline.as_ptr(), feather_index as _)
     }
 

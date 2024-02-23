@@ -41,7 +41,7 @@ impl CameraSuite {
     }
 
     /// Given a layer handle and time, returns the current camera layer handle.
-    pub fn get_camera(&self, render_context_handle: pr::RenderContextHandle, time: Time) -> Result<LayerHandle, Error> {
+    pub fn camera(&self, render_context_handle: pr::RenderContextHandle, time: Time) -> Result<LayerHandle, Error> {
         let camera_layer_handle = call_suite_fn_single!(self, AEGP_GetCamera -> ae_sys::AEGP_LayerH, render_context_handle.as_ptr(), &time as *const _ as *const ae_sys::A_Time)?;
         if camera_layer_handle.is_null() {
             Err(Error::Generic)
@@ -51,12 +51,12 @@ impl CameraSuite {
     }
 
     /// Given a layer, returns the camera type of the layer.
-    pub fn get_camera_type(&self, camera_layer_handle: LayerHandle) -> Result<CameraType, Error> {
+    pub fn camera_type(&self, camera_layer_handle: LayerHandle) -> Result<CameraType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetCameraType -> ae_sys::AEGP_CameraType, camera_layer_handle.as_ptr())?.into())
     }
 
     /// Retrieves the size (and units used to measure that size) of the film used by the designated camera.
-    pub fn get_camera_film_size(&self, camera_layer_handle: LayerHandle) -> Result<(FilmSizeUnits, f64), Error> {
+    pub fn camera_film_size(&self, camera_layer_handle: LayerHandle) -> Result<(FilmSizeUnits, f64), Error> {
         let mut film_size_units: ae_sys::AEGP_FilmSizeUnits = 0;
         let mut film_size: ae_sys::A_FpLong = 0.0;
 
@@ -71,7 +71,7 @@ impl CameraSuite {
     }
 
     /// Given a composition handle, returns the camera distance to the image plane.
-    pub fn get_default_camera_distance_to_image_plane(&self, comp_handle: CompHandle) -> Result<f64, Error> {
+    pub fn default_camera_distance_to_image_plane(&self, comp_handle: CompHandle) -> Result<f64, Error> {
         call_suite_fn_single!(self, AEGP_GetDefaultCameraDistanceToImagePlane -> f64, comp_handle.as_ptr())
     }
 }
@@ -130,10 +130,10 @@ define_suite_item_wrapper!(
         dispose: ;
 
         /// Returns the camera type
-        r#type() -> CameraType => suite.get_camera_type,
+        r#type() -> CameraType => suite.camera_type,
 
         /// Retrieves the size (and units used to measure that size) of the film used by the camera.
-        film_size() -> (FilmSizeUnits, f64) => suite.get_camera_film_size,
+        film_size() -> (FilmSizeUnits, f64) => suite.camera_film_size,
 
         /// Sets the size (and unites used to measure that size) of the film used by the designated camera.
         set_film_size(film_size_units: FilmSizeUnits, film_size: f64) -> () => suite.set_camera_film_size,
@@ -143,7 +143,7 @@ define_suite_item_wrapper!(
 impl Camera {
     pub fn from_render_context(render_context_handle: pr::RenderContextHandle, time: Time) -> Result<Self, Error> {
         let suite = CameraSuite::new()?;
-        let handle = suite.get_camera(render_context_handle, time)?;
+        let handle = suite.camera(render_context_handle, time)?;
         Ok(Self {
             suite,
             handle,

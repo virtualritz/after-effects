@@ -30,7 +30,7 @@ impl LightSuite {
     }
 
     /// Retrieves the [`LightType`] of the specified camera layer
-    pub fn get_light_type(&self, layer_handle: LayerHandle) -> Result<LightType, Error> {
+    pub fn light_type(&self, layer_handle: LayerHandle) -> Result<LightType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLightType -> ae_sys::AEGP_LightType, layer_handle.as_ptr())?.into())
     }
 

@@ -24,7 +24,7 @@ impl FootageSuite {
 
     /// Returns an error if item isn't a footage item.
     /// Used to convert an item handle to a footage handle.
-    pub fn get_main_footage_from_item(&self, item_handle: ItemHandle) -> Result<FootageHandle, Error> {
+    pub fn main_footage_from_item(&self, item_handle: ItemHandle) -> Result<FootageHandle, Error> {
         Ok(FootageHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetMainFootageFromItem -> ae_sys::AEGP_FootageH, item_handle.as_ptr())?
         ))
@@ -32,14 +32,14 @@ impl FootageSuite {
 
     /// Returns an error if item has no proxy. Returns the proxy footage handle.
     /// Note: a composition can have a proxy.
-    pub fn get_proxy_footage_from_item(&self, item_handle: ItemHandle) -> Result<FootageHandle, Error> {
+    pub fn proxy_footage_from_item(&self, item_handle: ItemHandle) -> Result<FootageHandle, Error> {
         Ok(FootageHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetProxyFootageFromItem -> ae_sys::AEGP_FootageH, item_handle.as_ptr())?
         ))
     }
 
     /// Returns the number of data (RGBA or audio) files, and the number of files per frame (may be greater than one if the footage has auxiliary channels).
-    pub fn get_footage_num_files(&self, footage_handle: FootageHandle) -> Result<(usize, usize), Error> {
+    pub fn footage_num_files(&self, footage_handle: FootageHandle) -> Result<(usize, usize), Error> {
         let (num_main_files, files_per_frame) = call_suite_fn_double!(self, AEGP_GetFootageNumFiles -> ae_sys::A_long, ae_sys::A_long, footage_handle.as_ptr())?;
         Ok((
             num_main_files  as usize,
@@ -51,10 +51,10 @@ impl FootageSuite {
     /// Get fully realized path to footage source file.
     ///
     /// Retrieves the footage path for a piece of footage (or for the specified frame of a footage sequence).
-    /// `frame_num` ranges from `0 to num_main_files`, as obtained using [`get_footage_num_files()`](Self::get_footage_num_files).
+    /// `frame_num` ranges from `0 to num_main_files`, as obtained using [`footage_num_files()`](Self::footage_num_files).
     ///
     /// [`ae_sys::AEGP_FOOTAGE_MAIN_FILE_INDEX`](after_effects_sys::AEGP_FOOTAGE_MAIN_FILE_INDEX) is the main file.
-    pub fn get_footage_path(&self, footage_handle: FootageHandle, frame_num: usize, file_index: usize) -> Result<String, Error> {
+    pub fn footage_path(&self, footage_handle: FootageHandle, frame_num: usize, file_index: usize) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetFootagePath -> ae_sys::AEGP_MemHandle, footage_handle.as_ptr(), frame_num as i32, file_index as i32)?;
 
         // Create a mem handle each and lock it.
@@ -67,7 +67,7 @@ impl FootageSuite {
     }
 
     /// Retrieves the footage signature of specified footage.
-    pub fn get_footage_signature(&self, footage_handle: FootageHandle) -> Result<FootageSignature, Error> {
+    pub fn footage_signature(&self, footage_handle: FootageHandle) -> Result<FootageSignature, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetFootageSignature -> ae_sys::AEGP_FootageSignature, footage_handle.as_ptr())?.into())
     }
 
@@ -118,7 +118,7 @@ impl FootageSuite {
     /// Populates an AEGP_FootageInterp describing the settings of the [`FootageHandle`].
     /// There is no way to create a valid `AEGP_FootageInterp` other than by using this function.
     /// If `proxy` is `true`, the proxy footage's settings are retrieved.
-    pub fn get_footage_interpretation(&self, item_handle: ItemHandle, proxy: bool) -> Result<ae_sys::AEGP_FootageInterp, Error> {
+    pub fn footage_interpretation(&self, item_handle: ItemHandle, proxy: bool) -> Result<ae_sys::AEGP_FootageInterp, Error> {
         call_suite_fn_single!(self, AEGP_GetFootageInterpretation -> ae_sys::AEGP_FootageInterp, item_handle.as_ptr(), proxy.into())
     }
 
@@ -129,7 +129,7 @@ impl FootageSuite {
     }
 
     /// Returns an [`ae_sys::AEGP_FootageLayerKey`](after_effects_sys::AEGP_FootageLayerKey) describing the footage.
-    pub fn get_footage_layer_key(&self, footage_handle: FootageHandle) -> Result<ae_sys::AEGP_FootageLayerKey, Error> {
+    pub fn footage_layer_key(&self, footage_handle: FootageHandle) -> Result<ae_sys::AEGP_FootageLayerKey, Error> {
         call_suite_fn_single!(self, AEGP_GetFootageLayerKey -> ae_sys::AEGP_FootageLayerKey, footage_handle.as_ptr())
     }
 
@@ -180,7 +180,7 @@ impl FootageSuite {
 
     /// Returns the color of a given solid. Returns an error if the [`ItemHandle`] is not a solid.
     /// If `proxy` is `true`, the proxy solid's color is retrieved.
-    pub fn get_solid_footage_color(&self, item_handle: ItemHandle, proxy: bool) -> Result<ae_sys::AEGP_ColorVal, Error> {
+    pub fn solid_footage_color(&self, item_handle: ItemHandle, proxy: bool) -> Result<ae_sys::AEGP_ColorVal, Error> {
         call_suite_fn_single!(self, AEGP_GetSolidFootageColor -> ae_sys::AEGP_ColorVal, item_handle.as_ptr(), proxy.into())
     }
 
@@ -197,12 +197,12 @@ impl FootageSuite {
     }
 
     /// Retrieves information about the audio data in the footage item (by populating the `AEGP_SoundDataFormat` you passed in).
-    pub fn get_footage_sound_data_format(&self, footage_handle: FootageHandle) -> Result<ae_sys::AEGP_SoundDataFormat, Error> {
+    pub fn footage_sound_data_format(&self, footage_handle: FootageHandle) -> Result<ae_sys::AEGP_SoundDataFormat, Error> {
         call_suite_fn_single!(self, AEGP_GetFootageSoundDataFormat -> ae_sys::AEGP_SoundDataFormat, footage_handle.as_ptr())
     }
 
     /// Populates and returns a `AEGP_FileSequenceImportOptions` describing the given `AEGP_FootageH`.
-    pub fn get_footage_sequence_import_options(&self, footage_handle: FootageHandle) -> Result<ae_sys::AEGP_FileSequenceImportOptions, Error> {
+    pub fn footage_sequence_import_options(&self, footage_handle: FootageHandle) -> Result<ae_sys::AEGP_FileSequenceImportOptions, Error> {
         call_suite_fn_single!(self, AEGP_GetFootageSequenceImportOptions -> ae_sys::AEGP_FileSequenceImportOptions, footage_handle.as_ptr())
     }
 }

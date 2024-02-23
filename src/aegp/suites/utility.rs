@@ -71,7 +71,7 @@ impl UtilitySuite {
 
     /// Retrieves After Effects' HWND; useful when displaying your own dialog on Windows.
     /// If you don't use After Effects' HWND, your modal dialog will not prevent interaction with the windows behind, and pain will ensue.
-    pub fn get_main_hwnd(&self) -> Result<*mut std::ffi::c_void, Error> {
+    pub fn main_hwnd(&self) -> Result<*mut std::ffi::c_void, Error> {
         let mut hwnd = std::ptr::null_mut();
         call_suite_fn!(self, AEGP_GetMainHWND, &mut hwnd as *mut _ as *mut _)?;
         Ok(hwnd)
@@ -160,7 +160,7 @@ impl UtilitySuite {
     }
 
     /// Returns whether After Effects is running without a user interface.
-    pub fn get_suppress_interactive_ui(&self) -> Result<bool, Error> {
+    pub fn suppress_interactive_ui(&self) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetSuppressInteractiveUI -> ae_sys::A_Boolean)? != 0)
     }
 
@@ -180,7 +180,7 @@ impl UtilitySuite {
 
     /// Retrieves the last error message displayed to the user, and its associated error number.
     /// Pass in the size of the character buffer to be returned.
-    pub fn get_last_error_message(&self) -> Result<(String, Error), Error> {
+    pub fn last_error_message(&self) -> Result<(String, Error), Error> {
         let mut buffer = vec![0u8; 512];
         let err = call_suite_fn_single!(self, AEGP_GetLastErrorMessage -> ae_sys::A_Err, buffer.len() as _, buffer.as_mut_ptr() as *mut _)?;
         Ok((String::from_utf8_lossy(&buffer).to_string(), Error::from(err)))
@@ -225,7 +225,7 @@ impl UtilitySuite {
 
     /// On macOS, returns a `CFBundleRef` to your Mach-O plug-in, or `NULL` for a CFM plug-in.
     /// Always returns `NULL` on Windows (you can use an OS-specific entry point to capture your DLLInstance).
-    pub fn get_plugin_platform_ref(&self, plugin_id: PluginID) -> Result<*mut std::ffi::c_void, Error> {
+    pub fn plugin_platform_ref(&self, plugin_id: PluginID) -> Result<*mut std::ffi::c_void, Error> {
         let mut plat_ref = std::ptr::null_mut();
         call_suite_fn!(self, AEGP_GetPluginPlatformRef, plugin_id, &mut plat_ref as *mut _ as *mut _)?;
         Ok(plat_ref)
@@ -242,7 +242,7 @@ impl UtilitySuite {
     /// - [`GetPathTypes::UserPlugin`] - The suite specific location of user specific plug-ins.
     /// - [`GetPathTypes::AllUserPlugin`] - The suite specific location of plug-ins shared by all users.
     /// - [`GetPathTypes::App`] - The After Effects .exe or .app location. Not plug-in specific.
-    pub fn get_plugin_paths(&self, plugin_id: PluginID, path_type: GetPathTypes) -> Result<String, Error> {
+    pub fn plugin_paths(&self, plugin_id: PluginID, path_type: GetPathTypes) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetPluginPaths -> ae_sys::AEGP_MemHandle, plugin_id, path_type.into())?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.

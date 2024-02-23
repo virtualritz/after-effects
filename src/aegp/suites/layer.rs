@@ -11,7 +11,7 @@ define_suite!(
     ///
     /// Use [`suites::Layer::set_layer_offset()`] and [`suites::Layer::set_layer_in_point_and_duration()`] to properly set the layer's time information.
     ///
-    /// When the layer stretch factor (obtained using [`suites::Layer::get_layer_stretch()`], naturally) is not 100%, the following computation will be needed to yield the correct layer offset:
+    /// When the layer stretch factor (obtained using [`suites::Layer::layer_stretch()`], naturally) is not 100%, the following computation will be needed to yield the correct layer offset:
     /// ```
     /// offset = compIn - stretch * layerIn;
     /// ```
@@ -29,12 +29,12 @@ impl LayerSuite {
     }
 
     /// Obtains the number of layers in a composition.
-    pub fn get_comp_num_layers(&self, comp_handle: CompHandle) -> Result<usize, Error> {
+    pub fn comp_num_layers(&self, comp_handle: CompHandle) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetCompNumLayers -> i32, comp_handle.as_ptr())? as usize)
     }
 
     /// Get a [`LayerHandle`] from a composition. Zero is the foremost layer.
-    pub fn get_comp_layer_by_index(&self, comp_handle: CompHandle, layer_index: usize) -> Result<LayerHandle, Error> {
+    pub fn comp_layer_by_index(&self, comp_handle: CompHandle, layer_index: usize) -> Result<LayerHandle, Error> {
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetCompLayerByIndex -> ae_sys::AEGP_LayerH, comp_handle.as_ptr(), layer_index as _)?
         ))
@@ -43,7 +43,7 @@ impl LayerSuite {
     /// Get the active layer. If a Layer or effect controls palette is active, the active layer is that associated with the front-most tab in the window.
     ///
     /// If a composition or timeline window is active, the active layer is the selected layer (if only one is selected; otherwise `None` is returned).
-    pub fn get_active_layer(&self) -> Result<Option<LayerHandle>, Error> {
+    pub fn active_layer(&self) -> Result<Option<LayerHandle>, Error> {
         let layer_handle = call_suite_fn_single!(self, AEGP_GetActiveLayer -> ae_sys::AEGP_LayerH)?;
         if layer_handle.is_null() {
             Ok(None)
@@ -53,12 +53,12 @@ impl LayerSuite {
     }
 
     /// Get the index of the layer (0 is the topmost layer in the composition).
-    pub fn get_layer_index(&self, layer_handle: LayerHandle) -> Result<usize, Error> {
+    pub fn layer_index(&self, layer_handle: LayerHandle) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerIndex -> i32, layer_handle.as_ptr())? as usize)
     }
 
     /// Get the [`ItemHandle`] of the layer's source item.
-    pub fn get_layer_source_item(&self, layer_handle: LayerHandle) -> Result<ItemHandle, Error> {
+    pub fn layer_source_item(&self, layer_handle: LayerHandle) -> Result<ItemHandle, Error> {
         Ok(ItemHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetLayerSourceItem -> ae_sys::AEGP_ItemH, layer_handle.as_ptr())?
         ))
@@ -67,19 +67,19 @@ impl LayerSuite {
     /// Retrieves the ID of the given [`LayerHandle`].
     ///
     /// This is useful when hunting for a specific layer's ID in an [`StreamValue`].
-    pub fn get_layer_source_item_id(&self, layer_handle: LayerHandle) -> Result<i32, Error> {
+    pub fn layer_source_item_id(&self, layer_handle: LayerHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerSourceItemID -> i32, layer_handle.as_ptr())?)
     }
 
     /// Get the AEGP_CompH of the composition containing the layer.
-    pub fn get_layer_parent_comp(&self, layer_handle: LayerHandle) -> Result<CompHandle, Error> {
+    pub fn layer_parent_comp(&self, layer_handle: LayerHandle) -> Result<CompHandle, Error> {
         Ok(CompHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetLayerParentComp -> ae_sys::AEGP_CompH, layer_handle.as_ptr())?
         ))
     }
 
     /// Get the name of a layer.
-    pub fn get_layer_name(&self, plugin_id: PluginID, layer_handle: LayerHandle) -> Result<(String, String), Error> {
+    pub fn layer_name(&self, plugin_id: PluginID, layer_handle: LayerHandle) -> Result<(String, String), Error> {
         let (layer_name, source_name) = call_suite_fn_double!(self, AEGP_GetLayerName ->ae_sys::AEGP_MemHandle, ae_sys::AEGP_MemHandle, plugin_id, layer_handle.as_ptr())?;
         unsafe {
             Ok((
@@ -92,7 +92,7 @@ impl LayerSuite {
     }
 
     /// Get the quality of a layer.
-    pub fn get_layer_quality(&self, layer_handle: LayerHandle) -> Result<LayerQuality, Error> {
+    pub fn layer_quality(&self, layer_handle: LayerHandle) -> Result<LayerQuality, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerQuality -> ae_sys::AEGP_LayerQuality, layer_handle.as_ptr())?.into())
     }
 
@@ -102,7 +102,7 @@ impl LayerSuite {
     }
 
     /// Get flags for a layer.
-    pub fn get_layer_flags(&self, layer_handle: LayerHandle) -> Result<LayerFlags, Error> {
+    pub fn layer_flags(&self, layer_handle: LayerHandle) -> Result<LayerFlags, Error> {
         Ok(LayerFlags::from_bits_truncate(
             call_suite_fn_single!(self, AEGP_GetLayerFlags -> ae_sys::AEGP_LayerFlags, layer_handle.as_ptr())?
         ))
@@ -128,19 +128,19 @@ impl LayerSuite {
     /// Get current time, in layer or composition timespace. This value is not updated during rendering.
     ///
     /// NOTE: If a layer starts at other than time 0 or is time-stretched other than 100%, layer time and composition time are distinct.
-    pub fn get_layer_current_time(&self, layer_handle: LayerHandle, time_mode: TimeMode) -> Result<Time, Error> {
+    pub fn layer_current_time(&self, layer_handle: LayerHandle, time_mode: TimeMode) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerCurrentTime -> ae_sys::A_Time, layer_handle.as_ptr(), time_mode.into())?.into())
     }
 
     /// Get time of first visible frame in composition or layer time.
     ///
     /// In layer time, the `in_point` is always 0.
-    pub fn get_layer_in_point(&self, layer_handle: LayerHandle, time_mode: TimeMode) -> Result<Time, Error> {
+    pub fn layer_in_point(&self, layer_handle: LayerHandle, time_mode: TimeMode) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerInPoint -> ae_sys::A_Time, layer_handle.as_ptr(), time_mode.into())?.into())
     }
 
     /// Get duration of layer, in composition or layer time, in seconds.
-    pub fn get_layer_duration(&self, layer_handle: LayerHandle, time_mode: TimeMode) -> Result<Time, Error> {
+    pub fn layer_duration(&self, layer_handle: LayerHandle, time_mode: TimeMode) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerDuration -> ae_sys::A_Time, layer_handle.as_ptr(), time_mode.into())?.into())
     }
 
@@ -150,7 +150,7 @@ impl LayerSuite {
     }
 
     /// Get the offset from the start of the composition to layer time 0, in composition time.
-    pub fn get_layer_offset(&self, layer_handle: LayerHandle) -> Result<Time, Error> {
+    pub fn layer_offset(&self, layer_handle: LayerHandle) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerOffset -> ae_sys::A_Time, layer_handle.as_ptr())?.into())
     }
 
@@ -160,7 +160,7 @@ impl LayerSuite {
     }
 
     /// Get stretch factor of a layer.
-    pub fn get_layer_stretch(&self, layer_handle: LayerHandle) -> Result<Ratio, Error> {
+    pub fn layer_stretch(&self, layer_handle: LayerHandle) -> Result<Ratio, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerStretch -> ae_sys::A_Ratio, layer_handle.as_ptr())?.into())
     }
 
@@ -170,7 +170,7 @@ impl LayerSuite {
     }
 
     /// Get transfer mode of a layer.
-    pub fn get_layer_transfer_mode(&self, layer_handle: LayerHandle) -> Result<ae_sys::AEGP_LayerTransferMode, Error> {
+    pub fn layer_transfer_mode(&self, layer_handle: LayerHandle) -> Result<ae_sys::AEGP_LayerTransferMode, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerTransferMode -> ae_sys::AEGP_LayerTransferMode, layer_handle.as_ptr())?.into())
     }
 
@@ -208,12 +208,12 @@ impl LayerSuite {
     }
 
     /// Given a layer's handle and a time, returns the bounds of area visible with masks applied.
-    pub fn get_layer_masked_bounds(&self, layer_handle: LayerHandle, time_mode: TimeMode, time: Time) -> Result<FloatRect, Error> {
+    pub fn layer_masked_bounds(&self, layer_handle: LayerHandle, time_mode: TimeMode, time: Time) -> Result<FloatRect, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerMaskedBounds -> ae_sys::A_FloatRect, layer_handle.as_ptr(), time_mode.into(), &time.into() as *const _)?.into())
     }
 
     /// Returns a layer's object type.
-    pub fn get_layer_object_type(&self, layer_handle: LayerHandle) -> Result<ObjectType, Error> {
+    pub fn layer_object_type(&self, layer_handle: LayerHandle) -> Result<ObjectType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerObjectType -> ae_sys::AEGP_ObjectType, layer_handle.as_ptr())?.into())
     }
 
@@ -255,22 +255,22 @@ impl LayerSuite {
     }
 
     /// Used by the dancing dissolve transfer function.
-    pub fn get_layer_dancing_rand_value(&self, layer_handle: LayerHandle, time: Time) -> Result<i32, Error> {
+    pub fn layer_dancing_rand_value(&self, layer_handle: LayerHandle, time: Time) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerDancingRandValue -> ae_sys::A_long, layer_handle.as_ptr(), &time.into() as *const _)?.into())
     }
 
     /// Supplies the layer's unique ID. This ID never changes during the lifetime of the project.
-    pub fn get_layer_id(&self, layer_handle: LayerHandle) -> Result<LayerID, Error> {
+    pub fn layer_id(&self, layer_handle: LayerHandle) -> Result<LayerID, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerID -> ae_sys::AEGP_LayerIDVal, layer_handle.as_ptr())? as LayerID)
     }
 
     /// Given a layer handle and time, returns the layer-to-world transformation matrix.
-    pub fn get_layer_to_world_xform(&self, layer_handle: LayerHandle, time: Time) -> Result<Matrix4, Error> {
+    pub fn layer_to_world_xform(&self, layer_handle: LayerHandle, time: Time) -> Result<Matrix4, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerToWorldXform -> ae_sys::A_Matrix4, layer_handle.as_ptr(), &time.into() as *const _)?.into())
     }
 
     /// Given a layer handle, the current (composition) time, and the requested view time, returns the translation between the user's view and the layer, corrected for the composition's current aspect ratio.
-    pub fn get_layer_to_world_xform_from_view(&self, layer_handle: LayerHandle, comp_time: Time, view_time: Time) -> Result<Matrix4, Error> {
+    pub fn layer_to_world_xform_from_view(&self, layer_handle: LayerHandle, comp_time: Time, view_time: Time) -> Result<Matrix4, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerToWorldXformFromView -> ae_sys::A_Matrix4, layer_handle.as_ptr(), &comp_time.into() as *const _, &view_time.into() as *const _)?.into())
     }
 
@@ -281,7 +281,7 @@ impl LayerSuite {
     }
 
     /// Retrieves the handle to a layer's parent (none if not parented).
-    pub fn get_layer_parent(&self, layer_handle: LayerHandle) -> Result<Option<LayerHandle>, Error> {
+    pub fn layer_parent(&self, layer_handle: LayerHandle) -> Result<Option<LayerHandle>, Error> {
         let parent_handle = call_suite_fn_single!(self, AEGP_GetLayerParent -> ae_sys::AEGP_LayerH, layer_handle.as_ptr())?;
         if parent_handle.is_null() {
             Ok(None)
@@ -308,14 +308,14 @@ impl LayerSuite {
     }
 
     /// Retrieves the [`LayerHandle`] associated with a given [`LayerID`] (which is what you get when accessing an effect's layer parameter stream).
-    pub fn get_layer_from_layer_id(&self, parent: CompHandle, layer_id: LayerID) -> Result<LayerHandle, Error> {
+    pub fn layer_from_layer_id(&self, parent: CompHandle, layer_id: LayerID) -> Result<LayerHandle, Error> {
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetLayerFromLayerID -> ae_sys::AEGP_LayerH, parent.as_ptr(), layer_id as _)?
         ))
     }
 
     /// Gets a layer's [`LabelId`].
-    pub fn get_layer_label(&self, layer_handle: LayerHandle) -> Result<LabelId, Error> {
+    pub fn layer_label(&self, layer_handle: LayerHandle) -> Result<LabelId, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerLabel -> ae_sys::AEGP_LabelID, layer_handle.as_ptr())?.into())
     }
 
@@ -330,7 +330,7 @@ impl LayerSuite {
     ///
     /// - [`LayerSamplingQuality::Bilinear`]
     /// - [`LayerSamplingQuality::Bicubic`]
-    pub fn get_layer_sampling_quality(&self, layer_handle: LayerHandle) -> Result<LayerSamplingQuality, Error> {
+    pub fn layer_sampling_quality(&self, layer_handle: LayerHandle) -> Result<LayerSamplingQuality, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerSamplingQuality -> ae_sys::AEGP_LayerSamplingQuality, layer_handle.as_ptr())?.into())
     }
 
@@ -345,7 +345,7 @@ impl LayerSuite {
     }
 
     /// New in 23.0. Returns the track matte layer of [`LayerHandle`]. Returns `None` if there is no track matte layer.
-    pub fn get_track_matte_layer(&self, layer_handle: LayerHandle) -> Result<Option<LayerHandle>, Error> {
+    pub fn track_matte_layer(&self, layer_handle: LayerHandle) -> Result<Option<LayerHandle>, Error> {
         let track_matte_handle = call_suite_fn_single!(self, AEGP_GetTrackMatteLayer -> ae_sys::AEGP_LayerH, layer_handle.as_ptr())?;
         if track_matte_handle.is_null() {
             Ok(None)

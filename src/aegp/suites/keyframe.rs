@@ -33,12 +33,12 @@ impl KeyframeSuite {
     /// Returns `-1` if the stream is not keyframe-able.
     ///
     /// Also, note that a stream without keyframes isn't necessarily constant; it can be altered by expressions.
-    pub fn get_stream_num_kfs(&self, stream: &StreamReferenceHandle) -> Result<i32, Error> {
+    pub fn stream_num_kfs(&self, stream: &StreamReferenceHandle) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetStreamNumKFs -> A_long, stream.as_ptr())? as i32)
     }
 
     /// Retrieves the time of the specified keyframe.
-    pub fn get_keyframe_time(&self, stream: &StreamReferenceHandle, key_index: i32, time_mode: TimeMode) -> Result<Time, Error> {
+    pub fn keyframe_time(&self, stream: &StreamReferenceHandle, key_index: i32, time_mode: TimeMode) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetKeyframeTime -> A_Time, stream.as_ptr(), key_index, time_mode.into())?.into())
     }
 
@@ -59,9 +59,9 @@ impl KeyframeSuite {
     }
 
     /// Creates and populates an [`StreamValue`] for the stream's value at the time of the keyframe.
-    pub fn get_new_keyframe_value(&self, plugin_id: PluginID, stream: &StreamReferenceHandle, key_index: i32) -> Result<StreamValue, Error> {
+    pub fn new_keyframe_value(&self, plugin_id: PluginID, stream: &StreamReferenceHandle, key_index: i32) -> Result<StreamValue, Error> {
         let stream_suite = aegp::suites::Stream::new()?;
-        let type_ = stream_suite.get_stream_type(&stream)?;
+        let type_ = stream_suite.stream_type(&stream)?;
 
         let mut sys_stream_value2 = call_suite_fn_single!(self, AEGP_GetNewKeyframeValue -> AEGP_StreamValue2, plugin_id, stream.as_ptr(), key_index)?;
 
@@ -80,21 +80,21 @@ impl KeyframeSuite {
     }
 
     /// Retrieves the dimensionality of the stream's value.
-    pub fn get_stream_value_dimensionality(&self, stream: &StreamReferenceHandle) -> Result<i16, Error> {
+    pub fn stream_value_dimensionality(&self, stream: &StreamReferenceHandle) -> Result<i16, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetStreamValueDimensionality -> A_short, stream.as_ptr())? as i16)
     }
 
     /// Retrieves the temporal dimensionality of the stream.
-    pub fn get_stream_temporal_dimensionality(&self, stream: &StreamReferenceHandle) -> Result<i16, Error> {
+    pub fn stream_temporal_dimensionality(&self, stream: &StreamReferenceHandle) -> Result<i16, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetStreamTemporalDimensionality -> A_short, stream.as_ptr())? as i16)
     }
 
     /// Returns the [`StreamValue`]s representing the stream's tangential values at the time of the keyframe.
     ///
     /// Returns a tuple containing the in and out tangents.
-    pub fn get_new_keyframe_spatial_tangents(&self, plugin_id: PluginID, stream: &StreamReferenceHandle, key_index: i32) -> Result<(StreamValue, StreamValue), Error> {
+    pub fn new_keyframe_spatial_tangents(&self, plugin_id: PluginID, stream: &StreamReferenceHandle, key_index: i32) -> Result<(StreamValue, StreamValue), Error> {
         let stream_suite = aegp::suites::Stream::new()?;
-        let type_ = stream_suite.get_stream_type(&stream)?;
+        let type_ = stream_suite.stream_type(&stream)?;
 
         let (mut sys_in_tan, mut sys_out_tan) =
             call_suite_fn_double!(self, AEGP_GetNewKeyframeSpatialTangents -> AEGP_StreamValue2, AEGP_StreamValue2, plugin_id, stream.as_ptr(), key_index)?;
@@ -122,7 +122,7 @@ impl KeyframeSuite {
     }
 
     /// Retrieves the [`AEGP_KeyframeEase`](after_effects_sys::AEGP_KeyframeEase)s associated with the specified dimension of the stream's value at the time of the keyframe.
-    pub fn get_keyframe_temporal_ease(&self, stream: &StreamReferenceHandle, key_index: i32, dimension: i32) -> Result<(AEGP_KeyframeEase, AEGP_KeyframeEase), Error> {
+    pub fn keyframe_temporal_ease(&self, stream: &StreamReferenceHandle, key_index: i32, dimension: i32) -> Result<(AEGP_KeyframeEase, AEGP_KeyframeEase), Error> {
         call_suite_fn_double!(self, AEGP_GetKeyframeTemporalEase -> ae_sys::AEGP_KeyframeEase, ae_sys::AEGP_KeyframeEase, stream.as_ptr(), key_index, dimension)
     }
 
@@ -132,7 +132,7 @@ impl KeyframeSuite {
     }
 
     /// Retrieves the flags currently set for the keyframe.
-    pub fn get_keyframe_flags(&self, stream: &StreamReferenceHandle, key_index: i32) -> Result<KeyframeFlags, Error> {
+    pub fn keyframe_flags(&self, stream: &StreamReferenceHandle, key_index: i32) -> Result<KeyframeFlags, Error> {
         Ok(KeyframeFlags::from_bits_truncate(
             call_suite_fn_single!(self, AEGP_GetKeyframeFlags -> ae_sys::AEGP_KeyframeFlags, stream.as_ptr(), key_index)?
         ))
@@ -144,7 +144,7 @@ impl KeyframeSuite {
     }
 
     /// Retrieves the in and out [`KeyframeInterpolation`]s for the specified keyframe.
-    pub fn get_keyframe_interpolation(&self, stream: &StreamReferenceHandle, key_index: i32) -> Result<(KeyframeInterpolation, KeyframeInterpolation), Error> {
+    pub fn keyframe_interpolation(&self, stream: &StreamReferenceHandle, key_index: i32) -> Result<(KeyframeInterpolation, KeyframeInterpolation), Error> {
         let (in_interp, out_interp) =
             call_suite_fn_double!(self,
                 AEGP_GetKeyframeInterpolation -> ae_sys::AEGP_KeyframeInterpolationType, ae_sys::AEGP_KeyframeInterpolationType,
@@ -170,7 +170,7 @@ impl KeyframeSuite {
         })
     }
 
-    pub fn get_keyframe_label_color_index(&self, stream: &StreamReferenceHandle, key_index: i32) -> Result<i32, Error> {
+    pub fn keyframe_label_color_index(&self, stream: &StreamReferenceHandle, key_index: i32) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetKeyframeLabelColorIndex -> A_long, stream.as_ptr(), key_index)? as i32)
     }
 

@@ -18,7 +18,7 @@ impl ColorSettingsSuite {
     }
 
     /// Retrieves the current opaque `PF_EffectBlendingTables`, for use with `AEGP_TransferRect`.
-    pub fn get_blending_tables(&self, render_context: RenderContextHandle) -> Result<ae_sys::PF_EffectBlendingTables, Error> {
+    pub fn blending_tables(&self, render_context: RenderContextHandle) -> Result<ae_sys::PF_EffectBlendingTables, Error> {
         call_suite_fn_single!(self, AEGP_GetBlendingTables -> ae_sys::PF_EffectBlendingTables, render_context.as_ptr())
     }
 
@@ -35,14 +35,14 @@ impl ColorSettingsSuite {
 
     /// Retrieves the opaque current working space ICC profile.
     /// The "New" in the name does not indicate that you're making up a new profile; rather, it's part of our function naming standard; anything with "New" in the name allocates something which the caller must dispose.
-    pub fn get_new_working_space_color_profile(&self, plugin_id: PluginID, comp: CompHandle) -> Result<ColorProfileHandle, Error> {
+    pub fn new_working_space_color_profile(&self, plugin_id: PluginID, comp: CompHandle) -> Result<ColorProfileHandle, Error> {
         Ok(ColorProfileHandle::from_raw_owned(
             call_suite_fn_single!(self, AEGP_GetNewWorkingSpaceColorProfile -> ae_sys::AEGP_ColorProfileP, plugin_id, comp.as_ptr())?
         ))
     }
 
     /// Retrieves a new [`ColorProfileHandle`] from After Effects, representing the specified ICC profile.
-    pub fn get_new_color_profile_from_icc_profile(&self, plugin_id: PluginID, icc_size: i32, icc_data: *const std::ffi::c_void) -> Result<ColorProfileHandle, Error> {
+    pub fn new_color_profile_from_icc_profile(&self, plugin_id: PluginID, icc_size: i32, icc_data: *const std::ffi::c_void) -> Result<ColorProfileHandle, Error> {
         Ok(ColorProfileHandle::from_raw_owned(
             call_suite_fn_single!(self, AEGP_GetNewColorProfileFromICCProfile -> ae_sys::AEGP_ColorProfileP, plugin_id, icc_size, icc_data)?
         ))
@@ -51,13 +51,13 @@ impl ColorSettingsSuite {
     /// Retrieves a new ICC profile representing the specified color profile.
     ///
     /// Use [`MemHandle::to_bytes()`] to convert into `Vec<u8>`.
-    pub fn get_new_icc_profile_from_color_profile(&self, plugin_id: PluginID, color_profile: ConstColorProfileHandle) -> Result<MemHandle<u8>, Error> {
+    pub fn new_icc_profile_from_color_profile(&self, plugin_id: PluginID, color_profile: ConstColorProfileHandle) -> Result<MemHandle<u8>, Error> {
         let handle = call_suite_fn_single!(self, AEGP_GetNewICCProfileFromColorProfile -> ae_sys::AEGP_MemHandle, plugin_id, color_profile.as_ptr())?;
         Ok(MemHandle::from_raw(handle)?)
     }
 
     /// Returns a textual description of the specified color profile.
-    pub fn get_new_color_profile_description(&self, plugin_id: PluginID, color_profile: ConstColorProfileHandle) -> Result<String, Error> {
+    pub fn new_color_profile_description(&self, plugin_id: PluginID, color_profile: ConstColorProfileHandle) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetNewColorProfileDescription -> ae_sys::AEGP_MemHandle, plugin_id, color_profile.as_ptr())?;
         Ok(unsafe {
             U16CString::from_ptr_str(
@@ -72,7 +72,7 @@ impl ColorSettingsSuite {
     }
 
     /// Returns a floating point number approximating the gamma setting used by the specified color profile.
-    pub fn get_color_profile_approximate_gamma(&self, color_profile: ConstColorProfileHandle) -> Result<f32, Error> {
+    pub fn color_profile_approximate_gamma(&self, color_profile: ConstColorProfileHandle) -> Result<f32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetColorProfileApproximateGamma -> ae_sys::A_FpShort, color_profile.as_ptr())?)
     }
 
@@ -95,7 +95,7 @@ impl ColorSettingsSuite {
     /// Returns the OCIO configuration file used by the project.
     ///
     /// Returned string is the OCIO Configuration file.
-    pub fn get_ocio_configuration_file(&self, plugin_id: PluginID) -> Result<String, Error> {
+    pub fn ocio_configuration_file(&self, plugin_id: PluginID) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetOCIOConfigurationFile -> ae_sys::AEGP_MemHandle, plugin_id)?;
         Ok(unsafe {
             U16CString::from_ptr_str(
@@ -107,7 +107,7 @@ impl ColorSettingsSuite {
     /// Returns the absolute file path to the OCIO configuration used by the project
     ///
     /// The returned string is an absolute path to OCIO Configuration file.
-    pub fn get_ocio_configuration_file_path(&self, plugin_id: PluginID) -> Result<String, Error> {
+    pub fn ocio_configuration_file_path(&self, plugin_id: PluginID) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetOCIOConfigurationFilePath -> ae_sys::AEGP_MemHandle, plugin_id)?;
         Ok(unsafe {
             U16CString::from_ptr_str(
@@ -119,7 +119,7 @@ impl ColorSettingsSuite {
     /// Returns the working color space of the project in OCIO mode.
     ///
     /// The returned string specifies the working color space.
-    pub fn get_ocio_working_color_space(&self, plugin_id: PluginID) -> Result<String, Error> {
+    pub fn ocio_working_color_space(&self, plugin_id: PluginID) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGPD_GetOCIOWorkingColorSpace -> ae_sys::AEGP_MemHandle, plugin_id)?;
         Ok(unsafe {
             U16CString::from_ptr_str(
@@ -131,7 +131,7 @@ impl ColorSettingsSuite {
     /// Returns the Display and View transforms used by the project.
     ///
     /// The returned strings specify the Display and View transforms used at project level.
-    pub fn get_ocio_display_color_space(&self, plugin_id: PluginID) -> Result<(String, String), Error> {
+    pub fn ocio_display_color_space(&self, plugin_id: PluginID) -> Result<(String, String), Error> {
         let (display, view) = call_suite_fn_double!(self, AEGPD_GetOCIODisplayColorSpace -> ae_sys::AEGP_MemHandle, ae_sys::AEGP_MemHandle, plugin_id)?;
         Ok(unsafe {(
             U16CString::from_ptr_str(MemHandle::<u16>::from_raw(display)?.lock()?.as_ptr()).to_string_lossy(),
