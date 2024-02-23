@@ -59,7 +59,7 @@ impl KeyframeSuite {
     }
 
     /// Creates and populates an [`StreamValue`] for the stream's value at the time of the keyframe.
-    pub fn new_keyframe_value(&self, plugin_id: PluginID, stream: &StreamReferenceHandle, key_index: i32) -> Result<StreamValue, Error> {
+    pub fn new_keyframe_value(&self, plugin_id: PluginId, stream: &StreamReferenceHandle, key_index: i32) -> Result<StreamValue, Error> {
         let stream_suite = aegp::suites::Stream::new()?;
         let type_ = stream_suite.stream_type(&stream)?;
 
@@ -92,7 +92,7 @@ impl KeyframeSuite {
     /// Returns the [`StreamValue`]s representing the stream's tangential values at the time of the keyframe.
     ///
     /// Returns a tuple containing the in and out tangents.
-    pub fn new_keyframe_spatial_tangents(&self, plugin_id: PluginID, stream: &StreamReferenceHandle, key_index: i32) -> Result<(StreamValue, StreamValue), Error> {
+    pub fn new_keyframe_spatial_tangents(&self, plugin_id: PluginId, stream: &StreamReferenceHandle, key_index: i32) -> Result<(StreamValue, StreamValue), Error> {
         let stream_suite = aegp::suites::Stream::new()?;
         let type_ = stream_suite.stream_type(&stream)?;
 

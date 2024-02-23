@@ -9,15 +9,52 @@ define_suite!(
 );
 
 impl SupplierSuite {
-    pub fn new_image_from_buffer(
-        &self,
-        supplier_ref: &SupplierRef,
-        width: usize,
-        height: usize,
-        row_bytes: usize,
-        pixel_layout: PixelLayout,
-        pixel_data: Vec<u8>,
-    ) -> Result<ImageRef, Error> {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+
+    /// Create a new pen.
+    pub fn new_pen(&self, supplier_ref: &SupplierRef, color: &ColorRgba, size: f32) -> Result<Pen, Error> {
+        let pen_ref = call_suite_fn_single!(self, NewPen -> ae_sys::DRAWBOT_PenRef, supplier_ref.as_ptr(), color, size)?;
+        Ok(Pen {
+            handle: pen_ref,
+            suite: crate::Suite::new()?,
+            supplier_suite: self.clone(),
+        })
+    }
+
+    /// Create a new brush.
+    pub fn new_brush(&self, supplier_ref: &SupplierRef, color: &ColorRgba) -> Result<Brush, Error> {
+        let brush_ref = call_suite_fn_single!(self, NewBrush -> ae_sys::DRAWBOT_BrushRef, supplier_ref.as_ptr(), color)?;
+        Ok(Brush {
+            handle: brush_ref,
+            supplier_suite: self.clone(),
+        })
+    }
+
+    /// Check if current supplier supports text.
+    pub fn supports_text(&self, supplier_ref: &SupplierRef) -> Result<bool, Error> {
+        Ok(call_suite_fn_single!(self, SupportsText -> ae_sys::DRAWBOT_Boolean, supplier_ref.as_ptr())? != 0)
+    }
+
+    /// Get the default font size.
+    pub fn default_font_size(&self, supplier_ref: &SupplierRef) -> Result<f32, Error> {
+        Ok(call_suite_fn_single!(self, GetDefaultFontSize -> f32, supplier_ref.as_ptr())?)
+    }
+
+    /// Create a new font with default settings.
+    pub fn new_default_font(&self, supplier_ref: &SupplierRef, font_size: f32) -> Result<Font, Error> {
+        let font_ref = call_suite_fn_single!(self, NewDefaultFont -> ae_sys::DRAWBOT_FontRef, supplier_ref.as_ptr(), font_size)?;
+        Ok(Font {
+            handle: font_ref,
+            supplier_suite: self.clone(),
+        })
+    }
+
+    /// Create a new image from buffer passed to `pixel_data`.
+    pub fn new_image_from_buffer(&self, supplier_ref: &SupplierRef, width: usize, height: usize, row_bytes: usize, pixel_layout: PixelLayout, pixel_data: Vec<u8>) -> Result<Image, Error> {
         assert!(row_bytes * height <= pixel_data.len());
 
         let image_ref = call_suite_fn_single!(
@@ -30,70 +67,110 @@ impl SupplierSuite {
             pixel_layout as _,
             pixel_data.as_ptr() as _
         )?;
-        Ok(ImageRef::from_raw(image_ref))
+        Ok(Image {
+            handle: image_ref,
+            suite: crate::Suite::new()?,
+            supplier_suite: self.clone(),
+        })
+    }
+
+    /// Create a new path.
+    pub fn new_path(&self, supplier_ref: &SupplierRef) -> Result<Path, Error> {
+        let path_ref = call_suite_fn_single!(self, NewPath -> ae_sys::DRAWBOT_PathRef, supplier_ref.as_ptr())?;
+        Ok(Path {
+            handle: path_ref,
+            suite: crate::Suite::new()?,
+            supplier_suite: self.clone(),
+        })
+    }
+
+    /// Check if the supplier supports BGRA pixel layout.
+    pub fn supports_pixel_layout_bgra(&self, supplier_ref: &SupplierRef) -> Result<bool, Error> {
+        Ok(call_suite_fn_single!(self, SupportsPixelLayoutBGRA -> ae_sys::DRAWBOT_Boolean, supplier_ref.as_ptr())? != 0)
+    }
+
+    /// Check if the supplier prefers BGRA pixel layout.
+    pub fn prefers_pixel_layout_bgra(&self, supplier_ref: &SupplierRef) -> Result<bool, Error> {
+        Ok(call_suite_fn_single!(self, PrefersPixelLayoutBGRA -> ae_sys::DRAWBOT_Boolean, supplier_ref.as_ptr())? != 0)
+    }
+
+    /// Check if the supplier supports ARGB pixel layout.
+    pub fn supports_pixel_layout_argb(&self, supplier_ref: &SupplierRef) -> Result<bool, Error> {
+        Ok(call_suite_fn_single!(self, SupportsPixelLayoutARGB -> ae_sys::DRAWBOT_Boolean, supplier_ref.as_ptr())? != 0)
+    }
+
+    /// Check if the supplier prefers ARGB pixel layout.
+    pub fn prefers_pixel_layout_argb(&self, supplier_ref: &SupplierRef) -> Result<bool, Error> {
+        Ok(call_suite_fn_single!(self, PrefersPixelLayoutARGB -> ae_sys::DRAWBOT_Boolean, supplier_ref.as_ptr())? != 0)
+    }
+
+    /// Retain (increase reference count on) any object (pen, brush, path, etc). For example, it should be used when any object is copied and the copied object should be retained.
+    pub fn retain_object(&self, obj_ref: ae_sys::DRAWBOT_ObjectRef) -> Result<(), Error> {
+        call_suite_fn!(self, RetainObject, obj_ref)
+    }
+
+    /// Release (decrease reference count on) any object (pen, brush, path, etc). This function MUST be called for any object created using ``NewXYZ()`` from this suite.
+    ///
+    /// Do not call this function on a ``DRAWBOT_SupplierRef`` and ``DRAWBOT_SupplierRef``, since these are not created by the plug-in.
+    pub fn release_object(&self, obj_ref: ae_sys::DRAWBOT_ObjectRef) -> Result<(), Error> {
+        call_suite_fn!(self, ReleaseObject, obj_ref)
     }
 }
 
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// |        **Function**         |                                                                                 **Purpose**                                                                                 |
-// +=============================+=============================================================================================================================================================================+
-// | ``NewPen``                  | Create a new pen. Release this using ``ReleaseObject`` from :ref:`effect-ui-events/custom-ui-and-drawbot.Drawbot_SupplierSuite`.                                            |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``NewBrush``                | Create a new brush. Release this using ``ReleaseObject`` from :ref:`effect-ui-events/custom-ui-and-drawbot.Drawbot_SupplierSuite`.                                          |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``SupportsText``            | Check if current supplier supports text.                                                                                                                                    |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``GetDefaultFontSize``      | Get the default font size.                                                                                                                                                  |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``NewDefaultFont``          | Create a new font with default settings.                                                                                                                                    |
-// |                             |                                                                                                                                                                             |
-// |                             | You can pass the default font size from ``GetDefaultFontSize``.                                                                                                             |
-// |                             |                                                                                                                                                                             |
-// |                             | Release this using ``ReleaseObject`` from :ref:`effect-ui-events/custom-ui-and-drawbot.Drawbot_SupplierSuite`.                                                              |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``NewImageFromBuffer``      | Create a new image from buffer passed to in_dataP.                                                                                                                          |
-// |                             |                                                                                                                                                                             |
-// |                             | Release this using ``ReleaseObject`` from :ref:`effect-ui-events/custom-ui-and-drawbot.Drawbot_SupplierSuite`.                                                              |
-// |                             | ``DRAWBOT_PixelLayout`` can be one of the following:                                                                                                                        |
-// |                             |                                                                                                                                                                             |
-// |                             |   - ``kDRAWBOT_PixelLayout_24RGB``,                                                                                                                                         |
-// |                             |   - ``kDRAWBOT_PixelLayout_24BGR``,                                                                                                                                         |
-// |                             |   - ``kDRAWBOT_PixelLayout_32RGB``,                                                                                                                                         |
-// |                             |   - ``ARGB`` (A is ignored),                                                                                                                                                |
-// |                             |   - ``kDRAWBOT_PixelLayout_32BGR``,                                                                                                                                         |
-// |                             |   - ``BGRA`` (A is ignored),                                                                                                                                                |
-// |                             |   - ``kDRAWBOT_PixelLayout_32ARGB_Straight``,                                                                                                                               |
-// |                             |   - ``kDRAWBOT_PixelLayout_32ARGB_Premul``,                                                                                                                                 |
-// |                             |   - ``kDRAWBOT_PixelLayout_32BGRA_Straight``,                                                                                                                               |
-// |                             |   - ``kDRAWBOT_PixelLayout_32BGRA_Premul``                                                                                                                                  |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``NewPath``                 | Create a new path. Release this using ``ReleaseObject`` from :ref:`effect-ui-events/custom-ui-and-drawbot.Drawbot_SupplierSuite`.                                           |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``SupportsPixelLayoutBGRA`` | A given Drawbot implementation can support multiple channel orders, but will likely prefer one over the other.                                                              |
-// |                             | Use the following four callbacks to get the preferred channel order for any API that takes a ``DRAWBOT_PixelLayout`` (e.g. ``NewImageFromBuffer``).                         |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``PrefersPixelLayoutBGRA``  | ::                                                                                                                                                                          |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``SupportsPixelLayoutARGB`` | ::                                                                                                                                                                          |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``PrefersPixelLayoutARGB``  | ::                                                                                                                                                                          |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``RetainObject``            | Retain (increase reference count on) any object (pen, brush, path, etc). For example, it should be used when any object is copied and the copied object should be retained. |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-// | ``ReleaseObject``           | Release (decrease reference count on) any object (pen, brush, path, etc). This function MUST be called for any object created using ``NewXYZ()`` from this suite.           |
-// |                             | Do not call this function on a ``DRAWBOT_SupplierRef`` and ``DRAWBOT_SupplierRef``, since these are not created by the plug-in.                                             |
-// +-----------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+// ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
 
-// fn NewPen(in_supplier_ref: DRAWBOT_SupplierRef,in_colorP: *const DRAWBOT_ColorRGBA,in_size: f32,out_penP: *mut DRAWBOT_PenRef) -> SPErr,
-// fn NewBrush(in_supplier_ref: DRAWBOT_SupplierRef,in_colorP: *const DRAWBOT_ColorRGBA,out_brushP: *mut DRAWBOT_BrushRef) -> SPErr,
-// fn SupportsText(in_supplier_ref: DRAWBOT_SupplierRef,out_supports_textPB: *mut DRAWBOT_Boolean) -> SPErr,
-// fn GetDefaultFontSize(in_supplier_ref: DRAWBOT_SupplierRef,out_font_sizeF: *mut f32) -> SPErr,
-// fn NewDefaultFont(in_supplier_ref: DRAWBOT_SupplierRef,in_font_sizeF: f32,out_fontP: *mut DRAWBOT_FontRef) -> SPErr,
-// fn NewImageFromBuffer(in_supplier_ref: DRAWBOT_SupplierRef,in_width: ::std::os::raw::c_int,in_height: ::std::os::raw::c_int,in_row_bytes: ::std::os::raw::c_int,in_pl: DRAWBOT_PixelLayout,in_dataP: *const ::std::os::raw::c_void,out_imageP: *mut DRAWBOT_ImageRef) -> SPErr,
-// fn NewPath(in_supplier_ref: DRAWBOT_SupplierRef,out_pathP: *mut DRAWBOT_PathRef) -> SPErr,
-// fn SupportsPixelLayoutBGRA(in_supplier_ref: DRAWBOT_SupplierRef,out_supports_bgraPB: *mut DRAWBOT_Boolean) -> SPErr,
-// fn PrefersPixelLayoutBGRA(in_supplier_ref: DRAWBOT_SupplierRef,out_prefers_bgraPB: *mut DRAWBOT_Boolean) -> SPErr,
-// fn SupportsPixelLayoutARGB(in_supplier_ref: DRAWBOT_SupplierRef,out_supports_argbPB: *mut DRAWBOT_Boolean) -> SPErr,
-// fn PrefersPixelLayoutARGB(in_supplier_ref: DRAWBOT_SupplierRef,out_prefers_argbPB: *mut DRAWBOT_Boolean) -> SPErr,
-// fn RetainObject(in_obj_ref: DRAWBOT_ObjectRef) -> SPErr>,
-// fn ReleaseObject(in_obj_ref: DRAWBOT_ObjectRef) -> SPErr>,
+define_enum! {
+    ae_sys::DRAWBOT_PixelLayout,
+    PixelLayout {
+        Rgb24          = ae_sys::kDRAWBOT_PixelLayout_24RGB,
+        Bgr24          = ae_sys::kDRAWBOT_PixelLayout_24BGR,
+        Rgb32          = ae_sys::kDRAWBOT_PixelLayout_32RGB,
+        Bgr32          = ae_sys::kDRAWBOT_PixelLayout_32BGR,
+        Argb32Straight = ae_sys::kDRAWBOT_PixelLayout_32ARGB_Straight,
+        Argb32Premul   = ae_sys::kDRAWBOT_PixelLayout_32ARGB_Premul,
+        Bgra32Straight = ae_sys::kDRAWBOT_PixelLayout_32BGRA_Straight,
+        Bgra32Premul   = ae_sys::kDRAWBOT_PixelLayout_32BGRA_Premul,
+    }
+}
+
+define_suite_item_wrapper!(
+    ae_sys::DRAWBOT_SupplierRef, SupplierRef,
+    suite: SupplierSuite,
+    /// Create and release drawing tools, get default settings, and query drawing capabilities.
+    Supplier {
+        dispose: ;
+
+        /// Create a new pen.
+        new_pen(color: &ColorRgba, size: f32) -> Pen => suite.new_pen,
+
+        /// Create a new brush.
+        new_brush(color: &ColorRgba)-> Brush => suite.new_brush,
+
+        /// Check if current supplier supports text.
+        supports_text() -> bool => suite.supports_text,
+
+        /// Get the default font size.
+        default_font_size() -> f32 => suite.default_font_size,
+
+        /// Create a new font with default settings.
+        new_default_font(font_size: f32) -> Font => suite.new_default_font,
+
+        /// Create a new image from buffer passed to `pixel_data`.
+        new_image_from_buffer(width: usize, height: usize, row_bytes: usize, pixel_layout: PixelLayout, pixel_data: Vec<u8>) -> Image => suite.new_image_from_buffer,
+
+        /// Create a new path.
+        new_path() -> Path => suite.new_path,
+
+        /// Check if the supplier supports BGRA pixel layout.
+        supports_pixel_layout_bgra() -> bool => suite.supports_pixel_layout_bgra,
+
+        /// Check if the supplier prefers BGRA pixel layout.
+        prefers_pixel_layout_bgra() -> bool => suite.prefers_pixel_layout_bgra,
+
+        /// Check if the supplier supports ARGB pixel layout.
+        supports_pixel_layout_argb() -> bool => suite.supports_pixel_layout_argb,
+
+        /// Check if the supplier prefers ARGB pixel layout.
+        prefers_pixel_layout_argb() -> bool => suite.prefers_pixel_layout_argb,
+    }
+);

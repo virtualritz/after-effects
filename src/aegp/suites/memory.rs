@@ -27,7 +27,7 @@ impl MemorySuite {
     ///
     /// Use `name` to identify the memory you are asking for.
     /// After Effects uses the string to display any related error messages.
-    pub fn new_mem_handle(&self, plugin_id: PluginID, name: &str, size: usize) -> Result<AEGP_MemHandle, Error> {
+    pub fn new_mem_handle(&self, plugin_id: PluginId, name: &str, size: usize) -> Result<AEGP_MemHandle, Error> {
         call_suite_fn_single!(self, AEGP_NewMemHandle -> AEGP_MemHandle, plugin_id, CString::new(name).unwrap().as_ptr(), size as u32, 0)
     }
 
@@ -70,7 +70,7 @@ impl MemorySuite {
     ///
     /// Only memory allocated using this suite is tracked and reported using this call,
     /// so for example memory allocated using [`HandleSuite`] will not be reported here.
-    pub fn mem_stats(&self, plugin_id: PluginID) -> Result<(i32, i32), Error> {
+    pub fn mem_stats(&self, plugin_id: PluginId) -> Result<(i32, i32), Error> {
         let (count, size) = call_suite_fn_double!(self, AEGP_GetMemStats -> ae_sys::A_long, ae_sys::A_long, plugin_id)?;
         Ok((
             count as _,
@@ -89,7 +89,7 @@ pub struct MemHandle<'a, T: 'a> {
 }
 
 impl<'a, T: 'a> MemHandle<'a, T> {
-    pub fn new(plugin_id: PluginID, name: &str, value: T) -> Result<MemHandle<'a, T>, Error> {
+    pub fn new(plugin_id: PluginId, name: &str, value: T) -> Result<MemHandle<'a, T>, Error> {
         let suite = MemorySuite::new()?;
         let handle = suite.new_mem_handle(plugin_id, name, std::mem::size_of::<T>())?;
 

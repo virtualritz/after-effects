@@ -29,7 +29,7 @@ impl CompSuite {
     }
 
     /// Used to get the item handle, given a composition handle.
-    pub fn item_from_comp(&self, comp_handle: CompHandle) -> Result<ItemHandle, Error> {
+    pub fn item_from_comp(&self, comp_handle: &CompHandle) -> Result<ItemHandle, Error> {
         Ok(ItemHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetItemFromComp -> ae_sys::AEGP_ItemH, comp_handle.as_ptr())?
         ))
@@ -38,27 +38,27 @@ impl CompSuite {
     /// Returns current downsample factor. Measured in pixels X by Y.
     ///
     /// Users can choose a custom downsample factor with independent X and Y.
-    pub fn comp_downsample_factor(&self, comp_handle: CompHandle) -> Result<ae_sys::AEGP_DownsampleFactor, Error> {
+    pub fn comp_downsample_factor(&self, comp_handle: &CompHandle) -> Result<ae_sys::AEGP_DownsampleFactor, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetCompDownsampleFactor -> ae_sys::AEGP_DownsampleFactor, comp_handle.as_ptr())?.into())
     }
 
     /// Sets the composition's downsample factor.
-    pub fn set_comp_downsample_factor(&self, comp_handle: CompHandle, downsample_factor: &ae_sys::AEGP_DownsampleFactor) -> Result<(), Error> {
+    pub fn set_comp_downsample_factor(&self, comp_handle: &CompHandle, downsample_factor: &ae_sys::AEGP_DownsampleFactor) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompDownsampleFactor, comp_handle.as_ptr(), downsample_factor)
     }
 
     /// Returns the composition background color.
-    pub fn comp_bg_color(&self, comp_handle: CompHandle) -> Result<ae_sys::AEGP_ColorVal, Error> {
+    pub fn comp_bg_color(&self, comp_handle: &CompHandle) -> Result<ae_sys::AEGP_ColorVal, Error> {
         call_suite_fn_single!(self, AEGP_GetCompBGColor -> ae_sys::AEGP_ColorVal, comp_handle.as_ptr())
     }
 
     /// Sets a composition's background color.
-    pub fn set_comp_bg_color(&self, comp_handle: CompHandle, color: ae_sys::AEGP_ColorVal) -> Result<(), Error> {
+    pub fn set_comp_bg_color(&self, comp_handle: &CompHandle, color: ae_sys::AEGP_ColorVal) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompBGColor, comp_handle.as_ptr(), &color)
     }
 
     /// Returns composition flags, or'd together.
-    pub fn comp_flags(&self, comp_handle: CompHandle) -> Result<CompFlags, Error> {
+    pub fn comp_flags(&self, comp_handle: &CompHandle) -> Result<CompFlags, Error> {
         CompFlags::from_bits(call_suite_fn_single!(self, AEGP_GetCompFlags -> ae_sys::A_long, comp_handle.as_ptr())?)
             .ok_or(Error::InvalidParms)
     }
@@ -66,14 +66,14 @@ impl CompSuite {
     /// New in CC. Passes back true if the Comp's timeline shows layer names, false if source names.
     ///
     /// This will open the comp as a side effect.
-    pub fn show_layer_name_or_source_name(&self, comp_handle: CompHandle) -> Result<bool, Error> {
+    pub fn show_layer_name_or_source_name(&self, comp_handle: &CompHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetShowLayerNameOrSourceName -> ae_sys::A_Boolean, comp_handle.as_ptr())? != 0)
     }
 
     /// New in CC. Pass in true to have the Comp's timeline show layer names, false for source names.
     ///
     /// This will open the comp as a side effect.
-    pub fn set_show_layer_name_or_source_name(&self, comp_handle: CompHandle, show_layer_names: bool) -> Result<(), Error> {
+    pub fn set_show_layer_name_or_source_name(&self, comp_handle: &CompHandle, show_layer_names: bool) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetShowLayerNameOrSourceName, comp_handle.as_ptr(), if show_layer_names { 1 } else { 0 })
     }
 
@@ -81,29 +81,29 @@ impl CompSuite {
     /// New in CC. Passes back true if the Comp's timeline shows blend modes column, false if hidden.
     ///
     /// This will open the comp as a side effect.
-    pub fn show_blend_modes(&self, comp_handle: CompHandle) -> Result<bool, Error> {
+    pub fn show_blend_modes(&self, comp_handle: &CompHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetShowBlendModes -> ae_sys::A_Boolean, comp_handle.as_ptr())? != 0)
     }
 
     /// New in CC. Pass in true to have the Comp's timeline show the blend modes column, false to hide it.
     ///
     /// This will open the comp as a side effect.
-    pub fn set_show_blend_modes(&self, comp_handle: CompHandle, show_blend_modes: bool) -> Result<(), Error> {
+    pub fn set_show_blend_modes(&self, comp_handle: &CompHandle, show_blend_modes: bool) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetShowBlendModes, comp_handle.as_ptr(), if show_blend_modes { 1 } else { 0 })
     }
 
     /// Returns the composition's frames per second.
-    pub fn comp_framerate(&self, comp_handle: CompHandle) -> Result<f64, Error> {
+    pub fn comp_framerate(&self, comp_handle: &CompHandle) -> Result<f64, Error> {
         call_suite_fn_single!(self, AEGP_GetCompFramerate -> f64, comp_handle.as_ptr())
     }
 
     /// Sets the composition's frames per second.
-    pub fn set_comp_framerate(&self, comp_handle: CompHandle, framerate: f64) -> Result<(), Error> {
+    pub fn set_comp_framerate(&self, comp_handle: &CompHandle, framerate: f64) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompFrameRate, comp_handle.as_ptr(), &framerate)
     }
 
     /// The composition shutter angle and phase.
-    pub fn comp_shutter_angle_phase(&self, comp_handle: CompHandle) -> Result<(Ratio, Ratio), Error> {
+    pub fn comp_shutter_angle_phase(&self, comp_handle: &CompHandle) -> Result<(Ratio, Ratio), Error> {
         let (angle, phase) = call_suite_fn_double!(self, AEGP_GetCompShutterAnglePhase -> ae_sys::A_Ratio, ae_sys::A_Ratio, comp_handle.as_ptr())?;
         Ok((
             angle.into(),
@@ -112,7 +112,7 @@ impl CompSuite {
     }
 
     /// The duration of the shutter frame, in seconds.
-    pub fn comp_shutter_frame_range(&self, comp_handle: CompHandle, comp_time: Time) -> Result<(Time, Time), Error> {
+    pub fn comp_shutter_frame_range(&self, comp_handle: &CompHandle, comp_time: Time) -> Result<(Time, Time), Error> {
         let (start, duration) = call_suite_fn_double!(self, AEGP_GetCompShutterFrameRange -> ae_sys::A_Time, ae_sys::A_Time, comp_handle.as_ptr(), &comp_time.into() as *const _)?;
         Ok((
             start.into(),
@@ -121,19 +121,19 @@ impl CompSuite {
     }
 
     /// Retrieves the number of motion blur samples After Effects will perform in the given composition.
-    pub fn comp_suggested_motion_blur_samples(&self, comp_handle: CompHandle) -> Result<i32, Error> {
+    pub fn comp_suggested_motion_blur_samples(&self, comp_handle: &CompHandle) -> Result<i32, Error> {
         call_suite_fn_single!(self, AEGP_GetCompSuggestedMotionBlurSamples -> i32, comp_handle.as_ptr())
     }
 
     /// Specifies the number of motion blur samples After Effects will perform in the given composition. Undoable.
-    pub fn set_comp_suggested_motion_blur_samples(&self, comp_handle: CompHandle, samples: i32) -> Result<(), Error> {
+    pub fn set_comp_suggested_motion_blur_samples(&self, comp_handle: &CompHandle, samples: i32) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompSuggestedMotionBlurSamples, comp_handle.as_ptr(), samples)
     }
 
     /// New in CC. Retrieves the motion blur adaptive sample limit for the given composition.
     ///
     /// As of CC, a new comp defaults to 128.
-    pub fn comp_motion_blur_adaptive_sample_limit(&self, comp_handle: CompHandle) -> Result<i32, Error> {
+    pub fn comp_motion_blur_adaptive_sample_limit(&self, comp_handle: &CompHandle) -> Result<i32, Error> {
         call_suite_fn_single!(self, AEGP_GetCompMotionBlurAdaptiveSampleLimit -> i32, comp_handle.as_ptr())
     }
 
@@ -142,17 +142,17 @@ impl CompSuite {
     /// As of CC, both the limit and the suggested values are clamped to \[2,256\] range and the limit value will not be allowed less than the suggested value.
     ///
     /// Undoable.
-    pub fn set_comp_motion_blur_adaptive_sample_limit(&self, comp_handle: CompHandle, limit: i32) -> Result<(), Error> {
+    pub fn set_comp_motion_blur_adaptive_sample_limit(&self, comp_handle: &CompHandle, limit: i32) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompMotionBlurAdaptiveSampleLimit, comp_handle.as_ptr(), limit)
     }
 
     /// Get the time where the current work area starts.
-    pub fn comp_work_area_start(&self, comp_handle: CompHandle) -> Result<Time, Error> {
+    pub fn comp_work_area_start(&self, comp_handle: &CompHandle) -> Result<Time, Error> {
         call_suite_fn_single!(self, AEGP_GetCompWorkAreaStart -> ae_sys::A_Time, comp_handle.as_ptr()).map(|t| t.into())
     }
 
     /// Get the duration of a composition's current work area, in seconds.
-    pub fn comp_work_area_duration(&self, comp_handle: CompHandle) -> Result<Time, Error> {
+    pub fn comp_work_area_duration(&self, comp_handle: &CompHandle) -> Result<Time, Error> {
         call_suite_fn_single!(self, AEGP_GetCompWorkAreaDuration -> ae_sys::A_Time, comp_handle.as_ptr()).map(|t| t.into())
     }
 
@@ -160,7 +160,7 @@ impl CompSuite {
     ///
     /// One call to this function is sufficient to set the layer's in point and duration;
     /// it's not necessary to call it twice, once for each timespace.
-    pub fn set_comp_work_area_start_and_duration(&self, comp_handle: CompHandle, start: Time, duration: Time) -> Result<(), Error> {
+    pub fn set_comp_work_area_start_and_duration(&self, comp_handle: &CompHandle, start: Time, duration: Time) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompWorkAreaStartAndDuration, comp_handle.as_ptr(), &start.into() as *const _ as *const ae_sys::A_Time, &duration.into() as *const _ as *const ae_sys::A_Time)
     }
 
@@ -236,7 +236,7 @@ impl CompSuite {
     /// Creates a new [`Collection2Handle`] from the items selected in the given composition.
     ///
     /// The plug-in is responsible for disposing of the [`Collection2Handle`].
-    pub fn new_collection_from_comp_selection(&self, plugin_id: PluginID, comp_handle: CompHandle) -> Result<Collection2Handle, Error> {
+    pub fn new_collection_from_comp_selection(&self, plugin_id: PluginId, comp_handle: &CompHandle) -> Result<Collection2Handle, Error> {
         Ok(Collection2Handle::from_raw(
             call_suite_fn_single!(self, AEGP_GetNewCollectionFromCompSelection -> ae_sys::AEGP_Collection2H, plugin_id, comp_handle.as_ptr())?
         ))
@@ -247,21 +247,21 @@ impl CompSuite {
     /// Will return an error if members of the [`Collection2Handle`] are not available.
     ///
     /// Don't assume that a composition hasn't changed between operations; always use a fresh [`Collection2Handle`].
-    pub fn set_selection(&self, comp_handle: CompHandle, collection_handle: Collection2Handle) -> Result<(), Error> {
+    pub fn set_selection(&self, comp_handle: &CompHandle, collection_handle: Collection2Handle) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetSelection, comp_handle.as_ptr(), collection_handle.as_ptr())
     }
 
-    pub fn comp_display_start_time(&self, comp_handle: CompHandle) -> Result<Time, Error> {
+    pub fn comp_display_start_time(&self, comp_handle: &CompHandle) -> Result<Time, Error> {
         call_suite_fn_single!(self, AEGP_GetCompDisplayStartTime -> ae_sys::A_Time, comp_handle.as_ptr()).map(|t| t.into())
     }
 
     /// Not undo-able. Sets the displayed start time of a composition (has no effect on the duration of the composition).
-    pub fn set_comp_display_start_time(&self, comp_handle: CompHandle, time: Time) -> Result<(), Error> {
+    pub fn set_comp_display_start_time(&self, comp_handle: &CompHandle, time: Time) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompDisplayStartTime, comp_handle.as_ptr(), &time.into() as *const _ as *const ae_sys::A_Time)
     }
 
     /// Undoable. Sets the duration of the given composition.
-    pub fn set_comp_duration(&self, comp_handle: CompHandle, duration: Time) -> Result<(), Error> {
+    pub fn set_comp_duration(&self, comp_handle: &CompHandle, duration: Time) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompDuration, comp_handle.as_ptr(), &duration.into() as *const _ as *const ae_sys::A_Time)
     }
 
@@ -282,7 +282,7 @@ impl CompSuite {
     }
 
     /// Sets the pixel aspect ratio of a composition.
-    pub fn set_comp_pixel_aspect_ratio(&self, comp_handle: CompHandle, pixel_aspect_ratio: Ratio) -> Result<(), Error> {
+    pub fn set_comp_pixel_aspect_ratio(&self, comp_handle: &CompHandle, pixel_aspect_ratio: Ratio) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompPixelAspectRatio, comp_handle.as_ptr(), &pixel_aspect_ratio.into() as *const _)
     }
 
@@ -310,19 +310,19 @@ impl CompSuite {
     }
 
     /// Sets the dimensions of the composition. Undoable.
-    pub fn set_comp_dimensions(&self, comp_handle: CompHandle, width: i32, height: i32) -> Result<(), Error> {
+    pub fn set_comp_dimensions(&self, comp_handle: &CompHandle, width: i32, height: i32) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompDimensions, comp_handle.as_ptr(), width, height)
     }
 
     /// Duplicates the composition. Undoable.
-    pub fn duplicate_comp(&self, comp_handle: CompHandle) -> Result<CompHandle, Error> {
+    pub fn duplicate_comp(&self, comp_handle: &CompHandle) -> Result<CompHandle, Error> {
         Ok(CompHandle::from_raw(
             call_suite_fn_single!(self, AEGP_DuplicateComp -> ae_sys::AEGP_CompH, comp_handle.as_ptr())?
         ))
     }
 
     /// Retrieves the duration of a frame in a composition.
-    pub fn comp_frame_duration(&self, comp_handle: CompHandle) -> Result<Time, Error> {
+    pub fn comp_frame_duration(&self, comp_handle: &CompHandle) -> Result<Time, Error> {
         call_suite_fn_single!(self, AEGP_GetCompFrameDuration -> ae_sys::A_Time, comp_handle.as_ptr()).map(|t| t.into())
     }
 
@@ -342,24 +342,24 @@ impl CompSuite {
     /// Returns an [`StreamReferenceHandle`] to the composition's marker stream.
     ///
     /// Must be disposed by caller.
-    pub fn new_comp_marker_stream(&self, plugin_id: PluginID, parent_comp_handle: CompHandle) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_comp_marker_stream(&self, plugin_id: PluginId, parent_comp_handle: CompHandle) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetNewCompMarkerStream -> ae_sys::AEGP_StreamRefH, plugin_id, parent_comp_handle.as_ptr())?
         ))
     }
 
     /// Passes back a boolean that indicates whether the specified comp uses drop-frame timecode or not.
-    pub fn comp_display_drop_frame(&self, comp_handle: CompHandle) -> Result<bool, Error> {
+    pub fn comp_display_drop_frame(&self, comp_handle: &CompHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetCompDisplayDropFrame -> ae_sys::A_Boolean, comp_handle.as_ptr())? != 0)
     }
 
     /// Sets the dropness of the timecode in the specified composition.
-    pub fn set_comp_display_drop_frame(&self, comp_handle: CompHandle, drop_frame: bool) -> Result<(), Error> {
+    pub fn set_comp_display_drop_frame(&self, comp_handle: &CompHandle, drop_frame: bool) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCompDisplayDropFrame, comp_handle.as_ptr(), if drop_frame { 1 } else { 0 })
     }
 
     /// Move the selection to a certain layer index. Use along with [`set_selection()`](Self::set_selection).
-    pub fn reorder_comp_selection(&self, comp_handle: CompHandle, layer_index: i32) -> Result<(), Error> {
+    pub fn reorder_comp_selection(&self, comp_handle: &CompHandle, layer_index: i32) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_ReorderCompSelection, comp_handle.as_ptr(), layer_index)
     }
 }

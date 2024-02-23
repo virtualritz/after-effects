@@ -475,7 +475,7 @@ macro_rules! define_suite_item_wrapper {
             $(
                 $(#[$attr])*
                 pub fn $fn_name(&self, $($arg: $argt, )*) -> Result<$ret, crate::Error> {
-                    self.$suite_fn_ident.$suite_fn(self.handle, $($arg, )*)
+                    self.$suite_fn_ident.$suite_fn(&self.handle, $($arg, )*)
                 }
             )*
         }

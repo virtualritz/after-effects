@@ -39,7 +39,7 @@ impl FootageSuite {
     }
 
     /// Returns the number of data (RGBA or audio) files, and the number of files per frame (may be greater than one if the footage has auxiliary channels).
-    pub fn footage_num_files(&self, footage_handle: FootageHandle) -> Result<(usize, usize), Error> {
+    pub fn footage_num_files(&self, footage_handle: &FootageHandle) -> Result<(usize, usize), Error> {
         let (num_main_files, files_per_frame) = call_suite_fn_double!(self, AEGP_GetFootageNumFiles -> ae_sys::A_long, ae_sys::A_long, footage_handle.as_ptr())?;
         Ok((
             num_main_files  as usize,
@@ -54,7 +54,7 @@ impl FootageSuite {
     /// `frame_num` ranges from `0 to num_main_files`, as obtained using [`footage_num_files()`](Self::footage_num_files).
     ///
     /// [`ae_sys::AEGP_FOOTAGE_MAIN_FILE_INDEX`](after_effects_sys::AEGP_FOOTAGE_MAIN_FILE_INDEX) is the main file.
-    pub fn footage_path(&self, footage_handle: FootageHandle, frame_num: usize, file_index: usize) -> Result<String, Error> {
+    pub fn footage_path(&self, footage_handle: &FootageHandle, frame_num: usize, file_index: usize) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetFootagePath -> ae_sys::AEGP_MemHandle, footage_handle.as_ptr(), frame_num as i32, file_index as i32)?;
 
         // Create a mem handle each and lock it.
@@ -67,14 +67,14 @@ impl FootageSuite {
     }
 
     /// Retrieves the footage signature of specified footage.
-    pub fn footage_signature(&self, footage_handle: FootageHandle) -> Result<FootageSignature, Error> {
+    pub fn footage_signature(&self, footage_handle: &FootageHandle) -> Result<FootageSignature, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetFootageSignature -> ae_sys::AEGP_FootageSignature, footage_handle.as_ptr())?.into())
     }
 
     /// Creates a new footage item. The file path is a NULL-terminated UTF-16 string with platform separators.
     /// Note that footage filenames with colons are not allowed, since colons are used as path separators in the HFS+ file system.
     /// Note the optional params. If `allow_interpretation_dialog` is `false`, After Effects will guess the alpha interpretation.
-    pub fn new_footage(&self, plugin_id: PluginID, path: &str, layer_info: Option<ae_sys::AEGP_FootageLayerKey>, sequence_options: Option<ae_sys::AEGP_FileSequenceImportOptions>,interp_style: InterpretationStyle) -> Result<FootageHandle, Error> {
+    pub fn new_footage(&self, plugin_id: PluginId, path: &str, layer_info: Option<ae_sys::AEGP_FootageLayerKey>, sequence_options: Option<ae_sys::AEGP_FileSequenceImportOptions>,interp_style: InterpretationStyle) -> Result<FootageHandle, Error> {
         let path = widestring::U16CString::from_str(path).map_err(|_| Error::InvalidParms)?;
 
         Ok(FootageHandle::from_raw(
@@ -92,7 +92,7 @@ impl FootageSuite {
 
     /// Adds a footage item to a project. Footage will be adopted by the project, and may be added only once.
     /// This is Undo-able; do not dispose of the returned added item if it's undone.
-    pub fn add_footage_to_project(&self, footage_handle: FootageHandle, folder_handle: ItemHandle) -> Result<ItemHandle, Error> {
+    pub fn add_footage_to_project(&self, footage_handle: &FootageHandle, folder_handle: ItemHandle) -> Result<ItemHandle, Error> {
         Ok(ItemHandle::from_raw(
             call_suite_fn_single!(self, AEGP_AddFootageToProject -> ae_sys::AEGP_ItemH, footage_handle.as_ptr(), folder_handle.as_ptr())?
         ))
@@ -100,18 +100,18 @@ impl FootageSuite {
 
     /// Sets footage as the proxy for an item. Will be adopted by the project.
     /// This is Undo-able; do not dispose of the returned added item if it's undone.
-    pub fn set_item_proxy_footage(&self, footage_handle: FootageHandle, item_handle: ItemHandle) -> Result<(), Error> {
+    pub fn set_item_proxy_footage(&self, footage_handle: &FootageHandle, item_handle: ItemHandle) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetItemProxyFootage, footage_handle.as_ptr(), item_handle.as_ptr())
     }
 
     /// Replaces footage for an item. The item will replace the main footage for this item.
     /// This is Undo-able; do not dispose of the returned added item if it's undone.
-    pub fn replace_item_main_footage(&self, footage_handle: FootageHandle, item_handle: ItemHandle) -> Result<(), Error> {
+    pub fn replace_item_main_footage(&self, footage_handle: &FootageHandle, item_handle: ItemHandle) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_ReplaceItemMainFootage, footage_handle.as_ptr(), item_handle.as_ptr())
     }
 
     /// Deletes a footage item. Do not dispose of footage you did not create, or that has been added to the project.
-    pub fn dispose_footage(&self, footage_handle: FootageHandle) -> Result<(), Error> {
+    pub fn dispose_footage(&self, footage_handle: &FootageHandle) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_DisposeFootage, footage_handle.as_ptr())
     }
 
@@ -129,14 +129,14 @@ impl FootageSuite {
     }
 
     /// Returns an [`ae_sys::AEGP_FootageLayerKey`](after_effects_sys::AEGP_FootageLayerKey) describing the footage.
-    pub fn footage_layer_key(&self, footage_handle: FootageHandle) -> Result<ae_sys::AEGP_FootageLayerKey, Error> {
+    pub fn footage_layer_key(&self, footage_handle: &FootageHandle) -> Result<ae_sys::AEGP_FootageLayerKey, Error> {
         call_suite_fn_single!(self, AEGP_GetFootageLayerKey -> ae_sys::AEGP_FootageLayerKey, footage_handle.as_ptr())
     }
 
     // /// Deprecated. Adds a new placeholder footage item to the project.
     // /// Using this function for missing footage will cause the user to search for each individual missing file, regardless of whether or not they're all in the same directory.
     // /// Undo-able.
-    // pub fn new_placeholder_footage(&self, plugin_id: PluginID, name: &str, width: i32, height: i32, duration: Option<Time>) -> Result<FootageHandle, Error> {
+    // pub fn new_placeholder_footage(&self, plugin_id: PluginId, name: &str, width: i32, height: i32, duration: Option<Time>) -> Result<FootageHandle, Error> {
     //     let name = std::ffi::CString::new(name).map_err(|_| Error::InvalidParms)?;
     //     Ok(FootageHandle::from_raw(
     //         call_suite_fn_single!(self, AEGP_NewPlaceholderFootage -> ae_sys::AEGP_FootageH, plugin_id, name.as_ptr(), width, height, duration.map_or(std::ptr::null(), |d| &d.into() as *const _))?
@@ -150,7 +150,7 @@ impl FootageSuite {
     /// Starting in CC, [`FileType::None`](crate::aeio::FileType::None) is now a warning condition.
     /// If you pass [`FileType::Any`](crate::aeio::FileType::Any), then path MUST exist.
     /// If the path may not exist, pass [`FileType::Dir`](crate::aeio::FileType::Dir) for folder, or [`FileType::Generic`](crate::aeio::FileType::Generic) for a file.
-    pub fn new_placeholder_footage_with_path(&self, plugin_id: PluginID, path: &str, path_platform: Platform, file_type: crate::aeio::FileType, width: i32, height: i32, duration: Option<Time>) -> Result<FootageHandle, Error> {
+    pub fn new_placeholder_footage_with_path(&self, plugin_id: PluginId, path: &str, path_platform: Platform, file_type: crate::aeio::FileType, width: i32, height: i32, duration: Option<Time>) -> Result<FootageHandle, Error> {
         let path = widestring::U16CString::from_str(path).map_err(|_| Error::InvalidParms)?;
 
         Ok(FootageHandle::from_raw(
@@ -197,12 +197,12 @@ impl FootageSuite {
     }
 
     /// Retrieves information about the audio data in the footage item (by populating the `AEGP_SoundDataFormat` you passed in).
-    pub fn footage_sound_data_format(&self, footage_handle: FootageHandle) -> Result<ae_sys::AEGP_SoundDataFormat, Error> {
+    pub fn footage_sound_data_format(&self, footage_handle: &FootageHandle) -> Result<ae_sys::AEGP_SoundDataFormat, Error> {
         call_suite_fn_single!(self, AEGP_GetFootageSoundDataFormat -> ae_sys::AEGP_SoundDataFormat, footage_handle.as_ptr())
     }
 
     /// Populates and returns a `AEGP_FileSequenceImportOptions` describing the given `AEGP_FootageH`.
-    pub fn footage_sequence_import_options(&self, footage_handle: FootageHandle) -> Result<ae_sys::AEGP_FileSequenceImportOptions, Error> {
+    pub fn footage_sequence_import_options(&self, footage_handle: &FootageHandle) -> Result<ae_sys::AEGP_FileSequenceImportOptions, Error> {
         call_suite_fn_single!(self, AEGP_GetFootageSequenceImportOptions -> ae_sys::AEGP_FileSequenceImportOptions, footage_handle.as_ptr())
     }
 }

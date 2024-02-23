@@ -36,7 +36,7 @@ impl StreamSuite {
     /// Get a layer's data stream.
     ///
     /// Note that this will not provide keyframe access; Use the [`KeyframeSuite`](aegp::suites::Keyframe) instead.
-    pub fn new_layer_stream(&self, plugin_id: PluginID, layer_handle: &LayerHandle, stream_name: LayerStream) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_layer_stream(&self, plugin_id: PluginId, layer_handle: &LayerHandle, stream_name: LayerStream) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewLayerStream -> ae_sys::AEGP_StreamRefH, plugin_id, layer_handle.as_ptr(), stream_name as _)?,
             true, // is_owned
@@ -49,7 +49,7 @@ impl StreamSuite {
     }
 
     /// Get an effect's parameter stream.
-    pub fn new_effect_stream_by_index(&self, plugin_id: PluginID, effect_ref: &EffectRefHandle, index: i32) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_effect_stream_by_index(&self, plugin_id: PluginId, effect_ref: &EffectRefHandle, index: i32) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewEffectStreamByIndex -> ae_sys::AEGP_StreamRefH, plugin_id, effect_ref.as_ptr(), index)?,
             true, // is_owned
@@ -59,7 +59,7 @@ impl StreamSuite {
     /// Get a mask's stream.
     ///
     /// Also see the [`MaskSuite`](aegp::suites::Mask) and [`MaskOutlineSuite`](aegp::suites::MaskOutline) for additional Mask functions.
-    pub fn new_mask_stream(&self, plugin_id: PluginID, mask_ref: &MaskRefHandle, stream: MaskStream) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_mask_stream(&self, plugin_id: PluginId, mask_ref: &MaskRefHandle, stream: MaskStream) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewMaskStream -> ae_sys::AEGP_StreamRefH, plugin_id, mask_ref.as_ptr(), stream.into())?,
             true, // is_owned
@@ -76,7 +76,7 @@ impl StreamSuite {
     /// Get name of the stream (localized or forced English).
     ///
     /// NOTE: if `force_english` is `true`, the default name will override any stream renaming which has been done (either programatically, or by the user).
-    pub fn stream_name(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, force_english: bool) -> Result<String, Error> {
+    pub fn stream_name(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle, force_english: bool) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetStreamName -> ae_sys::AEGP_MemHandle, plugin_id, stream_reference_handle.as_ptr(), force_english as _)?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
@@ -127,7 +127,7 @@ impl StreamSuite {
     // is wasteful and potentially slow.
     /// Get value, at a time you specify, of stream. `value` must be disposed by the plug-in.
     /// The `time_mode` indicates whether the time is in compositions or layer time.
-    pub fn new_stream_value(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, time_mode: TimeMode, time: Time, sample_stream_pre_expression: bool) -> Result<StreamValue, Error> {
+    pub fn new_stream_value(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle, time_mode: TimeMode, time: Time, sample_stream_pre_expression: bool) -> Result<StreamValue, Error> {
         let type_ = self.stream_type(stream_reference_handle)?;
 
         let mut stream_value2 = call_suite_fn_single!(self,
@@ -166,17 +166,17 @@ impl StreamSuite {
     }
 
     /// Determines whether expressions are enabled on the given [`StreamReferenceHandle`].
-    pub fn expression_state(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<bool, Error> {
+    pub fn expression_state(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetExpressionState -> ae_sys::A_Boolean, plugin_id, stream_reference_handle.as_ptr())? != 0)
     }
 
     /// Set whether expressions are enabled on the given [`StreamReferenceHandle`].
-    pub fn set_expression_state(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, enabled: bool) -> Result<(), Error> {
+    pub fn set_expression_state(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle, enabled: bool) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetExpressionState, plugin_id, stream_reference_handle.as_ptr(), enabled as u8)
     }
 
     /// Get the expression string for the given [`StreamReferenceHandle`].
-    pub fn expression_string(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<String, Error> {
+    pub fn expression_string(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetExpression -> ae_sys::AEGP_MemHandle, plugin_id, stream_reference_handle.as_ptr())?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
@@ -188,13 +188,13 @@ impl StreamSuite {
     }
 
     /// Set the expression string for the given [`StreamReferenceHandle`].
-    pub fn set_expression_string(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, expression: &str) -> Result<(), Error> {
+    pub fn set_expression_string(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle, expression: &str) -> Result<(), Error> {
         let expression = U16CString::from_str(expression).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, AEGP_SetExpression, plugin_id, stream_reference_handle.as_ptr(), expression.as_ptr())
     }
 
     /// Duplicate a given [`StreamReferenceHandle`].
-    pub fn duplicate_stream(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamReferenceHandle, Error> {
+    pub fn duplicate_stream(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_DuplicateStreamRef -> ae_sys::AEGP_StreamRefH, plugin_id, stream_reference_handle.as_ptr())?,
             true, // is_owned
@@ -226,7 +226,7 @@ impl DynamicStreamSuite {
     }
 
     /// Retrieves the [`StreamReferenceHandle`] corresponding to the layer. This function is used to initiate a recursive walk of the layer's streams.
-    pub fn new_stream_ref_for_layer(&self, plugin_id: PluginID, layer_handle: &LayerHandle) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_stream_ref_for_layer(&self, plugin_id: PluginId, layer_handle: &LayerHandle) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewStreamRefForLayer -> ae_sys::AEGP_StreamRefH, plugin_id, layer_handle.as_ptr())?,
             true, // is_owned
@@ -234,7 +234,7 @@ impl DynamicStreamSuite {
     }
 
     /// Retrieves the [`StreamReferenceHandle`] corresponding to the mask.
-    pub fn new_stream_ref_for_mask(&self, plugin_id: PluginID, mask_ref: &MaskRefHandle) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_stream_ref_for_mask(&self, plugin_id: PluginId, mask_ref: &MaskRefHandle) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewStreamRefForMask -> ae_sys::AEGP_StreamRefH, plugin_id, mask_ref.as_ptr())?,
             true, // is_owned
@@ -276,7 +276,7 @@ impl DynamicStreamSuite {
     }
 
     /// Retrieves a sub-stream by index from a given [`StreamReferenceHandle`]. Cannot be used on streams of type [`StreamGroupingType::Leaf`].
-    pub fn new_stream_ref_by_index(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, index: i32) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_stream_ref_by_index(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle, index: i32) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewStreamRefByIndex -> ae_sys::AEGP_StreamRefH, plugin_id, stream_reference_handle.as_ptr(), index)?,
             true, // is_owned
@@ -302,7 +302,7 @@ impl DynamicStreamSuite {
     /// * `"ADBE Transform Group"`
     /// * `"ADBE Light Options Group"`
     /// * `"ADBE Camera Options Group"`
-    pub fn new_stream_ref_by_match_name(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle, match_name: &str) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_stream_ref_by_match_name(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle, match_name: &str) -> Result<StreamReferenceHandle, Error> {
         let match_name = CString::new(match_name).map_err(|_| Error::InvalidParms)?;
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewStreamRefByMatchname -> ae_sys::AEGP_StreamRefH, plugin_id, stream_reference_handle.as_ptr(), match_name.as_ptr())?,
@@ -328,7 +328,7 @@ impl DynamicStreamSuite {
 
     /// Duplicates the specified stream and appends it to the stream group. Undoable.
     /// Only valid for children of type [`StreamGroupingType::IndexedGroup`].
-    pub fn duplicate_stream(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
+    pub fn duplicate_stream(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle) -> Result<i32, Error> {
         call_suite_fn_single!(self, AEGP_DuplicateStream -> i32, plugin_id, stream_reference_handle.as_ptr())
     }
 
@@ -350,7 +350,7 @@ impl DynamicStreamSuite {
     }
 
     /// Adds a stream to the specified stream group. Undoable. Only valid for [`StreamGroupingType::IndexedGroup`].
-    pub fn add_stream(&self, plugin_id: PluginID, group_stream: &StreamReferenceHandle, match_name: &str) -> Result<StreamReferenceHandle, Error> {
+    pub fn add_stream(&self, plugin_id: PluginId, group_stream: &StreamReferenceHandle, match_name: &str) -> Result<StreamReferenceHandle, Error> {
         let match_name = CString::new(match_name).map_err(|_| Error::InvalidParms)?;
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_AddStream -> ae_sys::AEGP_StreamRefH, plugin_id, group_stream.as_ptr(), match_name.as_ptr())?,
@@ -370,7 +370,7 @@ impl DynamicStreamSuite {
     }
 
     /// Retrieves an [`StreamReferenceHandle`] for the parent of the specified [`StreamReferenceHandle`].
-    pub fn new_parent_stream_ref(&self, plugin_id: PluginID, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_parent_stream_ref(&self, plugin_id: PluginId, stream_reference_handle: &StreamReferenceHandle) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
             call_suite_fn_single!(self, AEGP_GetNewParentStreamRef -> ae_sys::AEGP_StreamRefH, plugin_id, stream_reference_handle.as_ptr())?,
             true, // is_owned

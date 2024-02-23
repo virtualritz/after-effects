@@ -31,9 +31,9 @@ pub mod suites {
     pub(crate) mod world;          pub use world         ::WorldSuite           as World;
 }
 
-pub type PluginID = ae_sys::AEGP_PluginID;
-pub type ItemID = i32;
-pub type LayerID = u32;
+pub type PluginId = ae_sys::AEGP_PluginID;
+pub type ItemId = i32;
+pub type LayerId = u32;
 
 pub use suites::camera::{
     Camera,

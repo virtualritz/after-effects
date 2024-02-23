@@ -51,12 +51,12 @@ impl CameraSuite {
     }
 
     /// Given a layer, returns the camera type of the layer.
-    pub fn camera_type(&self, camera_layer_handle: LayerHandle) -> Result<CameraType, Error> {
+    pub fn camera_type(&self, camera_layer_handle: &LayerHandle) -> Result<CameraType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetCameraType -> ae_sys::AEGP_CameraType, camera_layer_handle.as_ptr())?.into())
     }
 
     /// Retrieves the size (and units used to measure that size) of the film used by the designated camera.
-    pub fn camera_film_size(&self, camera_layer_handle: LayerHandle) -> Result<(FilmSizeUnits, f64), Error> {
+    pub fn camera_film_size(&self, camera_layer_handle: &LayerHandle) -> Result<(FilmSizeUnits, f64), Error> {
         let mut film_size_units: ae_sys::AEGP_FilmSizeUnits = 0;
         let mut film_size: ae_sys::A_FpLong = 0.0;
 
@@ -66,12 +66,12 @@ impl CameraSuite {
     }
 
     /// Sets the size (and unites used to measure that size) of the film used by the designated camera.
-    pub fn set_camera_film_size(&self, camera_layer_handle: LayerHandle, film_size_units: FilmSizeUnits, mut film_size: f64) -> Result<(), Error> {
+    pub fn set_camera_film_size(&self, camera_layer_handle: &LayerHandle, film_size_units: FilmSizeUnits, mut film_size: f64) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetCameraFilmSize, camera_layer_handle.as_ptr(), film_size_units.into(), &mut film_size)
     }
 
     /// Given a composition handle, returns the camera distance to the image plane.
-    pub fn default_camera_distance_to_image_plane(&self, comp_handle: CompHandle) -> Result<f64, Error> {
+    pub fn default_camera_distance_to_image_plane(&self, comp_handle: &CompHandle) -> Result<f64, Error> {
         call_suite_fn_single!(self, AEGP_GetDefaultCameraDistanceToImagePlane -> f64, comp_handle.as_ptr())
     }
 }

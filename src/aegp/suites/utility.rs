@@ -28,13 +28,13 @@ impl UtilitySuite {
     }
 
     /// Displays dialog with name of the AEGP followed by the string passed.
-    pub fn report_info(&self, plugin_id: PluginID, info_string: &str) -> Result<(), Error> {
+    pub fn report_info(&self, plugin_id: PluginId, info_string: &str) -> Result<(), Error> {
         let info_string = CString::new(info_string).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, AEGP_ReportInfo, plugin_id, info_string.as_ptr())
     }
 
     /// New in CC. Displays dialog with name of the AEGP followed by the unicode string passed.
-    pub fn report_info_unicode(&self, plugin_id: PluginID, info_string: &str) -> Result<(), Error> {
+    pub fn report_info_unicode(&self, plugin_id: PluginId, info_string: &str) -> Result<(), Error> {
         let info_string = U16CString::from_str(info_string).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, AEGP_ReportInfoUnicode, plugin_id, info_string.as_ptr())
     }
@@ -61,10 +61,10 @@ impl UtilitySuite {
         call_suite_fn!(self, AEGP_EndUndoGroup,)
     }
 
-    /// Returns an [`PluginID`], which effect plug-ins can then use in calls to many functions throughout the AEGP API.
-    /// Effects should only call this function once, during [`Command::GlobalSetup`], and save the [`PluginID`] for later use.
+    /// Returns an [`PluginId`], which effect plug-ins can then use in calls to many functions throughout the AEGP API.
+    /// Effects should only call this function once, during [`Command::GlobalSetup`], and save the [`PluginId`] for later use.
     /// The first parameter can be any value, and the second parameter should be the plug-in's match name.
-    pub fn register_with_aegp(&self, global_refcon: Option<*mut std::ffi::c_void>, plugin_name: &str) -> Result<PluginID, Error> {
+    pub fn register_with_aegp(&self, global_refcon: Option<*mut std::ffi::c_void>, plugin_name: &str) -> Result<PluginId, Error> {
         let plugin_name = CString::new(plugin_name).map_err(|_| Error::InvalidParms)?;
         call_suite_fn_single!(self, AEGP_RegisterWithAEGP -> ae_sys::AEGP_PluginID, global_refcon.unwrap_or(std::ptr::null_mut()) as _, plugin_name.as_ptr())
     }
@@ -196,7 +196,7 @@ impl UtilitySuite {
     /// The script passed in can be in either UTF-8 or the current application encoding (if `platform_encoding` is passed in as `true`).
     ///
     /// Returns a tuple containing `(result, error_string)`. The result is the value of the last line of the script.
-    pub fn execute_script(&self, plugin_id: PluginID, script: &str, platform_encoding: bool) -> Result<(String, String), Error> {
+    pub fn execute_script(&self, plugin_id: PluginId, script: &str, platform_encoding: bool) -> Result<(String, String), Error> {
         let script = CString::new(script).map_err(|_| Error::InvalidParms)?;
         let (result, error_string) = call_suite_fn_double!(self,
             AEGP_ExecuteScript -> ae_sys::AEGP_MemHandle, ae_sys::AEGP_MemHandle,
@@ -225,7 +225,7 @@ impl UtilitySuite {
 
     /// On macOS, returns a `CFBundleRef` to your Mach-O plug-in, or `NULL` for a CFM plug-in.
     /// Always returns `NULL` on Windows (you can use an OS-specific entry point to capture your DLLInstance).
-    pub fn plugin_platform_ref(&self, plugin_id: PluginID) -> Result<*mut std::ffi::c_void, Error> {
+    pub fn plugin_platform_ref(&self, plugin_id: PluginId) -> Result<*mut std::ffi::c_void, Error> {
         let mut plat_ref = std::ptr::null_mut();
         call_suite_fn!(self, AEGP_GetPluginPlatformRef, plugin_id, &mut plat_ref as *mut _ as *mut _)?;
         Ok(plat_ref)
@@ -242,7 +242,7 @@ impl UtilitySuite {
     /// - [`GetPathTypes::UserPlugin`] - The suite specific location of user specific plug-ins.
     /// - [`GetPathTypes::AllUserPlugin`] - The suite specific location of plug-ins shared by all users.
     /// - [`GetPathTypes::App`] - The After Effects .exe or .app location. Not plug-in specific.
-    pub fn plugin_paths(&self, plugin_id: PluginID, path_type: GetPathTypes) -> Result<String, Error> {
+    pub fn plugin_paths(&self, plugin_id: PluginId, path_type: GetPathTypes) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetPluginPaths -> ae_sys::AEGP_MemHandle, plugin_id, path_type.into())?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.

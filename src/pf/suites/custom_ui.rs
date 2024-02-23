@@ -15,10 +15,11 @@ impl EffectCustomUISuite {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
-    pub fn drawing_reference(&self, context_handle: &ContextHandle) -> Result<drawbot::DrawRef, Error> {
-        Ok(drawbot::DrawRef::from_raw(
-            call_suite_fn_single!(self, PF_GetDrawingReference -> ae_sys::DRAWBOT_DrawRef, context_handle.as_ptr())?
-        ))
+    pub fn drawing_reference(&self, context_handle: &ContextHandle) -> Result<drawbot::Drawbot, Error> {
+        Ok(drawbot::Drawbot {
+            suite: crate::Suite::new()?,
+            handle: call_suite_fn_single!(self, PF_GetDrawingReference -> ae_sys::DRAWBOT_DrawRef, context_handle.as_ptr())?
+        })
     }
 }
 
@@ -35,12 +36,12 @@ impl EffectCustomUIOverlayThemeSuite {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
-    pub fn preferred_foreground_color(&self) -> Result<drawbot::ColorRGBA, Error> {
-        call_suite_fn_single!(self, PF_GetPreferredForegroundColor -> drawbot::ColorRGBA)
+    pub fn preferred_foreground_color(&self) -> Result<drawbot::ColorRgba, Error> {
+        call_suite_fn_single!(self, PF_GetPreferredForegroundColor -> drawbot::ColorRgba)
     }
 
-    pub fn preferred_shadow_color(&self) -> Result<drawbot::ColorRGBA, Error> {
-        call_suite_fn_single!(self, PF_GetPreferredShadowColor -> drawbot::ColorRGBA)
+    pub fn preferred_shadow_color(&self) -> Result<drawbot::ColorRgba, Error> {
+        call_suite_fn_single!(self, PF_GetPreferredShadowColor -> drawbot::ColorRgba)
     }
 
     //PF_GetPreferredShadowOffset

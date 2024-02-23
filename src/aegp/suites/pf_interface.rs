@@ -28,7 +28,7 @@ impl PFInterfaceSuite {
     }
 
     /// Obtain the [`EffectRefHandle`] corresponding to the effect.
-    pub fn new_effect_for_effect(&self, plugin_id: PluginID, effect_ref: pf::ProgPtr) -> Result<EffectRefHandle, Error> {
+    pub fn new_effect_for_effect(&self, plugin_id: PluginId, effect_ref: pf::ProgPtr) -> Result<EffectRefHandle, Error> {
         Ok(EffectRefHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetNewEffectForEffect -> ae_sys::AEGP_EffectRefH, plugin_id, effect_ref.into())?
         ))
