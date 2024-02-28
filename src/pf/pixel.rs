@@ -1,64 +1,77 @@
 use crate::*;
 
-#[derive(Debug, Copy, Clone, Default)]
-#[repr(C)]
-pub struct Pixel {
-    pub alpha: ae_sys::A_u_char,
-    pub red: ae_sys::A_u_char,
-    pub green: ae_sys::A_u_char,
-    pub blue: ae_sys::A_u_char,
+// Don't define separate wrappers for pixel types, because any potential
+// additional per-pixel allocation may have a significant performance impact.
+
+pub type Pixel8 = ae_sys::PF_Pixel;
+pub type Pixel16 = ae_sys::PF_Pixel16;
+pub type PixelF32 = ae_sys::PF_Pixel32;
+pub type PixelF64 = ae_sys::AEGP_ColorVal;
+
+pub enum GenericPixel<'a> {
+    Pixel8(&'a Pixel8),
+    Pixel16(&'a Pixel16),
+    PixelF32(&'a PixelF32),
+    PixelF64(&'a PixelF64),
 }
 
-unsafe impl Send for Pixel {}
-unsafe impl Sync for Pixel {}
+pub enum GenericPixelMut<'a> {
+    Pixel8(&'a mut Pixel8),
+    Pixel16(&'a mut Pixel16),
+    PixelF32(&'a mut PixelF32),
+    PixelF64(&'a mut PixelF64),
+}
 
-impl From<ae_sys::PF_Pixel> for Pixel {
-    fn from(pixel: ae_sys::PF_Pixel) -> Self {
-        Self {
-            alpha: pixel.alpha,
-            red: pixel.red,
-            green: pixel.green,
-            blue: pixel.blue,
+impl<'a> GenericPixel<'a> {
+    pub fn as_u8(&self) -> Pixel8 {
+        match self {
+            Self::Pixel8 (p)  => **p,
+            Self::Pixel16(p)  => Pixel8 { alpha: p.alpha as _, red: p.red as _, green: p.green as _, blue: p.blue as _ },
+            Self::PixelF32(p) => Pixel8 { alpha: p.alpha as _, red: p.red as _, green: p.green as _, blue: p.blue as _ },
+            Self::PixelF64(p) => Pixel8 { alpha: p.alphaF as _, red: p.redF as _, green: p.greenF as _, blue: p.blueF as _ },
+        }
+    }
+    pub fn as_u16(&self) -> Pixel16 {
+        match self {
+            Self::Pixel8 (p)  => Pixel16 { alpha: p.alpha as _, red: p.red as _, green: p.green as _, blue: p.blue as _ },
+            Self::Pixel16(p)  => **p,
+            Self::PixelF32(p) => Pixel16 { alpha: p.alpha as _, red: p.red as _, green: p.green as _, blue: p.blue as _ },
+            Self::PixelF64(p) => Pixel16 { alpha: p.alphaF as _, red: p.redF as _, green: p.greenF as _, blue: p.blueF as _ },
+        }
+    }
+    pub fn as_f32(&self) -> PixelF32 {
+        match self {
+            Self::Pixel8 (p)  => PixelF32 { alpha: p.alpha as _, red: p.red as _, green: p.green as _, blue: p.blue as _ },
+            Self::Pixel16(p)  => PixelF32 { alpha: p.alpha as _, red: p.red as _, green: p.green as _, blue: p.blue as _ },
+            Self::PixelF32(p) => **p,
+            Self::PixelF64(p) => PixelF32 { alpha: p.alphaF as _, red: p.redF as _, green: p.greenF as _, blue: p.blueF as _ },
         }
     }
 }
 
-impl From<Pixel> for ae_sys::PF_Pixel {
-    fn from(pixel: Pixel) -> Self {
-        Self {
-            alpha: pixel.alpha,
-            red: pixel.red,
-            green: pixel.green,
-            blue: pixel.blue,
+impl<'a> GenericPixelMut<'a> {
+    pub fn set_from_u8(&mut self, px: Pixel8) {
+        match self {
+            Self::Pixel8 (s)  => { **s = px; },
+            Self::Pixel16(s)  => { s.alpha = px.alpha as _; s.red = px.red as _; s.green = px.green as _; s.blue = px.blue as _; },
+            Self::PixelF32(s) => { s.alpha = px.alpha as _; s.red = px.red as _; s.green = px.green as _; s.blue = px.blue as _; },
+            Self::PixelF64(s) => { s.alphaF = px.alpha as _; s.redF = px.red as _; s.greenF = px.green as _; s.blueF = px.blue as _; },
         }
     }
-}
-
-pub type Pixel8 = Pixel;
-
-#[derive(Debug, Copy, Clone)]
-#[repr(C)]
-pub struct Pixel16 {
-    pub alpha: ae_sys::A_u_short,
-    pub red: ae_sys::A_u_short,
-    pub green: ae_sys::A_u_short,
-    pub blue: ae_sys::A_u_short,
-}
-
-#[derive(Debug, Copy, Clone)]
-#[repr(C)]
-pub struct Pixel32 {
-    pub alpha: ae_sys::PF_FpShort,
-    pub red: ae_sys::PF_FpShort,
-    pub green: ae_sys::PF_FpShort,
-    pub blue: ae_sys::PF_FpShort,
-}
-
-#[derive(Debug, Copy, Clone)]
-#[repr(C)]
-pub struct Pixel64 {
-    pub alpha: ae_sys::PF_FpLong,
-    pub red: ae_sys::PF_FpLong,
-    pub green: ae_sys::PF_FpLong,
-    pub blue: ae_sys::PF_FpLong,
+    pub fn set_from_u16(&mut self, px: Pixel16) {
+        match self {
+            Self::Pixel8 (s)  => { s.alpha = px.alpha as _; s.red = px.red as _; s.green = px.green as _; s.blue = px.blue as _; },
+            Self::Pixel16(s)  => { **s = px; },
+            Self::PixelF32(s) => { s.alpha = px.alpha as _; s.red = px.red as _; s.green = px.green as _; s.blue = px.blue as _; },
+            Self::PixelF64(s) => { s.alphaF = px.alpha as _; s.redF = px.red as _; s.greenF = px.green as _; s.blueF = px.blue as _; },
+        }
+    }
+    pub fn set_from_f32(&mut self, px: PixelF32) {
+        match self {
+            Self::Pixel8 (s)  => { s.alpha = px.alpha as _; s.red = px.red as _; s.green = px.green as _; s.blue = px.blue as _; },
+            Self::Pixel16(s)  => { s.alpha = px.alpha as _; s.red = px.red as _; s.green = px.green as _; s.blue = px.blue as _; },
+            Self::PixelF32(s) => { **s = px; },
+            Self::PixelF64(s) => { s.alphaF = px.alpha as _; s.redF = px.red as _; s.greenF = px.green as _; s.blueF = px.blue as _; },
+        }
+    }
 }

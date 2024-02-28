@@ -1,22 +1,5 @@
 use crate::*;
 
-define_enum! {
-    ae_sys::PF_PixelFormat,
-    PixelFormat {
-        Argb32       = ae_sys::PF_PixelFormat_ARGB32,
-        Argb64       = ae_sys::PF_PixelFormat_ARGB64,
-        Argb128      = ae_sys::PF_PixelFormat_ARGB128,
-        GpuBgra128   = ae_sys::PF_PixelFormat_GPU_BGRA128,
-        Reserved     = ae_sys::PF_PixelFormat_RESERVED,
-        Bgra32       = ae_sys::PF_PixelFormat_BGRA32,
-        Vuya32       = ae_sys::PF_PixelFormat_VUYA32,
-        NtscDv25     = ae_sys::PF_PixelFormat_NTSCDV25,
-        PalDv25      = ae_sys::PF_PixelFormat_PALDV25,
-        Invalid      = ae_sys::PF_PixelFormat_INVALID,
-        ForceLongInt = ae_sys::PF_PixelFormat_FORCE_LONG_INT,
-    }
-}
-
 define_suite!(
     PixelFormatSuite,
     PF_PixelFormatSuite1,
@@ -45,4 +28,23 @@ impl PixelFormatSuite {
 // pub GetBlackForPixelFormat(pixelFormat: PrPixelFormat, pixelData: *mut ::std::os::raw::c_void) -> PF_Err,
 // pub GetWhiteForPixelFormat(pixelFormat: PrPixelFormat, pixelData: *mut ::std::os::raw::c_void) -> PF_Err,
 // pub ConvertColorToPixelFormattedData(pixelFormat: PrPixelFormat, alpha: f32, red: f32, green: f32, blue: f32, pixelData: *mut ::std::os::raw::c_void) -> PF_Err,
+}
+
+// ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
+
+define_enum! {
+    ae_sys::PF_PixelFormat,
+    PixelFormat {
+        Argb32       = ae_sys::PF_PixelFormat_ARGB32,
+        Argb64       = ae_sys::PF_PixelFormat_ARGB64,
+        Argb128      = ae_sys::PF_PixelFormat_ARGB128,
+        GpuBgra128   = ae_sys::PF_PixelFormat_GPU_BGRA128,
+        Reserved     = ae_sys::PF_PixelFormat_RESERVED,
+        Bgra32       = ae_sys::PF_PixelFormat_BGRA32,
+        Vuya32       = ae_sys::PF_PixelFormat_VUYA32,
+        NtscDv25     = ae_sys::PF_PixelFormat_NTSCDV25,
+        PalDv25      = ae_sys::PF_PixelFormat_PALDV25,
+        Invalid      = ae_sys::PF_PixelFormat_INVALID,
+        ForceLongInt = ae_sys::PF_PixelFormat_FORCE_LONG_INT,
+    }
 }

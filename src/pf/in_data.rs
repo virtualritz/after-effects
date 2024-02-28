@@ -149,4 +149,12 @@ impl InData {
             }
         }
     }
+
+    pub fn interact(&self) -> InteractCallbacks {
+        InteractCallbacks::new(*self)
+    }
+
+    pub fn utils(&self) -> UtilCallbacks {
+        UtilCallbacks::new(*self)
+    }
 }

@@ -139,7 +139,7 @@ impl FootageSuite {
     // pub fn new_placeholder_footage(&self, plugin_id: PluginId, name: &str, width: i32, height: i32, duration: Option<Time>) -> Result<FootageHandle, Error> {
     //     let name = std::ffi::CString::new(name).map_err(|_| Error::InvalidParms)?;
     //     Ok(FootageHandle::from_raw(
-    //         call_suite_fn_single!(self, AEGP_NewPlaceholderFootage -> ae_sys::AEGP_FootageH, plugin_id, name.as_ptr(), width, height, duration.map_or(std::ptr::null(), |d| &d.into() as *const _))?
+    //         call_suite_fn_single!(self, AEGP_NewPlaceholderFootage -> ae_sys::AEGP_FootageH, plugin_id, name.as_ptr(), width, height, duration.map(Into::into).as_ref().map_or(std::ptr::null(), |d| d))?
     //     ))
     // }
 
@@ -162,7 +162,7 @@ impl FootageSuite {
                 file_type as _,
                 width,
                 height,
-                duration.map_or(std::ptr::null(), |d| &d.into() as *const _)
+                duration.map(Into::into).as_ref().map_or(std::ptr::null(), |d| d)
             )?
         ))
     }

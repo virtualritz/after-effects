@@ -17,6 +17,8 @@ mod parameters; pub use parameters::*;
 mod pixel;      pub use pixel::*;
 mod render;     pub use render::*;
 mod suites;     pub use suites::*;
+mod interact_callbacks; pub use interact_callbacks::*;
+mod util_callbacks;     pub use util_callbacks::*;
 
 define_enum! {
     ae_sys::PF_XferMode,
@@ -106,30 +108,12 @@ impl From<ae_sys::PF_Point> for Point {
     }
 }
 
-#[derive(Debug, Copy, Clone, Hash)]
-#[repr(C)]
-pub struct RationalScale {
-    pub num: ae_sys::A_long,
-    pub den: ae_sys::A_u_long,
-}
-
-impl From<RationalScale> for ae_sys::PF_RationalScale {
-    #[inline]
-    fn from(ratio: RationalScale) -> Self {
-        Self {
-            num: ratio.num,
-            den: ratio.den,
-        }
-    }
-}
-
-impl From<ae_sys::PF_RationalScale> for RationalScale {
-    #[inline]
-    fn from(ratio: ae_sys::PF_RationalScale) -> Self {
-        Self {
-            num: ratio.num,
-            den: ratio.den,
-        }
+define_struct! {
+    ae_sys::PF_RationalScale,
+    #[derive(Eq)]
+    RationalScale {
+        num: i32,
+        den: u32,
     }
 }
 
@@ -213,7 +197,7 @@ unsafe impl Sync for EffectWorld {}
 
 impl EffectWorld {
     #[inline]
-    pub fn new(world_handle: aegp::WorldHandle) -> Result<Self, crate::Error> {
+    pub fn new(world_handle: &aegp::WorldHandle) -> Result<Self, crate::Error> {
         aegp::suites::World::new()?.effect_world(world_handle)
     }
 
@@ -298,16 +282,16 @@ impl EffectWorld {
     }
 
     #[inline]
-    pub fn as_pixel32_mut(&self, x: usize, y: usize) -> &mut Pixel32 {
+    pub fn as_pixel32_mut(&self, x: usize, y: usize) -> &mut PixelF32 {
         debug_assert!(
             x < self.width() && y < self.height(),
             "Coordinate is outside EffectWorld bounds."
         );
-        unsafe { &mut *(self.data_as_ptr_mut().add(y * self.row_bytes()) as *mut Pixel32).add(x) }
+        unsafe { &mut *(self.data_as_ptr_mut().add(y * self.row_bytes()) as *mut PixelF32).add(x) }
     }
 
     #[inline]
-    pub fn as_pixel32(&self, x: usize, y: usize) -> &Pixel32 {
+    pub fn as_pixel32(&self, x: usize, y: usize) -> &PixelF32 {
         self.as_pixel32_mut(x, y)
     }
 
@@ -413,25 +397,45 @@ bitflags! {
     }
 }
 
-/*
-pub enum GameState {
-    FreePlacement(FreePlacement),
-    Play(PlayState),
-    Scoring(ScoringState),
-    Done(ScoringState),
+#[derive(Default)]
+#[repr(transparent)]
+pub struct Fixed(ae_sys::PF_Fixed);
+impl Fixed {
+    pub const ONE: Self = Self(0x00010000);
+    pub const HALF: Self = Self(0x00008000);
+
+    pub fn to_int(self) -> i32 {
+        self.0 as ae_sys::A_long >> 16
+    }
+    pub fn to_int_rounded(self) -> i32 {
+        self.to_int() + 32768
+    }
+    pub fn from_int(value: i32) -> Self {
+        Self(value << 16)
+    }
 }
-
-assume!(GameState);
-assume!(GameState, Play(x) => x, PlayState);
-assume!(GameState, Scoring(x) => x, ScoringState);
-assume!(GameState, FreePlacement(x) => x, FreePlacement);
-
-// and then I can:
-
-state.assume::<PlayState>()
-*/
-
-pub trait AssumeFrom<T> {
-    fn assume(x: &T) -> &Self;
-    fn assume_mut(x: &mut T) -> &mut Self;
+impl Into<ae_sys::PF_Fixed> for Fixed {
+    fn into(self) -> ae_sys::PF_Fixed {
+        self.0
+    }
+}
+impl From<ae_sys::PF_Fixed> for Fixed {
+    fn from(value: ae_sys::PF_Fixed) -> Self {
+        Fixed(value)
+    }
+}
+impl From<f32> for Fixed {
+    fn from(value: f32) -> Self {
+        Fixed((value * 65536.0 + (if value < 0.0 { -0.5 } else { 0.5 })) as _)
+    }
+}
+impl Into<f32> for Fixed {
+    fn into(self) -> f32 {
+        self.0 as f32 / 65536.0
+    }
+}
+impl Into<f64> for Fixed {
+    fn into(self) -> f64 {
+        self.0 as f64 / 65536.0
+    }
 }

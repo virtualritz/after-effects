@@ -1,5 +1,7 @@
 use crate::{ae_sys, borrow_pica_basic_as_ptr, pr, Error, Matrix4, Suite, Time, WorldHandle};
 
+// TDOO: finish wrapping the entire scene 3d
+
 pub type MaterialBasic = ae_sys::AEGP_MaterialBasic_v1;
 
 pub struct Scene3D {

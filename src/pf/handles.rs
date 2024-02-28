@@ -38,6 +38,8 @@ impl<'a, T> Drop for HandleLock<'a, T> {
 
 impl<'a, T: 'a> Handle<'a, T> {
     pub fn new(value: T) -> Result<Handle<'a, T>, Error> {
+        assert!(std::mem::size_of::<T>() > 0);
+
         match HandleSuite::new() {
             Ok(suite) => {
                 let handle = suite.new_handle(std::mem::size_of::<T>() as u64);
@@ -107,7 +109,7 @@ impl<'a, T: 'a> Handle<'a, T> {
     }
 
     pub fn size(&self) -> usize {
-        self.suite.get_handle_size(self.handle) as usize
+        self.suite.handle_size(self.handle) as usize
     }
 
     /*
@@ -277,7 +279,7 @@ impl<'a> FlatHandle<'a> {
 
     #[inline]
     pub fn size(&self) -> usize {
-        self.suite.get_handle_size(self.handle) as usize
+        self.suite.handle_size(self.handle) as usize
     }
 
     #[inline]

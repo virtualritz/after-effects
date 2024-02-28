@@ -1,6 +1,17 @@
 use crate::*;
 
 define_suite!(
+    /// Effects often iterate over all pixels in an image, filtering each one.
+    /// By taking advantage of After Effects' iteration suites, you make it possible for After Effects to sub-allocate your task
+    /// to as many processors are present, taking advantage of hardware-specific acceleration.
+    ///
+    /// After Effects will also manage progress reporting and user cancellation automatically.
+    ///
+    /// Use these suites! Make sure the pixel processing functions you pass to these iterator callbacks are re-entrant.
+    ///
+    /// ```
+    ///   The October 2021 SDK update increases the number of concurrent iterate threads up to the available system CPU cores instead of the previous hard-coded limit of 32.
+    /// ```
     IterateFloatSuite,
     PF_iterateFloatSuite2,
     kPFIterateFloatSuite,
@@ -52,6 +63,17 @@ impl IterateFloatSuite {
     }
 }
 define_suite!(
+    /// Effects often iterate over all pixels in an image, filtering each one.
+    /// By taking advantage of After Effects' iteration suites, you make it possible for After Effects to sub-allocate your task
+    /// to as many processors are present, taking advantage of hardware-specific acceleration.
+    ///
+    /// After Effects will also manage progress reporting and user cancellation automatically.
+    ///
+    /// Use these suites! Make sure the pixel processing functions you pass to these iterator callbacks are re-entrant.
+    ///
+    /// ```
+    ///   The October 2021 SDK update increases the number of concurrent iterate threads up to the available system CPU cores instead of the previous hard-coded limit of 32.
+    /// ```
     Iterate16Suite,
     PF_Iterate16Suite2,
     kPFIterate16Suite,
@@ -104,6 +126,17 @@ impl Iterate16Suite {
 }
 
 define_suite!(
+    /// Effects often iterate over all pixels in an image, filtering each one.
+    /// By taking advantage of After Effects' iteration suites, you make it possible for After Effects to sub-allocate your task
+    /// to as many processors are present, taking advantage of hardware-specific acceleration.
+    ///
+    /// After Effects will also manage progress reporting and user cancellation automatically.
+    ///
+    /// Use these suites! Make sure the pixel processing functions you pass to these iterator callbacks are re-entrant.
+    ///
+    /// ```
+    ///   The October 2021 SDK update increases the number of concurrent iterate threads up to the available system CPU cores instead of the previous hard-coded limit of 32.
+    /// ```
     Iterate8Suite,
     PF_Iterate8Suite2,
     kPFIterate8Suite,

@@ -1,23 +1,5 @@
 use crate::*;
 
-define_enum! {
-    ae_sys::PF_TimeDir,
-    TimeDir {
-        GreaterThan        = ae_sys::PF_TimeDir_GREATER_THAN,
-        LessThan           = ae_sys::PF_TimeDir_LESS_THAN,
-        GreaterThanOrEqual = ae_sys::PF_TimeDir_GREATER_THAN_OR_EQUAL,
-        LessThanOrEqual    = ae_sys::PF_TimeDir_LESS_THAN_OR_EQUAL,
-    }
-}
-
-pub const PARAM_INDEX_NONE: i32 = ae_sys::PF_ParamIndex_NONE;
-/// check every parameter, including every layer referred to by a layer parameter
-pub const PARAM_INDEX_CHECK_ALL: i32 = ae_sys::PF_ParamIndex_CHECK_ALL;
-/// omit all layers. Pass a specific layer parameter index to include that as the only layer parameter tested.
-pub const PARAM_INDEX_CHECK_ALL_EXCEPT_LAYER_PARAMS: i32 = ae_sys::PF_ParamIndex_CHECK_ALL_EXCEPT_LAYER_PARAMS;
-/// Similar to CHECK_ALL, but honor PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED.
-pub const PARAM_INDEX_CHECK_ALL_HONOR_EXCLUDE: i32 = ae_sys::PF_ParamIndex_CHECK_ALL_HONOR_EXCLUDE;
-
 define_suite!(
     /// A parameter's value (not just UI) can be modified during `Command::UserChangedParam` and during `Command::Event` (*PF_Event_DO_CLICK*, *PF_Event_DRAG*, & *PF_Event_KEYDOWN*).
     /// After Effects will not honor changes made at other times.
@@ -93,13 +75,13 @@ impl ParamUtilsSuite {
     /// it will be expanded to include any times needed to produce that range.
     ///
     /// Populates a `PF_State`, an opaque data type used as a receipt for the current state of the effect's parameters (the `PF_State` is used in our internal frame caching database).
-    pub fn get_current_state(&self, effect_ref: ProgressInfo, param_index: i32, start: Option<Time>, duration: Option<Time>) -> Result<ae_sys::PF_State, Error> {
+    pub fn current_state(&self, effect_ref: ProgressInfo, param_index: i32, start: Option<Time>, duration: Option<Time>) -> Result<ae_sys::PF_State, Error> {
         call_suite_fn_single!(self,
             PF_GetCurrentState -> ae_sys::PF_State,
             effect_ref.as_ptr(),
             param_index,
-            start.map_or(std::ptr::null(), |t| &t.into() as *const _),
-            duration.map_or(std::ptr::null(), |t| &t.into() as *const _)
+            start.map(Into::into).as_ref().map_or(std::ptr::null(), |t| t),
+            duration.map(Into::into).as_ref().map_or(std::ptr::null(), |t| t)
         )
     }
 
@@ -133,7 +115,7 @@ impl ParamUtilsSuite {
     }
 
     /// Returns the number of keyframes in the parameter's stream.
-    pub fn get_keyframe_count(&self, effect_ref: ProgressInfo, param_index: i32) -> Result<i32, Error> {
+    pub fn keyframe_count(&self, effect_ref: ProgressInfo, param_index: i32) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, PF_GetKeyframeCount -> ae_sys::PF_KeyIndex, effect_ref.as_ptr(), param_index)? as i32)
     }
 
@@ -157,5 +139,25 @@ impl ParamUtilsSuite {
             time as i32,
             timesale as u32
         ))
+    }
+}
+
+// ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
+
+pub const PARAM_INDEX_NONE: i32 = ae_sys::PF_ParamIndex_NONE;
+/// check every parameter, including every layer referred to by a layer parameter
+pub const PARAM_INDEX_CHECK_ALL: i32 = ae_sys::PF_ParamIndex_CHECK_ALL;
+/// omit all layers. Pass a specific layer parameter index to include that as the only layer parameter tested.
+pub const PARAM_INDEX_CHECK_ALL_EXCEPT_LAYER_PARAMS: i32 = ae_sys::PF_ParamIndex_CHECK_ALL_EXCEPT_LAYER_PARAMS;
+/// Similar to CHECK_ALL, but honor PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED.
+pub const PARAM_INDEX_CHECK_ALL_HONOR_EXCLUDE: i32 = ae_sys::PF_ParamIndex_CHECK_ALL_HONOR_EXCLUDE;
+
+define_enum! {
+    ae_sys::PF_TimeDir,
+    TimeDir {
+        GreaterThan        = ae_sys::PF_TimeDir_GREATER_THAN,
+        LessThan           = ae_sys::PF_TimeDir_LESS_THAN,
+        GreaterThanOrEqual = ae_sys::PF_TimeDir_GREATER_THAN_OR_EQUAL,
+        LessThanOrEqual    = ae_sys::PF_TimeDir_LESS_THAN_OR_EQUAL,
     }
 }

@@ -380,7 +380,6 @@ define_enum! {
         Camera     = ae_sys::AEGP_ObjectType_CAMERA,
         Text       = ae_sys::AEGP_ObjectType_TEXT,
         Vector     = ae_sys::AEGP_ObjectType_VECTOR,
-        NumTypes   = ae_sys::AEGP_ObjectType_NUM_TYPES,
     }
 }
 

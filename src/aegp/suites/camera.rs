@@ -94,7 +94,6 @@ define_enum! {
         None         = ae_sys::AEGP_CameraType_NONE,
         Perspective  = ae_sys::AEGP_CameraType_PERSPECTIVE,
         Orthographic = ae_sys::AEGP_CameraType_ORTHOGRAPHIC,
-        NumTypes     = ae_sys::AEGP_CameraType_NUM_TYPES,
     }
 }
 

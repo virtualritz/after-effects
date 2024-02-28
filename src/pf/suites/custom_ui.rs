@@ -15,6 +15,8 @@ impl EffectCustomUISuite {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
+
+    /// Obtain [`Drawbot`](drawbot::Drawbot) for the provided context handle.
     pub fn drawing_reference(&self, context_handle: &ContextHandle) -> Result<drawbot::Drawbot, Error> {
         Ok(drawbot::Drawbot {
             suite: crate::Suite::new()?,
@@ -26,6 +28,11 @@ impl EffectCustomUISuite {
 }
 
 define_suite!(
+    /// This suite should be used for stroking and filling paths and vertices on the Composition and Layer Windows.
+
+    /// After Effects is using this suite internally, and we have made it available to make custom UI look consistent across effects.
+
+    /// The foreground/shadow colors are computed based on the app brightness level so that custom UI is always visible regardless of the application's Brightness setting in the Preferences.
     EffectCustomUIOverlayThemeSuite,
     PF_EffectCustomUIOverlayThemeSuite1,
     kPFEffectCustomUIOverlayThemeSuite,
@@ -38,36 +45,55 @@ impl EffectCustomUIOverlayThemeSuite {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
+
+    /// Get the preferred foreground color.
     pub fn preferred_foreground_color(&self) -> Result<drawbot::ColorRgba, Error> {
         call_suite_fn_single!(self, PF_GetPreferredForegroundColor -> drawbot::ColorRgba)
     }
 
+    /// Get the preferred shadow color.
     pub fn preferred_shadow_color(&self) -> Result<drawbot::ColorRgba, Error> {
         call_suite_fn_single!(self, PF_GetPreferredShadowColor -> drawbot::ColorRgba)
     }
 
+    /// Get the preferred foreground & shadow stroke width.
     pub fn preferred_stroke_width(&self) -> Result<f32, Error> {
         call_suite_fn_single!(self, PF_GetPreferredStrokeWidth -> f32)
     }
 
+    /// Get the preferred vertex size.
     pub fn preferred_vertex_size(&self) -> Result<f32, Error> {
         call_suite_fn_single!(self, PF_GetPreferredVertexSize -> f32)
     }
 
+    /// Get the preferred shadow offset.
     pub fn preferred_shadow_offset(&self) -> Result<ae_sys::A_LPoint, Error> {
         Ok(call_suite_fn_single!(self, PF_GetPreferredShadowOffset -> ae_sys::A_LPoint)?.into())
     }
 
-    // fn PF_GetPreferredForegroundColor(foreground_colorP: *mut DRAWBOT_ColorRGBA) -> PF_Err,
-    // fn PF_GetPreferredShadowColor(shadow_colorP: *mut DRAWBOT_ColorRGBA) -> PF_Err,
-    // fn PF_GetPreferredStrokeWidth(stroke_widthPF: *mut f32) -> PF_Err>,
-    // fn PF_GetPreferredVertexSize(vertex_sizePF: *mut f32) -> PF_Err>,
-    // fn PF_GetPreferredShadowOffset(shadow_offsetP: *mut A_LPoint) -> PF_Err>,
+    /// Stoke the path with the overlay theme foreground color.
+    ///
+    /// Optionally draw the shadow using the overlay theme shadow color.
+    ///
+    /// Uses overlay theme stroke width for stroking foreground and shadow strokes.
+    pub fn stroke_path(&self, drawbot: impl AsRef<ae_sys::DRAWBOT_DrawRef>, path: impl AsRef<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
+        call_suite_fn!(self, PF_StrokePath, *drawbot.as_ref(), *path.as_ref(), draw_shadow as _)
+    }
 
-    // fn PF_StrokePath(drawbot_ref: DRAWBOT_DrawRef, path_ref: DRAWBOT_PathRef, draw_shadowB: PF_Boolean) -> PF_Err,
-    // fn PF_FillPath(drawbot_ref: DRAWBOT_DrawRef, path_ref: DRAWBOT_PathRef, draw_shadowB: PF_Boolean) -> PF_Err,
-    // fn PF_FillVertex(drawbot_ref: DRAWBOT_DrawRef, center_pointP: *const A_FloatPoint, draw_shadowB: PF_Boolean) -> PF_Err,
+    /// Fills the path with overlay theme foreground color.
+    ///
+    /// Optionally draw the shadow using the overlay theme shadow color.
+    pub fn fill_path(&self, drawbot: impl AsRef<ae_sys::DRAWBOT_DrawRef>, path: impl AsRef<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
+        call_suite_fn!(self, PF_FillPath, *drawbot.as_ref(), *path.as_ref(), draw_shadow as _)
+    }
+
+    /// Fills a square vertex around the center point using the overlay theme foreground color and vertex size.
+    pub fn fill_vertex(&self, drawbot: impl AsRef<ae_sys::DRAWBOT_DrawRef>, center_point: FloatPoint, draw_shadow: bool) -> Result<(), Error> {
+        call_suite_fn!(self, PF_FillVertex, *drawbot.as_ref(), &center_point.into(), draw_shadow as _)
+    }
 }
+
+// ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
 
 #[derive(Copy, Clone, Debug)]
 pub struct CustomUIInfo(ae_sys::PF_CustomUIInfo);
@@ -118,25 +144,5 @@ impl CustomUIInfo {
 
     pub fn finalize(self) -> Self {
         self
-    }
-}
-
-pub struct InteractCallbacks(InData);
-
-impl InteractCallbacks {
-    pub fn new(in_data: InData) -> Self {
-        Self(in_data)
-    }
-
-    pub fn register_ui(&self, custom_ui_info: CustomUIInfo) -> Result<(), Error> {
-        match unsafe {
-            (*self.0.as_ptr()).inter.register_ui.unwrap()(
-                (*self.0.as_ptr()).effect_ref,
-                custom_ui_info.as_ptr() as _,
-            )
-        } {
-            0 => Ok(()),
-            e => Err(Error::from(e)),
-        }
     }
 }

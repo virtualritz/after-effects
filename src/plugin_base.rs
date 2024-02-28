@@ -51,7 +51,7 @@ macro_rules! define_plugin {
             fn do_dialog(&mut self, _: &mut PluginState) -> Result<(), ae::Error> { Ok(()) }
         }
 
-        unsafe fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: RawCommand, in_data_ptr: *mut after_effects_sys::PF_InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
+        unsafe fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: RawCommand, in_data: &InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
             Ok(if std::any::type_name::<S>() == "()" {
                 // Don't allocate sequence data
                 None
@@ -60,11 +60,10 @@ macro_rules! define_plugin {
                 Some((pf::Handle::new(S::default())?, true))
             } else if cmd == RawCommand::SequenceResetup {
                 // Restore from flat handle
-                if (*in_data_ptr).sequence_data.is_null() {
-                    log::error!("Sequence data pointer is null in cmd: {:?}!", cmd);
+                if (*in_data.as_ptr()).sequence_data.is_null() {
                     Some((pf::Handle::new(S::default())?, true))
                 } else {
-                    let instance = FlatHandle::from_raw((*in_data_ptr).sequence_data as after_effects_sys::PF_Handle)?;
+                    let instance = FlatHandle::from_raw((*in_data.as_ptr()).sequence_data as after_effects_sys::PF_Handle)?;
                     let bytes = instance.as_slice().ok_or(Error::InvalidIndex)?;
                     if bytes.len() < 2 {
                         return Ok(None);
@@ -82,22 +81,22 @@ macro_rules! define_plugin {
                    || cmd == RawCommand::ArbitraryCallback
                    || cmd == RawCommand::FrameSetdown {
                 // Read-only sequence data available through a suite only
-                let seq_ptr = pf::EffectSequenceDataSuite1::new()
-                    .and_then(|x| x.get_const_sequence_data(InData::from_raw(in_data_ptr)))
-                    .unwrap_or((*in_data_ptr).sequence_data as *const _);
+                let seq_ptr = pf::EffectSequenceDataSuite::new()
+                    .and_then(|x| x.const_sequence_data(&in_data))
+                    .unwrap_or((*in_data.as_ptr()).sequence_data as *const _);
                 if !seq_ptr.is_null() {
                     let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _)?;
                     Some((instance_handle, false))
                 } else {
-                    log::error!("Sequence data pointer got through EffectSequenceDataSuite1 is null in cmd: {:?}!", cmd);
+                    log::error!("Sequence data pointer got through EffectSequenceDataSuite is null in cmd: {:?}!", cmd);
                     None
                 }
             } else {
-                if (*in_data_ptr).sequence_data.is_null() {
+                if (*in_data.as_ptr()).sequence_data.is_null() {
                     log::error!("Sequence data pointer is null in cmd: {:?}!", cmd);
                     None
                 } else {
-                    let instance_handle = pf::Handle::<S>::from_raw((*in_data_ptr).sequence_data)?;
+                    let instance_handle = pf::Handle::<S>::from_raw((*in_data.as_ptr()).sequence_data)?;
                     Some((instance_handle, false))
                 }
             })
@@ -135,7 +134,7 @@ macro_rules! define_plugin {
             };
 
             // Allocate or restore sequence data pointer
-            let sequence_handle = get_sequence_handle::<$sequence_type>(cmd, in_data_ptr).unwrap_or(None);
+            let sequence_handle = get_sequence_handle::<$sequence_type>(cmd, &in_data).unwrap_or(None);
 
             let global_lock = global_handle.lock()?;
             let global_inst = global_lock.as_ref_mut()?;
@@ -181,8 +180,8 @@ macro_rules! define_plugin {
                         sequence_err = Some(inst.do_dialog(&mut plugin_state));
                     }
                     RawCommand::Render => {
-                        let in_layer = $crate::Layer::from_raw(in_data_ptr, &mut (*(*params)).u.ld);
-                        let mut out_layer = $crate::Layer::from_raw(in_data_ptr, output);
+                        let in_layer = $crate::Layer::from_raw(&mut (*(*params)).u.ld, &in_data);
+                        let mut out_layer = $crate::Layer::from_raw(output, &in_data);
                         sequence_err = Some(inst.render(&mut plugin_state, &in_layer, &mut out_layer));
                     }
                     RawCommand::UserChangedParam => {
@@ -307,9 +306,11 @@ macro_rules! define_plugin {
                 assert_impl::<$sequence_type>();
             }
 
-            //log::info!("EffectMain start {:?} {:?}", PfCmd(cmd), std::thread::current().id());
-            //struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", PfCmd(self.cmd), std::thread::current().id()); } }
-            //let _x = X { cmd: cmd as i32 };
+            const _: () = assert!(std::mem::size_of::<$sequence_type>() > 0, concat!("Instance type `", stringify!($sequence_type), "` cannot be zero-sized"));
+
+            // log::info!("EffectMain start {:?} {:?}", RawCommand::from(cmd), std::thread::current().id());
+            // struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", RawCommand::from(self.cmd), std::thread::current().id()); } }
+            // let _x = X { cmd: cmd as i32 };
 
             match handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra) {
                 Ok(_) => after_effects_sys::PF_Err_NONE as after_effects_sys::PF_Err,

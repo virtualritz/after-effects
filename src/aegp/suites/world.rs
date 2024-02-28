@@ -64,7 +64,7 @@ impl WorldSuite {
     /// Returns the base address of the [`WorldHandle`] for use in pixel iteration functions.
     ///
     /// Will return an error if used on a non-32bpc world.
-    pub fn base_addr32(&self, world_handle: &WorldHandle) -> Result<*mut pf::Pixel32, Error> {
+    pub fn base_addr32(&self, world_handle: &WorldHandle) -> Result<*mut pf::PixelF32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetBaseAddr32 -> *mut ae_sys::PF_PixelFloat, world_handle.as_ptr())? as _)
     }
 
@@ -151,7 +151,7 @@ define_suite_item_wrapper!(
         /// Returns the base address of this world for use in pixel iteration functions.
         ///
         /// Will return an error if used on a non-32bpc world.
-        base_addr32() -> *mut pf::Pixel32 => suite.base_addr32,
+        base_addr32() -> *mut pf::PixelF32 => suite.base_addr32,
 
         /// Performs a fast blur on this world.
         fast_blur(radius: f64, mode: ModeFlags, quality: Quality) -> () => suite.fast_blur,

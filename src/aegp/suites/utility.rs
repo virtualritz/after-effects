@@ -85,25 +85,25 @@ impl UtilitySuite {
     }
 
     /// Retrieves the foreground color from the paint palette.
-    pub fn paint_palette_get_foreground_color(&self) -> Result<pf::Pixel64, Error> {
+    pub fn paint_palette_get_foreground_color(&self) -> Result<pf::PixelF64, Error> {
         let color = call_suite_fn_single!(self, AEGP_PaintPalGetForeColor -> ae_sys::AEGP_ColorVal)?;
         Ok(unsafe { std::mem::transmute(color) })
     }
 
     /// Retrieves the background color from the paint palette.
-    pub fn paint_palette_get_background_color(&self) -> Result<pf::Pixel64, Error> {
+    pub fn paint_palette_get_background_color(&self) -> Result<pf::PixelF64, Error> {
         let color = call_suite_fn_single!(self, AEGP_PaintPalGetBackColor -> ae_sys::AEGP_ColorVal)?;
         Ok(unsafe { std::mem::transmute(color) })
     }
 
     /// Sets the foreground color in the paint palette.
-    pub fn paint_palette_set_foreground_color(&self, color: pf::Pixel64) -> Result<(), Error> {
+    pub fn paint_palette_set_foreground_color(&self, color: pf::PixelF64) -> Result<(), Error> {
         let color = unsafe { std::mem::transmute(color) };
         call_suite_fn!(self, AEGP_PaintPalSetForeColor, &color as *const _)
     }
 
     /// Sets the background color in the paint palette.
-    pub fn paint_palette_set_background_color(&self, color: pf::Pixel64) -> Result<(), Error> {
+    pub fn paint_palette_set_background_color(&self, color: pf::PixelF64) -> Result<(), Error> {
         let color = unsafe { std::mem::transmute(color) };
         call_suite_fn!(self, AEGP_PaintPalSetBackColor, &color as *const _)
     }
@@ -111,7 +111,7 @@ impl UtilitySuite {
     /// Retrieves the fill color from the character palette.
     ///
     /// Returns tuple containing (is_defined, color)
-    pub fn character_palette_get_fill_color(&self) -> Result<(bool, pf::Pixel64), Error> {
+    pub fn character_palette_get_fill_color(&self) -> Result<(bool, pf::PixelF64), Error> {
         let (is_defined, color) = call_suite_fn_double!(self, AEGP_CharPalGetFillColor -> ae_sys::A_Boolean, ae_sys::AEGP_ColorVal)?;
         Ok((is_defined != 0, unsafe { std::mem::transmute(color) }))
     }
@@ -119,19 +119,19 @@ impl UtilitySuite {
     /// Retrieves the stroke color from the character palette.
     ///
     /// Returns tuple containing (is_defined, color)
-    pub fn character_palette_get_stroke_color(&self) -> Result<(bool, pf::Pixel64), Error> {
+    pub fn character_palette_get_stroke_color(&self) -> Result<(bool, pf::PixelF64), Error> {
         let (is_defined, color) = call_suite_fn_double!(self, AEGP_CharPalGetStrokeColor -> ae_sys::A_Boolean, ae_sys::AEGP_ColorVal)?;
         Ok((is_defined != 0, unsafe { std::mem::transmute(color) }))
     }
 
     /// Sets the fill color in the character palette.
-    pub fn character_palette_set_fill_color(&self, color: pf::Pixel64) -> Result<(), Error> {
+    pub fn character_palette_set_fill_color(&self, color: pf::PixelF64) -> Result<(), Error> {
         let color = unsafe { std::mem::transmute(color) };
         call_suite_fn!(self, AEGP_CharPalSetFillColor, &color as *const _)
     }
 
     /// Sets the stroke color in the character palette.
-    pub fn character_palette_set_stroke_color(&self, color: pf::Pixel64) -> Result<(), Error> {
+    pub fn character_palette_set_stroke_color(&self, color: pf::PixelF64) -> Result<(), Error> {
         let color = unsafe { std::mem::transmute(color) };
         call_suite_fn!(self, AEGP_CharPalSetStrokeColor, &color as *const _)
     }

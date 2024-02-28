@@ -79,13 +79,13 @@ impl MaskSuite {
     }
 
     /// Retrieves the color of the specified mask.
-    pub fn mask_color(&self, mask: &MaskRefHandle) -> Result<pf::Pixel64, Error> {
+    pub fn mask_color(&self, mask: &MaskRefHandle) -> Result<pf::PixelF64, Error> {
         let color_val = call_suite_fn_single!(self, AEGP_GetMaskColor -> ae_sys::AEGP_ColorVal, mask.as_ptr())?;
         Ok(unsafe { std::mem::transmute(color_val) })
     }
 
     /// Sets the color of the specified mask.
-    pub fn set_mask_color(&self, mask: &MaskRefHandle, color: pf::Pixel64) -> Result<(), Error> {
+    pub fn set_mask_color(&self, mask: &MaskRefHandle, color: pf::PixelF64) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetMaskColor, mask.as_ptr(), std::mem::transmute(&color))
     }
 

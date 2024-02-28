@@ -1,9 +1,22 @@
 use super::*;
+use ae_sys::PF_LayerDef;
 
-#[derive(Debug)]
 pub struct Layer {
-    pub(crate) in_data: *const ae_sys::PF_InData,
-    pub(crate) layer_ptr: *mut ae_sys::PF_LayerDef,
+    pub(crate) util_callbacks: UtilCallbacks,
+    pub(crate) layer_ptr: *mut PF_LayerDef,
+}
+
+impl Debug for Layer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Layer")
+            .field("width", &self.width())
+            .field("height", &self.height())
+            .field("buffer_stride", &self.buffer_stride())
+            .field("rowbytes", &self.rowbytes())
+            .field("extent_hint", &self.extent_hint())
+            .field("bit_depth", &self.bit_depth())
+            .finish()
+    }
 }
 
 //pub world_flags: PF_WorldFlags,
@@ -12,20 +25,20 @@ pub struct Layer {
 //pub width: A_long,
 //pub height: A_long,
 //pub extent_hint: PF_UnionableRect,
-//pub platform_ref: *mut ::std::os::raw::c_void,
+//pub platform_ref: *mut c_void,
 //pub pix_aspect_ratio: PF_RationalScale,
 //pub origin_x: A_long,
 //pub origin_y: A_long,
 //pub dephault: A_long,
 
 impl Layer {
-    pub fn from_raw(
-        in_data: *const ae_sys::PF_InData,
-        layer_ptr: *mut ae_sys::PF_LayerDef,
-    ) -> Self {
-        assert!(!in_data.is_null());
+    pub fn from_raw(layer_ptr: *mut PF_LayerDef, in_data: &InData) -> Self {
         assert!(!layer_ptr.is_null());
-        Self { in_data, layer_ptr }
+        Self { util_callbacks: in_data.utils(), layer_ptr }
+    }
+
+    pub fn as_ptr(&self) -> *mut PF_LayerDef {
+        self.layer_ptr
     }
 
     pub fn width(&self) -> i32 {
@@ -87,127 +100,51 @@ impl Layer {
         }
     }
 
-    pub fn copy_from(
-        &mut self,
-        src: &Self,
-        src_rect: Option<Rect>,
-        dst_rect: Option<Rect>,
-    ) -> Result<(), Error> {
-        unsafe {
-            if self.in_data.is_null()
-                || self.layer_ptr.is_null()
-                || src.layer_ptr.is_null()
-                || (*self.in_data).utils.is_null()
-                || (*self.in_data).effect_ref.is_null()
-            {
-                return Err(Error::BadCallbackParameter);
-            }
-            let copy_fn = (*(*self.in_data).utils)
-                .copy
-                .ok_or(Error::BadCallbackParameter)?;
-            match copy_fn(
-                (*self.in_data).effect_ref,
-                src.layer_ptr,
-                self.layer_ptr,
-                src_rect
-                    .map(|x| &mut x.into() as *mut _)
-                    .unwrap_or(std::ptr::null_mut()),
-                dst_rect
-                    .map(|x| &mut x.into() as *mut _)
-                    .unwrap_or(std::ptr::null_mut()),
-            ) {
-                0 => Ok(()),
-                e => return Err(e.into()),
-            }
-        }
-    }
-    pub fn fill(&mut self, color: Pixel, rect: Option<Rect>) -> Result<(), Error> {
-        unsafe {
-            if self.in_data.is_null()
-                || self.layer_ptr.is_null()
-                || (*self.in_data).utils.is_null()
-                || (*self.in_data).effect_ref.is_null()
-            {
-                return Err(Error::BadCallbackParameter);
-            }
-            let fill_fn = (*(*self.in_data).utils)
-                .fill
-                .ok_or(Error::BadCallbackParameter)?;
-            match fill_fn(
-                (*self.in_data).effect_ref,
-                &color.into() as *const _,
-                rect.map(|x| &x.into() as *const _)
-                    .unwrap_or(std::ptr::null_mut()),
-                self.layer_ptr,
-            ) {
-                0 => Ok(()),
-                e => return Err(e.into()),
-            }
-        }
+    pub fn copy_from(&mut self, src: &Self, src_rect: Option<Rect>, dst_rect: Option<Rect>) -> Result<(), Error> {
+        self.util_callbacks.copy(src.layer_ptr, self.layer_ptr, src_rect, dst_rect)
     }
 
-    pub fn iterate<F>(
-        &self,
-        output: &mut Self,
-        progress_base: i32,
-        progress_final: i32,
-        extent_hint: Rect,
-        cb: F,
-    ) -> Result<(), Error>
+    pub fn fill(&mut self, color: Option<Pixel8>, rect: Option<Rect>) -> Result<(), Error> {
+        self.util_callbacks.fill(self.layer_ptr, color, rect)
+    }
+
+    pub fn iterate_with<F>(&self, output: &mut Self, progress_base: i32, progress_final: i32, area: Option<Rect>, cb: F) -> Result<(), Error>
     where
-        F: Fn(i32, i32, Pixel) -> Result<Pixel, Error>,
+        F: Fn(i32, i32, GenericPixel, GenericPixelMut) -> Result<(), Error>,
     {
-        unsafe {
-            if self.in_data.is_null()
-                || self.layer_ptr.is_null()
-                || output.layer_ptr.is_null()
-                || (*self.in_data).utils.is_null()
-            {
-                return Err(Error::BadCallbackParameter);
-            }
-            let iterate_fn = (*(*self.in_data).utils)
-                .iterate
-                .ok_or(Error::BadCallbackParameter)?;
+        if self.layer_ptr.is_null() || output.layer_ptr.is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
+        assert!(self.bit_depth() == output.bit_depth());
 
-            let callback =
-                Box::<Box<dyn Fn(i32, i32, Pixel) -> Result<Pixel, Error>>>::new(Box::new(cb));
-            let refcon = &callback as *const _;
-            match iterate_fn(
-                self.in_data as *mut _,
-                progress_base,
-                progress_final,
-                self.layer_ptr,
-                &ae_sys::PF_LRect::from(extent_hint),
-                refcon as *mut _,
-                Some(iterate_8_func),
-                output.layer_ptr,
-            ) {
-                0 => Ok(()),
-                e => return Err(e.into()),
-            }
+        match self.bit_depth() {
+            8 => self.util_callbacks.iterate(Some(self.layer_ptr), output.layer_ptr, progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
+                cb(x, y, GenericPixel::Pixel8(in_pixel), GenericPixelMut::Pixel8(out_pixel))
+            }),
+            16 => self.util_callbacks.iterate16(Some(self.layer_ptr), output.layer_ptr, progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
+                cb(x, y, GenericPixel::Pixel16(in_pixel), GenericPixelMut::Pixel16(out_pixel))
+            }),
+            //32 => cb(x, y, &GenericPixel::PixelF32(in_pixel), &mut GenericPixel::PixelF32(out_pixel)),
+            _ => Err(Error::BadCallbackParameter),
         }
     }
-}
 
-unsafe extern "C" fn iterate_8_func(
-    refcon: *mut std::ffi::c_void,
-    x: i32,
-    y: i32,
-    in_p: *mut ae_sys::PF_Pixel,
-    out_p: *mut ae_sys::PF_Pixel,
-) -> ae_sys::PF_Err {
-    if refcon.is_null() || in_p.is_null() || out_p.is_null() {
-        return ae_sys::PF_Err_BAD_CALLBACK_PARAM as ae_sys::PF_Err;
-    }
-    let cb = &*(refcon as *const Box<Box<dyn Fn(i32, i32, Pixel) -> Result<Pixel, Error>>>);
-
-    let ret = match cb(x, y, (*in_p).into()) {
-        Ok(px) => {
-            *out_p = px.into();
-            ae_sys::PF_Err_NONE as ae_sys::PF_Err
+    pub fn iterate<F>(&mut self, progress_base: i32, progress_final: i32, area: Option<Rect>, cb: F) -> Result<(), Error>
+    where
+        F: Fn(i32, i32, GenericPixelMut) -> Result<(), Error>,
+    {
+        if self.layer_ptr.is_null() {
+            return Err(Error::BadCallbackParameter);
         }
-        Err(e) => e as ae_sys::PF_Err,
-    };
-
-    ret
+        match self.bit_depth() {
+            8 => self.util_callbacks.iterate(None, self.layer_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
+                cb(x, y, GenericPixelMut::Pixel8(out_pixel))
+            }),
+            16 => self.util_callbacks.iterate16(None, self.layer_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
+                cb(x, y, GenericPixelMut::Pixel16(out_pixel))
+            }),
+            //32 => cb(x, y, &GenericPixel::PixelF32(in_pixel), &mut GenericPixel::PixelF32(out_pixel)),
+            _ => Err(Error::BadCallbackParameter),
+        }
+    }
 }

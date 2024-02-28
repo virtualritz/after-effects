@@ -93,6 +93,8 @@ pub use drawbot::*;
 pub mod pf;
 pub use pf::*;
 pub mod pr;
+pub mod pr_string;
+use pr_string::*;
 
 // re-exports
 pub use cstr_literal;

@@ -178,7 +178,7 @@ impl CompSuite {
                 height,
                 &color,
                 parent_comp_handle.as_ptr(),
-                duration.map_or(std::ptr::null(), |t| &t.into() as *const _)
+                duration.map(Into::into).as_ref().map_or(std::ptr::null(), |t| t)
             )?
         ))
     }
@@ -276,7 +276,7 @@ impl CompSuite {
                 AEGP_CreateNullInComp -> ae_sys::AEGP_LayerH,
                 name.as_ptr(),
                 parent_comp_handle.as_ptr(),
-                duration.map_or(std::ptr::null(), |t| &t.into() as *const _)
+                duration.map(Into::into).as_ref().map_or(std::ptr::null(), |t| t)
             )?
         ))
     }

@@ -354,7 +354,7 @@ impl CanvasSuite {
     /// Retrieves the colors used in the checkerboard.
     ///
     /// This function is valid for interactive artisans only.
-    pub fn interactive_checkerboard_colors(&self, render_ctx: &RenderContextHandle) -> Result<(Pixel, Pixel), Error> {
+    pub fn interactive_checkerboard_colors(&self, render_ctx: &RenderContextHandle) -> Result<(Pixel8, Pixel8), Error> {
         let (px1, px2) = call_suite_fn_double!(self, AEGP_GetInteractiveCheckerboardColors -> ae_sys::PF_Pixel, ae_sys::PF_Pixel, render_ctx.as_ptr())?;
         Ok((
             px1.into(),

@@ -204,11 +204,20 @@ impl Into<Param> for PopupDef {
 }
 
 define_param_wrapper!(AngleDef, PF_AngleDef);
-define_param_basic_wrapper!(AngleDef, PF_AngleDef, i32, i32);
 //define_param_value_str_wrapper!(AngleDef, angle_def);
 //define_param_value_desc_wrapper!(AngleDef, angle_def);
 
 impl AngleDef {
+    pub fn set_value(mut self, value: f32) -> Self {
+        self.0.value = Fixed::from(value).into();
+        self
+    }
+
+    pub fn set_default(mut self, default: f32) -> Self {
+        self.0.dephault = Fixed::from(default).into();
+        self
+    }
+
     pub fn from(param: &ParamDef) -> Option<Self> {
         if ae_sys::PF_Param_ANGLE == param.param_def_boxed.param_type {
             Some(Self(unsafe { param.param_def_boxed.u.ad }))
@@ -217,8 +226,8 @@ impl AngleDef {
         }
     }
 
-    pub fn value(&self) -> i32 {
-        self.0.value
+    pub fn value(&self) -> f32 {
+        Fixed::from(self.0.value).into()
     }
 }
 impl Into<Param> for AngleDef {
@@ -238,16 +247,16 @@ impl ColorDef {
         }
     }
 
-    pub fn value(&self) -> Pixel {
-        Pixel::from(self.0.value)
+    pub fn value(&self) -> Pixel8 {
+        Pixel8::from(self.0.value)
     }
 
-    pub fn set_value(&mut self, value: Pixel) -> &mut Self {
+    pub fn set_value(&mut self, value: Pixel8) -> &mut Self {
         self.0.value = ae_sys::PF_Pixel::from(value);
         self
     }
 
-    pub fn default(&mut self, default: Pixel) -> &mut Self {
+    pub fn default(&mut self, default: Pixel8) -> &mut Self {
         self.0.dephault = ae_sys::PF_Pixel::from(default);
         self
     }
@@ -784,7 +793,7 @@ impl ParamDef {
         (|| -> Option<i32> {
             crate::ParamUtilsSuite::new()
                 .ok()?
-                .get_keyframe_count(InData::from_raw(self.in_data_ptr).effect_ref(), self.index?)
+                .keyframe_count(InData::from_raw(self.in_data_ptr).effect_ref(), self.index?)
                 .ok()
         })()
         .unwrap_or(0)
