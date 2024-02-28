@@ -1,6 +1,6 @@
 use crate::*;
 use std::ffi::c_void;
-use ae_sys::*;
+use ae_sys::{ PF_ProgPtr, PF_EffectWorld, PF_CompositeMode, PF_MaskWorld, _PF_UtilCallbacks, PF_Pixel, PF_Pixel16, PF_FloatMatrix };
 
 define_enum! {
     ae_sys::PF_Quality,
@@ -652,8 +652,7 @@ impl RawHandle {
                 return Err(Error::OutOfMemory);
             }
             Ok(RawHandleLock {
-                utils_ptr: self.utils_ptr,
-                handle: self.handle,
+                handle: self,
                 ptr,
             })
         }
@@ -683,21 +682,20 @@ impl Drop for RawHandle {
         }
     }
 }
-pub struct RawHandleLock {
-    utils_ptr: *const ae_sys::_PF_UtilCallbacks,
-    handle: ae_sys::PF_Handle,
+pub struct RawHandleLock<'a> {
+    handle: &'a RawHandle,
     ptr: *mut c_void,
 }
-impl RawHandleLock {
+impl<'a> RawHandleLock<'a> {
     pub fn as_ptr(&self) -> *mut c_void {
         self.ptr
     }
 }
-impl Drop for RawHandleLock {
+impl<'a> Drop for RawHandleLock<'a> {
     fn drop(&mut self) {
         unsafe {
-            let unlock = (*self.utils_ptr).host_unlock_handle.unwrap();
-            unlock(self.handle);
+            let unlock = (*self.handle.utils_ptr).host_unlock_handle.unwrap();
+            unlock(self.handle.handle);
         }
     }
 }

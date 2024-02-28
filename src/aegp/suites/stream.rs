@@ -102,11 +102,10 @@ impl StreamSuite {
         let mut min = 0.0;
         let mut max = 0.0;
         call_suite_fn!(self, AEGP_GetStreamProperties, stream_reference_handle.as_ptr(), &mut flags, &mut min, &mut max)?;
-        Ok((
-            StreamFlags::from_bits_truncate(flags),
-            if flags & ae_sys::AEGP_StreamFlag_HAS_MIN != 0 { Some(min) } else { None },
-            if flags & ae_sys::AEGP_StreamFlag_HAS_MAX != 0 { Some(max) } else { None }
-        ))
+        let flags = StreamFlags::from_bits_truncate(flags);
+        let min = if flags.contains(StreamFlags::HAS_MIN) { Some(min) } else { None };
+        let max = if flags.contains(StreamFlags::HAS_MAX) { Some(max) } else { None };
+        Ok((flags, min, max))
     }
 
     /// Returns whether or not the stream is affected by expressions.
