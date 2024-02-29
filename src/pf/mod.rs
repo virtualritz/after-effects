@@ -16,10 +16,37 @@ mod out_data;   pub use out_data::*;
 mod parameters; pub use parameters::*;
 mod pixel;      pub use pixel::*;
 mod render;     pub use render::*;
-mod suites;     pub use suites::*;
 mod effect;     pub use effect::*;
 mod interact_callbacks; pub use interact_callbacks::*;
 mod util_callbacks;     pub use util_callbacks::*;
+
+pub mod suites {
+    pub(crate) mod effect_sequence_data;  pub use effect_sequence_data::EffectSequenceDataSuite  as EffectSequenceData;
+    pub(crate) mod custom_ui;             pub use custom_ui           ::{ EffectCustomUISuite as EffectCustomUI,
+                                                                          EffectCustomUIOverlayThemeSuite as EffectCustomUIOverlayTheme };
+    pub(crate) mod iterate;               pub use iterate             ::{ Iterate8Suite     as Iterate8,
+                                                                          Iterate16Suite    as Iterate16,
+                                                                          IterateFloatSuite as IterateFloat };
+    pub(crate) mod pixel_format;          pub use pixel_format        ::PixelFormatSuite    as PixelFormat;
+    pub(crate) mod utility;               pub use utility             ::UtilitySuite        as Utility;
+    pub(crate) mod world;                 pub use world               ::WorldSuite          as World;
+    pub(crate) mod handle;                pub use handle              ::HandleSuite         as Handle;
+    pub(crate) mod param_utils;           pub use param_utils         ::ParamUtilsSuite     as ParamUtils;
+    pub(crate) mod gpu_device;            pub use gpu_device          ::GPUDeviceSuite      as GPUDevice;
+}
+
+pub use suites::custom_ui::{
+    ContextHandle,
+    CustomUIInfo
+};
+pub use suites::param_utils::{
+    PARAM_INDEX_NONE,
+    PARAM_INDEX_CHECK_ALL,
+    PARAM_INDEX_CHECK_ALL_EXCEPT_LAYER_PARAMS,
+    PARAM_INDEX_CHECK_ALL_HONOR_EXCLUDE,
+    TimeDir,
+};
+pub use suites::pixel_format::PixelFormat;
 
 define_enum! {
     ae_sys::PF_XferMode,
@@ -173,6 +200,20 @@ define_enum! {
         Frame = ae_sys::PF_Field_FRAME,
         Upper = ae_sys::PF_Field_UPPER,
         Lower = ae_sys::PF_Field_LOWER,
+    }
+}
+define_enum! {
+    ae_sys::PF_TimeDisplay,
+    TimeDisplay {
+        Fps24        = ae_sys::PF_TimeDisplay_24,
+        Fps25        = ae_sys::PF_TimeDisplay_25,
+        Fps30Drop    = ae_sys::PF_TimeDisplay_30Drop,
+        Fps30NonDrop = ae_sys::PF_TimeDisplay_30NonDrop,
+        Fps50        = ae_sys::PF_TimeDisplay_50,
+        Fps60Drop    = ae_sys::PF_TimeDisplay_60Drop,
+        Fps60NonDrop = ae_sys::PF_TimeDisplay_60NonDrop,
+        NonStandard  = ae_sys::PF_TimeDisplay_NonStandard,
+        Invalid      = ae_sys::PF_TimeDisplay_Invalid,
     }
 }
 // FIXME: wrap this nicely

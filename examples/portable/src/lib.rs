@@ -50,7 +50,7 @@ fn detect_host(in_data: ae::InData) -> String {
                     // Q. How can I tell the difference between versions where the API version is the same, such as AE 6.5 and 7.0?
                     // A. The effect API didn't change the only way to differentiate between them is to check for the presence of a version of a suite new in 7.0.
                     // Say, something 32bpc-ish. To avoid AEGP_SuiteHandler throwing if the suite isn't present, we'll acquire it the old-school way.
-                    if let Ok(_) = ae::pf::IterateFloatSuite::new() {
+                    if pf::suites::IterateFloat::new().is_ok() {
                         "After Effects between 7.0 and CS4."
                     } else {
                         "After Effects 6.5 or earlier."

@@ -1,5 +1,5 @@
 use crate::*;
-use crate::aegp::*;
+use ae_sys::AEGP_LayerH;
 
 define_suite!(
     /// Get and set the type of lights in a composition.
@@ -30,12 +30,12 @@ impl LightSuite {
     }
 
     /// Retrieves the [`LightType`] of the specified camera layer
-    pub fn light_type(&self, layer_handle: &LayerHandle) -> Result<LightType, Error> {
+    pub fn light_type(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LightType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLightType -> ae_sys::AEGP_LightType, layer_handle.as_ptr())?.into())
     }
 
     /// Sets the [`LightType`] for the specified camera layer.
-    pub fn set_light_type(&self, layer_handle: &LayerHandle, light_type: LightType) -> Result<(), Error> {
+    pub fn set_light_type(&self, layer_handle: impl AsPtr<AEGP_LayerH>, light_type: LightType) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetLightType, layer_handle.as_ptr(), light_type.into())
     }
 }

@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug)]
 pub struct Handle<'a, T: 'a> {
-    suite: HandleSuite,
+    suite: pf::suites::Handle,
     handle: ae_sys::PF_Handle,
     _marker: PhantomData<&'a T>,
 }
@@ -40,7 +40,7 @@ impl<'a, T: 'a> Handle<'a, T> {
     pub fn new(value: T) -> Result<Handle<'a, T>, Error> {
         assert!(std::mem::size_of::<T>() > 0);
 
-        match HandleSuite::new() {
+        match pf::suites::Handle::new() {
             Ok(suite) => {
                 let handle = suite.new_handle(std::mem::size_of::<T>() as u64);
                 if handle.is_null() {
@@ -118,7 +118,7 @@ impl<'a, T: 'a> Handle<'a, T> {
     }*/
 
     pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<Handle<'a, T>, Error> {
-        match HandleSuite::new() {
+        match pf::suites::Handle::new() {
             Ok(suite) => {
                 Ok(Handle {
                     suite,
@@ -180,7 +180,7 @@ impl<'a, 'b> Drop for FlatHandleLock<'a, 'b> {
 /// structure into a flat [`Vec<u8>``].
 #[derive(Debug)]
 pub struct FlatHandle<'a> {
-    suite: HandleSuite,
+    suite: pf::suites::Handle,
     handle: ae_sys::PF_Handle,
     is_owned: bool,
     _marker: PhantomData<&'a ()>,
@@ -189,7 +189,7 @@ pub struct FlatHandle<'a> {
 impl<'a> FlatHandle<'a> {
     pub fn new(slice: impl Into<Vec<u8>>) -> Result<FlatHandle<'a>, Error> {
 
-        let suite = HandleSuite::new()?;
+        let suite = pf::suites::Handle::new()?;
         let vector = slice.into();
 
         let handle = suite.new_handle(vector.len() as u64);
@@ -287,7 +287,7 @@ impl<'a> FlatHandle<'a> {
         if handle.is_null() {
             return Err(Error::Generic);
         }
-        let suite = HandleSuite::new()?;
+        let suite = pf::suites::Handle::new()?;
         let ptr = unsafe { *(handle as *const *const u8) };
         if ptr.is_null() {
             Err(Error::InternalStructDamaged)
@@ -306,7 +306,7 @@ impl<'a> FlatHandle<'a> {
         if handle.is_null() {
             return Err(Error::Generic);
         }
-        let suite = HandleSuite::new()?;
+        let suite = pf::suites::Handle::new()?;
 
         let ptr = unsafe { *(handle as *const *const u8) };
         if ptr.is_null() {

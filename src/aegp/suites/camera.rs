@@ -1,6 +1,6 @@
 use crate::*;
 use crate::aegp::*;
-use ae_sys::AEGP_LayerH;
+use ae_sys::{ AEGP_LayerH, PR_RenderContextH };
 
 define_suite!(
     /// Obtains the camera geometry, including camera properties (type, lens, depth of field, focal distance, aperture, et cetera).
@@ -42,7 +42,7 @@ impl CameraSuite {
     }
 
     /// Given a layer handle and time, returns the current camera layer handle.
-    pub fn camera(&self, render_context_handle: &pr::RenderContextHandle, time: Time) -> Result<LayerHandle, Error> {
+    pub fn camera(&self, render_context_handle: impl AsPtr<PR_RenderContextH>, time: Time) -> Result<LayerHandle, Error> {
         let camera_layer_handle = call_suite_fn_single!(self, AEGP_GetCamera -> ae_sys::AEGP_LayerH, render_context_handle.as_ptr(), &time as *const _ as *const ae_sys::A_Time)?;
         if camera_layer_handle.is_null() {
             Err(Error::Generic)
@@ -141,7 +141,7 @@ define_suite_item_wrapper!(
 );
 
 impl Camera {
-    pub fn from_render_context(render_context_handle: &pr::RenderContextHandle, time: Time) -> Result<Self, Error> {
+    pub fn from_render_context(render_context_handle: impl AsPtr<PR_RenderContextH>, time: Time) -> Result<Self, Error> {
         let suite = CameraSuite::new()?;
         let handle = suite.camera(render_context_handle, time)?;
         Ok(Self {

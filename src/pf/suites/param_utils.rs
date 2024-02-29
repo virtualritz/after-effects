@@ -12,13 +12,13 @@ define_suite!(
     /// At least some of these functions are provided by several third-party hosts. These functions are especially handy for effects with supervised parameters.
     ///
     ///
-	/// ### [`get_current_state()`](Self::get_current_state) / [`are_states_identical()`](Self::are_states_identical)
-    /// This API lets you determine if a set of your inputs (either layers, other properties, or both) are different between when you first called [`get_current_state()`](Self::get_current_state) and a current call, so it can/ be used for caching.
+	/// ### [`current_state()`](Self::current_state) / [`are_states_identical()`](Self::are_states_identical)
+    /// This API lets you determine if a set of your inputs (either layers, other properties, or both) are different between when you first called [`current_state()`](Self::current_state) and a current call, so it can/ be used for caching.
     /// You can specify a range of time to consider or all of time.
     ///
     /// For effects that do simulation across time and therefore set PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT, when you ask about a time range, it will be expanded to include any times needed to produce that range.
     ///
-    /// IMPORTANT: as of 13.5 to avoid threading deadlock problems, [`get_current_state()`](Self::get_current_state) returns a random state
+    /// IMPORTANT: as of 13.5 to avoid threading deadlock problems, [`current_state()`](Self::current_state) returns a random state
     /// if used in the context of UPDATE_PARAMS_UI only. In other selectors this will behave normally.
     ParamUtilsSuite,
     PF_ParamUtilsSuite3,
@@ -47,15 +47,15 @@ impl ParamUtilsSuite {
 	///
 	/// The ONLY fields that can be changed in this way are:
 	///     PF_ParamDef
-	///         ui_flags: PF_PUI_ECW_SEPARATOR, PF_PUI_DISABLED only (and PF_PUI_INVISIBLE in Premiere).
+	///         ui_flags: `PF_PUI_ECW_SEPARATOR`, `PF_PUI_DISABLED` only (and `PF_PUI_INVISIBLE` in Premiere).
 	///         ui_width
 	///         ui_height
 	///         name
-	///         flags: PF_ParamFlag_COLLAPSE_TWIRLY only
+	///         flags: `PF_ParamFlag_COLLAPSE_TWIRLY` only
 	///     PF_ParamDefUnion:
 	///         slider_min, slider_max, precision, display_flags of any slider type
-	/// For PF_PUI_STD_CONTROL_ONLY params, you can also change the value field by setting PF_ChangeFlag_CHANGED_VALUE before returning.
-    /// But you are not allowed to change the value during PF_Cmd_UPDATE_PARAMS_UI.
+	/// For `PF_PUI_STD_CONTROL_ONLY` params, you can also change the value field by setting `PF_ChangeFlag_CHANGED_VALUE` before returning.
+    /// But you are not allowed to change the value during `PF_Cmd_UPDATE_PARAMS_UI`.
     pub fn update_param_ui(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, param_def: &ParamDef) -> Result<(), Error> {
         call_suite_fn!(self, PF_UpdateParamUI, effect_ref.as_ptr(), param_index, param_def.as_ptr())
     }
@@ -89,6 +89,7 @@ impl ParamUtilsSuite {
     pub fn are_states_identical(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, state1: &ae_sys::PF_State, state2: &ae_sys::PF_State) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, PF_AreStatesIdentical -> ae_sys::A_Boolean, effect_ref.as_ptr(), state1, state2)? != 0)
     }
+
     /// Returns `true` if a parameter's value is the same at the two passed times.
     ///
     /// Note: the times need not be contiguous; there could be different intervening values.
@@ -145,10 +146,13 @@ impl ParamUtilsSuite {
 // ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
 
 pub const PARAM_INDEX_NONE: i32 = ae_sys::PF_ParamIndex_NONE;
+
 /// check every parameter, including every layer referred to by a layer parameter
 pub const PARAM_INDEX_CHECK_ALL: i32 = ae_sys::PF_ParamIndex_CHECK_ALL;
+
 /// omit all layers. Pass a specific layer parameter index to include that as the only layer parameter tested.
 pub const PARAM_INDEX_CHECK_ALL_EXCEPT_LAYER_PARAMS: i32 = ae_sys::PF_ParamIndex_CHECK_ALL_EXCEPT_LAYER_PARAMS;
+
 /// Similar to CHECK_ALL, but honor PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED.
 pub const PARAM_INDEX_CHECK_ALL_HONOR_EXCLUDE: i32 = ae_sys::PF_ParamIndex_CHECK_ALL_HONOR_EXCLUDE;
 

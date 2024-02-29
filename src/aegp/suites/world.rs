@@ -1,6 +1,6 @@
 use crate::*;
 use crate::aegp::*;
-use ae_sys::AEGP_WorldH;
+use ae_sys::{ AEGP_WorldH, AEGP_PlatformWorldH };
 
 define_suite!(
     /// [`World`]s are the common format used throughout the AEGP APIs to describe frames of pixels.
@@ -92,14 +92,14 @@ impl WorldSuite {
     }
 
     /// Disposes of an [`PlatformWorldHandle`].
-    pub fn dispose_platform_world(&self, world: &PlatformWorldHandle) -> Result<(), Error> {
+    pub fn dispose_platform_world(&self, world: impl AsPtr<AEGP_PlatformWorldH>) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_DisposePlatformWorld, world.as_ptr())
     }
 
     /// Retrieves an [`WorldHandle`] referring to the given [`PlatformWorldHandle`].
     ///
     /// NOTE: This doesn't allocate a new world, it simply provides a reference to an existing one.
-    pub fn new_reference_from_platform_world(&self, plugin_id: PluginId, platform_world: &PlatformWorldHandle) -> Result<WorldHandle, Error> {
+    pub fn new_reference_from_platform_world(&self, plugin_id: PluginId, platform_world: impl AsPtr<AEGP_PlatformWorldH>) -> Result<WorldHandle, Error> {
         Ok(WorldHandle::from_raw(
             call_suite_fn_single!(self, AEGP_NewReferenceFromPlatformWorld -> ae_sys::AEGP_WorldH, plugin_id, platform_world.as_ptr())?
         ))

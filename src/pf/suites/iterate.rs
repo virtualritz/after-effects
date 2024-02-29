@@ -15,13 +15,13 @@ define_suite!(
     /// ```
     ///   The October 2021 SDK update increases the number of concurrent iterate threads up to the available system CPU cores instead of the previous hard-coded limit of 32.
     /// ```
-    IterateFloatSuite,
-    PF_iterateFloatSuite2,
-    kPFIterateFloatSuite,
-    kPFIterateFloatSuiteVersion2
+    Iterate8Suite,
+    PF_Iterate8Suite2,
+    kPFIterate8Suite,
+    kPFIterate8SuiteVersion2
 );
 
-impl IterateFloatSuite {
+impl Iterate8Suite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
@@ -30,11 +30,12 @@ impl IterateFloatSuite {
 
     // Helpers for the define_iterate macros
     #[inline(always)] fn get_in_data(&self) -> *const ae_sys::PF_InData { std::ptr::null() }
-    #[inline(always)] fn get_funcs_ptr(&self) -> *const ae_sys::PF_iterateFloatSuite2 { self.suite_ptr }
+    #[inline(always)] fn get_funcs_ptr(&self) -> *const ae_sys::PF_Iterate8Suite2 { self.suite_ptr }
 
-    define_iterate!(+ in_data: &InData, iterate,                       PixelF32,  PF_PixelFloat);
-    define_iterate!(+ in_data: &InData, iterate_origin,                PixelF32,  PF_PixelFloat,   origin: Option<Point>);
-    define_iterate!(+ in_data: &InData, iterate_origin_non_clip_src,   PixelF32,  PF_PixelFloat,   origin: Option<Point>);
+    define_iterate!(+ in_data: &InData, iterate,                       Pixel8,  PF_Pixel);
+    define_iterate!(+ in_data: &InData, iterate_origin,                Pixel8,  PF_Pixel,   origin: Option<Point>);
+    define_iterate!(+ in_data: &InData, iterate_origin_non_clip_src,   Pixel8,  PF_Pixel,   origin: Option<Point>);
+    define_iterate_lut_and_generic!(+ in_data: &InData,);
 }
 
 define_suite!(
@@ -83,13 +84,13 @@ define_suite!(
     /// ```
     ///   The October 2021 SDK update increases the number of concurrent iterate threads up to the available system CPU cores instead of the previous hard-coded limit of 32.
     /// ```
-    Iterate8Suite,
-    PF_Iterate8Suite2,
-    kPFIterate8Suite,
-    kPFIterate8SuiteVersion2
+    IterateFloatSuite,
+    PF_iterateFloatSuite2,
+    kPFIterateFloatSuite,
+    kPFIterateFloatSuiteVersion2
 );
 
-impl Iterate8Suite {
+impl IterateFloatSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
@@ -98,10 +99,9 @@ impl Iterate8Suite {
 
     // Helpers for the define_iterate macros
     #[inline(always)] fn get_in_data(&self) -> *const ae_sys::PF_InData { std::ptr::null() }
-    #[inline(always)] fn get_funcs_ptr(&self) -> *const ae_sys::PF_Iterate8Suite2 { self.suite_ptr }
+    #[inline(always)] fn get_funcs_ptr(&self) -> *const ae_sys::PF_iterateFloatSuite2 { self.suite_ptr }
 
-    define_iterate!(+ in_data: &InData, iterate,                       Pixel8,  PF_Pixel);
-    define_iterate!(+ in_data: &InData, iterate_origin,                Pixel8,  PF_Pixel,   origin: Option<Point>);
-    define_iterate!(+ in_data: &InData, iterate_origin_non_clip_src,   Pixel8,  PF_Pixel,   origin: Option<Point>);
-    define_iterate_lut_and_generic!(+ in_data: &InData,);
+    define_iterate!(+ in_data: &InData, iterate,                       PixelF32,  PF_PixelFloat);
+    define_iterate!(+ in_data: &InData, iterate_origin,                PixelF32,  PF_PixelFloat,   origin: Option<Point>);
+    define_iterate!(+ in_data: &InData, iterate_origin_non_clip_src,   PixelF32,  PF_PixelFloat,   origin: Option<Point>);
 }

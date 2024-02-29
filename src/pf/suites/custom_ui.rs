@@ -1,7 +1,5 @@
 use crate::*;
 
-define_handle_wrapper!(ContextHandle, PF_ContextH);
-
 define_suite!(
     EffectCustomUISuite,
     PF_EffectCustomUISuite2,
@@ -94,6 +92,8 @@ impl EffectCustomUIOverlayThemeSuite {
 }
 
 // ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
+
+define_handle_wrapper!(ContextHandle, PF_ContextH);
 
 #[derive(Copy, Clone, Debug)]
 pub struct CustomUIInfo(ae_sys::PF_CustomUIInfo);

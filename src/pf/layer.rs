@@ -128,7 +128,7 @@ impl Layer {
                 cb(x, y, GenericPixel::Pixel16(in_pixel), GenericPixelMut::Pixel16(out_pixel))
             }),
             32 => {
-                let suite = crate::IterateFloatSuite::new()?;
+                let suite = pf::suites::IterateFloat::new()?;
                 suite.iterate(&self.in_data, Some(self.layer_ptr), output.layer_ptr, progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
                     cb(x, y, GenericPixel::PixelF32(in_pixel), GenericPixelMut::PixelF32(out_pixel))
                 })
@@ -152,7 +152,7 @@ impl Layer {
                 cb(x, y, GenericPixelMut::Pixel16(out_pixel))
             }),
             32 => {
-                let suite = crate::IterateFloatSuite::new()?;
+                let suite = pf::suites::IterateFloat::new()?;
                 suite.iterate(&self.in_data, None, self.layer_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
                     cb(x, y, GenericPixelMut::PixelF32(out_pixel))
                 })

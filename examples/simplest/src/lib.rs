@@ -7,7 +7,7 @@ enum Params { Opacity }
 struct Plugin { }
 
 #[derive(Default)]
-struct Instance { }
+struct Instance { _unused: u8 }
 
 ae::define_plugin!(Plugin, Instance, Params);
 
@@ -28,7 +28,7 @@ impl AdobePluginGlobal for Plugin {
 
 impl AdobePluginInstance for Instance {
     fn flatten(&self) -> Result<(u16, Vec<u8>), Error> { Ok((1, Vec::new())) }
-    fn unflatten(_version: u16, _bytes: &[u8]) -> Result<Self, Error> { Ok(Self {}) }
+    fn unflatten(_version: u16, _bytes: &[u8]) -> Result<Self, Error> { Ok(Self { _unused: 0 }) }
 
     fn user_changed_param(&mut self, _: &mut PluginState, _: Params) -> Result<(), ae::Error> { Ok(()) }
 
@@ -37,10 +37,17 @@ impl AdobePluginInstance for Instance {
 
         let extent_hint = plugin.in_data.extent_hint();
 
-        in_layer.iterate(out_layer, 0, extent_hint.height(), extent_hint, |_x: i32, _y: i32, mut pixel: ae::Pixel| -> Result<ae::Pixel, Error> {
-            pixel.alpha = (pixel.alpha as f64 * slider_value / 100.0) as u8;
-
-            Ok(pixel)
+        in_layer.iterate_with(out_layer, 0, extent_hint.height(), Some(extent_hint), |_x: i32, _y: i32, pixel: ae::GenericPixel, out_pixel: ae::GenericPixelMut| -> Result<(), Error> {
+            match (pixel, out_pixel) {
+                (ae::GenericPixel::Pixel8(pixel), ae::GenericPixelMut::Pixel8(out_pixel)) => {
+                    out_pixel.alpha = (pixel.alpha as f64 * slider_value / 100.0) as u8;
+                }
+                (ae::GenericPixel::Pixel16(pixel), ae::GenericPixelMut::Pixel16(out_pixel)) => {
+                    out_pixel.alpha = (pixel.alpha as f64 * slider_value / 100.0) as u16;
+                }
+                _ => return Err(Error::BadCallbackParameter)
+            }
+            Ok(())
         })
     }
     fn handle_command(&mut self, _: &mut PluginState, _: ae::Command) -> Result<(), ae::Error> { Ok(()) }

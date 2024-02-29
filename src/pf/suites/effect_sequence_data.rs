@@ -16,7 +16,7 @@ impl EffectSequenceDataSuite {
     }
 
     /// Retrieves the read-only const sequence_data object for a rendering thread when Multi-Frame Rendering is enabled for an effect.
-    pub fn const_sequence_data(&self, in_data_handle: &InData) -> Result<ae_sys::PF_ConstHandle, Error> {
-        call_suite_fn_single!(self, PF_GetConstSequenceData -> ae_sys::PF_ConstHandle, in_data_handle.effect_ref().as_ptr())
+    pub fn const_sequence_data(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>) -> Result<ae_sys::PF_ConstHandle, Error> {
+        call_suite_fn_single!(self, PF_GetConstSequenceData -> ae_sys::PF_ConstHandle, effect_ref.as_ptr())
     }
 }

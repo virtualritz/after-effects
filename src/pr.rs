@@ -34,6 +34,7 @@ impl InDataHandle {
     }
 }
 
+register_handle!(PR_RenderContextH);
 define_handle_wrapper!(RenderContextHandle, PR_RenderContextH);
 define_handle_wrapper!(InstanceDataHandle, PR_InstanceDataH);
 define_handle_wrapper!(InstanceContextHandle, PR_InstanceContextH);

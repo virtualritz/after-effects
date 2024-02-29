@@ -3,13 +3,13 @@ use ae_sys::PF_ProgPtr;
 
 define_suite!(
     /// Use these functions to create and destroy [`EffectWorld`], and to find out their bit-depth.
-    WorldSuite2,
+    WorldSuite,
     PF_WorldSuite2,
     kPFWorldSuite,
     kPFWorldSuiteVersion2
 );
 
-impl WorldSuite2 {
+impl WorldSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
@@ -17,7 +17,7 @@ impl WorldSuite2 {
     }
 
     /// Creates a new [`EffectWorld`].
-    pub fn new_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, width: i32, height: i32, clear_pix: bool, pixel_format: pf::PixelFormat) -> Result<EffectWorld, Error> {
+    pub fn new_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, width: i32, height: i32, clear_pix: bool, pixel_format: PixelFormat) -> Result<EffectWorld, Error> {
         Ok(EffectWorld {
             effect_world: call_suite_fn_single!(self, PF_NewWorld -> ae_sys::PF_EffectWorld, effect_ref.as_ptr(), width, height, clear_pix as _, pixel_format.into())?
         })

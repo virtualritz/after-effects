@@ -781,7 +781,7 @@ impl ParamDef {
     }
 
     pub fn update_param_ui(&self) {
-        if let Ok(suite) = crate::ParamUtilsSuite::new() {
+        if let Ok(suite) = pf::suites::ParamUtils::new() {
             if let Some(index) = self.index {
                 suite.update_param_ui(unsafe { (*self.in_data_ptr).effect_ref }, index, self);
             }
@@ -791,7 +791,7 @@ impl ParamDef {
     }
     pub fn keyframe_count(&self) -> i32 {
         (|| -> Option<i32> {
-            crate::ParamUtilsSuite::new()
+            pf::suites::ParamUtils::new()
                 .ok()?
                 .keyframe_count(unsafe { (*self.in_data_ptr).effect_ref }, self.index?)
                 .ok()
