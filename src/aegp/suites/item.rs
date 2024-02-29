@@ -1,5 +1,6 @@
 use crate::*;
 use crate::aegp::*;
+use ae_sys::AEGP_ItemH;
 
 define_suite!(
     /// Accesses and modifies items within a project or composition.
@@ -28,7 +29,7 @@ impl ItemSuite {
     }
 
     /// Retrieves the next project item; Result will be `None` after the last item.
-    pub fn next_proj_item(&self, project_handle: &ProjectHandle, item_handle: &ItemHandle) -> Result<Option<ItemHandle>, Error> {
+    pub fn next_proj_item(&self, project_handle: &ProjectHandle, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<Option<ItemHandle>, Error> {
         let next_item = call_suite_fn_single!(self, AEGP_GetNextProjItem -> ae_sys::AEGP_ItemH, project_handle.as_ptr(), item_handle.as_ptr())?;
         if next_item.is_null() {
             Ok(None)
@@ -51,7 +52,7 @@ impl ItemSuite {
     }
 
     /// Returns true if the Project window is active and the item is selected.
-    pub fn is_item_selected(&self, item_handle: &ItemHandle) -> Result<bool, Error> {
+    pub fn is_item_selected(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_IsItemSelected -> ae_sys::A_Boolean, item_handle.as_ptr())? != 0)
     }
 
@@ -59,12 +60,12 @@ impl ItemSuite {
     /// This call selects items in the Project panel.
     ///
     /// To make selections in the Composition panel, use [`suites::Comp:set_selection()`](aegp::suites::Comp::set_selection).
-    pub fn select_item(&self, item_handle: &ItemHandle, select: bool, deselect_others: bool) -> Result<(), Error> {
+    pub fn select_item(&self, item_handle: impl AsPtr<AEGP_ItemH>, select: bool, deselect_others: bool) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SelectItem, item_handle.as_ptr(), select.into(), deselect_others.into())
     }
 
     /// Gets type of an item. Note: solids don't appear in the project, but can be the source to a layer.
-    pub fn item_type(&self, item_handle: &ItemHandle) -> Result<ItemType, Error> {
+    pub fn item_type(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<ItemType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetItemType -> ae_sys::AEGP_ItemType, item_handle.as_ptr())?.into())
     }
 
@@ -76,7 +77,7 @@ impl ItemSuite {
     }
 
     /// Get item name.
-    pub fn item_name(&self, plugin_id: PluginId, item_handle: &ItemHandle) -> Result<String, Error> {
+    pub fn item_name(&self, item_handle: impl AsPtr<AEGP_ItemH>, plugin_id: PluginId) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetItemName -> ae_sys::AEGP_MemHandle, plugin_id, item_handle.as_ptr())?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
@@ -88,32 +89,32 @@ impl ItemSuite {
     }
 
     /// Specifies the name of the [`ItemHandle`].
-    pub fn set_item_name(&self, item_handle: &ItemHandle, name: &str) -> Result<(), Error> {
+    pub fn set_item_name(&self, item_handle: impl AsPtr<AEGP_ItemH>, name: &str) -> Result<(), Error> {
         let name = U16CString::from_str(name).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, AEGP_SetItemName, item_handle.as_ptr(), name.as_ptr())
     }
 
     /// Returns the item's unique ID, which persists across saves and loads of the project.
-    pub fn item_id(&self, item_handle: &ItemHandle) -> Result<ItemId, Error> {
+    pub fn item_id(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<ItemId, Error> {
         call_suite_fn_single!(self, AEGP_GetItemID -> ItemId, item_handle.as_ptr())
     }
 
     /// Get properties of an item.
     ///
     /// Unlike the [`ItemFlags::HAS_AUDIO`] flag, this bit flag will set only if the comp has at least one layer where audio is actually on.
-    pub fn item_flags(&self, item_handle: &ItemHandle) -> Result<ItemFlags, Error> {
+    pub fn item_flags(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<ItemFlags, Error> {
         Ok(ItemFlags::from_bits_truncate(
             call_suite_fn_single!(self, AEGP_GetItemFlags -> ae_sys::A_long, item_handle.as_ptr())? as _
         ))
     }
 
     /// Toggle item's proxy usage. Undoable.
-    pub fn set_item_use_proxy(&self, item_handle: &ItemHandle, use_proxy: bool) -> Result<(), Error> {
+    pub fn set_item_use_proxy(&self, item_handle: impl AsPtr<AEGP_ItemH>, use_proxy: bool) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetItemUseProxy, item_handle.as_ptr(), use_proxy.into())
     }
 
     /// Get folder containing item.
-    pub fn item_parent_folder(&self, item_handle: &ItemHandle) -> Result<Option<ItemHandle>, Error> {
+    pub fn item_parent_folder(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<Option<ItemHandle>, Error> {
         let parent_folder = call_suite_fn_single!(self, AEGP_GetItemParentFolder -> ae_sys::AEGP_ItemH, item_handle.as_ptr())?;
         if parent_folder.is_null() {
             Ok(None)
@@ -123,22 +124,22 @@ impl ItemSuite {
     }
 
     /// Sets an item's parent folder. Undoable.
-    pub fn set_item_parent_folder(&self, item_handle: &ItemHandle, parent_folder: ItemHandle) -> Result<(), Error> {
+    pub fn set_item_parent_folder(&self, item_handle: impl AsPtr<AEGP_ItemH>, parent_folder: &ItemHandle) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetItemParentFolder, item_handle.as_ptr(), parent_folder.as_ptr())
     }
 
     /// Get duration of item, in seconds.
-    pub fn item_duration(&self, item_handle: &ItemHandle) -> Result<Time, Error> {
+    pub fn item_duration(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetItemDuration -> ae_sys::A_Time, item_handle.as_ptr())?.into())
     }
 
     /// Get current time within item. Not updated while rendering.
-    pub fn item_current_time(&self, item_handle: &ItemHandle) -> Result<Time, Error> {
+    pub fn item_current_time(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetItemCurrentTime -> ae_sys::A_Time, item_handle.as_ptr())?.into())
     }
 
     /// Get width and height of item.
-    pub fn item_dimensions(&self, item_handle: &ItemHandle) -> Result<(u32, u32), Error> {
+    pub fn item_dimensions(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<(u32, u32), Error> {
         let (width, height) = call_suite_fn_double!(self, AEGP_GetItemDimensions -> ae_sys::A_long, ae_sys:: A_long, item_handle.as_ptr())?;
         Ok((
             width as _,
@@ -147,13 +148,13 @@ impl ItemSuite {
     }
 
     /// Get the width of a pixel, assuming its height is 1.0, as numerator over denominator.
-    pub fn item_pixel_aspect_ratio(&self, item_handle: &ItemHandle) -> Result<Ratio, Error> {
+    pub fn item_pixel_aspect_ratio(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<Ratio, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetItemPixelAspectRatio -> ae_sys::A_Ratio, item_handle.as_ptr())?.into())
     }
 
     /// Removes item from all compositions. Undo-able.
     /// Do not use the [`ItemHandle`] after calling this function.
-    pub fn delete_item(&self, item_handle: &ItemHandle) -> Result<(), Error> {
+    pub fn delete_item(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_DeleteItem, item_handle.as_ptr())
     }
 
@@ -172,12 +173,12 @@ impl ItemSuite {
     }
 
     /// Sets the current time within a given [`ItemHandle`].
-    pub fn set_item_current_time(&self, item_handle: &ItemHandle, new_time: Time) -> Result<(), Error> {
+    pub fn set_item_current_time(&self, item_handle: impl AsPtr<AEGP_ItemH>, new_time: Time) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetItemCurrentTime, item_handle.as_ptr(), &new_time.into())
     }
 
     /// Retrieves the [`ItemHandle`]'s comment.
-    pub fn item_comment(&self, item_handle: &ItemHandle) -> Result<String, Error> {
+    pub fn item_comment(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetItemComment -> ae_sys::AEGP_MemHandle, item_handle.as_ptr())?;
         Ok(unsafe {
             U16CString::from_ptr_str(
@@ -187,31 +188,31 @@ impl ItemSuite {
     }
 
     /// Sets the [`ItemHandle`]'s comment.
-    pub fn set_item_comment(&self, item_handle: &ItemHandle, comment: &str) -> Result<(), Error> {
+    pub fn set_item_comment(&self, item_handle: impl AsPtr<AEGP_ItemH>, comment: &str) -> Result<(), Error> {
         let comment = U16CString::from_str(comment).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, AEGP_SetItemComment, item_handle.as_ptr(), comment.as_ptr())
     }
 
     /// Retrieves an item's label.
-    pub fn item_label(&self, item_handle: &ItemHandle) -> Result<LabelId, Error> {
+    pub fn item_label(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<LabelId, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetItemLabel -> ae_sys::AEGP_LabelID, item_handle.as_ptr())?.into())
     }
 
     /// Sets an item's label.
-    pub fn set_item_label(&self, item_handle: &ItemHandle, label: LabelId) -> Result<(), Error> {
+    pub fn set_item_label(&self, item_handle: impl AsPtr<AEGP_ItemH>, label: LabelId) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetItemLabel, item_handle.as_ptr(), label.into())
     }
 
     /// Gets an item's most recently used view.
     ///
     /// The view can be used with two calls in the [`suites::ColorSettings`](aegp::suites::ColorSettings), to perform a color transform on a pixel buffer from working to view color space.
-    pub fn item_mru_view(&self, item_handle: &ItemHandle) -> Result<ae_sys::AEGP_ItemViewP, Error> {
+    pub fn item_mru_view(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<ae_sys::AEGP_ItemViewP, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetItemMRUView -> ae_sys::AEGP_ItemViewP, item_handle.as_ptr())?.into())
     }
 }
 
 // ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
-
+register_handle!(AEGP_ItemH);
 define_handle_wrapper!(ItemHandle, AEGP_ItemH);
 define_handle_wrapper!(ProjectHandle, AEGP_ProjectH);
 
@@ -261,5 +262,143 @@ bitflags::bitflags! {
         const HAS_AUDIO         = ae_sys::AEGP_ItemFlag_HAS_AUDIO        as ae_sys::A_long;
         const STILL             = ae_sys::AEGP_ItemFlag_STILL            as ae_sys::A_long;
         const HAS_ACTIVE_AUDIO  = ae_sys::AEGP_ItemFlag_HAS_ACTIVE_AUDIO as ae_sys::A_long;
+    }
+}
+
+define_suite_item_wrapper!(
+    ae_sys::AEGP_ItemH, ItemHandle,
+    suite: ItemSuite,
+    footage: aegp::suites::Footage,
+    /// Item can be a folder, a composition, or a footage
+    Item {
+        dispose: ;
+
+        /// Returns true if the Project window is active and the item is selected.
+        is_selected() -> bool => suite.is_item_selected,
+
+        /// Toggles the selection state of the item, and (depending on `deselect_others`) can deselect other items.
+        /// This call selects items in the Project panel.
+        ///
+        /// To make selections in the Composition panel, use [`suites::Comp:set_selection()`](aegp::suites::Comp::set_selection).
+        select(select: bool, deselect_others: bool) -> () => suite.select_item,
+
+        /// Gets type of an item. Note: solids don't appear in the project, but can be the source to a layer.
+        item_type() -> ItemType => suite.item_type,
+
+        /// Get item name.
+        name(plugin_id: PluginId) -> String => suite.item_name,
+
+        /// Specifies the name of this item.
+        set_name(name: &str) -> () => suite.set_item_name,
+
+        /// Returns the item's unique ID, which persists across saves and loads of the project.
+        id() -> ItemId => suite.item_id,
+
+        /// Get properties of an item.
+        ///
+        /// Unlike the [`ItemFlags::HAS_AUDIO`] flag, this bit flag will set only if the comp has at least one layer where audio is actually on.
+        flags() -> ItemFlags => suite.item_flags,
+
+        /// Toggle item's proxy usage. Undoable.
+        set_use_proxy(use_proxy: bool) -> () => suite.set_item_use_proxy,
+
+        /// Get folder containing item.
+        parent_folder() -> Option<ItemHandle> => suite.item_parent_folder,
+
+        /// Sets an item's parent folder. Undoable.
+        set_parent_folder(parent_folder: &ItemHandle) -> () => suite.set_item_parent_folder,
+
+        /// Get duration of item, in seconds.
+        duration() -> Time => suite.item_duration,
+
+        /// Get current time within item. Not updated while rendering.
+        current_time() -> Time => suite.item_current_time,
+
+        /// Get width and height of item.
+        dimensions() -> (u32, u32) => suite.item_dimensions,
+
+        /// Get the width of a pixel, assuming its height is 1.0, as numerator over denominator.
+        pixel_aspect_ratio() -> Ratio => suite.item_pixel_aspect_ratio,
+
+        /// Removes item from all compositions. Undo-able.
+        /// Do not use the [`ItemHandle`] after calling this function.
+        delete() -> () => suite.delete_item,
+
+        /// Sets the current time.
+        set_current_time(new_time: Time) -> () => suite.set_item_current_time,
+
+        /// Retrieves the comment.
+        comment() -> String => suite.item_comment,
+
+        /// Sets the comment.
+        set_comment(comment: &str) -> () => suite.set_item_comment,
+
+        /// Retrieves an item's label.
+        label() -> LabelId => suite.item_label,
+
+        /// Sets an item's label.
+        set_label(label: LabelId) -> () => suite.set_item_label,
+
+        /// Gets an item's most recently used view.
+        ///
+        /// The view can be used with two calls in the [`suites::ColorSettings`](aegp::suites::ColorSettings), to perform a color transform on a pixel buffer from working to view color space.
+        mru_view() -> ae_sys::AEGP_ItemViewP => suite.item_mru_view,
+
+        // ―――――――――――――――――――――――――――― Footage suite functions ――――――――――――――――――――――――――――
+
+        /// Returns an error if item isn't a footage item.
+        /// Used to convert an item handle to a footage handle.
+        main_footage() -> Footage => footage.main_footage_from_item,
+
+        /// Returns an error if item has no proxy. Returns the proxy footage handle.
+        /// Note: a composition can have a proxy.
+        proxy_footage() -> Footage => footage.proxy_footage_from_item,
+
+        /// Sets footage as the proxy for an item. Will be adopted by the project.
+        /// This is Undo-able; do not dispose of the returned added item if it's undone.
+        set_proxy_footage(footage: impl AsPtr<ae_sys::AEGP_FootageH>) -> () => footage.set_item_proxy_footage,
+
+        /// Replaces footage for an item. The item will replace the main footage for this item.
+        /// This is Undo-able; do not dispose of the returned added item if it's undone.
+        replace_main_footage(footage: impl AsPtr<ae_sys::AEGP_FootageH>) -> () => footage.replace_item_main_footage,
+
+        /// Populates an AEGP_FootageInterp describing the settings of the [`FootageHandle`].
+        /// There is no way to create a valid `AEGP_FootageInterp` other than by using this function.
+        /// If `proxy` is `true`, the proxy footage's settings are retrieved.
+        footage_interpretation(proxy: bool) -> ae_sys::AEGP_FootageInterp => footage.footage_interpretation,
+
+        /// Apply the settings in the `AEGP_FootageInterp` to the `AEGP_FootageH`. Undo-able.
+        /// If `proxy` is `true`, the proxy footage's settings are modified.
+        set_footage_interpretation(proxy: bool, interp: &ae_sys::AEGP_FootageInterp) -> () => footage.set_footage_interpretation,
+
+        /// Returns the color of a given solid. Returns an error if the [`ItemHandle`] is not a solid.
+        /// If `proxy` is `true`, the proxy solid's color is retrieved.
+        solid_footage_color(proxy: bool) -> ae_sys::AEGP_ColorVal => footage.solid_footage_color,
+
+        /// Sets the color of a solid. Undo-able.
+        /// If `proxy` is `true`, the proxy solid's color is set.
+        set_solid_footage_color(proxy: bool, color: &ae_sys::AEGP_ColorVal) -> () => footage.set_solid_footage_color,
+
+        /// Sets the dimensions of a solid. Undo-able.
+        /// If `proxy` is `true`, the proxy solid's dimensions are modified. Returns an error if the item isn't a solid.
+        set_solid_footage_dimensions(proxy: bool, width: i32, height: i32) -> () => footage.set_solid_footage_dimensions,
+    }
+);
+
+impl Item {
+    /// Get name of type. (name length up to `32`).
+    pub fn type_name(&self) -> Result<String, Error> {
+        let Ok(ref suite) = *self.suite else { return Err(Error::MissingSuite); };
+        suite.type_name(self.item_type()?)
+    }
+
+    /// Creates a new folder in the project, inside the current item.
+    /// The newly created folder is allocated and owned by After Effects.
+    pub fn create_folder_inside(&self, name: &str) -> Result<Item, Error> {
+        let Ok(ref suite) = *self.suite else { return Err(Error::MissingSuite); };
+        Ok(Item::from_handle(
+            suite.create_new_folder(name, Some(self.handle))?,
+            false
+        ))
     }
 }

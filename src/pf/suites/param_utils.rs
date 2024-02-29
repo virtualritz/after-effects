@@ -56,7 +56,7 @@ impl ParamUtilsSuite {
 	///         slider_min, slider_max, precision, display_flags of any slider type
 	/// For PF_PUI_STD_CONTROL_ONLY params, you can also change the value field by setting PF_ChangeFlag_CHANGED_VALUE before returning.
     /// But you are not allowed to change the value during PF_Cmd_UPDATE_PARAMS_UI.
-    pub fn update_param_ui(&self, effect_ref: ProgressInfo, param_index: i32, param_def: &ParamDef) -> Result<(), Error> {
+    pub fn update_param_ui(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, param_def: &ParamDef) -> Result<(), Error> {
         call_suite_fn!(self, PF_UpdateParamUI, effect_ref.as_ptr(), param_index, param_def.as_ptr())
     }
 
@@ -75,7 +75,7 @@ impl ParamUtilsSuite {
     /// it will be expanded to include any times needed to produce that range.
     ///
     /// Populates a `PF_State`, an opaque data type used as a receipt for the current state of the effect's parameters (the `PF_State` is used in our internal frame caching database).
-    pub fn current_state(&self, effect_ref: ProgressInfo, param_index: i32, start: Option<Time>, duration: Option<Time>) -> Result<ae_sys::PF_State, Error> {
+    pub fn current_state(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, start: Option<Time>, duration: Option<Time>) -> Result<ae_sys::PF_State, Error> {
         call_suite_fn_single!(self,
             PF_GetCurrentState -> ae_sys::PF_State,
             effect_ref.as_ptr(),
@@ -86,20 +86,20 @@ impl ParamUtilsSuite {
     }
 
     /// New in CS6. Compare two different states, retrieved using `PF_GetCurrentState`, above.
-    pub fn are_states_identical(&self, effect_ref: ProgressInfo, state1: &ae_sys::PF_State, state2: &ae_sys::PF_State) -> Result<bool, Error> {
+    pub fn are_states_identical(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, state1: &ae_sys::PF_State, state2: &ae_sys::PF_State) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, PF_AreStatesIdentical -> ae_sys::A_Boolean, effect_ref.as_ptr(), state1, state2)? != 0)
     }
     /// Returns `true` if a parameter's value is the same at the two passed times.
     ///
     /// Note: the times need not be contiguous; there could be different intervening values.
-    pub fn is_identical_checkout(&self, effect_ref: ProgressInfo, param_index: i32, what_time1: i32, time_step1: i32, time_scale1: u32, what_time2: i32, time_step2: i32, time_scale2: u32) -> Result<bool, Error> {
+    pub fn is_identical_checkout(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, what_time1: i32, time_step1: i32, time_scale1: u32, what_time2: i32, time_step2: i32, time_scale2: u32) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, PF_IsIdenticalCheckout -> ae_sys::PF_Boolean, effect_ref.as_ptr(), param_index, what_time1, time_step1, time_scale1, what_time2, time_step2, time_scale2)? != 0)
     }
 
     /// Searches (in the specified direction) for the next keyframe in the parameter's stream. The last three parameters are optional.
     ///
     /// Returns a tuple containing: (found, key_index, key_time, key_timescale)
-    pub fn find_keyframe_time(&self, effect_ref: ProgressInfo, param_index: i32, what_time: i32, time_scale: u32, time_dir: TimeDir) -> Result<(bool, i32, i32, u32), Error> {
+    pub fn find_keyframe_time(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, what_time: i32, time_scale: u32, time_dir: TimeDir) -> Result<(bool, i32, i32, u32), Error> {
         let mut found: ae_sys::PF_Boolean = 0;
         let mut key_index: ae_sys::PF_KeyIndex = 0;
         let mut key_time: ae_sys::A_long = 0;
@@ -115,12 +115,12 @@ impl ParamUtilsSuite {
     }
 
     /// Returns the number of keyframes in the parameter's stream.
-    pub fn keyframe_count(&self, effect_ref: ProgressInfo, param_index: i32) -> Result<i32, Error> {
+    pub fn keyframe_count(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, PF_GetKeyframeCount -> ae_sys::PF_KeyIndex, effect_ref.as_ptr(), param_index)? as i32)
     }
 
     /// Checks a keyframe for the specified parameter out of our keyframe database. `param_index` is zero-based. You can request time, timescale, or neither; useful if you're performing your own motion blur.
-    pub fn checkout_keyframe(&self, effect_ref: ProgressInfo, param_index: i32, key_index: i32) -> Result<(i32, u32, ae_sys::PF_ParamDef), Error> {
+    pub fn checkout_keyframe(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, key_index: i32) -> Result<(i32, u32, ae_sys::PF_ParamDef), Error> {
         let mut key_time: ae_sys::A_long = 0;
         let mut key_timescale: ae_sys::A_u_long = 0;
         let param = call_suite_fn_single!(self, PF_CheckoutKeyframe -> ae_sys::PF_ParamDef, effect_ref.as_ptr(), param_index, key_index, &mut key_time, &mut key_timescale)?;
@@ -128,12 +128,12 @@ impl ParamUtilsSuite {
     }
 
     /// All calls to `checkout_keyframe` must be balanced with this check-in, or pain will ensue.
-    pub fn checkin_keyframe(&self, effect_ref: ProgressInfo, mut param: ae_sys::PF_ParamDef) -> Result<(), Error> {
+    pub fn checkin_keyframe(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, mut param: ae_sys::PF_ParamDef) -> Result<(), Error> {
         call_suite_fn!(self, PF_CheckinKeyframe, effect_ref.as_ptr(), &mut param as *mut _)
     }
 
     /// Returns the time (and timescale) of the specified keyframe.
-    pub fn key_index_to_time(&self, effect_ref: ProgressInfo, param_index: i32, key_index: i32) -> Result<(i32, u32), Error> {
+    pub fn key_index_to_time(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, key_index: i32) -> Result<(i32, u32), Error> {
         let (time, timesale) = call_suite_fn_double!(self, PF_KeyIndexToTime -> ae_sys::A_long, ae_sys::A_u_long, effect_ref.as_ptr(), param_index, key_index)?;
         Ok((
             time as i32,

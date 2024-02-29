@@ -1,4 +1,5 @@
 use crate::*;
+use ae_sys::PF_ProgPtr;
 
 define_suite!(
     PixelFormatSuite,
@@ -14,11 +15,11 @@ impl PixelFormatSuite {
         crate::Suite::new()
     }
 
-    pub fn add_supported_pixel_format(&self, effect_ref: ProgressInfo, pixel_format: pr::PixelFormat) -> Result<(), Error> {
+    pub fn add_supported_pixel_format(&self, effect_ref: impl AsPtr<PF_ProgPtr>, pixel_format: pr::PixelFormat) -> Result<(), Error> {
         call_suite_fn!(self, AddSupportedPixelFormat, effect_ref.as_ptr(), pixel_format.into())
     }
 
-    pub fn clear_supported_pixel_formats(&self, effect_ref: ProgressInfo) -> Result<(), Error> {
+    pub fn clear_supported_pixel_formats(&self, effect_ref: impl AsPtr<PF_ProgPtr>) -> Result<(), Error> {
         call_suite_fn!(self, ClearSupportedPixelFormats, effect_ref.as_ptr())
     }
 

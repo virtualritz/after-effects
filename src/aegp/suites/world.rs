@@ -1,5 +1,6 @@
 use crate::*;
 use crate::aegp::*;
+use ae_sys::AEGP_WorldH;
 
 define_suite!(
     /// [`World`]s are the common format used throughout the AEGP APIs to describe frames of pixels.
@@ -29,12 +30,12 @@ impl WorldSuite {
     }
 
     /// Returns the type of a given [`WorldHandle`]
-    pub fn world_type(&self, world: &WorldHandle) -> Result<WorldType, Error> {
+    pub fn world_type(&self, world: impl AsPtr<AEGP_WorldH>) -> Result<WorldType, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetType -> ae_sys::AEGP_WorldType, world.as_ptr())?.into())
     }
 
     /// Returns the width and height of the given [`WorldHandle`].
-    pub fn size(&self, world: &WorldHandle) -> Result<(i32, i32), Error> {
+    pub fn size(&self, world: impl AsPtr<AEGP_WorldH>) -> Result<(i32, i32), Error> {
         let (width, height) = call_suite_fn_double!(self, AEGP_GetSize -> ae_sys::A_long, ae_sys::A_long, world.as_ptr())?;
         Ok((
             width as i32,
@@ -43,28 +44,28 @@ impl WorldSuite {
     }
 
     /// Returns the rowbytes for the given [`WorldHandle`].
-    pub fn row_bytes(&self, world: &WorldHandle) -> Result<usize, Error> {
+    pub fn row_bytes(&self, world: impl AsPtr<AEGP_WorldH>) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetRowBytes -> ae_sys::A_u_long, world.as_ptr())? as usize)
     }
 
     /// Returns the base address of the [`WorldHandle`] for use in pixel iteration functions.
     ///
     /// Will return an error if used on a non-8bpc world.
-    pub fn base_addr8(&self, world_handle: &WorldHandle) -> Result<*mut pf::Pixel8, Error> {
+    pub fn base_addr8(&self, world_handle: impl AsPtr<AEGP_WorldH>) -> Result<*mut pf::Pixel8, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetBaseAddr8 -> *mut ae_sys::PF_Pixel8, world_handle.as_ptr())? as _)
     }
 
     /// Returns the base address of the [`WorldHandle`] for use in pixel iteration functions.
     ///
     /// Will return an error if used on a non-16bpc world.
-    pub fn base_addr16(&self, world_handle: &WorldHandle) -> Result<*mut pf::Pixel16, Error> {
+    pub fn base_addr16(&self, world_handle: impl AsPtr<AEGP_WorldH>) -> Result<*mut pf::Pixel16, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetBaseAddr16 -> *mut ae_sys::PF_Pixel16, world_handle.as_ptr())? as _)
     }
 
     /// Returns the base address of the [`WorldHandle`] for use in pixel iteration functions.
     ///
     /// Will return an error if used on a non-32bpc world.
-    pub fn base_addr32(&self, world_handle: &WorldHandle) -> Result<*mut pf::PixelF32, Error> {
+    pub fn base_addr32(&self, world_handle: impl AsPtr<AEGP_WorldH>) -> Result<*mut pf::PixelF32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetBaseAddr32 -> *mut ae_sys::PF_PixelFloat, world_handle.as_ptr())? as _)
     }
 
@@ -72,14 +73,14 @@ impl WorldSuite {
     ///
     /// NOTE: This does not give your plug-in ownership of the world referenced; destroy the source [`WorldHandle`] only if you allocated it.
     /// It just returns an [`EffectWorld`] that points to the same pixel buffer.
-    pub fn effect_world(&self, world: &WorldHandle) -> Result<EffectWorld, Error> {
+    pub fn effect_world(&self, world: impl AsPtr<AEGP_WorldH>) -> Result<EffectWorld, Error> {
         Ok(EffectWorld {
             effect_world: call_suite_fn_single!(self, AEGP_FillOutPFEffectWorld -> ae_sys::PF_EffectWorld, world.as_ptr())?
         })
     }
 
     /// Performs a fast blur on a given [`WorldHandle`].
-    pub fn fast_blur(&self, world: &WorldHandle, radius: f64, mode: ModeFlags, quality: Quality) -> Result<(), Error> {
+    pub fn fast_blur(&self, world: impl AsPtr<AEGP_WorldH>, radius: f64, mode: ModeFlags, quality: Quality) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_FastBlur, radius, mode.into(), quality.into(), world.as_ptr())
     }
 
@@ -119,6 +120,8 @@ define_enum! {
     }
 }
 
+register_handle!(AEGP_WorldH);
+register_handle!(AEGP_PlatformWorldH);
 define_handle_wrapper!(WorldHandle, AEGP_WorldH);
 define_handle_wrapper!(PlatformWorldHandle, AEGP_PlatformWorldH);
 
@@ -169,7 +172,7 @@ impl World {
         let suite = WorldSuite::new()?;
         Ok(Self {
             handle: suite.new_world(plugin_id, world_type, width, height)?,
-            suite,
+            suite: once_cell::sync::Lazy::new(|| WorldSuite::new()),
             is_owned: true,
         })
     }

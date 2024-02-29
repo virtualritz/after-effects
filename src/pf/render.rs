@@ -1,5 +1,6 @@
 use super::*;
 use std::any::Any;
+use ae_sys::PF_ProgPtr;
 
 /*
 pub const PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS: _bindgen_ty_30 = 1;
@@ -224,7 +225,7 @@ impl PreRenderCallbacks {
 
     pub fn checkout_layer(
         &self,
-        effect_ref: ProgressInfo,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
         index: i32,
         checkout_id: i32,
         // FIXME: warp this struct
@@ -280,7 +281,7 @@ impl SmartRenderCallbacks {
 
     pub fn checkout_layer_pixels(
         &self,
-        effect_ref: ProgressInfo,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
         checkout_id: u32,
     ) -> Result<EffectWorld, Error> {
         if let Some(checkout_layer_pixels) = unsafe { *self.rc_ptr }.checkout_layer_pixels {
@@ -306,7 +307,7 @@ impl SmartRenderCallbacks {
 
     pub fn checkin_layer_pixels(
         &self,
-        effect_ref: ProgressInfo,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
         checkout_id: u32,
     ) -> Result<(), Error> {
         if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
@@ -319,7 +320,7 @@ impl SmartRenderCallbacks {
         }
     }
 
-    pub fn checkout_output(&self, effect_ref: ProgressInfo) -> Result<EffectWorld, Error> {
+    pub fn checkout_output(&self, effect_ref: impl AsPtr<PF_ProgPtr>) -> Result<EffectWorld, Error> {
         if let Some(checkout_output) = unsafe { *self.rc_ptr }.checkout_output {
             let mut effect_world_ptr =
                 std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();

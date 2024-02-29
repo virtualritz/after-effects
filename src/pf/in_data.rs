@@ -63,20 +63,21 @@ impl InData {
         self.ptr
     }
 
-    #[inline]
     pub fn application_id(&self) -> [u8; 4] {
         let bytes: [u8; 4] = unsafe { std::mem::transmute((*self.ptr).appl_id) };
         [bytes[3], bytes[2], bytes[1], bytes[0]]
     }
 
-    #[inline]
     pub fn extent_hint(&self) -> Rect {
         Rect::from(unsafe { (*self.ptr).extent_hint })
     }
 
-    #[inline]
-    pub fn effect_ref(&self) -> ProgressInfo {
-        pf::ProgressInfo(unsafe { (*self.ptr).effect_ref })
+    pub fn effect(&self) -> Effect {
+        Effect::from_raw(unsafe { (*self.ptr).effect_ref })
+    }
+
+    pub fn effect_ref(&self) -> EffectHandle {
+        EffectHandle::from_raw(unsafe { (*self.ptr).effect_ref })
     }
 
     pub fn pica_basic_suite_ptr(&self) -> *mut ae_sys::SPBasicSuite {

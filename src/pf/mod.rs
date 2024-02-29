@@ -17,6 +17,7 @@ mod parameters; pub use parameters::*;
 mod pixel;      pub use pixel::*;
 mod render;     pub use render::*;
 mod suites;     pub use suites::*;
+mod effect;     pub use effect::*;
 mod interact_callbacks; pub use interact_callbacks::*;
 mod util_callbacks;     pub use util_callbacks::*;
 
@@ -328,8 +329,6 @@ pub fn progress(in_data: InData, count: u16, total: u16) -> i32 {
         )
     }
 }
-
-define_handle_wrapper!(ProgressInfo, PF_ProgPtr);
 
 define_enum! {
     ae_sys::PF_ParamIndex,

@@ -1,5 +1,7 @@
 use crate::*;
 
+register_handle!(DRAWBOT_SupplierRef);
+register_handle!(DRAWBOT_SurfaceRef);
 define_handle_wrapper!(SupplierRef, DRAWBOT_SupplierRef);
 define_handle_wrapper!(SurfaceRef, DRAWBOT_SurfaceRef);
 
@@ -43,16 +45,16 @@ pub struct Drawbot {
 impl Drawbot {
     /// Get the supplier reference.
     pub fn supplier(&self) -> Result<Supplier, Error> {
-        Supplier::from_raw(
+        Ok(Supplier::from_raw(
             call_suite_fn_single!(self.suite, GetSupplier -> ae_sys::DRAWBOT_SupplierRef, self.handle)?
-        )
+        ))
     }
 
     /// Get the surface reference.
     pub fn surface(&self) -> Result<Surface, Error> {
-        Surface::from_raw(
+        Ok(Surface::from_raw(
             call_suite_fn_single!(self.suite, GetSurface -> ae_sys::DRAWBOT_SurfaceRef, self.handle)?
-        )
+        ))
     }
 }
 impl AsRef<ae_sys::DRAWBOT_DrawRef> for Drawbot {

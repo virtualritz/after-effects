@@ -1,4 +1,5 @@
 use crate::*;
+use ae_sys::PF_ProgPtr;
 
 define_suite!(
     /// Use these functions to create and destroy [`EffectWorld`], and to find out their bit-depth.
@@ -16,14 +17,14 @@ impl WorldSuite2 {
     }
 
     /// Creates a new [`EffectWorld`].
-    pub fn new_world(&self, effect_ref: ProgressInfo, width: i32, height: i32, clear_pix: bool, pixel_format: pf::PixelFormat) -> Result<EffectWorld, Error> {
+    pub fn new_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, width: i32, height: i32, clear_pix: bool, pixel_format: pf::PixelFormat) -> Result<EffectWorld, Error> {
         Ok(EffectWorld {
             effect_world: call_suite_fn_single!(self, PF_NewWorld -> ae_sys::PF_EffectWorld, effect_ref.as_ptr(), width, height, clear_pix as _, pixel_format.into())?
         })
     }
 
     /// Dispose of an [`EffectWorld`].
-    pub fn dispose_world(&self, effect_ref: ProgressInfo, effect_world: EffectWorld) -> Result<(), Error> {
+    pub fn dispose_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, effect_world: EffectWorld) -> Result<(), Error> {
         call_suite_fn!(self, PF_DisposeWorld, effect_ref.as_ptr(), effect_world.as_ptr() as *mut _)
     }
 

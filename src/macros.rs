@@ -124,6 +124,15 @@ macro_rules! define_handle_wrapper_v2 {
     };
 }*/
 
+macro_rules! register_handle {
+    ($data_type:ident) => {
+        impl AsPtr<after_effects_sys::$data_type> for after_effects_sys::$data_type {
+            fn as_ptr(&self) -> after_effects_sys::$data_type {
+                *self
+            }
+        }
+    };
+}
 macro_rules! define_handle_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident) => {
         #[derive(Copy, Clone, Debug, Hash)]
@@ -134,10 +143,6 @@ macro_rules! define_handle_wrapper {
                 Self(raw_handle)
             }
 
-            pub fn as_ptr(&self) -> after_effects_sys::$data_type {
-                self.0
-            }
-
             pub fn is_null(&self) -> bool {
                 self.0.is_null()
             }
@@ -146,6 +151,21 @@ macro_rules! define_handle_wrapper {
         impl From<$wrapper_pretty_name> for after_effects_sys::$data_type {
             fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
                 handle_wrapper.as_ptr()
+            }
+        }
+        impl AsRef<after_effects_sys::$data_type> for $wrapper_pretty_name {
+            fn as_ref(&self) -> &after_effects_sys::$data_type {
+                &self.0
+            }
+        }
+        impl AsPtr<after_effects_sys::$data_type> for $wrapper_pretty_name {
+            fn as_ptr(&self) -> after_effects_sys::$data_type {
+                self.0
+            }
+        }
+        impl AsPtr<after_effects_sys::$data_type> for &$wrapper_pretty_name {
+            fn as_ptr(&self) -> after_effects_sys::$data_type {
+                self.0
             }
         }
     };
@@ -445,27 +465,27 @@ macro_rules! define_suite {
 }
 
 macro_rules! define_suite_item_wrapper {
-    ($raw_handle_type:ty, $handle_type:ty, $( $suite_ident:ident: $suite_type:ty ),*, $(#[$type_attr:meta])* $name:ident {
+    ($raw_handle_type:ty, $handle_type:ty, $( $suite_ident:ident: $suite_type:ty ),*, $(#[$type_attr:meta])+ $name:ident {
         dispose: $( $dispose_suite_fn_ident:ident.$dispose_fun:ident )?;
         $( $(#[$attr:meta])* $fn_name:ident($($arg:ident: $argt:ty),*) -> $ret:ty => $suite_fn_ident:ident.$suite_fn:ident ),*,
     }) => {
-        $(#[$type_attr])*
+        $(#[$type_attr])+
         pub struct $name {
             handle: $handle_type,
-            $( $suite_ident: $suite_type, )*
+            $( $suite_ident: once_cell::sync::Lazy<Result<$suite_type, crate::Error>>, )*
             #[allow(dead_code)]
             is_owned: bool,
         }
 
         impl $name {
-            pub fn from_handle(handle: $handle_type, owned: bool) -> Result<Self, crate::Error> {
-                Ok(Self {
+            pub fn from_handle(handle: $handle_type, owned: bool) -> Self {
+                Self {
                     handle,
-                    $( $suite_ident: <$suite_type>::new()?, )*
+                    $( $suite_ident: once_cell::sync::Lazy::new(|| <$suite_type>::new()), )*
                     is_owned: owned,
-                })
+                }
             }
-            pub fn from_raw(raw_handle: $raw_handle_type) -> Result<Self, crate::Error> {
+            pub fn from_raw(raw_handle: $raw_handle_type) -> Self {
                 Self::from_handle(<$handle_type>::from_raw(raw_handle), false)
             }
             pub fn handle(&self) -> $handle_type {
@@ -481,15 +501,36 @@ macro_rules! define_suite_item_wrapper {
             $(
                 $(#[$attr])*
                 pub fn $fn_name(&self, $($arg: $argt, )*) -> Result<$ret, crate::Error> {
-                    self.$suite_fn_ident.$suite_fn(&self.handle, $($arg, )*)
+                    if let Ok(ref suite) = *self.$suite_fn_ident {
+                        suite.$suite_fn(self.handle, $($arg, )*).map(Into::into)
+                    } else {
+                        Err(crate::Error::MissingSuite)
+                    }
                 }
             )*
+        }
+        impl AsRef<$handle_type> for $name {
+            fn as_ref(&self) -> &$handle_type {
+                &self.handle
+            }
+        }
+        impl Into<$name> for $handle_type {
+            fn into(self) -> $name {
+                $name::from_handle(self, false)
+            }
+        }
+        impl crate::AsPtr<$raw_handle_type> for $name {
+            fn as_ptr(&self) -> $raw_handle_type {
+                self.handle.as_ptr()
+            }
         }
         $(
             impl Drop for $name {
                 fn drop(&mut self) {
                     if self.is_owned {
-                        self.$dispose_suite_fn_ident.$dispose_fun(self.handle).expect(concat!("Failed to dispose the ", stringify!($name), " handle."));
+                        if let Ok(ref suite) = *self.$dispose_suite_fn_ident {
+                            suite.$dispose_fun(self.handle).expect(concat!("Failed to dispose the ", stringify!($name), " handle."));
+                        }
                     }
                 }
             }

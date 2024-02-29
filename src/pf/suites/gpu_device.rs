@@ -1,6 +1,6 @@
 use crate::*;
 use std::ffi::c_void;
-use ae_sys:: { A_u_long, PF_EffectWorld };
+use ae_sys:: { A_u_long, PF_EffectWorld, PF_ProgPtr };
 
 define_suite!(
     GPUDeviceSuite,
@@ -18,7 +18,7 @@ impl GPUDeviceSuite {
     /// This will return the number of gpu devices the host supports.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// Returns the number of available devices.
-    pub fn device_count(&self, effect_ref: ProgressInfo) -> Result<usize, Error> {
+    pub fn device_count(&self, effect_ref: impl AsPtr<PF_ProgPtr>) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, GetDeviceCount -> A_u_long, effect_ref.as_ptr())? as usize)
     }
 
@@ -27,7 +27,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref`   - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
     /// Returns the device info will to be filled.
-    pub fn device_info(&self, effect_ref: ProgressInfo, device_index: usize) -> Result<ae_sys::PF_GPUDeviceInfo, Error> {
+    pub fn device_info(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize) -> Result<ae_sys::PF_GPUDeviceInfo, Error> {
         call_suite_fn_single!(self, GetDeviceInfo -> ae_sys::PF_GPUDeviceInfo, effect_ref.as_ptr(), device_index as _)
     }
 
@@ -36,7 +36,7 @@ impl GPUDeviceSuite {
     /// These calls do not need to be made in that case.
     /// * `effect_ref`   - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
-    pub fn acquire_exclusive_device_access(&self, effect_ref: ProgressInfo, device_index: usize) -> Result<(), Error> {
+    pub fn acquire_exclusive_device_access(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize) -> Result<(), Error> {
         call_suite_fn!(self, AcquireExclusiveDeviceAccess, effect_ref.as_ptr(), device_index as _)
     }
 
@@ -45,7 +45,7 @@ impl GPUDeviceSuite {
     /// These calls do not need to be made in that case.
     /// * `effect_ref`   - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
-    pub fn release_exclusive_device_access(&self, effect_ref: ProgressInfo, device_index: usize) -> Result<(), Error> {
+    pub fn release_exclusive_device_access(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize) -> Result<(), Error> {
         call_suite_fn!(self, ReleaseExclusiveDeviceAccess, effect_ref.as_ptr(), device_index as _)
     }
 
@@ -56,7 +56,7 @@ impl GPUDeviceSuite {
     /// * `device_index` - The device index for the requested device.
     /// * `size_bytes` - The size of the memory to allocate.
     /// Returns the pointer to the allocated memory.
-    pub fn allocate_device_memory(&self, effect_ref: ProgressInfo, device_index: usize, size_bytes: usize) -> Result<*mut c_void, Error> {
+    pub fn allocate_device_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, size_bytes: usize) -> Result<*mut c_void, Error> {
         call_suite_fn_single!(self, AllocateDeviceMemory -> *mut c_void, effect_ref.as_ptr(), device_index as _, size_bytes)
     }
 
@@ -64,7 +64,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
     /// * `memory` - The pointer to the memory to free.
-    pub fn free_device_memory(&self, effect_ref: ProgressInfo, device_index: usize, memory: *mut c_void) -> Result<(), Error> {
+    pub fn free_device_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, memory: *mut c_void) -> Result<(), Error> {
         call_suite_fn!(self, FreeDeviceMemory, effect_ref.as_ptr(), device_index as _, memory)
     }
 
@@ -73,7 +73,7 @@ impl GPUDeviceSuite {
     /// * `device_index` - The device index for the requested device.
     /// * `size_bytes` - The size of the memory to purge.
     /// Returns the number of bytes purged.
-    pub fn purge_device_memory(&self, effect_ref: ProgressInfo, device_index: usize, size_bytes: usize) -> Result<usize, Error> {
+    pub fn purge_device_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, size_bytes: usize) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, PurgeDeviceMemory -> usize, effect_ref.as_ptr(), device_index as _, size_bytes)?)
     }
 
@@ -84,7 +84,7 @@ impl GPUDeviceSuite {
     /// * `device_index` - The device index for the requested device.
     /// * `size_bytes` - The size of the memory to allocate.
     /// Returns the pointer to the allocated memory.
-    pub fn allocate_host_memory(&self, effect_ref: ProgressInfo, device_index: usize, size_bytes: usize) -> Result<*mut c_void, Error> {
+    pub fn allocate_host_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, size_bytes: usize) -> Result<*mut c_void, Error> {
         call_suite_fn_single!(self, AllocateHostMemory -> *mut c_void, effect_ref.as_ptr(), device_index as _, size_bytes)
     }
 
@@ -92,7 +92,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
     /// * `memory` - The pointer to the memory to free.
-    pub fn free_host_memory(&self, effect_ref: ProgressInfo, device_index: usize, memory: *mut c_void) -> Result<(), Error> {
+    pub fn free_host_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, memory: *mut c_void) -> Result<(), Error> {
         call_suite_fn!(self, FreeHostMemory, effect_ref.as_ptr(), device_index as _, memory)
     }
 
@@ -101,7 +101,7 @@ impl GPUDeviceSuite {
     /// * `device_index` - The device index for the requested device.
     /// * `bytes_to_purge` - The size of the memory to purge.
     /// Returns the number of bytes purged.
-    pub fn purge_host_memory(&self, effect_ref: ProgressInfo, device_index: usize, bytes_to_purge: usize) -> Result<usize, Error> {
+    pub fn purge_host_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, bytes_to_purge: usize) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, PurgeHostMemory -> usize, effect_ref.as_ptr(), device_index as _, bytes_to_purge)?)
     }
 
@@ -115,7 +115,7 @@ impl GPUDeviceSuite {
     /// * `pixel_format` - The pixel format of the effect world, only gpu formats are accepted.
     /// * `clear_pix` - Pass in 'true' for a transparent black frame.
     /// Returns the handle to the effect world to be created.
-    pub fn create_gpu_world(&self, effect_ref: ProgressInfo, device_index: usize, width: i32, height: i32, pixel_aspect_ratio: RationalScale, field_type: Field, pixel_format: pf::PixelFormat, clear_pix: bool) -> Result<EffectWorld, Error> {
+    pub fn create_gpu_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, width: i32, height: i32, pixel_aspect_ratio: RationalScale, field_type: Field, pixel_format: pf::PixelFormat, clear_pix: bool) -> Result<EffectWorld, Error> {
         EffectWorld::from_raw(
             call_suite_fn_single!(self, CreateGPUWorld -> *mut PF_EffectWorld, effect_ref.as_ptr(), device_index as _, width, height, pixel_aspect_ratio.into(), field_type.into(), pixel_format.into(), clear_pix as _)?
         )
@@ -125,7 +125,7 @@ impl GPUDeviceSuite {
     /// Plugin module is only allowed to dispose of gpu effect worlds they create.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to dispose.
-    pub fn dispose_gpu_world(&self, effect_ref: ProgressInfo, world: EffectWorld) -> Result<(), Error> {
+    pub fn dispose_gpu_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: EffectWorld) -> Result<(), Error> {
         call_suite_fn!(self, DisposeGPUWorld, effect_ref.as_ptr(), world.as_ptr() as *mut _)
     }
 
@@ -133,7 +133,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
     /// Returns the gpu buffer address.
-    pub fn gpu_world_data(&self, effect_ref: ProgressInfo, world: &EffectWorld) -> Result<*mut std::ffi::c_void, Error> {
+    pub fn gpu_world_data(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: &EffectWorld) -> Result<*mut std::ffi::c_void, Error> {
         call_suite_fn_single!(self, GetGPUWorldData -> *mut c_void, effect_ref.as_ptr(), world.as_ptr() as *mut _)
     }
 
@@ -141,7 +141,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
     /// Returns the size of the total data in the effect world.
-    pub fn gpu_world_size(&self, effect_ref: ProgressInfo, world: &EffectWorld) -> Result<usize, Error> {
+    pub fn gpu_world_size(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: &EffectWorld) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, GetGPUWorldSize -> usize, effect_ref.as_ptr(), world.as_ptr() as *mut _)?)
     }
 
@@ -149,7 +149,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
     /// Returns the device index of the given effect world.
-    pub fn gpu_world_device_index(&self, effect_ref: ProgressInfo, world: &EffectWorld) -> Result<usize, Error> {
+    pub fn gpu_world_device_index(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: &EffectWorld) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, GetGPUWorldDeviceIndex -> A_u_long, effect_ref.as_ptr(), world.as_ptr() as *mut _)? as usize)
     }
 }

@@ -1,4 +1,5 @@
 use crate::*;
+use ae_sys::DRAWBOT_SurfaceRef;
 
 define_suite!(
     /// Calls to draw on the surface, and to query and set drawing settings.
@@ -18,84 +19,84 @@ impl SurfaceSuite {
     /// Push the current surface state onto the stack. It should be popped to retrieve old state.
     ///
     /// It is required to restore state if you are going to clip or transform a surface or change the interpolation or anti-aliasing policy.
-    pub fn push_state_stack(&self, surface_ref: &SurfaceRef) -> Result<(), Error> {
+    pub fn push_state_stack(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>) -> Result<(), Error> {
         call_suite_fn!(self, PushStateStack, surface_ref.as_ptr(),)
     }
 
     /// Pop the last pushed surface state off the stack.
-    pub fn pop_state_stack(&self, surface_ref: &SurfaceRef) -> Result<(), Error> {
+    pub fn pop_state_stack(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>) -> Result<(), Error> {
         call_suite_fn!(self, PopStateStack, surface_ref.as_ptr(),)
     }
 
     /// Paint a rectangle with a color on the surface.
-    pub fn paint_rect(&self, surface_ref: &SurfaceRef, color: &ColorRgba, rect: &RectF32) -> Result<(), Error> {
+    pub fn paint_rect(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, color: &ColorRgba, rect: &RectF32) -> Result<(), Error> {
         call_suite_fn!(self, PaintRect, surface_ref.as_ptr(), color, rect)
     }
 
     /// Fill a path using a brush and fill type.
-    pub fn fill_path(&self, surface_ref: &SurfaceRef, brush: &Brush, path: &Path, fill_type: FillType) -> Result<(), Error> {
+    pub fn fill_path(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, brush: &Brush, path: &Path, fill_type: FillType) -> Result<(), Error> {
         call_suite_fn!(self, FillPath, surface_ref.as_ptr(), brush.handle, path.handle, fill_type as _)
     }
 
     /// Stroke a path using a pen.
-    pub fn stroke_path(&self, surface_ref: &SurfaceRef, pen: &Pen, path: &Path) -> Result<(), Error> {
+    pub fn stroke_path(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, pen: &Pen, path: &Path) -> Result<(), Error> {
         call_suite_fn!(self, StrokePath, surface_ref.as_ptr(), pen.handle, path.handle)
     }
 
     /// Clip the surface.
-    pub fn clip(&self, surface_ref: &SurfaceRef, supplier: &Supplier, rect: &Rect32) -> Result<(), Error> {
+    pub fn clip(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, supplier: &Supplier, rect: &Rect32) -> Result<(), Error> {
         call_suite_fn!(self, Clip, surface_ref.as_ptr(), supplier.as_ptr(), rect)
     }
 
     /// Get clip bounds.
-    pub fn clip_bounds(&self, surface_ref: &SurfaceRef) -> Result<Rect32, Error> {
+    pub fn clip_bounds(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>) -> Result<Rect32, Error> {
         call_suite_fn_single!(self, GetClipBounds -> ae_sys::DRAWBOT_Rect32, surface_ref.as_ptr())
     }
 
     /// Checks whether a rect is within the clip bounds.
-    pub fn is_within_clip_bounds(&self, surface_ref: &SurfaceRef, rect: &Rect32) -> Result<bool, Error> {
+    pub fn is_within_clip_bounds(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, rect: &Rect32) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, IsWithinClipBounds -> ae_sys::DRAWBOT_Boolean, surface_ref.as_ptr(), rect)? != 0)
     }
 
     /// Transform the last surface state.
-    pub fn transform(&self, surface_ref: &SurfaceRef, matrix: &MatrixF32) -> Result<(), Error> {
+    pub fn transform(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, matrix: &MatrixF32) -> Result<(), Error> {
         call_suite_fn!(self, Transform, surface_ref.as_ptr(), matrix as _,)
     }
 
     /// Draw a string.
-    pub fn draw_string(&self, surface_ref: &SurfaceRef, brush: &Brush, font: &Font, string: &str, origin: &PointF32, alignment_style: TextAlignment, truncation_style: TextTruncation, truncation_width: f32) -> Result<(), Error> {
+    pub fn draw_string(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, brush: &Brush, font: &Font, string: &str, origin: &PointF32, alignment_style: TextAlignment, truncation_style: TextTruncation, truncation_width: f32) -> Result<(), Error> {
         let string = widestring::U16CString::from_str(string).map_err(|_| Error::InvalidParms)?;
 
         call_suite_fn!(self, DrawString, surface_ref.as_ptr(), brush.handle, font.handle, string.as_ptr(), origin, alignment_style.into(), truncation_style.into(), truncation_width)
     }
 
     /// Draw an image created using [`new_image_from_buffer()`](super::Supplier::new_image_from_buffer) on the surface. Alpha = [0.0, 1.0].
-    pub fn draw_image(&self, surface_ref: &SurfaceRef, image: &Image, origin: &PointF32, alpha: f32) -> Result<(), Error> {
+    pub fn draw_image(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, image: &Image, origin: &PointF32, alpha: f32) -> Result<(), Error> {
         call_suite_fn!(self, DrawImage, surface_ref.as_ptr(), image.handle, origin, alpha)
     }
 
     /// Set the interpolation policy.
-    pub fn set_interpolation_policy(&self, surface_ref: &SurfaceRef, interp: InterpolationPolicy) -> Result<(), Error> {
+    pub fn set_interpolation_policy(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, interp: InterpolationPolicy) -> Result<(), Error> {
         call_suite_fn!(self, SetInterpolationPolicy, surface_ref.as_ptr(), interp.into())
     }
 
     /// Get the interpolation policy.
-    pub fn interpolation_policy(&self, surface_ref: &SurfaceRef) -> Result<InterpolationPolicy, Error> {
+    pub fn interpolation_policy(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>) -> Result<InterpolationPolicy, Error> {
         Ok(call_suite_fn_single!(self, GetInterpolationPolicy -> ae_sys::DRAWBOT_InterpolationPolicy, surface_ref.as_ptr())?.into())
     }
 
     /// Set the anti-alias policy.
-    pub fn set_anti_alias_policy(&self, surface_ref: &SurfaceRef, policy: AntiAliasPolicy) -> Result<(), Error> {
+    pub fn set_anti_alias_policy(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, policy: AntiAliasPolicy) -> Result<(), Error> {
         call_suite_fn!(self, SetAntiAliasPolicy, surface_ref.as_ptr(), policy.into())
     }
 
     /// Get the anti-alias policy.
-    pub fn anti_alias_policy(&self, surface_ref: &SurfaceRef) -> Result<AntiAliasPolicy, Error> {
+    pub fn anti_alias_policy(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>) -> Result<AntiAliasPolicy, Error> {
         Ok(call_suite_fn_single!(self, GetAntiAliasPolicy -> ae_sys::DRAWBOT_AntiAliasPolicy, surface_ref.as_ptr())?.into())
     }
 
     /// Flush drawing. This is not always needed, and if overused, may cause excessive redrawing and flashing.
-    pub fn flush(&self, surface_ref: &SurfaceRef) -> Result<(), Error> {
+    pub fn flush(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>) -> Result<(), Error> {
         call_suite_fn!(self, Flush, surface_ref.as_ptr(),)
     }
 }

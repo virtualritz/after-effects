@@ -783,7 +783,7 @@ impl ParamDef {
     pub fn update_param_ui(&self) {
         if let Ok(suite) = crate::ParamUtilsSuite::new() {
             if let Some(index) = self.index {
-                suite.update_param_ui(InData::from_raw(self.in_data_ptr).effect_ref(), index, self);
+                suite.update_param_ui(unsafe { (*self.in_data_ptr).effect_ref }, index, self);
             }
         } else {
             log::error!("failed to get params suite");
@@ -793,7 +793,7 @@ impl ParamDef {
         (|| -> Option<i32> {
             crate::ParamUtilsSuite::new()
                 .ok()?
-                .keyframe_count(InData::from_raw(self.in_data_ptr).effect_ref(), self.index?)
+                .keyframe_count(unsafe { (*self.in_data_ptr).effect_ref }, self.index?)
                 .ok()
         })()
         .unwrap_or(0)

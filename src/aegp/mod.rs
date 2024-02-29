@@ -65,12 +65,14 @@ pub use suites::effect::{
     InstalledEffectKey,
 };
 pub use suites::footage::{
+    Footage,
     FootageHandle,
     FootageSignature,
     InterpretationStyle,
     Platform,
 };
 pub use suites::item::{
+    Item,
     ItemFlags,
     ItemHandle,
     ItemType,
@@ -84,6 +86,7 @@ pub use suites::keyframe::{
     KeyframeInterpolationMask,
 };
 pub use suites::layer::{
+    Layer,
     LayerFlags,
     LayerHandle,
     LayerQuality,

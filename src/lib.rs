@@ -625,3 +625,9 @@ pub(crate) trait Suite {
     where
         Self: Sized;
 }
+
+pub trait AsPtr<T> {
+    fn as_ptr(&self) -> T
+    where
+        T: Sized;
+}
