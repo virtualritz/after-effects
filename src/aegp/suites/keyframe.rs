@@ -6,15 +6,15 @@ define_suite!(
     /// Keyframes make After Effects what it is. AEGPs (and...ssshh, don't tell anyone...effects) can use this suite to add, manipulate and remove keyframes from any keyframe-able stream.
     ///
     /// # Adding Multiple Keyframes
-    /// Each time you call ``AEGP_InsertKeyframe()``, the entire stream is added to the undo stack.
+    /// Each time you call [`insert_keyframe`](Self::insert_keyframe), the entire stream is added to the undo stack.
     ///
     /// If you're adding one or two keyframes, this isn't a problem. However, if you're writing a keyframer, you'll want to do things the *right* way.
     ///
-    /// Before you begin adding keyframes, call the (very-appropriately-named) ``AEGP_StartAddKeyframes``, passing it an opaque ``AEGP_AddKeyframesInfoH``.
+    /// Before you begin adding keyframes, call the (very-appropriately-named) [`start_add_keyframes`](Self::start_add_keyframes).
     ///
-    /// For each keyframe to add, call ``AEGP_AddKeyframes`` to set the time to be used (and get the newly-added keyframe's index), then ``AEGP_SetAddKeyframe`` to specify the value to be used.
+    /// For each keyframe to add, call [`AddKeyframesInfoHandle::add_keyframes`] to set the time to be used (and get the newly-added keyframe's index), then [`AddKeyframesInfoHandle::set_add_keyframe`] to specify the value to be used.
     ///
-    /// Once you're finished, call ``AEGP_EndAddKeyframes`` to let know After Effects know it's time to add the changed parameter stream to the undo stack.
+    /// Once you're finished, simply drop the [`AddKeyframesInfoHandle`] to let know After Effects know it's time to add the changed parameter stream to the undo stack.
     KeyframeSuite,
     AEGP_KeyframeSuite5,
     kAEGPKeyframeSuite,

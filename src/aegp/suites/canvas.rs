@@ -52,7 +52,7 @@ impl CanvasSuite {
         ))
     }
 
-    /// Given a [`RenderContextHandle`], retrieves the associated [`LayerHandle`] (required by many suite functions).
+    /// Given a [`RenderContextHandle`](pr::RenderContextHandle), retrieves the associated [`LayerHandle`] (required by many suite functions).
     pub fn layer_from_layer_context(&self, render_ctx: impl AsPtr<PR_RenderContextH>, layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>) -> Result<LayerHandle, Error> {
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self,
@@ -129,7 +129,7 @@ impl CanvasSuite {
         call_suite_fn!(self, AEGP_DisposeTexture, render_ctx.as_ptr(), layer_ctx.as_ptr(), world_handle.as_ptr())
     }
 
-    /// Returns the field settings of the given [`RenderContextHandle`].
+    /// Returns the field settings of the given [`RenderContextHandle`](pr::RenderContextHandle).
     pub fn field_render(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<ae_sys::PF_Field, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetFieldRender -> ae_sys::PF_Field, render_ctx.as_ptr())?)
     }
@@ -141,7 +141,7 @@ impl CanvasSuite {
         call_suite_fn!(self, AEGP_ReportArtisanProgress, render_ctx.as_ptr(), count, total)
     }
 
-    /// Returns the downsample factor of the [`RenderContextHandle`].
+    /// Returns the downsample factor of the [`RenderContextHandle`](pr::RenderContextHandle).
     pub fn render_downsample_factor(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<ae_sys::AEGP_DownsampleFactor, Error> {
         let dsf = call_suite_fn_single!(self, AEGP_GetRenderDownsampleFactor -> ae_sys::AEGP_DownsampleFactor, render_ctx.as_ptr())?;
         Ok(dsf.into())
@@ -150,7 +150,7 @@ impl CanvasSuite {
         call_suite_fn!(self, AEGP_SetRenderDownsampleFactor, render_ctx.as_ptr(), &mut dsf as *mut _)
     }
 
-    /// Determines whether the [`RenderContextHandle`] is blank (empty).
+    /// Determines whether the [`RenderContextHandle`](pr::RenderContextHandle) is blank (empty).
     pub fn is_blank_canvas(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_IsBlankCanvas -> ae_sys::A_Boolean, render_ctx.as_ptr())? != 0)
     }
@@ -161,7 +161,7 @@ impl CanvasSuite {
         Ok(matrix.into())
     }
 
-    /// Retrieves the bounding rectangle of the layer_contextH (at a given time) within the [`RenderContextHandle`].
+    /// Retrieves the bounding rectangle of the layer_contextH (at a given time) within the [`RenderContextHandle`](pr::RenderContextHandle).
     pub fn render_layer_bounds(&self, render_ctx: impl AsPtr<PR_RenderContextH>, layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, comp_time: Time) -> Result<Rect, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetRenderLayerBounds -> ae_sys::A_LegacyRect, render_ctx.as_ptr(), layer_ctx.as_ptr(), &comp_time.into() as *const _)?.into())
     }
@@ -303,35 +303,35 @@ impl CanvasSuite {
         )?.into())
     }
 
-    /// Retrieves the platform-specific window context into which to draw the given [`RenderContextHandle`].
+    /// Retrieves the platform-specific window context into which to draw the given [`RenderContextHandle`](pr::RenderContextHandle).
     ///
     /// This function is valid for interactive artisans only.
     pub fn platform_window_ref(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<ae_sys::AEGP_PlatformWindowRef, Error> {
         call_suite_fn_single!(self, AEGP_GetPlatformWindowRef -> ae_sys::AEGP_PlatformWindowRef, render_ctx.as_ptr())
     }
 
-    /// Retrieves the source-to-frame downsample factor for the given [`RenderContextHandle`].
+    /// Retrieves the source-to-frame downsample factor for the given [`RenderContextHandle`](pr::RenderContextHandle).
     ///
     /// This function is valid for interactive artisans only.
     pub fn viewport_scale(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<(f64, f64), Error> {
         call_suite_fn_double!(self, AEGP_GetViewportScale -> f64, f64, render_ctx.as_ptr())
     }
 
-    /// Retrieves to origin of the source, within the frame (necessary to translate between the two), for the given [`RenderContextHandle`].
+    /// Retrieves to origin of the source, within the frame (necessary to translate between the two), for the given [`RenderContextHandle`](pr::RenderContextHandle).
     ///
     /// This function is valid for interactive artisans only.
     pub fn viewport_origin(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<(i32, i32), Error> {
         call_suite_fn_double!(self, AEGP_GetViewportOrigin -> i32, i32, render_ctx.as_ptr())
     }
 
-    /// Retrieves the bounding rectangle for the area to be drawn, for the given [`RenderContextHandle`].
+    /// Retrieves the bounding rectangle for the area to be drawn, for the given [`RenderContextHandle`](pr::RenderContextHandle).
     ///
     /// This function is valid for interactive artisans only.
     pub fn viewport_rect(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<Rect, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetViewportRect -> ae_sys::A_LegacyRect, render_ctx.as_ptr())?.into())
     }
 
-    /// Retrieves the color used for the fallow regions in the given [`RenderContextHandle`].
+    /// Retrieves the color used for the fallow regions in the given [`RenderContextHandle`](pr::RenderContextHandle).
     ///
     /// This function is valid for interactive artisans only.
     pub fn fallow_color(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<ae_sys::PF_Pixel8, Error> {
@@ -344,7 +344,7 @@ impl CanvasSuite {
         ))
     }
 
-    /// Retrieves whether or not the checkerboard is currently active for the given [`RenderContextHandle`].
+    /// Retrieves whether or not the checkerboard is currently active for the given [`RenderContextHandle`](pr::RenderContextHandle).
     ///
     /// This function is valid for interactive artisans only.
     pub fn interactive_checkerboard(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<bool, Error> {
@@ -369,7 +369,7 @@ impl CanvasSuite {
         call_suite_fn_double!(self, AEGP_GetInteractiveCheckerboardSize -> u32, u32, render_ctx.as_ptr())
     }
 
-    /// Retrieves the cached AEGP_WorldH last used for the [`RenderContextHandle`].
+    /// Retrieves the cached AEGP_WorldH last used for the [`RenderContextHandle`](pr::RenderContextHandle).
     ///
     /// This function is valid for interactive artisans only.
     pub fn interactive_cached_buffer(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<WorldHandle, Error> {
@@ -392,7 +392,7 @@ impl CanvasSuite {
         Ok(call_suite_fn_single!(self, AEGP_GetInteractiveDisplayChannel -> ae_sys::AEGP_DisplayChannelType, render_ctx.as_ptr())?.into())
     }
 
-    /// Returns the exposure for the given [`RenderContextHandle`], expressed as a floating point number.
+    /// Returns the exposure for the given [`RenderContextHandle`](pr::RenderContextHandle), expressed as a floating point number.
     ///
     /// This function is valid for interactive artisans only.
     pub fn interactive_exposure(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<f64, Error> {
@@ -400,7 +400,7 @@ impl CanvasSuite {
     }
 
     // TODO: what's xform?
-    /// Returns the color transform for the given [`RenderContextHandle`].
+    /// Returns the color transform for the given [`RenderContextHandle`](pr::RenderContextHandle).
     ///
     /// This function is valid for interactive artisans only.
     pub fn color_transform(&self, render_ctx: impl AsPtr<PR_RenderContextH>, xform: *mut std::ffi::c_void) -> Result<(bool, u32), Error> {
@@ -410,7 +410,7 @@ impl CanvasSuite {
         Ok((cms_on != 0, xform_key))
     }
 
-    /// Returns the shutter angle for the given [`RenderContextHandle`].
+    /// Returns the shutter angle for the given [`RenderContextHandle`](pr::RenderContextHandle).
     ///
     /// This function is valid for interactive artisans only.
     pub fn comp_shutter_time(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<(Time, Time), Error> {

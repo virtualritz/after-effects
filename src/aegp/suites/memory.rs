@@ -23,7 +23,7 @@ impl MemorySuite {
 
     /// Create a new memory handle.
     /// This memory is guaranteed to be 16-byte aligned.
-    /// `plugin_id` is the ID passed in through the main entry point, or alternatively what you obtained from [`suites::Utility::register_with_aegp)_`](aegp::suites::Utility::register_with_aegp).
+    /// `plugin_id` is the ID passed in through the main entry point, or alternatively what you obtained from [`suites::Utility::register_with_aegp`](aegp::suites::Utility::register_with_aegp).
     ///
     /// Use `name` to identify the memory you are asking for.
     /// After Effects uses the string to display any related error messages.
@@ -61,7 +61,7 @@ impl MemorySuite {
     /// Make use of this during development!
     ///
     /// Only memory allocated and then leaked using this suite is reported using this call,
-    /// so for example memory allocated using [`HandleSuite`] will not be reported.
+    /// so for example memory allocated using [`suites::Handle`](crate::suites::Handle) will not be reported.
     pub fn set_mem_reporting_on(&self, turn_on: bool) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetMemReportingOn, turn_on.into())
     }
@@ -69,7 +69,7 @@ impl MemorySuite {
     /// Obtain information about the number of currently allocated handles and their total size.
     ///
     /// Only memory allocated using this suite is tracked and reported using this call,
-    /// so for example memory allocated using [`HandleSuite`] will not be reported here.
+    /// so for example memory allocated using [`suites::Handle`](crate::suites::Handle) will not be reported here.
     pub fn mem_stats(&self, plugin_id: PluginId) -> Result<(i32, i32), Error> {
         let (count, size) = call_suite_fn_double!(self, AEGP_GetMemStats -> ae_sys::A_long, ae_sys::A_long, plugin_id)?;
         Ok((

@@ -116,20 +116,20 @@ impl FootageSuite {
         call_suite_fn!(self, AEGP_DisposeFootage, footage_handle.as_ptr())
     }
 
-    /// Populates an AEGP_FootageInterp describing the settings of the [`FootageHandle`].
-    /// There is no way to create a valid `AEGP_FootageInterp` other than by using this function.
+    /// Populates an [`AEGP_FootageInterp`](after_effects_sys::AEGP_FootageInterp) describing the settings of the [`FootageHandle`].
+    /// There is no way to create a valid [`AEGP_FootageInterp`](after_effects_sys::AEGP_FootageInterp) other than by using this function.
     /// If `proxy` is `true`, the proxy footage's settings are retrieved.
     pub fn footage_interpretation(&self, item_handle: impl AsPtr<AEGP_ItemH>, proxy: bool) -> Result<ae_sys::AEGP_FootageInterp, Error> {
         call_suite_fn_single!(self, AEGP_GetFootageInterpretation -> ae_sys::AEGP_FootageInterp, item_handle.as_ptr(), proxy.into())
     }
 
-    /// Apply the settings in the `AEGP_FootageInterp` to the `AEGP_FootageH`. Undo-able.
+    /// Apply the settings in the [`AEGP_FootageInterp`](after_effects_sys::AEGP_FootageInterp) to the `item_handle`. Undo-able.
     /// If `proxy` is `true`, the proxy footage's settings are modified.
     pub fn set_footage_interpretation(&self, item_handle: impl AsPtr<AEGP_ItemH>, proxy: bool, interp: &ae_sys::AEGP_FootageInterp) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetFootageInterpretation, item_handle.as_ptr(), proxy.into(), interp)
     }
 
-    /// Returns an [`ae_sys::AEGP_FootageLayerKey`](after_effects_sys::AEGP_FootageLayerKey) describing the footage.
+    /// Returns an [`AEGP_FootageLayerKey`](after_effects_sys::AEGP_FootageLayerKey) describing the footage.
     pub fn footage_layer_key(&self, footage_handle: impl AsPtr<AEGP_FootageH>) -> Result<ae_sys::AEGP_FootageLayerKey, Error> {
         call_suite_fn_single!(self, AEGP_GetFootageLayerKey -> ae_sys::AEGP_FootageLayerKey, footage_handle.as_ptr())
     }
@@ -270,7 +270,6 @@ define_suite_item_wrapper!(
 
         /// Returns an [`ae_sys::AEGP_FootageLayerKey`](after_effects_sys::AEGP_FootageLayerKey) describing the footage.
         layer_key() -> ae_sys::AEGP_FootageLayerKey => suite.footage_layer_key,
-
 
         /// Retrieves information about the audio data in the footage item (by populating the `AEGP_SoundDataFormat` you passed in).
         sound_data_format() -> ae_sys::AEGP_SoundDataFormat => suite.footage_sound_data_format,

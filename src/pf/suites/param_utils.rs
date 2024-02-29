@@ -61,7 +61,7 @@ impl ParamUtilsSuite {
     }
 
     /// This API, combined with [`are_states_identical()`](Self::are_states_identical) below, lets you determine if a set of inputs (either layers, other properties, or both)
-    /// are different between when you first called [`get_current_state()`](Self::get_current_state) and a current call, so it can be used for caching.
+    /// are different between when you first called [`current_state()`](Self::current_state) and a current call, so it can be used for caching.
     /// You can specify a range of time to consider or all of time.
     ///
     /// Updated in CS6 to add `param_index`, `start`, and `duration`. Pre-defined constants for `param_index` are as follows:

@@ -612,7 +612,7 @@ define_suite_item_wrapper!(
         ///
         /// Option is explicitly set on the layer independent of layer quality.
         ///
-        /// If you want to force it on you must also set the layer quality to [`LayerQuality::Best`] with [`Self::set_layer_quality`].
+        /// If you want to force it on you must also set the layer quality to [`LayerQuality::Best`] with [`Self::set_quality`].
         /// Otherwise it will only be using the specified layer sampling quality whenever the layer quality is set to [`LayerQuality::Best`].
         set_sampling_quality(quality: LayerSamplingQuality) -> () => suite.set_layer_sampling_quality,
 
