@@ -34,8 +34,10 @@ macro_rules! call_fn {
     };
 }
 
+
+#[macro_export]
 macro_rules! define_iterate {
-    ($name:ident, $pixel:ident, $pixel_ptr:ident $(, $additional:ident: $additional_type:ty)?) => {
+    ($(+ $in_data:ident: $in_data_ty:ty, )? $name:ident, $pixel:ident, $pixel_ptr:ident $(, $additional:ident: $additional_type:ty)?) => {
         /// This invokes a function you specify on a region of pixels in the source and dest images.
         /// The function is invoked with the x and y coordinates of the current pixel, plus a pointer to that pixel in the src and dest images.
         /// You can specify a rectangle to iterate over (for instance, the extent_hint), or pass `None` to iterate over every pixel where the worlds overlap.
@@ -48,7 +50,7 @@ macro_rules! define_iterate {
         /// Pass the max number as zero to turn off progress reporting.
         ///
         /// This is quality independent.
-        pub fn $name<F>(&self, src: Option<*mut PF_EffectWorld>, dst: *mut PF_EffectWorld, progress_base: i32, progress_final: i32, area: Option<Rect> $(, $additional: $additional_type)?, cb: F) -> Result<(), Error>
+        pub fn $name<F>(&self $(, $in_data: $in_data_ty)?, src: Option<*mut PF_EffectWorld>, dst: *mut PF_EffectWorld, progress_base: i32, progress_final: i32, area: Option<Rect> $(, $additional: $additional_type)?, cb: F) -> Result<(), Error>
         where
             F: Fn(i32, i32, &$pixel, &mut $pixel) -> Result<(), Error>,
         {
@@ -67,16 +69,20 @@ macro_rules! define_iterate {
                 }
             }
             unsafe {
-                let in_data = &(*self.0.as_ptr());
-                if dst.is_null() || in_data.utils.is_null() {
+                let _in_data_ptr = self.get_in_data();
+                $(
+                    let _in_data_ptr = $in_data.as_ptr();
+                )?
+                let ptr = self.get_funcs_ptr();
+                if dst.is_null() || ptr.is_null() {
                     return Err(Error::BadCallbackParameter);
                 }
-                let iterate_fn = (*in_data.utils).$name.ok_or(Error::BadCallbackParameter)?;
+                let iterate_fn = (*ptr).$name.ok_or(Error::BadCallbackParameter)?;
 
                 let callback = Box::<Box<dyn Fn(i32, i32, &$pixel, &mut $pixel) -> Result<(), Error>>>::new(Box::new(cb));
                 let refcon = &callback as *const _;
                 match iterate_fn(
-                    self.0.as_ptr() as *mut _,
+                    _in_data_ptr as *mut _,
                     progress_base,
                     progress_final,
                     src.unwrap_or(std::ptr::null_mut()),
@@ -93,6 +99,84 @@ macro_rules! define_iterate {
         }
     };
 }
+
+#[macro_export]
+macro_rules! define_iterate_lut_and_generic {
+    ($(+ $in_data:ident: $in_data_ty:ty, )?) => {
+        /// Allows a Look-Up Table (LUT) to be passed for iteration; you can pass the same or different LUTs for each color channel.
+        ///
+        /// If no LUT is passed, an identity LUT is used.
+        pub fn iterate_lut(&self $(, $in_data: $in_data_ty)?, src: *mut PF_EffectWorld, dst: *mut PF_EffectWorld, progress_base: i32, progress_final: i32, area: Option<Rect>, a_lut: Option<&[u8]>, r_lut: Option<&[u8]>, g_lut: Option<&[u8]>, b_lut: Option<&[u8]>) -> Result<(), Error> {
+            if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
+            unsafe {
+                let _in_data_ptr = self.get_in_data();
+                $(
+                    let _in_data_ptr = $in_data.as_ptr();
+                )?
+                let ptr = self.get_funcs_ptr();
+                if dst.is_null() || ptr.is_null() {
+                    return Err(Error::BadCallbackParameter);
+                }
+                let iterate_fn = (*ptr).iterate_lut.ok_or(Error::BadCallbackParameter)?;
+
+                match iterate_fn(
+                    _in_data_ptr as *mut _,
+                    progress_base,
+                    progress_final,
+                    src,
+                    area.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
+                    a_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
+                    r_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
+                    g_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
+                    b_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
+                    dst,
+                ) {
+                    0 => Ok(()),
+                    e => Err(e.into()),
+                }
+            }
+        }
+
+        /// If you want to do something once per available CPU, this is the function to use (pass [`ONCE_PER_PROCESSOR`] for `iterations`).
+        ///
+        /// Only call abort and progress functions from thread index 0.
+        ///
+        /// The `cb` callback parameters are: `thread_index`, `i`, `iterations`.
+        ///
+        /// Inside the callback, if you want to call abort or progress, you can only do it if `thread_index == 0`.
+        ///
+        /// Note: You can iterate over more than pixels. Internally, we use it for row-based image processing, and for once-per-entity updates of complex sequence data.
+        pub fn iterate_generic<F>(&self, iterations: i32, cb: F) -> Result<(), Error>
+        where
+            F: Fn(i32, i32, i32) -> Result<(), Error>,
+        {
+            unsafe extern "C" fn iterate_c_fn(refcon: *mut c_void, thread_index: ae_sys::A_long, i: ae_sys::A_long, iterations: ae_sys::A_long) -> ae_sys::PF_Err {
+                let cb = &*(refcon as *const Box<Box<dyn Fn(i32, i32, i32) -> Result<(), Error>>>);
+                match cb(thread_index, i, iterations) {
+                    Ok(_)  => ae_sys::PF_Err_NONE as _,
+                    Err(e) => e as _,
+                }
+            }
+            unsafe {
+                let ptr = self.get_funcs_ptr();
+                if ptr.is_null() {
+                    return Err(Error::BadCallbackParameter);
+                }
+                let f = (*ptr).iterate_generic.ok_or(Error::BadCallbackParameter)?;
+
+                let callback = Box::<Box<dyn Fn(i32, i32, i32) -> Result<(), Error>>>::new(Box::new(cb));
+                let refcon = &callback as *const _ as *mut _;
+
+                match f(iterations, refcon, Some(iterate_c_fn)) {
+                    0 => Ok(()),
+                    e => Err(e.into()),
+                }
+            }
+        }
+    }
+}
+
+pub const ONCE_PER_PROCESSOR: i32 = ae_sys::PF_Iterations_ONCE_PER_PROCESSOR as i32;
 
 pub struct UtilCallbacks(InData);
 
@@ -217,7 +301,6 @@ impl UtilCallbacks {
         call_fn!(self, fill16, color.map_or(std::ptr::null_mut(), |x| &x), rect.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x), world)
     }
 
-
     /// This blits a region from one PF_EffectWorld to another.
     /// This is an alpha-preserving (unlike CopyBits), 32-bit only, non-antialiased stretch blit.
     /// The high qual version does an anti-aliased blit (ie. it interpolates).
@@ -226,42 +309,17 @@ impl UtilCallbacks {
         call_fn!(self, copy, src, dst, src_rect.map_or(std::ptr::null_mut(), |x| &mut x.into()), dst_rect.map_or(std::ptr::null_mut(), |x| &mut x.into()))
     }
 
+    // Helpers for the define_iterate macros
+    #[inline(always)] fn get_in_data(&self) -> *const ae_sys::PF_InData { self.0.as_ptr() }
+    #[inline(always)] fn get_funcs_ptr(&self) -> *mut ae_sys::_PF_UtilCallbacks { unsafe { (*self.0.as_ptr()).utils } }
+
     define_iterate!(iterate,                       Pixel8,  PF_Pixel);
     define_iterate!(iterate16,                     Pixel16, PF_Pixel16);
     define_iterate!(iterate_origin,                Pixel8,  PF_Pixel,   origin: Option<Point>);
     define_iterate!(iterate_origin16,              Pixel16, PF_Pixel16, origin: Option<Point>);
     define_iterate!(iterate_origin_non_clip_src,   Pixel8,  PF_Pixel,   origin: Option<Point>);
     define_iterate!(iterate_origin_non_clip_src16, Pixel16, PF_Pixel16, origin: Option<Point>);
-
-    /// Allows a Look-Up Table (LUT) to be passed for iteration; you can pass the same or different LUTs for each color channel.
-    ///
-    /// If no LUT is passed, an identity LUT is used.
-    pub fn iterate_lut(&self, src: *mut PF_EffectWorld, dst: *mut PF_EffectWorld, progress_base: i32, progress_final: i32, area: Option<Rect>, a_lut: Option<&[u8]>, r_lut: Option<&[u8]>, g_lut: Option<&[u8]>, b_lut: Option<&[u8]>) -> Result<(), Error> {
-        if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
-        unsafe {
-            let in_data = &(*self.0.as_ptr());
-            if dst.is_null() || in_data.utils.is_null() {
-                return Err(Error::BadCallbackParameter);
-            }
-            let iterate_fn = (*in_data.utils).iterate_lut.ok_or(Error::BadCallbackParameter)?;
-
-            match iterate_fn(
-                self.0.as_ptr() as *mut _,
-                progress_base,
-                progress_final,
-                src,
-                area.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
-                a_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
-                r_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
-                g_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
-                b_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
-                dst,
-            ) {
-                0 => Ok(()),
-                e => Err(e.into()),
-            }
-        }
-    }
+    define_iterate_lut_and_generic!();
 
     pub fn host_new_handle(&self, size: usize) -> Result<RawHandle, Error> {
         unsafe {
@@ -446,6 +504,10 @@ impl UtilCallbacks {
             }
         }
     }
+
+    // fn get_callback_addr( effect_ref: PF_ProgPtr, quality: PF_Quality, mode_flags: PF_ModeFlags, which_callback: PF_CallbackID, fn_ptr: *mut PF_CallbackFunc) -> PF_Err,
+    // fn app(arg1: PF_ProgPtr, arg2: A_long, ...) -> PF_Err,
+    // ansi: PF_ANSICallbacks,
 }
 
 #[derive(Default)]
@@ -620,21 +682,6 @@ pub enum PlatformData {
     ExeFilePath(String),
     ResFilePath(String),
 }
-
-/*
-type IterateGenericFunc = ::std::option::Option<unsafe extern "C" fn(refconPV: *mut c_void, thread_indexL: A_long, i: A_long, iterationsL: A_long) -> PF_Err>;
-fn iterate_generic(iterationsL: A_long, refconPV: *mut c_void, fn_func: IterateGenericFunc) -> PF_Err,
-fn get_callback_addr( effect_ref: PF_ProgPtr, quality: PF_Quality, mode_flags: PF_ModeFlags, which_callback: PF_CallbackID, fn_ptr: *mut PF_CallbackFunc) -> PF_Err,
-fn app(arg1: PF_ProgPtr, arg2: A_long, ...) -> PF_Err,
-// ansi: PF_ANSICallbacks,
-PF_Err (*iterate_generic)(
-    A_long			iterationsL,						/* >> */		// can be PF_Iterations_ONCE_PER_PROCESSOR
-    void			*refconPV,							/* >> */
-    PF_Err			(*fn_func)(	void *refconPV,			/* >> */
-                                A_long thread_indexL,		// only call abort and progress from thread_indexL == 0.
-                                A_long i,
-                                A_long iterationsL));		// never sends PF_Iterations_ONCE_PER_PROCESSOR
-*/
 
 pub struct RawHandle {
     utils_ptr: *const ae_sys::_PF_UtilCallbacks,

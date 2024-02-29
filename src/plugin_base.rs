@@ -180,8 +180,8 @@ macro_rules! define_plugin {
                         sequence_err = Some(inst.do_dialog(&mut plugin_state));
                     }
                     RawCommand::Render => {
-                        let in_layer = $crate::Layer::from_raw(&mut (*(*params)).u.ld, &in_data);
-                        let mut out_layer = $crate::Layer::from_raw(output, &in_data);
+                        let in_layer = $crate::Layer::from_raw(&mut (*(*params)).u.ld, in_data.clone());
+                        let mut out_layer = $crate::Layer::from_raw(output, in_data.clone());
                         sequence_err = Some(inst.render(&mut plugin_state, &in_layer, &mut out_layer));
                     }
                     RawCommand::UserChangedParam => {

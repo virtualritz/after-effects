@@ -1,4 +1,7 @@
 use crate::*;
+use crate::{ define_iterate, define_iterate_lut_and_generic };
+use ae_sys::{ PF_EffectWorld, PF_Pixel, PF_Pixel16, PF_PixelFloat };
+use std::ffi::c_void;
 
 define_suite!(
     /// Effects often iterate over all pixels in an image, filtering each one.
@@ -25,43 +28,15 @@ impl IterateFloatSuite {
         crate::Suite::new()
     }
 
-    pub fn iterate(
-        &self,
-        in_data: InData,
-        progress_base: i32,
-        progress_final: i32,
-        src: EffectWorld,
-        area: Option<Rect>,
-        refcon: *const std::ffi::c_void,
-        pix_fn: Option<
-            unsafe extern "C" fn(
-                refcon: *mut std::ffi::c_void,
-                x: i32,
-                y: i32,
-                in_: *mut ae_sys::PF_PixelFloat,
-                out: *mut ae_sys::PF_PixelFloat,
-            ) -> ae_sys::PF_Err,
-        >,
-        dst: EffectWorld,
-    ) -> Result<(), Error> {
-        call_suite_fn!(
-            self,
-            iterate,
-            in_data.as_ptr() as *mut _,
-            progress_base,
-            progress_final,
-            src.as_ptr() as *mut _,
-            if let Some(area) = area {
-                &area.into()
-            } else {
-                std::ptr::null()
-            },
-            refcon as *mut _,
-            pix_fn,
-            dst.as_ptr() as *mut _,
-        )
-    }
+    // Helpers for the define_iterate macros
+    #[inline(always)] fn get_in_data(&self) -> *const ae_sys::PF_InData { std::ptr::null() }
+    #[inline(always)] fn get_funcs_ptr(&self) -> *const ae_sys::PF_iterateFloatSuite2 { self.suite_ptr }
+
+    define_iterate!(+ in_data: &InData, iterate,                       PixelF32,  PF_PixelFloat);
+    define_iterate!(+ in_data: &InData, iterate_origin,                PixelF32,  PF_PixelFloat,   origin: Option<Point>);
+    define_iterate!(+ in_data: &InData, iterate_origin_non_clip_src,   PixelF32,  PF_PixelFloat,   origin: Option<Point>);
 }
+
 define_suite!(
     /// Effects often iterate over all pixels in an image, filtering each one.
     /// By taking advantage of After Effects' iteration suites, you make it possible for After Effects to sub-allocate your task
@@ -87,42 +62,13 @@ impl Iterate16Suite {
         crate::Suite::new()
     }
 
-    pub fn iterate(
-        &self,
-        in_data: InData,
-        progress_base: i32,
-        progress_final: i32,
-        src: EffectWorld,
-        area: Option<Rect>,
-        refcon: *const std::ffi::c_void,
-        pix_fn: Option<
-            unsafe extern "C" fn(
-                refcon: *mut std::ffi::c_void,
-                x: i32,
-                y: i32,
-                in_: *mut ae_sys::PF_Pixel16,
-                out: *mut ae_sys::PF_Pixel16,
-            ) -> ae_sys::PF_Err,
-        >,
-        dst: EffectWorld,
-    ) -> Result<(), Error> {
-        call_suite_fn!(
-            self,
-            iterate,
-            in_data.as_ptr() as *mut _,
-            progress_base,
-            progress_final,
-            src.as_ptr() as *mut _,
-            if let Some(area) = area {
-                &area.into()
-            } else {
-                std::ptr::null()
-            },
-            refcon as *mut _,
-            pix_fn,
-            dst.as_ptr() as *mut _,
-        )
-    }
+    // Helpers for the define_iterate macros
+    #[inline(always)] fn get_in_data(&self) -> *const ae_sys::PF_InData { std::ptr::null() }
+    #[inline(always)] fn get_funcs_ptr(&self) -> *const ae_sys::PF_Iterate16Suite2 { self.suite_ptr }
+
+    define_iterate!(+ in_data: &InData, iterate,                       Pixel16,  PF_Pixel16);
+    define_iterate!(+ in_data: &InData, iterate_origin,                Pixel16,  PF_Pixel16,   origin: Option<Point>);
+    define_iterate!(+ in_data: &InData, iterate_origin_non_clip_src,   Pixel16,  PF_Pixel16,   origin: Option<Point>);
 }
 
 define_suite!(
@@ -150,40 +96,12 @@ impl Iterate8Suite {
         crate::Suite::new()
     }
 
-    pub fn iterate(
-        &self,
-        in_data: InData,
-        progress_base: i32,
-        progress_final: i32,
-        src: EffectWorld,
-        area: Option<Rect>,
-        refcon: *const std::ffi::c_void,
-        pix_fn: Option<
-            unsafe extern "C" fn(
-                refcon: *mut std::ffi::c_void,
-                x: i32,
-                y: i32,
-                in_: *mut ae_sys::PF_Pixel8,
-                out: *mut ae_sys::PF_Pixel8,
-            ) -> ae_sys::PF_Err,
-        >,
-        dst: EffectWorld,
-    ) -> Result<(), Error> {
-        call_suite_fn!(
-            self,
-            iterate,
-            in_data.as_ptr() as *mut _,
-            progress_base,
-            progress_final,
-            src.as_ptr() as *mut _,
-            if let Some(area) = area {
-                &area.into()
-            } else {
-                std::ptr::null()
-            },
-            refcon as *mut _,
-            pix_fn,
-            dst.as_ptr() as *mut _,
-        )
-    }
+    // Helpers for the define_iterate macros
+    #[inline(always)] fn get_in_data(&self) -> *const ae_sys::PF_InData { std::ptr::null() }
+    #[inline(always)] fn get_funcs_ptr(&self) -> *const ae_sys::PF_Iterate8Suite2 { self.suite_ptr }
+
+    define_iterate!(+ in_data: &InData, iterate,                       Pixel8,  PF_Pixel);
+    define_iterate!(+ in_data: &InData, iterate_origin,                Pixel8,  PF_Pixel,   origin: Option<Point>);
+    define_iterate!(+ in_data: &InData, iterate_origin_non_clip_src,   Pixel8,  PF_Pixel,   origin: Option<Point>);
+    define_iterate_lut_and_generic!(+ in_data: &InData,);
 }

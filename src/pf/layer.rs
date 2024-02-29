@@ -2,7 +2,7 @@ use super::*;
 use ae_sys::PF_LayerDef;
 
 pub struct Layer {
-    pub(crate) util_callbacks: UtilCallbacks,
+    pub(crate) in_data: InData,
     pub(crate) layer_ptr: *mut PF_LayerDef,
 }
 
@@ -32,9 +32,9 @@ impl Debug for Layer {
 //pub dephault: A_long,
 
 impl Layer {
-    pub fn from_raw(layer_ptr: *mut PF_LayerDef, in_data: &InData) -> Self {
+    pub fn from_raw(layer_ptr: *mut PF_LayerDef, in_data: InData) -> Self {
         assert!(!layer_ptr.is_null());
-        Self { util_callbacks: in_data.utils(), layer_ptr }
+        Self { in_data, layer_ptr }
     }
 
     pub fn as_ptr(&self) -> *mut PF_LayerDef {
@@ -101,11 +101,14 @@ impl Layer {
     }
 
     pub fn copy_from(&mut self, src: &Self, src_rect: Option<Rect>, dst_rect: Option<Rect>) -> Result<(), Error> {
-        self.util_callbacks.copy(src.layer_ptr, self.layer_ptr, src_rect, dst_rect)
+        self.in_data.utils().copy(src.layer_ptr, self.layer_ptr, src_rect, dst_rect)
     }
 
     pub fn fill(&mut self, color: Option<Pixel8>, rect: Option<Rect>) -> Result<(), Error> {
-        self.util_callbacks.fill(self.layer_ptr, color, rect)
+        self.in_data.utils().fill(self.layer_ptr, color, rect)
+    }
+    pub fn fill16(&mut self, color: Option<Pixel16>, rect: Option<Rect>) -> Result<(), Error> {
+        self.in_data.utils().fill16(self.layer_ptr, color, rect)
     }
 
     pub fn iterate_with<F>(&self, output: &mut Self, progress_base: i32, progress_final: i32, area: Option<Rect>, cb: F) -> Result<(), Error>
@@ -118,13 +121,18 @@ impl Layer {
         assert!(self.bit_depth() == output.bit_depth());
 
         match self.bit_depth() {
-            8 => self.util_callbacks.iterate(Some(self.layer_ptr), output.layer_ptr, progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
+            8 => self.in_data.utils().iterate(Some(self.layer_ptr), output.layer_ptr, progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
                 cb(x, y, GenericPixel::Pixel8(in_pixel), GenericPixelMut::Pixel8(out_pixel))
             }),
-            16 => self.util_callbacks.iterate16(Some(self.layer_ptr), output.layer_ptr, progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
+            16 => self.in_data.utils().iterate16(Some(self.layer_ptr), output.layer_ptr, progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
                 cb(x, y, GenericPixel::Pixel16(in_pixel), GenericPixelMut::Pixel16(out_pixel))
             }),
-            //32 => cb(x, y, &GenericPixel::PixelF32(in_pixel), &mut GenericPixel::PixelF32(out_pixel)),
+            32 => {
+                let suite = crate::IterateFloatSuite::new()?;
+                suite.iterate(&self.in_data, Some(self.layer_ptr), output.layer_ptr, progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
+                    cb(x, y, GenericPixel::PixelF32(in_pixel), GenericPixelMut::PixelF32(out_pixel))
+                })
+            },
             _ => Err(Error::BadCallbackParameter),
         }
     }
@@ -137,13 +145,18 @@ impl Layer {
             return Err(Error::BadCallbackParameter);
         }
         match self.bit_depth() {
-            8 => self.util_callbacks.iterate(None, self.layer_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
+            8 => self.in_data.utils().iterate(None, self.layer_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
                 cb(x, y, GenericPixelMut::Pixel8(out_pixel))
             }),
-            16 => self.util_callbacks.iterate16(None, self.layer_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
+            16 => self.in_data.utils().iterate16(None, self.layer_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
                 cb(x, y, GenericPixelMut::Pixel16(out_pixel))
             }),
-            //32 => cb(x, y, &GenericPixel::PixelF32(in_pixel), &mut GenericPixel::PixelF32(out_pixel)),
+            32 => {
+                let suite = crate::IterateFloatSuite::new()?;
+                suite.iterate(&self.in_data, None, self.layer_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
+                    cb(x, y, GenericPixelMut::PixelF32(out_pixel))
+                })
+            },
             _ => Err(Error::BadCallbackParameter),
         }
     }

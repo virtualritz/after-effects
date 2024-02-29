@@ -53,8 +53,8 @@ impl Command {
             RawCommand::SequenceSetdown => Command::SequenceSetdown,
             RawCommand::DoDialog => Command::DoDialog,
             RawCommand::FrameSetup => Command::FrameSetup {
-                in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, &InData::from_raw(in_data_ptr)) },
-                out_layer: Layer::from_raw(output, &InData::from_raw(in_data_ptr)),
+                in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, InData::from_raw(in_data_ptr)) },
+                out_layer: Layer::from_raw(output, InData::from_raw(in_data_ptr)),
             },
             RawCommand::Render => Command::Render,
             RawCommand::FrameSetdown => Command::FrameSetdown,
