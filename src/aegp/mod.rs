@@ -74,6 +74,7 @@ pub use suites::footage::{
     InterpretationStyle,
     Platform,
 };
+pub use suites::io_in::InputSpecification;
 pub use suites::item::{
     Item,
     ItemFlags,
@@ -83,6 +84,7 @@ pub use suites::item::{
     ProjectHandle,
 };
 pub use suites::keyframe::{
+    Keyframes,
     AddKeyframesInfoHandle,
     KeyframeFlags,
     KeyframeInterpolation,
@@ -100,6 +102,8 @@ pub use suites::layer::{
 };
 pub use suites::light::LightType;
 pub use suites::mask::{
+    Mask,
+    MaskOutline,
     MaskFeatherFalloff,
     MaskFeatherInterp,
     MaskFeatherType,
@@ -113,6 +117,7 @@ pub use suites::memory::{
     MemHandleLock,
 };
 pub use suites::stream::{
+    Stream,
     DynamicStreamFlags,
     LayerStream,
     MaskStream,

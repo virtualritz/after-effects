@@ -456,6 +456,10 @@ define_suite_item_wrapper!(
     ae_sys::AEGP_LayerH, LayerHandle,
     suite: LayerSuite,
     effect: aegp::suites::Effect,
+    light:  aegp::suites::Light,
+    mask:   aegp::suites::Mask,
+    stream: aegp::suites::Stream,
+    dynstream: aegp::suites::DynamicStream,
     /// A layer
     Layer {
         dispose: ;
@@ -639,6 +643,38 @@ define_suite_item_wrapper!(
         /// Apply an effect to a given layer. Returns the newly-created [`Effect`](aegp::Effect).
         apply_effect(plugin_id: PluginId, installed_effect_key: InstalledEffectKey) -> aegp::Effect => effect.apply_effect,
 
+        // ―――――――――――――――――――――――――――― Light suite functions ――――――――――――――――――――――――――――
+
+        /// Retrieves the [`LightType`] of the specified camera layer
+        light_type() -> LightType => light.light_type,
+
+        /// Sets the [`LightType`] for the specified camera layer.
+        set_light_type(light_type: LightType) -> () => light.set_light_type,
+
+        // ―――――――――――――――――――――――――――― Mask suite functions ――――――――――――――――――――――――――――
+
+        /// Counts the masks applied to a layer.
+        num_masks() -> i32 => mask.layer_num_masks,
+
+        /// Given a layer handle and mask index, returns a pointer to the mask handle.
+        mask_by_index(mask_index: i32) -> Mask => mask.layer_mask_by_index,
+
+        // ―――――――――――――――――――――――――――― Stream suite functions ――――――――――――――――――――――――――――
+
+        /// Determines if the given stream is appropriate for this layer.
+        is_stream_legal(stream: LayerStream) -> bool => stream.is_stream_legal,
+
+        /// Get layer's data stream.
+        ///
+        /// Note that this will not provide keyframe access; Use the [`KeyframeSuite`](aegp::suites::Keyframe) instead.
+        new_layer_stream(plugin_id: PluginId, stream_name: LayerStream) -> aegp::Stream => stream.new_layer_stream,
+
+        /// NOTE: This convenience function is only valid for streams with primitive data types, and not for `StreamType::ArbBlock`, `StreamType::Marker` or `StreamType::MaskOutline`.
+        /// For these and other complex types, use [`Stream::new_value()`](aegp::Stream::new_value), described above.
+        layer_stream_value(stream: LayerStream, time_mode: TimeMode, time: Time, pre_expression: bool) -> StreamValue => stream.layer_stream_value,
+
+        /// Retrieves the [`Stream`] corresponding to the layer. This function is used to initiate a recursive walk of the layer's streams.
+        new_stream_for_layer(plugin_id: PluginId) -> aegp::Stream => dynstream.new_stream_ref_for_layer,
     }
 );
 
@@ -648,5 +684,11 @@ impl Layer {
     /// If a composition or timeline window is active, the active layer is the selected layer (if only one is selected; otherwise `None` is returned).
     pub fn active() -> Result<Option<Layer>, Error> {
         LayerSuite::new()?.active_layer().map(|h| h.map(|x| Layer::from_handle(x, false)))
+    }
+
+    /// Creates a new mask on the referenced layer, with zero nodes. Returns new mask and its index.
+    pub fn create_new_mask(&self) -> Result<(Mask, i32), Error> {
+        let Ok(ref suite) = *self.mask else { return Err(Error::MissingSuite); };
+        suite.create_new_mask(self.handle.as_ptr()).map(|(mask, idx)| (mask.into(), idx))
     }
 }

@@ -29,13 +29,13 @@ impl PFInterfaceSuite {
     }
 
     /// Obtain the [`EffectRefHandle`] corresponding to the effect.
-    pub fn new_effect_for_effect(&self, plugin_id: PluginId, effect_ref: impl AsPtr<PF_ProgPtr>) -> Result<EffectRefHandle, Error> {
+    pub fn new_effect_for_effect(&self, effect_ref: impl AsPtr<PF_ProgPtr>, plugin_id: PluginId) -> Result<EffectRefHandle, Error> {
         Ok(EffectRefHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetNewEffectForEffect -> ae_sys::AEGP_EffectRefH, plugin_id, effect_ref.as_ptr())?
         ))
     }
 
-    /// Retreive the composition time corresponding to the effect's layer time.
+    /// Retrieve the composition time corresponding to the effect's layer time.
     pub fn convert_effect_to_comp_time(&self, effect_ref: impl AsPtr<PF_ProgPtr>, time: i32, time_scale: u32) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_ConvertEffectToCompTime -> ae_sys::A_Time, effect_ref.as_ptr(), time, time_scale)?.into())
     }

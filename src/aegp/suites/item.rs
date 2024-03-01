@@ -404,7 +404,7 @@ impl Item {
     }
 
     /// Returns the composition for this item. Returns an error if the item isn't a composition.
-    pub fn composition(&self ) -> Result<Composition, Error> {
+    pub fn composition(&self) -> Result<Composition, Error> {
         if self.item_type()? == ItemType::Comp {
             let Ok(ref comp) = *self.comp else { return Err(Error::MissingSuite); };
             Ok(comp.comp_from_item(self.as_ptr())?.unwrap().into())

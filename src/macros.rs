@@ -230,6 +230,21 @@ macro_rules! define_owned_handle_wrapper {
                 handle_wrapper.as_ptr()
             }
         }
+        impl AsRef<after_effects_sys::$data_type> for $wrapper_pretty_name {
+            fn as_ref(&self) -> &after_effects_sys::$data_type {
+                &self.0
+            }
+        }
+        impl AsPtr<after_effects_sys::$data_type> for $wrapper_pretty_name {
+            fn as_ptr(&self) -> after_effects_sys::$data_type {
+                self.0
+            }
+        }
+        impl AsPtr<after_effects_sys::$data_type> for &$wrapper_pretty_name {
+            fn as_ptr(&self) -> after_effects_sys::$data_type {
+                self.0
+            }
+        }
     };
 }
 
@@ -488,8 +503,8 @@ macro_rules! define_suite_item_wrapper {
             pub fn from_raw(raw_handle: $raw_handle_type) -> Self {
                 Self::from_handle(<$handle_type>::from_raw(raw_handle), false)
             }
-            pub fn handle(&self) -> $handle_type {
-                self.handle
+            pub fn handle(&self) -> &$handle_type {
+                &self.handle
             }
             pub fn into_raw(item: Self) -> $raw_handle_type {
                 item.handle.into()
@@ -502,7 +517,7 @@ macro_rules! define_suite_item_wrapper {
                 $(#[$attr])*
                 pub fn $fn_name(&self, $($arg: $argt, )*) -> Result<$ret, crate::Error> {
                     if let Ok(ref suite) = *self.$suite_fn_ident {
-                        suite.$suite_fn(self.handle, $($arg, )*).map(Into::into)
+                        suite.$suite_fn(self.handle.as_ptr(), $($arg, )*).map(Into::into)
                     } else {
                         Err(crate::Error::MissingSuite)
                     }

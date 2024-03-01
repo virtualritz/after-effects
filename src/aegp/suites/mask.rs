@@ -1,6 +1,5 @@
 use crate::*;
-use crate::aegp::*;
-use ae_sys::{ A_long, AEGP_MaskRefH, AEGP_MaskOutlineValH };
+use ae_sys::{ A_long, AEGP_LayerH, AEGP_MaskRefH, AEGP_MaskOutlineValH };
 
 define_suite!(
     /// Access, manipulate, and delete a layer's masks.
@@ -18,12 +17,12 @@ impl MaskSuite {
     }
 
     /// Counts the masks applied to a layer.
-    pub fn layer_num_masks(&self, layer: &LayerHandle) -> Result<i32, Error> {
+    pub fn layer_num_masks(&self, layer: impl AsPtr<AEGP_LayerH>) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetLayerNumMasks -> A_long, layer.as_ptr())? as i32)
     }
 
     /// Given a layer handle and mask index, returns a pointer to the mask handle.
-    pub fn layer_mask_by_index(&self, layer: &LayerHandle, mask_index: i32) -> Result<MaskRefHandle, Error> {
+    pub fn layer_mask_by_index(&self, layer: impl AsPtr<AEGP_LayerH>, mask_index: i32) -> Result<MaskRefHandle, Error> {
         Ok(MaskRefHandle::from_raw_owned(
             call_suite_fn_single!(self, AEGP_GetLayerMaskByIndex -> ae_sys::AEGP_MaskRefH, layer.as_ptr(), mask_index as _)?
         ))
@@ -117,7 +116,7 @@ impl MaskSuite {
     }
 
     /// Creates a new mask on the referenced layer, with zero nodes. Returns new mask and its index.
-    pub fn create_new_mask(&self, layer: &LayerHandle) -> Result<(MaskRefHandle, i32), Error> {
+    pub fn create_new_mask(&self, layer: impl AsPtr<AEGP_LayerH>) -> Result<(MaskRefHandle, i32), Error> {
         let (mask, index) = call_suite_fn_double!(self, AEGP_CreateNewMask -> ae_sys::AEGP_MaskRefH, A_long, layer.as_ptr())?;
         Ok((MaskRefHandle::from_raw_owned(mask), index))
     }
@@ -295,3 +294,143 @@ define_enum! {
         Inner = ae_sys::AEGP_MaskFeatherType_INNER,
     }
 }
+
+define_suite_item_wrapper!(
+    ae_sys::AEGP_MaskRefH, MaskRefHandle,
+    suite: MaskSuite,
+    stream: aegp::suites::Stream,
+    /// Access, manipulate, and delete a layer's masks.
+    Mask {
+        dispose: ;
+
+        /// Given a mask handle, determines if the mask is inverted or not.
+        is_inverted() -> bool => suite.mask_invert,
+
+        /// Sets the inversion state of a mask.
+        set_inverted(invert: bool) -> () => suite.set_mask_invert,
+
+        /// Given a mask handle, returns the current mode of the mask.
+        ///
+        /// * [`MaskMode::None`] does nothing.
+        /// * [`MaskMode::Add`] is the default behavior.
+        mode() -> MaskMode => suite.mask_mode,
+
+        /// Sets the mode of the given mask.
+        set_mode(mode: MaskMode) -> () => suite.set_mask_mode,
+
+        /// Retrieves the motion blur setting for the given mask.
+        motion_blur_state() -> MaskMBlur => suite.mask_motion_blur_state,
+
+        /// New in CS6. Sets the motion blur setting for the given mask.
+        set_motion_blur_state(blur_state: MaskMBlur) -> () => suite.set_mask_motion_blur_state,
+
+        /// New in CS6. Gets the type of feather falloff for the given mask, either
+        /// [`MaskFeatherFalloff::Smooth`] or [`MaskFeatherFalloff::Linear`].
+        feather_falloff() -> MaskFeatherFalloff => suite.mask_feather_falloff,
+
+        /// Sets the type of feather falloff for the given mask.
+        set_feather_falloff(falloff: MaskFeatherFalloff) -> () => suite.set_mask_feather_falloff,
+
+        /// Retrieves the color of the specified mask.
+        color() -> pf::PixelF64 => suite.mask_color,
+
+        /// Sets the color of the specified mask.
+        set_color(color: pf::PixelF64) -> () => suite.set_mask_color,
+
+        /// Retrieves the lock state of the specified mask.
+        lock_state() -> bool => suite.mask_lock_state,
+
+        /// Sets the lock state of the specified mask.
+        set_lock_state(lock: bool) -> () => suite.set_mask_lock_state,
+
+        /// Returns whether or not the given mask is used as a rotobezier.
+        is_roto_bezier() -> bool => suite.mask_is_roto_bezier,
+
+        /// Sets whether a given mask is to be used as a rotobezier.
+        set_is_roto_bezier(is_roto_bezier: bool) -> () => suite.set_mask_is_roto_bezier,
+
+        /// Duplicates a given mask.
+        duplicate() -> Mask => suite.duplicate_mask,
+
+        /// NOTE: As of 6.5, if you delete a mask and it or a child stream is selected, the current selection within the composition will become NULL.
+        delete_from_layer() -> () => suite.delete_mask_from_layer,
+
+        /// Retrieves the ``AEGP_MaskIDVal`` for the given [`MaskRefHandle`], for use in uniquely identifying the mask.
+        id() -> i32 => suite.mask_id,
+
+        /// Get a mask's stream.
+        stream(plugin_id: aegp::PluginId, stream: aegp::MaskStream) -> aegp::Stream => stream.new_mask_stream,
+    }
+);
+
+define_suite_item_wrapper!(
+    ae_sys::AEGP_MaskOutlineValH, MaskOutlineHandle,
+    suite: MaskOutlineSuite,
+    /// The [`Mask`] type tells plug-ins about the masks on a layer, but not about the details of those masks.
+    ///
+    /// This is because processing is required on After Effects' part to access the information; the information isn't just lying around.
+    ///
+    /// Plug-ins access that information using this Mask Outline Suite.
+    ///
+    /// ## Mask Feathering
+    /// New for CS6, masks can be feathered.
+    ///
+    /// `AEGP_MaskFeather` is defined as follows:
+    /// ```
+    /// pub struct AEGP_MaskFeather {
+    ///     pub segment:          A_long,     // mask segment where feather is
+    ///     pub segment_sF:       PF_FpLong,  // 0-1: feather location on segment
+    ///     pub radiusF:          PF_FpLong,  // negative value allowed if type == AEGP_MaskFeatherType_INNER
+    ///     pub ui_corner_angleF: PF_FpShort, // 0-1: angle of UI handle on corners
+    ///     pub tensionF:         PF_FpShort, // 0-1: tension of boundary at feather pt
+    ///     pub interp:           AEGP_MaskFeatherInterp,
+    ///     pub type_:            AEGP_MaskFeatherType,
+    /// }
+    /// ```
+    /// `AEGP_MaskFeatherInterp` is either `AEGP_MaskFeatherInterp_NORMAL` or `AEGP_MaskFeatherInterp_HOLD_CW`.
+    ///
+    /// `AEGP_MaskFeatherType` is either `AEGP_MaskFeatherType_OUTER` or `AEGP_MaskFeatherType_INNER`.
+    ///
+    /// This suite enables AEGPs to get and set the text associated with text layers.
+    ///
+    /// Note: to get started, retrieve an [`TextDocumentHandle`] by calling [`suites::Stream::layer_stream_value()`](aegp::suites::Stream::layer_stream_value), above, and passing [`StreamType::TextDocument`] as the `StreamType`.
+    MaskOutline {
+        dispose: ;
+
+        /// Given an mask outline pointer (obtainable through the [`suites::Stream`](aegp::suites::Stream), determines if the mask path is open or closed.
+        is_open() -> bool => suite.is_mask_outline_open,
+
+        /// Sets the open state of the given mask outline.
+        set_open(open: bool) -> () => suite.set_mask_outline_open,
+
+        /// Given a mask outline pointer, returns the number of segments in the path.
+        num_segments() -> i32 => suite.mask_outline_num_segments,
+
+        /// Given a mask outline pointer and a point between 0 and the total number of segments.
+        vertex_info(point: i32) -> ae_sys::AEGP_MaskVertex => suite.mask_outline_vertex_info,
+
+        /// Sets the vertex information for a given index.
+        set_vertex_info(point: i32, vertex: &ae_sys::AEGP_MaskVertex) -> () => suite.set_mask_outline_vertex_info,
+
+        /// Creates a vertex at index position.
+        create_vertex(position: i32) -> () => suite.create_vertex,
+
+        /// Removes a vertex from a mask.
+        delete_vertex(index: i32) -> () => suite.delete_vertex,
+
+        /// Given a mask outline pointer, returns the number of feathers in the path.
+        num_feathers() -> i32 => suite.mask_outline_num_feathers,
+
+        /// Given a mask outline pointer and a feather index, returns the feather information.
+        feather_info(feather_index: i32) -> ae_sys::AEGP_MaskFeather => suite.mask_outline_feather_info,
+
+        /// Sets the feather information for a given index. Feather must already exist; use [`create_feather()`](Self::create_feather) first, if needed.
+        set_feather_info(feather_index: i32, feather: &ae_sys::AEGP_MaskFeather) -> () => suite.set_mask_outline_feather_info,
+
+        /// Creates a feather at the given index. Returns the index of new feather.
+        create_feather(feather: Option<ae_sys::AEGP_MaskFeather>) -> i32 => suite.create_mask_outline_feather,
+
+        /// Deletes a feather from the mask.
+        delete_feather(index: i32) -> () => suite.delete_mask_outline_feather,
+    }
+);

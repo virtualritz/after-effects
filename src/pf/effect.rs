@@ -16,6 +16,24 @@ define_suite_item_wrapper!(
         /// Returns the layer the effect is applied to
         layer() -> aegp::Layer => pf_interface.effect_layer,
 
+        /// Obtain the [`aegp::Effect`](aegp::Effect) corresponding to the effect.
+        aegp_effect(plugin_id: aegp::PluginId) -> aegp::Effect => pf_interface.new_effect_for_effect,
+
+        /// Retrieve the composition time corresponding to the effect's layer time.
+        comp_time(time: i32, time_scale: u32) -> Time => pf_interface.convert_effect_to_comp_time,
+
+        /// Obtain the transform used to move between the layer's coordinate space and that of the containing composition.
+        ///
+        /// NOTE: In cases where the effect's input layer has square pixels, but is in a non-square pixel composition,
+        /// you must correct for the pixel aspect ratio by premultiplying the matrix by `(1/parF, 1, 1)`.
+        ///
+        /// The model view for the camera matrix is inverse of the matrix obtained from [`effect_camera_matrix()`](Self::effect_camera_matrix).
+        ///
+        /// Also note that our matrix is row-based; OpenGL's is column-based.
+        ///
+        /// Returns a tuple containing: (matrix, dist_to_image_plane, image_plane_width, image_plane_height)
+        camera_matrix(time: Time) -> (Matrix4, f64, i16, i16) => pf_interface.effect_camera_matrix,
+
         // ―――――――――――――――――――――――――――― Utility suite functions ――――――――――――――――――――――――――――
 
         /// Gets the filter ID for the current effect reference.
@@ -70,7 +88,7 @@ define_suite_item_wrapper!(
         source_track_media_timecode2(layer_param_index: u32, apply_transform: bool, add_start_time_offset: bool, sequence_time: PrTime) -> A_long => pf_utility.source_track_media_timecode2,
         /// Retrieves the clip name used by the specific layer parameter.
         source_track_clip_name2(layer_param_index: u32, get_master_clip_name: bool, sequence_time: PrTime)       ->  String => pf_utility.source_track_clip_name2,
-        /// Retreives the clip name in use by the specified layer parameter.
+        /// Retrieves the clip name in use by the specified layer parameter.
         source_track_file_name2(layer_param_index: u32, sequence_time: PrTime)                                   ->  String => pf_utility.source_track_file_name2,
         /// Retrieves the comment string associated with the specified source track item, at the specified time.
         comment_string(source_track: i32, sequence_time: PrTime)         -> String => pf_utility.comment_string,
@@ -123,3 +141,11 @@ define_suite_item_wrapper!(
         const_sequence_data() -> ae_sys::PF_ConstHandle => effect_sequence_data.const_sequence_data,
     }
 );
+
+impl Effect {
+    /// Obtain the camera (if any) being used by After Effects to view the effect's layer.
+    pub fn camera(&self, time: Time) -> Result<Option<aegp::Layer>, Error> {
+        let Ok(ref suite) = *self.pf_interface else { return Err(Error::MissingSuite); };
+        suite.effect_camera(self.handle.as_ptr(), time).map(|x| x.map(Into::into))
+    }
+}

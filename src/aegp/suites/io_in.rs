@@ -246,3 +246,150 @@ impl IOInSuite {
         call_suite_fn!(self, AEGP_SetInSpecNativeDisplayDropFrame, in_spec_handle.as_ptr(), drop_frame as _)
     }
 }
+
+// ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
+
+define_suite_item_wrapper!(
+    ae_sys::AEIO_InSpecH, aeio::InSpecHandle,
+    suite: IOInSuite,
+    /// This struct manages an input specification, After Effects' internal representation of data gathered from any source.
+    ///
+    /// Any image or audio data in After Effects (except solids) is obtained from an input specification handle, or [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+    InputSpecification {
+        dispose: ;
+
+        /// Retrieves the options data (created by your AEIO) for the given [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        options_handle() -> aeio::Handle => suite.in_spec_options_handle,
+
+        /// Sets the options data for the given [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        ///
+        /// Must be allocated using the [`suites::Memory`](aegp::suites::Memory).
+        ///
+        /// Returns the old options handle.
+        set_options_handle(options: &aeio::Handle) -> aeio::Handle => suite.set_in_spec_options_handle,
+
+        /// Retrieves the file path for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        file_path() -> String => suite.in_spec_file_path,
+
+        /// Retrieves the frame rate of the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        native_fps() -> i32 => suite.in_spec_native_fps,
+
+        /// Sets the frame rate of the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_native_fps(native_fps: i32) -> () => suite.set_in_spec_native_fps,
+
+        /// Retrieves the bit depth of the image data in the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        depth() -> i16 => suite.in_spec_depth,
+
+        /// Indicates to After Effects the bit depth of the image data in the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_depth(depth: i16) -> () => suite.set_in_spec_depth,
+
+        /// Retrieves the size (in bytes) of the data referenced by the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        size() -> u64 => suite.in_spec_size,
+
+        /// Indicates to After Effects the size (in bytes) of the data referenced by the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_size(size: u64) -> () => suite.set_in_spec_size,
+
+        /// Retrieves field information for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        interlace_label() -> ae_sys::FIEL_Label => suite.in_spec_interlace_label,
+
+        /// Specifies field information for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_interlace_label(interlace_label: &ae_sys::FIEL_Label) -> () => suite.set_in_spec_interlace_label,
+
+        /// Retrieves alpha channel interpretation information for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        alpha_label() -> ae_sys::AEIO_AlphaLabel => suite.in_spec_alpha_label,
+
+        /// Sets alpha channel interpretation information for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_alpha_label(alpha_label: &ae_sys::AEIO_AlphaLabel) -> () => suite.set_in_spec_alpha_label,
+
+        /// Retrieves the duration of the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        duration() -> Time => suite.in_spec_duration,
+
+        /// Sets the duration of the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        ///
+        /// NOTE: As of 5.5, this must be called, even for frame-based file formats.
+        /// If you don't set the `A_Time.scale` to something other than zero, your file(s) will not import.
+        ///
+        /// This will be fixed in future versions.
+        set_duration(duration: Time) -> () => suite.set_in_spec_duration,
+
+        /// Retrieves the width and height of the image data in the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        dimensions() -> (i32, i32) => suite.in_spec_dimensions,
+
+        /// Indicates to After Effects the width and height of the image data in the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_dimensions(width: i32, height: i32) -> () => suite.set_in_spec_dimensions,
+
+        /// Retrieves the width, height, bounding rect, and scaling factor applied to an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        get_rational_dimensions() -> (ae_sys::AEIO_RationalScale, i32, i32, Rect) => suite.in_spec_get_rational_dimensions,
+
+        /// Retrieves the horizontal scaling factor applied to an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        hsf() -> Ratio => suite.in_spec_hsf,
+
+        /// Sets the horizontal scaling factor of an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_hsf(hsf: Ratio) -> () => suite.set_in_spec_hsf,
+
+        /// Obtains the sampling rate (in samples per second) for the audio data referenced by the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        sound_rate() -> f64 => suite.in_spec_sound_rate,
+
+        /// Sets the sampling rate (in samples per second) for the audio data referenced by the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_sound_rate(rate: f64) -> () => suite.set_in_spec_sound_rate,
+
+        /// Obtains the encoding method (signed PCM, unsigned PCM, or floating point) from an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        sound_encoding() -> aeio::SoundEncoding => suite.in_spec_sound_encoding,
+
+        /// Sets the encoding method of an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_sound_encoding(encoding: aeio::SoundEncoding) -> () => suite.set_in_spec_sound_encoding,
+
+        /// Retrieves the bytes-per-sample (1,2, or 4) from an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        sound_sample_size() -> aeio::SoundSampleSize => suite.in_spec_sound_sample_size,
+
+        /// Set the bytes per sample of an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
+        set_sound_sample_size(bytes_per_sample: aeio::SoundSampleSize) -> () => suite.set_in_spec_sound_sample_size,
+
+        /// Determines whether the audio in the [`aeio::SoundChannels`] is mono or stereo.
+        sound_channels() -> aeio::SoundChannels => suite.in_spec_sound_channels,
+
+        /// Sets the audio in an [`aeio::SoundChannels`] to mono or stereo.
+        set_sound_channels(num_channels: aeio::SoundChannels) -> () => suite.set_in_spec_sound_channels,
+
+        /// In case of RGB data, if there is an embedded icc profile, build an `AEGP_ColorProfile` out of
+        /// this icc profile using [`suites::ColorSettings::new_color_profile_from_icc_profile`](aegp::suites::ColorSettings::new_color_profile_from_icc_profile)
+        /// and set the profile description set to NULL.
+        ///
+        /// In case of non-RGB data, if there is an embedded non-RGB icc profile or you know the color space the data is in,
+        /// set the color profile set to NULL, and provide the description as a NULL-terminated unicode string.
+        /// Doing this disables color management UI that allows user to affect profile choice in the application UI.
+        /// If you are unpacking non-RGB data directly into working space (to get working space use [`suites::ColorSettings::new_working_space_color_profile`](aegp::suites::ColorSettings::new_working_space_color_profile), you are done.
+        /// If you are unpacking non-RGB data into specific RGB color space, you must pass the profile describing this space to [`set_in_spec_assigned_color_profile()`](Self::set_in_spec_assigned_color_profile) below.
+        /// Otherwise, your RGB data will be incorrectly interpreted as being in working space.
+        /// Either color profile or profile description should be NULL in this function. You cannot use both.
+        set_embedded_color_profile(color_profile: Option<ae_sys::AEGP_ConstColorProfileP>, profile_desc: Option<&str>) -> () => suite.set_in_spec_embedded_color_profile,
+
+        /// Assign a valid RGB color profile to the footage.
+        set_assigned_color_profile(color_profile: ae_sys::AEGP_ConstColorProfileP) -> () => suite.set_in_spec_assigned_color_profile,
+
+        /// New in CC. Retrieves the native start time of the footage.
+        native_start_time() -> Time => suite.in_spec_native_start_time,
+
+        /// New in CC. Assign a native start time to the footage.
+        set_native_start_time(start_time: Time) -> () => suite.set_in_spec_native_start_time,
+
+        /// New in CC. Clear the native start time of the footage.
+        /// Setting the native start time to 0 using [`set_in_spec_native_start_time()`](Self::set_in_spec_native_start_time) doesn't do this.
+        /// It still means there is a special native start time provided.
+        clear_native_start_time() -> () => suite.clear_in_spec_native_start_time,
+
+        /// New in CC. Retrieve the drop-frame setting of the footage.
+        native_display_drop_frame() -> bool => suite.in_spec_native_display_drop_frame,
+
+        /// New in CC. Assign the drop-frame setting of the footage.
+        set_native_display_drop_frame(drop_frame: bool) -> () => suite.set_in_spec_native_display_drop_frame,
+    }
+);
+
+impl InputSpecification {
+    /// If your file format has auxiliary files which you want to prevent users from opening directly,
+    /// pass it's extension, file type and creator to this function to keep it from appearing in input dialogs.
+    pub fn add_aux_ext_map(extension: &str, file_type: aeio::FileType, creator: i32) -> Result<(), Error> {
+        IOInSuite::new()?.add_aux_ext_map(extension, file_type, creator)
+    }
+}

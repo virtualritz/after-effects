@@ -142,7 +142,7 @@ impl UtilitySuite {
         Ok(PrString(val).into())
     }
 
-    /// Retreives the clip name in use by the specified layer parameter.
+    /// Retrieves the clip name in use by the specified layer parameter.
     pub fn source_track_file_name2(&self, effect_ref: impl AsPtr<PF_ProgPtr>, layer_param_index: u32, sequence_time: PrTime) -> Result<String, Error> {
         let mut val: PrSDKString = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, GetSourceTrackFileName2, effect_ref.as_ptr(), layer_param_index, &mut val, sequence_time)?;

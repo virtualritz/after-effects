@@ -238,6 +238,7 @@ bitflags::bitflags! {
 define_suite_item_wrapper!(
     ae_sys::AEGP_EffectRefH, EffectRefHandle,
     suite: EffectSuite,
+    stream: aegp::suites::Stream,
     /// Access the effects applied to a layer. This suite provides access to all parameter data streams.
     ///
     /// Use the [`suites::Stream`](aegp::suites::Stream) to work with those streams.
@@ -285,7 +286,7 @@ define_suite_item_wrapper!(
         /// Returns the local stream of the effect ref - useful if you want to add keyframes.
         ///
         /// Undoable.
-        add_mask(id_val: ae_sys::AEGP_MaskIDVal) -> StreamReferenceHandle => suite.add_effect_mask,
+        add_mask(id_val: ae_sys::AEGP_MaskIDVal) -> Stream => suite.add_effect_mask,
 
         /// New in CC 2014. Remove an effect mask.
         ///
@@ -297,7 +298,15 @@ define_suite_item_wrapper!(
         /// Returns the local stream of the effect ref - useful if you want to add keyframes.
         ///
         /// Undoable.
-        set_mask(mask_index: usize, id_val: ae_sys::AEGP_MaskIDVal) -> StreamReferenceHandle => suite.set_effect_mask,
+        set_mask(mask_index: usize, id_val: ae_sys::AEGP_MaskIDVal) -> Stream => suite.set_effect_mask,
+
+        // ―――――――――――――――――――――――――――― Stream suite functions ――――――――――――――――――――――――――――
+
+        /// Get number of parameter streams associated with an effect.
+        num_param_streams() -> i32 => stream.effect_num_param_streams,
+
+        /// Get an effect's parameter stream.
+        new_stream_by_index(plugin_id: PluginId, index: i32) -> Stream => stream.new_effect_stream_by_index,
     }
 );
 
