@@ -62,6 +62,7 @@ pub use suites::comp::{
     CompHandle,
 };
 pub use suites::effect::{
+    Effect,
     EffectFlags,
     EffectRefHandle,
     InstalledEffectKey,

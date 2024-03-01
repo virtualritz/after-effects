@@ -29,7 +29,7 @@ impl EffectSuite {
     }
 
     /// Retrieves (by index) a reference to an effect applied to the layer.
-    pub fn layer_effect_by_index(&self, plugin_id: PluginId, layer: impl AsPtr<AEGP_LayerH>, index: i32) -> Result<EffectRefHandle, Error> {
+    pub fn layer_effect_by_index(&self, layer: impl AsPtr<AEGP_LayerH>, plugin_id: PluginId, index: i32) -> Result<EffectRefHandle, Error> {
         Ok(EffectRefHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetLayerEffectByIndex -> ae_sys::AEGP_EffectRefH, plugin_id, layer.as_ptr(), index)?
         ))
@@ -46,7 +46,7 @@ impl EffectSuite {
     /// it's provided so AEGPs can access parameter defaults, checkbox names, and pop-up strings.
     ///
     /// Use [`suites::Stream::effect_num_param_streams()`](aegp::suites::Stream::effect_num_param_streams) to get the stream count, useful for determining the maximum `param_index`.
-    pub fn effect_param_union_by_index(&self, plugin_id: PluginId, effect_ref: impl AsPtr<AEGP_EffectRefH>, param_index: i32) -> Result<pf::Param, Error> {
+    pub fn effect_param_union_by_index(&self, effect_ref: impl AsPtr<AEGP_EffectRefH>, plugin_id: PluginId, param_index: i32) -> Result<pf::Param, Error> {
         let (param_type, u) = call_suite_fn_double!(self, AEGP_GetEffectParamUnionByIndex -> ae_sys::PF_ParamType, ae_sys::PF_ParamDefUnion, plugin_id, effect_ref.as_ptr(), param_index)?;
 
         unsafe {
@@ -84,7 +84,7 @@ impl EffectSuite {
     /// This is how AEGPs communicate with effects.
     ///
     /// Pass [`Command::CompletelyGeneral`](crate::Command::CompletelyGeneral) for `command` to get the old behaviour.
-    pub fn effect_call_generic<T: Sized>(&self, plugin_id: PluginId, effect_ref: impl AsPtr<AEGP_EffectRefH>, time: Time, command: &pf::Command, extra_payload: Option<&T>) -> Result<(), Error> {
+    pub fn effect_call_generic<T: Sized>(&self, effect_ref: impl AsPtr<AEGP_EffectRefH>, plugin_id: PluginId, time: Time, command: &pf::Command, extra_payload: Option<&T>) -> Result<(), Error> {
         // T is Sized so it can never be a fat pointer which means we are safe to transmute here.
         // Alternatively we could write extra_payload.map(|p| p as *const _).unwrap_or(core::ptr::null())
         call_suite_fn!(self, AEGP_EffectCallGeneric, plugin_id, effect_ref.as_ptr(), &time.into() as *const _, command.as_raw(), std::mem::transmute(extra_payload))
@@ -96,7 +96,7 @@ impl EffectSuite {
     }
 
     /// Apply an effect to a given layer. Returns the newly-created [`EffectRefHandle`].
-    pub fn apply_effect(&self, plugin_id: PluginId, layer: impl AsPtr<AEGP_LayerH>, installed_effect_key: InstalledEffectKey) -> Result<EffectRefHandle, Error> {
+    pub fn apply_effect(&self, layer: impl AsPtr<AEGP_LayerH>, plugin_id: PluginId, installed_effect_key: InstalledEffectKey) -> Result<EffectRefHandle, Error> {
         Ok(EffectRefHandle::from_raw(
             call_suite_fn_single!(self, AEGP_ApplyEffect -> ae_sys::AEGP_EffectRefH, plugin_id, layer.as_ptr(), installed_effect_key.into())?
         ))
@@ -158,7 +158,7 @@ impl EffectSuite {
         Ok(call_suite_fn_single!(self, AEGP_NumEffectMask -> ae_sys::A_u_long, effect_ref.as_ptr())? as usize)
     }
 
-    /// New in CC 2014. For a given mask_indexL, returns the corresponding `AEGP_MaskIDVal` for use in uniquely identifying the mask.
+    /// New in CC 2014. For a given `mask_index`, returns the corresponding `AEGP_MaskIDVal` for use in uniquely identifying the mask.
     pub fn effect_mask_id(&self, effect_ref: impl AsPtr<AEGP_EffectRefH>, mask_index: usize) -> Result<ae_sys::AEGP_MaskIDVal, Error> {
         call_suite_fn_single!(self, AEGP_GetEffectMaskID -> ae_sys::AEGP_MaskIDVal, effect_ref.as_ptr(), mask_index as ae_sys::A_u_long)
     }
@@ -232,5 +232,105 @@ bitflags::bitflags! {
         const AUDIO_ONLY = ae_sys::AEGP_EffectFlags_AUDIO_ONLY as ae_sys::A_long;
         const AUDIO_TOO  = ae_sys::AEGP_EffectFlags_AUDIO_TOO  as ae_sys::A_long;
         const MISSING    = ae_sys::AEGP_EffectFlags_MISSING    as ae_sys::A_long;
+    }
+}
+
+define_suite_item_wrapper!(
+    ae_sys::AEGP_EffectRefH, EffectRefHandle,
+    suite: EffectSuite,
+    /// Access the effects applied to a layer. This suite provides access to all parameter data streams.
+    ///
+    /// Use the [`suites::Stream`](aegp::suites::Stream) to work with those streams.
+    ///
+    /// An [`EffectRefHandle`] is a reference to an applied effect. An [`InstalledEffectKey`] is a reference to an installed effect, which may or may not be currently applied to anything.
+    ///
+    /// If Foobarocity is applied to a layer twice, there will be two distinct [`EffectRefHandle`]s, but they'll both return the same [`InstalledEffectKey`].
+    Effect {
+        dispose: suite.dispose_effect;
+
+        /// Retrieves its associated [`InstalledEffectKey`].
+        installed_key() -> InstalledEffectKey => suite.installed_key_from_layer_effect,
+
+        /// Returns description of effect parameter.
+        ///
+        /// Do not use the value(s) in the Param returned by this function (Use [`suites::Stream::new_stream_value()`](aegp::suites::Stream::new_stream_value) instead);
+        /// it's provided so AEGPs can access parameter defaults, checkbox names, and pop-up strings.
+        ///
+        /// Use [`suites::Stream::effect_num_param_streams()`](aegp::suites::Stream::effect_num_param_streams) to get the stream count, useful for determining the maximum `param_index`.
+        param_union_by_index(plugin_id: PluginId, param_index: i32) -> pf::Param => suite.effect_param_union_by_index,
+
+        /// Obtains the flags for this [`Effect`].
+        flags() -> EffectFlags => suite.effect_flags,
+
+        /// Sets the flags for this [`Effect`], masked by a different set of effect flags.
+        set_flags(set_mask: EffectFlags, flags: EffectFlags) -> () => suite.set_effect_flags,
+
+        /// Change the order of applied effects (pass the requested index).
+        reorder(index: i32) -> () => suite.reorder_effect,
+
+        /// Remove an applied effect.
+        delete_layert() -> () => suite.delete_layer_effect,
+
+        /// Duplicates this [`Effect`]. Caller must dispose of duplicate when finished.
+        duplicate() -> EffectRefHandle => suite.duplicate_effect,
+
+        /// New in CC 2014. How many masks are on this effect?
+        num_mask() -> usize => suite.num_effect_mask,
+
+        /// New in CC 2014. For a given `mask_index`, returns the corresponding `AEGP_MaskIDVal` for use in uniquely identifying the mask.
+        mask_id(mask_index: usize) -> ae_sys::AEGP_MaskIDVal => suite.effect_mask_id,
+
+        /// New in CC 2014. Add an effect mask, which may be created using the [`suites::Mask`](aegp::suites::Mask).
+        ///
+        /// Returns the local stream of the effect ref - useful if you want to add keyframes.
+        ///
+        /// Undoable.
+        add_mask(id_val: ae_sys::AEGP_MaskIDVal) -> StreamReferenceHandle => suite.add_effect_mask,
+
+        /// New in CC 2014. Remove an effect mask.
+        ///
+        /// Undoable.
+        remove_mask(id_val: ae_sys::AEGP_MaskIDVal) -> () => suite.remove_effect_mask,
+
+        /// New in CC 2014. Set an effect mask on an existing index.
+        ///
+        /// Returns the local stream of the effect ref - useful if you want to add keyframes.
+        ///
+        /// Undoable.
+        set_mask(mask_index: usize, id_val: ae_sys::AEGP_MaskIDVal) -> StreamReferenceHandle => suite.set_effect_mask,
+    }
+);
+
+impl Effect {
+    /// Returns the count of effects installed in After Effects.
+    pub fn num_installed_effects() -> Result<i32, Error> {
+        EffectSuite::new()?.num_installed_effects()
+    }
+
+    /// Returns the [`InstalledEffectKey`] of the next installed effect.
+    ///
+    /// Pass [`InstalledEffectKey::None`] as the first parameter to obtain the first [`InstalledEffectKey`].
+    pub fn next_installed_effect(installed_effect_key: InstalledEffectKey) -> Result<InstalledEffectKey, Error> {
+        EffectSuite::new()?.next_installed_effect(installed_effect_key)
+    }
+
+    /// Get name of the effect. `name` can be up to `48` characters long.
+    ///
+    /// Note: use [`suites::DynamicStream::set_stream_name()`](aegp::suites::DynamicStream::set_stream_name) to change the display name of an effect.
+    pub fn name_of(installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
+        EffectSuite::new()?.effect_name(installed_effect_key)
+    }
+
+    /// Get match name of an effect (defined in PiPL). Can be up to `48` characters long.
+    ///
+    /// Match names are in 7-bit ASCII. UI names are in the current application runtime encoding;
+    /// for example, ISO 8859-1 for most languages on Windows.
+    pub fn match_name_of(installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
+        EffectSuite::new()?.effect_match_name(installed_effect_key)
+    }
+
+    /// Menu category of effect. Can be up to `48` characters long.
+    pub fn category_of(installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
+        EffectSuite::new()?.effect_category(installed_effect_key)
     }
 }

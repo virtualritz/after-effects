@@ -455,6 +455,7 @@ bitflags::bitflags! {
 define_suite_item_wrapper!(
     ae_sys::AEGP_LayerH, LayerHandle,
     suite: LayerSuite,
+    effect: aegp::suites::Effect,
     /// A layer
     Layer {
         dispose: ;
@@ -626,6 +627,18 @@ define_suite_item_wrapper!(
 
         /// New in 23.0. Removes the track matte layer of [`LayerHandle`].
         remove_track_matte() -> () => suite.remove_track_matte,
+
+        // ―――――――――――――――――――――――――――― Effect suite functions ――――――――――――――――――――――――――――
+
+        /// Get the number of effects applied to this layer.
+        num_effects() -> i32 => effect.layer_num_effects,
+
+        /// Retrieves (by index) a reference to an effect applied to this layer.
+        effect_by_index(plugin_id: PluginId, index: i32) -> aegp::Effect => effect.layer_effect_by_index,
+
+        /// Apply an effect to a given layer. Returns the newly-created [`Effect`](aegp::Effect).
+        apply_effect(plugin_id: PluginId, installed_effect_key: InstalledEffectKey) -> aegp::Effect => effect.apply_effect,
+
     }
 );
 
