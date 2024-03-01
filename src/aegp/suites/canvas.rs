@@ -502,3 +502,211 @@ impl Drop for RenderReceiptHandle {
         }
     }
 }
+
+define_suite_item_wrapper!(
+    ae_sys::PR_RenderContextH, pr::RenderContextHandle,
+    suite: CanvasSuite,
+    /// [`render_texture()`](Self::render_texture) supplies the raw pixels of a layer, untransformed, into an arbitrarily-sized buffer.
+    ///
+    /// [`render_layer_plus()`](Self::render_layer_plus) invokes the entire After Effects render pipeline, including transforms, masking, et cetera, providing the layer as it appears in its composition, in a composition-sized buffer.
+    ///
+    /// If the layer being rendered is 3D, the default (Standard 3D) Artisan is invoked to perform any 3D geometrics.
+    ///
+    /// Your Artisan can use this to render track matte layers, and apply them only in a strictly 2D sense, to the transformed 3D layer.
+    ///
+    /// Before rendering, the Artisans that ship with After Effects apply an inverse transform to get square pixels, then re-apply the transform before display.
+    ///
+    /// For example, if the pixel aspect ratio is 10/11 (DV NTSC), we multiply by 11/10 to get square pixels. We process and composite 3D layers, then re-divide to get back to the original pixel aspect ratio.
+    ///
+    /// The following suite supplies the layers, compositions, texture and destination buffers. This is a vital suite for all artisans.
+    Canvas {
+        dispose: ;
+
+        /// Given the render context provided to the Artisan at render time, returns a handle to the composition.
+        comp_to_render() -> CompHandle => suite.comp_to_render,
+
+        /// Given the render context, returns the number of layers the Artisan needs to render.
+        num_layers_to_render() -> u32 => suite.num_layers_to_render,
+
+        /// Used to build a list of layers to render after determining the total number of layers that need rendering by the Artisan.
+        nth_layer_context_to_render(n: u32) -> RenderLayerContextHandle => suite.nth_layer_context_to_render,
+
+        /// Given a [`RenderContextHandle`](pr::RenderContextHandle), retrieves the associated [`LayerHandle`] (required by many suite functions).
+        layer_from_layer_context(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>) -> LayerHandle => suite.layer_from_layer_context,
+
+        /// Allows for rendering of sub-layers (as within a Photoshop file).
+        layer_and_sub_layer_from_layer_context(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>) -> (LayerHandle, u32) => suite.layer_and_sub_layer_from_layer_context,
+
+        /// With collapsed geometrics "on" this gives the layer in the root composition containing the layer context.
+        ///
+        /// With collapsed geometrics off this is the same as [`layer_from_layer_context()`](Self::layer_from_layer_context).
+        top_layer_from_layer_context(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>) -> LayerHandle => suite.top_layer_from_layer_context,
+
+        /// Given the render context, returns the current point in (composition) time to render.
+        comp_render_time() -> (Time, Time) => suite.comp_render_time,
+
+        /// Given the render context, returns a buffer in which to place the final rendered output.
+        comp_destination_buffer(comp_handle: CompHandle) -> WorldHandle => suite.comp_destination_buffer,
+
+        /// Given the render context provided to the Artisan at render time, returns a handle to the composition.
+        region_of_interest() -> Rect => suite.region_of_interest,
+
+        /// Given the render context and layer, returns the layer texture.
+        ///
+        /// The returned [`WorldHandle`] can be null.
+        ///
+        /// [`RenderHints::NoTransferMode`] prevents application of opacity & transfer mode; for use with `RenderLayer` calls.
+        render_texture(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, render_hints: RenderHints, suggested_scale: Option<FloatPoint>, suggested_src_rect: Option<FloatRect>, src_matrix: Option<Matrix3>) -> WorldHandle => suite.render_texture,
+
+        /// Disposes of an acquired layer texture.
+        dispose_texture(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, world_handle: WorldHandle) -> () => suite.dispose_texture,
+
+        /// Returns the field settings of the given [`RenderContextHandle`](pr::RenderContextHandle).
+        field_render() -> ae_sys::PF_Field => suite.field_render,
+
+        /// Given the render context provided to the Artisan at render time, returns a handle to the composition.
+        ///
+        /// Note: this is NOT thread-safe on macOS; only use this function when the current thread ID is 0.
+        report_artisan_progress(count: i32, total: i32) -> () => suite.report_artisan_progress,
+
+        /// Returns the downsample factor of the [`RenderContextHandle`](pr::RenderContextHandle).
+        render_downsample_factor() -> ae_sys::AEGP_DownsampleFactor => suite.render_downsample_factor,
+
+        set_render_downsample_factor(dsf: ae_sys::AEGP_DownsampleFactor) -> () => suite.set_render_downsample_factor,
+
+        /// Determines whether the [`RenderContextHandle`](pr::RenderContextHandle) is blank (empty).
+        is_blank_canvas() -> bool => suite.is_blank_canvas,
+
+        /// Given a render context and a layer (at a given time), retrieves the 4 by 4 transform to move between their coordinate spaces.
+        render_layer_to_world_xform(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, comp_time: Time) -> Matrix4 => suite.render_layer_to_world_xform,
+
+        /// Retrieves the bounding rectangle of the layer_contextH (at a given time) within the [`RenderContextHandle`](pr::RenderContextHandle).
+        render_layer_bounds(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, comp_time: Time) -> Rect => suite.render_layer_bounds,
+
+        /// Returns the opacity of the given layer context at the given time, within the render context.
+        render_opacity(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, comp_time: Time) -> f64 => suite.render_opacity,
+
+        /// Returns whether or not a given layer context is active within the render context, at the given time.
+        is_render_layer_active(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, comp_time: Time) -> bool => suite.is_render_layer_active,
+
+        /// Sets the progress information for a rendering Artisan.
+        ///
+        /// * `count` is the number of layers completed
+        /// * `num_layers` is the total number of layers the Artisan is rendering
+        set_artisan_layer_progress(count: i32, num_layers: i32) -> () => suite.set_artisan_layer_progress,
+
+        /// Invokes the entire After Effects render pipeline, including transforms, masking, et cetera,
+        /// providing the layer as it appears in its composition, in a composition-sized buffer.
+        render_layer_plus(layer_handle: LayerHandle, layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, render_hints: RenderHints) -> WorldHandle => suite.render_layer_plus,
+
+        /// Retrieves the [`RenderLayerContextHandle`] for the specified render and fill contexts.
+        track_matte_context(fill_ctx: RenderLayerContextHandle) -> RenderLayerContextHandle => suite.track_matte_context,
+
+        /// Renders a texture into an [`WorldHandle`], and provides an [`RenderReceiptHandle`] for the operation.
+        render_texture_with_receipt(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, render_hints: RenderHints, num_effects: RenderNumEffects, suggested_scale: Option<FloatPoint>, suggested_src_rect: Option<FloatRect>, src_matrix: Option<Matrix3>) -> (RenderReceiptHandle, WorldHandle) => suite.render_texture_with_receipt,
+
+        /// Returns the number of software effects applied in the given [`RenderLayerContextHandle`].
+        number_of_software_effects(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>) -> i32 => suite.number_of_software_effects,
+
+        /// An improvement over [`render_layer_plus()`](Self::render_layer_plus), this function also provides an [`RenderReceiptHandle`] for caching purposes.
+        render_layer_plus_with_receipt(layer_handle: LayerHandle, layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, render_hints: RenderHints) -> (RenderReceiptHandle, WorldHandle) => suite.render_layer_plus_with_receipt,
+
+        /// Returns the number of bins After Effects wants the artisan to render.
+        num_bins_to_render() -> i32 => suite.num_bins_to_render,
+
+        /// Sets the given render context to be the n-th bin to be rendered by After Effects.
+        set_nth_bin(n: i32) -> () => suite.set_nth_bin,
+
+        /// Retrieves the type of the given bin.
+        bin_type() -> BinType => suite.bin_type,
+
+        /// Retrieves the transform to correctly orient the layer being rendered with the output world.
+        ///
+        /// Pass `true` for `only_2dB` to constrain the transform to two dimensions.
+        render_layer_to_world_xform_2d_3d(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, comp_time: Time, only_2d: bool) -> Matrix4 => suite.render_layer_to_world_xform_2d_3d,
+
+        /// Retrieves the platform-specific window context into which to draw the given [`RenderContextHandle`](pr::RenderContextHandle).
+        ///
+        /// This function is valid for interactive artisans only.
+        platform_window_ref() -> ae_sys::AEGP_PlatformWindowRef => suite.platform_window_ref,
+
+        /// Retrieves the source-to-frame downsample factor for the given [`RenderContextHandle`](pr::RenderContextHandle).
+        ///
+        /// This function is valid for interactive artisans only.
+        viewport_scale() -> (f64, f64) => suite.viewport_scale,
+
+        /// Retrieves to origin of the source, within the frame (necessary to translate between the two), for the given [`RenderContextHandle`](pr::RenderContextHandle).
+        ///
+        /// This function is valid for interactive artisans only.
+        viewport_origin() -> (i32, i32) => suite.viewport_origin,
+
+        /// Retrieves the bounding rectangle for the area to be drawn, for the given [`RenderContextHandle`](pr::RenderContextHandle).
+        ///
+        /// This function is valid for interactive artisans only.
+        viewport_rect() -> Rect => suite.viewport_rect,
+
+        /// Retrieves the color used for the fallow regions in the given [`RenderContextHandle`](pr::RenderContextHandle).
+        ///
+        /// This function is valid for interactive artisans only.
+        fallow_color() -> ae_sys::PF_Pixel8 => suite.fallow_color,
+
+        interactive_buffer() -> WorldHandle => suite.interactive_buffer,
+
+        /// Retrieves whether or not the checkerboard is currently active for the given [`RenderContextHandle`](pr::RenderContextHandle).
+        ///
+        /// This function is valid for interactive artisans only.
+        interactive_checkerboard() -> bool => suite.interactive_checkerboard,
+
+        /// Retrieves the colors used in the checkerboard.
+        ///
+        /// This function is valid for interactive artisans only.
+        interactive_checkerboard_colors() -> (Pixel8, Pixel8) => suite.interactive_checkerboard_colors,
+
+        /// Retrieves the width and height of one checkerboard square.
+        ///
+        /// This function is valid for interactive artisans only.
+        interactive_checkerboard_size() -> (u32, u32) => suite.interactive_checkerboard_size,
+
+        /// Retrieves the cached AEGP_WorldH last used for the [`RenderContextHandle`](pr::RenderContextHandle).
+        ///
+        /// This function is valid for interactive artisans only.
+        interactive_cached_buffer() -> WorldHandle => suite.interactive_cached_buffer,
+
+        /// Determines whether or not the artisan must render the current [`RenderLayerContextHandle`] as a layer.
+        ///
+        /// This function is valid for interactive artisans only.
+        artisan_must_render_as_layer(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>) -> bool => suite.artisan_must_render_as_layer,
+
+        /// Returns which channels should be displayed by the interactive artisan.
+        ///
+        /// This function is valid for interactive artisans only.
+        interactive_display_channel() -> DisplayChannel => suite.interactive_display_channel,
+
+        /// Returns the exposure for the given [`RenderContextHandle`](pr::RenderContextHandle), expressed as a floating point number.
+        ///
+        /// This function is valid for interactive artisans only.
+        interactive_exposure() -> f64 => suite.interactive_exposure,
+
+        // TODO: what's xform?
+        /// Returns the color transform for the given [`RenderContextHandle`](pr::RenderContextHandle).
+        ///
+        /// This function is valid for interactive artisans only.
+        color_transform(xform: *mut std::ffi::c_void) -> (bool, u32) => suite.color_transform,
+
+        /// Returns the shutter angle for the given [`RenderContextHandle`](pr::RenderContextHandle).
+        ///
+        /// This function is valid for interactive artisans only.
+        comp_shutter_time() -> (Time, Time) => suite.comp_shutter_time,
+
+        /// New in CC. Unlike [`suites::Layer::convert_comp_to_layer_time()`](aegp::suites::Layer::convert_comp_to_layer_time), this handles time remapping with collapsed or nested comps.
+        ///
+        /// This function is valid for interactive artisans only.
+        map_comp_to_layer_time(layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, comp_time: Time) -> Time => suite.map_comp_to_layer_time,
+    }
+);
+
+impl Canvas {
+    // dispose_render_receipt(&self, render_receipt_handle: ae_sys::AEGP_RenderReceiptH) -> () => suite.
+    // check_render_receipt(&self, current_render_ctx: impl AsPtr<PR_RenderContextH>, current_layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, old_render_receipt_handle: RenderReceiptHandle, check_geometrics: bool, num_effects: RenderNumEffects) -> RenderReceiptStatus => suite.
+    // generate_render_receipt(&self, current_render_ctx: impl AsPtr<PR_RenderContextH>, current_layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, num_effects: RenderNumEffects) -> RenderReceiptHandle => suite.
+}

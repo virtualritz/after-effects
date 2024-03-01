@@ -269,6 +269,7 @@ define_suite_item_wrapper!(
     ae_sys::AEGP_ItemH, ItemHandle,
     suite: ItemSuite,
     footage: aegp::suites::Footage,
+    comp: aegp::suites::Comp,
     /// Item can be a folder, a composition, or a footage
     Item {
         dispose: ;
@@ -400,5 +401,15 @@ impl Item {
             suite.create_new_folder(name, Some(self.handle))?,
             false
         ))
+    }
+
+    /// Returns the composition for this item. Returns an error if the item isn't a composition.
+    pub fn composition(&self ) -> Result<Composition, Error> {
+        if self.item_type()? == ItemType::Comp {
+            let Ok(ref comp) = *self.comp else { return Err(Error::MissingSuite); };
+            Ok(comp.comp_from_item(self.as_ptr())?.unwrap().into())
+        } else {
+            Err(Error::Parameter)
+        }
     }
 }

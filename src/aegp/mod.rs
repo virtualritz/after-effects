@@ -41,6 +41,7 @@ pub use suites::camera::{
     FilmSizeUnits,
 };
 pub use suites::canvas::{
+    Canvas,
     BinType,
     DisplayChannel,
     RenderHints,
@@ -55,6 +56,7 @@ pub use suites::color_settings::{
     ItemViewHandle,
 };
 pub use suites::comp::{
+    Composition,
     Collection2Handle,
     CompFlags,
     CompHandle,

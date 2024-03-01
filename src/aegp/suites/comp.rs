@@ -169,7 +169,7 @@ impl CompSuite {
     ///
     /// If you pass `None` for the duration, After Effects uses its preference for the duration of a new still.
     /// If you pass `None`, or an invalid time scale, duration is set to the length of the composition.
-    pub fn create_solid_in_comp(&self, name: &str, width: i32, height: i32, color: ae_sys::AEGP_ColorVal, parent_comp_handle: impl AsPtr<AEGP_CompH>, duration: Option<Time>) -> Result<LayerHandle, Error> {
+    pub fn create_solid_in_comp(&self, comp_handle: impl AsPtr<AEGP_CompH>, name: &str, width: i32, height: i32, color: ae_sys::AEGP_ColorVal, duration: Option<Time>) -> Result<LayerHandle, Error> {
         let name = U16CString::from_str(name).map_err(|_| Error::InvalidParms)?;
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self,
@@ -178,7 +178,7 @@ impl CompSuite {
                 width,
                 height,
                 &color,
-                parent_comp_handle.as_ptr(),
+                comp_handle.as_ptr(),
                 duration.map(Into::into).as_ref().map_or(std::ptr::null(), |t| t)
             )?
         ))
@@ -188,28 +188,28 @@ impl CompSuite {
     /// Once created, you can manipulate the camera's parameter streams using the [`suites::Stream`](aegp::suites::Stream).
     ///
     /// To specify a two-node camera, use [`suites::Layer::set_layer_flag()`](aegp::suites::Layer::set_layer_flag) to set [`LayerFlags::LOOK_AT_POI`].
-    pub fn create_camera_in_comp(&self, name: &str, center_point: ae_sys::A_FloatPoint, parent_comp_handle: impl AsPtr<AEGP_CompH>) -> Result<LayerHandle, Error> {
+    pub fn create_camera_in_comp(&self, comp_handle: impl AsPtr<AEGP_CompH>, name: &str, center_point: ae_sys::A_FloatPoint) -> Result<LayerHandle, Error> {
         let name = U16CString::from_str(name).map_err(|_| Error::InvalidParms)?;
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self,
                 AEGP_CreateCameraInComp -> ae_sys::AEGP_LayerH,
                 name.as_ptr(),
                 center_point,
-                parent_comp_handle.as_ptr()
+                comp_handle.as_ptr()
             )?
         ))
     }
 
     /// Creates and adds a light to the specified composition.
     /// Once created, you can manipulate the light's parameter streams using the AEGP [`suites::Stream`](aegp::suites::Stream).
-    pub fn create_light_in_comp(&self, name: &str, center_point: ae_sys::A_FloatPoint, parent_comp_handle: impl AsPtr<AEGP_CompH>) -> Result<LayerHandle, Error> {
+    pub fn create_light_in_comp(&self, comp_handle: impl AsPtr<AEGP_CompH>, name: &str, center_point: ae_sys::A_FloatPoint) -> Result<LayerHandle, Error> {
         let name = U16CString::from_str(name).map_err(|_| Error::InvalidParms)?;
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self,
                 AEGP_CreateLightInComp -> ae_sys::AEGP_LayerH,
                 name.as_ptr(),
                 center_point,
-                parent_comp_handle.as_ptr()
+                comp_handle.as_ptr()
             )?
         ))
     }
@@ -237,7 +237,7 @@ impl CompSuite {
     /// Creates a new [`Collection2Handle`] from the items selected in the given composition.
     ///
     /// The plug-in is responsible for disposing of the [`Collection2Handle`].
-    pub fn new_collection_from_comp_selection(&self, plugin_id: PluginId, comp_handle: impl AsPtr<AEGP_CompH>) -> Result<Collection2Handle, Error> {
+    pub fn new_collection_from_comp_selection(&self, comp_handle: impl AsPtr<AEGP_CompH>, plugin_id: PluginId) -> Result<Collection2Handle, Error> {
         Ok(Collection2Handle::from_raw(
             call_suite_fn_single!(self, AEGP_GetNewCollectionFromCompSelection -> ae_sys::AEGP_Collection2H, plugin_id, comp_handle.as_ptr())?
         ))
@@ -270,13 +270,13 @@ impl CompSuite {
     ///
     /// If you pass `None` for the duration, After Effects uses its preference for the duration of a new still.
     /// If you pass 0, or an invalid time scale, duration is set to the length of the composition.
-    pub fn create_null_in_comp(&self, name: &str, parent_comp_handle: impl AsPtr<AEGP_CompH>, duration: Option<Time>) -> Result<LayerHandle, Error> {
+    pub fn create_null_in_comp(&self, comp_handle: impl AsPtr<AEGP_CompH>, name: &str, duration: Option<Time>) -> Result<LayerHandle, Error> {
         let name = U16CString::from_str(name).map_err(|_| Error::InvalidParms)?;
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self,
                 AEGP_CreateNullInComp -> ae_sys::AEGP_LayerH,
                 name.as_ptr(),
-                parent_comp_handle.as_ptr(),
+                comp_handle.as_ptr(),
                 duration.map(Into::into).as_ref().map_or(std::ptr::null(), |t| t)
             )?
         ))
@@ -288,23 +288,23 @@ impl CompSuite {
     }
 
     /// Updated in CS6. Creates a text layer in the composition, and returns its [`LayerHandle`].
-    pub fn create_text_layer_in_comp(&self, parent_comp_handle: impl AsPtr<AEGP_CompH>, select_new_layer: bool) -> Result<LayerHandle, Error> {
+    pub fn create_text_layer_in_comp(&self, comp_handle: impl AsPtr<AEGP_CompH>, select_new_layer: bool) -> Result<LayerHandle, Error> {
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self,
                 AEGP_CreateTextLayerInComp -> ae_sys::AEGP_LayerH,
-                parent_comp_handle.as_ptr(),
-                if select_new_layer { 1 } else { 0 }
+                comp_handle.as_ptr(),
+                select_new_layer as _
             )?
         ))
     }
 
     /// Updated in CS6. Creates a new box text layer, and returns its [`LayerHandle`].
-    pub fn create_box_text_layer_in_comp(&self, parent_comp_handle: impl AsPtr<AEGP_CompH>, select_new_layer: bool, box_dimensions: FloatPoint) -> Result<LayerHandle, Error> {
+    pub fn create_box_text_layer_in_comp(&self, comp_handle: impl AsPtr<AEGP_CompH>, select_new_layer: bool, box_dimensions: FloatPoint) -> Result<LayerHandle, Error> {
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self,
                 AEGP_CreateBoxTextLayerInComp -> ae_sys::AEGP_LayerH,
-                parent_comp_handle.as_ptr(),
-                if select_new_layer { 1 } else { 0 },
+                comp_handle.as_ptr(),
+                select_new_layer as _,
                 box_dimensions.into()
             )?
         ))
@@ -333,19 +333,20 @@ impl CompSuite {
             call_suite_fn_single!(self, AEGP_GetMostRecentlyUsedComp -> ae_sys::AEGP_CompH)?
         ))
     }
+
     /// Creates and returns a handle to a new vector layer.
-    pub fn create_vector_layer_in_comp(&self, parent_comp_handle: impl AsPtr<AEGP_CompH>) -> Result<LayerHandle, Error> {
+    pub fn create_vector_layer_in_comp(&self, comp_handle: impl AsPtr<AEGP_CompH>) -> Result<LayerHandle, Error> {
         Ok(LayerHandle::from_raw(
-            call_suite_fn_single!(self, AEGP_CreateVectorLayerInComp -> ae_sys::AEGP_LayerH, parent_comp_handle.as_ptr())?
+            call_suite_fn_single!(self, AEGP_CreateVectorLayerInComp -> ae_sys::AEGP_LayerH, comp_handle.as_ptr())?
         ))
     }
 
     /// Returns an [`StreamReferenceHandle`] to the composition's marker stream.
     ///
     /// Must be disposed by caller.
-    pub fn new_comp_marker_stream(&self, plugin_id: PluginId, parent_comp_handle: impl AsPtr<AEGP_CompH>) -> Result<StreamReferenceHandle, Error> {
+    pub fn new_comp_marker_stream(&self, comp_handle: impl AsPtr<AEGP_CompH>, plugin_id: PluginId) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle::from_raw(
-            call_suite_fn_single!(self, AEGP_GetNewCompMarkerStream -> ae_sys::AEGP_StreamRefH, plugin_id, parent_comp_handle.as_ptr())?
+            call_suite_fn_single!(self, AEGP_GetNewCompMarkerStream -> ae_sys::AEGP_StreamRefH, plugin_id, comp_handle.as_ptr())?
         ))
     }
 
@@ -387,23 +388,192 @@ bitflags::bitflags! {
     }
 }
 
-/*pub struct Comp {
-    comp_suite: CompSuite,
-    comp_handle: CompHandle,
-}
+define_suite_item_wrapper!(
+    ae_sys::AEGP_CompH, CompHandle,
+    suite: CompSuite,
+    /// Provide information about the compositions in a project, and create cameras, lights, and solids.
+    Composition {
+        dispose: ;
 
-impl Comp {
-    pub fn from_item(item_handle: ItemHandle) -> Result<Self, Error> {
-        let comp_suite = CompSuite::new()?;
-        let comp_handle = comp_suite.comp_from_item(item_handle)?;
-        if comp_handle.is_none() {
-            return Err(Error::InvalidParms);
-        }
+        /// Used to get the item handle.
+        item() -> ItemHandle => suite.item_from_comp,
 
-        Ok(Self {
-            comp_suite,
-            comp_handle: comp_handle.unwrap()
-        })
+        /// Returns current downsample factor. Measured in pixels X by Y.
+        ///
+        /// Users can choose a custom downsample factor with independent X and Y.
+        downsample_factor() -> ae_sys::AEGP_DownsampleFactor => suite.comp_downsample_factor,
+
+        /// Sets the composition's downsample factor.
+        set_downsample_factor(downsample_factor: &ae_sys::AEGP_DownsampleFactor) -> () => suite.set_comp_downsample_factor,
+
+        /// Returns the composition background color.
+        bg_color() -> ae_sys::AEGP_ColorVal => suite.comp_bg_color,
+
+        /// Sets a composition's background color.
+        set_bg_color(color: ae_sys::AEGP_ColorVal) -> () => suite.set_comp_bg_color,
+
+        /// Returns composition flags, or'd together.
+        flags() -> CompFlags => suite.comp_flags,
+
+        /// New in CC. Passes back true if the Comp's timeline shows layer names, false if source names.
+        ///
+        /// This will open the comp as a side effect.
+        show_layer_name_or_source_name() -> bool => suite.show_layer_name_or_source_name,
+
+        /// New in CC. Pass in true to have the Comp's timeline show layer names, false for source names.
+        ///
+        /// This will open the comp as a side effect.
+        set_show_layer_name_or_source_name(show_layer_names: bool) -> () => suite.set_show_layer_name_or_source_name,
+
+        /// New in CC. Passes back true if the Comp's timeline shows blend modes column, false if hidden.
+        ///
+        /// This will open the comp as a side effect.
+        show_blend_modes() -> bool => suite.show_blend_modes,
+
+        /// New in CC. Pass in true to have the Comp's timeline show the blend modes column, false to hide it.
+        ///
+        /// This will open the comp as a side effect.
+        set_show_blend_modes(show_blend_modes: bool) -> () => suite.set_show_blend_modes,
+
+        /// Returns the composition's frames per second.
+        framerate() -> f64 => suite.comp_framerate,
+
+        /// Sets the composition's frames per second.
+        set_framerate(framerate: f64) -> () => suite.set_comp_framerate,
+
+        /// The composition shutter angle and phase.
+        shutter_angle_phase() -> (Ratio, Ratio) => suite.comp_shutter_angle_phase,
+
+        /// The duration of the shutter frame, in seconds.
+        shutter_frame_range(comp_time: Time) -> (Time, Time) => suite.comp_shutter_frame_range,
+
+        /// Retrieves the number of motion blur samples After Effects will perform in the given composition.
+        suggested_motion_blur_samples() -> i32 => suite.comp_suggested_motion_blur_samples,
+
+        /// Specifies the number of motion blur samples After Effects will perform in the given composition. Undoable.
+        set_suggested_motion_blur_samples(samples: i32) -> () => suite.set_comp_suggested_motion_blur_samples,
+
+        /// New in CC. Retrieves the motion blur adaptive sample limit for the given composition.
+        ///
+        /// As of CC, a new comp defaults to 128.
+        motion_blur_adaptive_sample_limit() -> i32 => suite.comp_motion_blur_adaptive_sample_limit,
+
+        /// New in CC. Specifies the motion blur adaptive sample limit for the given composition.
+        ///
+        /// As of CC, both the limit and the suggested values are clamped to \[2,256\] range and the limit value will not be allowed less than the suggested value.
+        ///
+        /// Undoable.
+        set_motion_blur_adaptive_sample_limit(limit: i32) -> () => suite.set_comp_motion_blur_adaptive_sample_limit,
+
+        /// Get the time where the current work area starts.
+        work_area_start() -> Time => suite.comp_work_area_start,
+
+        /// Get the duration of a composition's current work area, in seconds.
+        work_area_duration() -> Time => suite.comp_work_area_duration,
+
+        /// Set the work area start and duration, in seconds. Undo-able.
+        ///
+        /// One call to this function is sufficient to set the layer's in point and duration;
+        /// it's not necessary to call it twice, once for each timespace.
+        set_work_area_start_and_duration(start: Time, duration: Time) -> () => suite.set_comp_work_area_start_and_duration,
+
+        /// Creates a new solid with a specified width, height, color, and duration in the composition. Undo-able.
+        ///
+        /// If you pass `None` for the duration, After Effects uses its preference for the duration of a new still.
+        /// If you pass `None`, or an invalid time scale, duration is set to the length of the composition.
+        create_solid(name: &str, width: i32, height: i32, color: ae_sys::AEGP_ColorVal, duration: Option<Time>) -> LayerHandle => suite.create_solid_in_comp,
+
+        /// Creates and adds a camera to the specified composition.
+        /// Once created, you can manipulate the camera's parameter streams using the [`suites::Stream`](aegp::suites::Stream).
+        ///
+        /// To specify a two-node camera, use [`suites::Layer::set_layer_flag()`](aegp::suites::Layer::set_layer_flag) to set [`LayerFlags::LOOK_AT_POI`].
+        create_camera(name: &str, center_point: ae_sys::A_FloatPoint) -> LayerHandle => suite.create_camera_in_comp,
+
+        /// Creates and adds a light to the specified composition.
+        /// Once created, you can manipulate the light's parameter streams using the AEGP [`suites::Stream`](aegp::suites::Stream).
+        create_light(name: &str, center_point: ae_sys::A_FloatPoint) -> LayerHandle => suite.create_light_in_comp,
+
+        /// Creates a new [`Collection2Handle`] from the items selected in the given composition.
+        ///
+        /// The plug-in is responsible for disposing of the [`Collection2Handle`].
+        new_collection_from_comp_selection(plugin_id: PluginId) -> Collection2Handle => suite.new_collection_from_comp_selection,
+
+        /// Sets the selection within the given composition to the given [`Collection2Handle`].
+        ///
+        /// Will return an error if members of the [`Collection2Handle`] are not available.
+        ///
+        /// Don't assume that a composition hasn't changed between operations; always use a fresh [`Collection2Handle`].
+        set_selection(collection_handle: Collection2Handle) -> () => suite.set_selection,
+
+        display_start_time() -> Time => suite.comp_display_start_time,
+
+        /// Not undo-able. Sets the displayed start time of a composition (has no effect on the duration of the composition).
+        set_display_start_time(time: Time) -> () => suite.set_comp_display_start_time,
+
+        /// Undoable. Sets the duration of the given composition.
+        set_duration(duration: Time) -> () => suite.set_comp_duration,
+
+        /// Creates a "null object" in the composition (useful for translating projects from 3D applications into After Effects).
+        ///
+        /// If you pass `None` for the duration, After Effects uses its preference for the duration of a new still.
+        /// If you pass 0, or an invalid time scale, duration is set to the length of the composition.
+        create_null(name: &str, duration: Option<Time>) -> LayerHandle => suite.create_null_in_comp,
+
+        /// Sets the pixel aspect ratio of a composition.
+        set_pixel_aspect_ratio(pixel_aspect_ratio: Ratio) -> () => suite.set_comp_pixel_aspect_ratio,
+
+        /// Updated in CS6. Creates a text layer in the composition, and returns its [`LayerHandle`].
+        create_text_layer(select_new_layer: bool) -> LayerHandle => suite.create_text_layer_in_comp,
+
+        /// Updated in CS6. Creates a new box text layer, and returns its [`LayerHandle`].
+        create_box_text_layer(select_new_layer: bool, box_dimensions: FloatPoint) -> LayerHandle => suite.create_box_text_layer_in_comp,
+
+        /// Sets the dimensions of the composition. Undoable.
+        set_dimensions(width: i32, height: i32) -> () => suite.set_comp_dimensions,
+
+        /// Duplicates the composition. Undoable.
+        duplicate_comp() -> CompHandle => suite.duplicate_comp,
+
+        /// Retrieves the duration of a frame in a composition.
+        frame_duration() -> Time => suite.comp_frame_duration,
+
+        /// Creates and returns a handle to a new vector layer.
+        create_vector_layer() -> LayerHandle => suite.create_vector_layer_in_comp,
+
+        /// Returns an [`StreamReferenceHandle`] to the composition's marker stream.
+        ///
+        /// Must be disposed by caller.
+        new_marker_stream(plugin_id: PluginId) -> StreamReferenceHandle => suite.new_comp_marker_stream,
+
+        /// Passes back a boolean that indicates whether the specified comp uses drop-frame timecode or not.
+        display_drop_frame() -> bool => suite.comp_display_drop_frame,
+
+        /// Sets the dropness of the timecode in the specified composition.
+        set_display_drop_frame(drop_frame: bool) -> () => suite.set_comp_display_drop_frame,
+
+        /// Move the selection to a certain layer index. Use along with [`set_selection()`](Self::set_selection).
+        reorder_comp_selection(layer_index: i32) -> () => suite.reorder_comp_selection,
+    }
+);
+
+impl Composition {
+    /// Retrieves the handle to the composition, given an item handle.
+    ///
+    /// Returns `Err` if `item_handle` is not an `AEGP_CompH`.
+    pub fn from_item(item: impl AsPtr<AEGP_ItemH>) -> Result<Option<Composition>, Error> {
+        Ok(CompSuite::new()?.comp_from_item(item.as_ptr())?.map(Into::into))
+    }
+
+    /// Creates a new composition for the project.
+    /// If you don't provide a parent folder, the composition will be at the root level of the project.
+    ///
+    /// Undo-able.
+    pub fn create(parent_folder: Option<ItemHandle>, name: &str, width: i32, height: i32, pixel_aspect_ratio: Ratio, duration: Time, frame_rate: Ratio) -> Result<Composition, Error> {
+        CompSuite::new()?.create_comp(parent_folder, name, width, height, pixel_aspect_ratio, duration, frame_rate).map(Into::into)
+    }
+
+    /// Returns the most-recently-used composition.
+    pub fn most_recently_used() -> Result<Composition, Error> {
+        CompSuite::new()?.most_recently_used_comp().map(Into::into)
     }
 }
-*/
