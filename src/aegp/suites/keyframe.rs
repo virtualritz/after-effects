@@ -257,7 +257,7 @@ define_suite_item_wrapper!(
     /// Keyframes make After Effects what it is. AEGPs (and...ssshh, don't tell anyone...effects) can use this suite to add, manipulate and remove keyframes from any keyframe-able stream.
     ///
     /// # Adding Multiple Keyframes
-    /// Each time you call [`insert_keyframe`](Self::insert_keyframe), the entire stream is added to the undo stack.
+    /// Each time you call [`insert`](Self::insert), the entire stream is added to the undo stack.
     ///
     /// If you're adding one or two keyframes, this isn't a problem. However, if you're writing a keyframer, you'll want to do things the *right* way.
     ///

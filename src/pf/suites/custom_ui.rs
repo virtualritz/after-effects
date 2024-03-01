@@ -15,9 +15,10 @@ impl EffectCustomUISuite {
     }
 
     /// Obtain [`Drawbot`](drawbot::Drawbot) for the provided context handle.
-    pub fn drawing_reference(&self, context_handle: &ContextHandle) -> Result<drawbot::Drawbot, Error> {
+    pub fn drawing_reference(&self, context_handle: impl AsPtr<ae_sys::PF_ContextH>) -> Result<drawbot::Drawbot, Error> {
         Ok(drawbot::Drawbot {
             suite: crate::Suite::new()?,
+            theme_suite: crate::Suite::new(),
             handle: call_suite_fn_single!(self, PF_GetDrawingReference -> ae_sys::DRAWBOT_DrawRef, context_handle.as_ptr())?
         })
     }
@@ -74,25 +75,25 @@ impl EffectCustomUIOverlayThemeSuite {
     /// Optionally draw the shadow using the overlay theme shadow color.
     ///
     /// Uses overlay theme stroke width for stroking foreground and shadow strokes.
-    pub fn stroke_path(&self, drawbot: impl AsRef<ae_sys::DRAWBOT_DrawRef>, path: impl AsRef<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
-        call_suite_fn!(self, PF_StrokePath, *drawbot.as_ref(), *path.as_ref(), draw_shadow as _)
+    pub fn stroke_path(&self, drawbot: impl AsPtr<ae_sys::DRAWBOT_DrawRef>, path: impl AsPtr<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
+        call_suite_fn!(self, PF_StrokePath, drawbot.as_ptr(), path.as_ptr(), draw_shadow as _)
     }
 
     /// Fills the path with overlay theme foreground color.
     ///
     /// Optionally draw the shadow using the overlay theme shadow color.
-    pub fn fill_path(&self, drawbot: impl AsRef<ae_sys::DRAWBOT_DrawRef>, path: impl AsRef<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
-        call_suite_fn!(self, PF_FillPath, *drawbot.as_ref(), *path.as_ref(), draw_shadow as _)
+    pub fn fill_path(&self, drawbot: impl AsPtr<ae_sys::DRAWBOT_DrawRef>, path: impl AsPtr<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
+        call_suite_fn!(self, PF_FillPath, drawbot.as_ptr(), path.as_ptr(), draw_shadow as _)
     }
 
     /// Fills a square vertex around the center point using the overlay theme foreground color and vertex size.
-    pub fn fill_vertex(&self, drawbot: impl AsRef<ae_sys::DRAWBOT_DrawRef>, center_point: FloatPoint, draw_shadow: bool) -> Result<(), Error> {
-        call_suite_fn!(self, PF_FillVertex, *drawbot.as_ref(), &center_point.into(), draw_shadow as _)
+    pub fn fill_vertex(&self, drawbot: impl AsPtr<ae_sys::DRAWBOT_DrawRef>, center_point: FloatPoint, draw_shadow: bool) -> Result<(), Error> {
+        call_suite_fn!(self, PF_FillVertex, drawbot.as_ptr(), &center_point.into(), draw_shadow as _)
     }
 }
 
 // ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
-
+register_handle!(PF_ContextH);
 define_handle_wrapper!(ContextHandle, PF_ContextH);
 
 #[derive(Copy, Clone, Debug)]
@@ -100,7 +101,7 @@ pub struct CustomUIInfo(ae_sys::PF_CustomUIInfo);
 
 impl CustomUIInfo {
     pub fn new() -> Self {
-        Self(unsafe { std::mem::MaybeUninit::zeroed().assume_init() })
+        Self(unsafe { std::mem::zeroed() })
     }
 
     pub fn as_ptr(&self) -> *const ae_sys::PF_CustomUIInfo {

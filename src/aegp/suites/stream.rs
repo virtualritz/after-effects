@@ -1058,7 +1058,7 @@ define_suite_item_wrapper!(
 
         /// Retrieves the match name for this stream.
         ///
-        /// Note that this may differ from the display name, which can be retrieves using [`Stream::stream_name()`].
+        /// Note that this may differ from the display name, which can be retrieves using [`Stream::name()`].
         match_name() -> String => dynamic.match_name,
 
         /// Retrieves an [`Stream`] for the parent of this stream.

@@ -359,7 +359,7 @@ define_suite_item_wrapper!(
         /// set the color profile set to NULL, and provide the description as a NULL-terminated unicode string.
         /// Doing this disables color management UI that allows user to affect profile choice in the application UI.
         /// If you are unpacking non-RGB data directly into working space (to get working space use [`suites::ColorSettings::new_working_space_color_profile`](aegp::suites::ColorSettings::new_working_space_color_profile), you are done.
-        /// If you are unpacking non-RGB data into specific RGB color space, you must pass the profile describing this space to [`set_in_spec_assigned_color_profile()`](Self::set_in_spec_assigned_color_profile) below.
+        /// If you are unpacking non-RGB data into specific RGB color space, you must pass the profile describing this space to [`set_assigned_color_profile()`](Self::set_assigned_color_profile) below.
         /// Otherwise, your RGB data will be incorrectly interpreted as being in working space.
         /// Either color profile or profile description should be NULL in this function. You cannot use both.
         set_embedded_color_profile(color_profile: Option<ae_sys::AEGP_ConstColorProfileP>, profile_desc: Option<&str>) -> () => suite.set_in_spec_embedded_color_profile,
@@ -374,7 +374,7 @@ define_suite_item_wrapper!(
         set_native_start_time(start_time: Time) -> () => suite.set_in_spec_native_start_time,
 
         /// New in CC. Clear the native start time of the footage.
-        /// Setting the native start time to 0 using [`set_in_spec_native_start_time()`](Self::set_in_spec_native_start_time) doesn't do this.
+        /// Setting the native start time to 0 using [`set_native_start_time()`](Self::set_native_start_time) doesn't do this.
         /// It still means there is a special native start time provided.
         clear_native_start_time() -> () => suite.clear_in_spec_native_start_time,
 

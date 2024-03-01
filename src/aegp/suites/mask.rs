@@ -160,7 +160,7 @@ define_suite!(
     ///
     /// This suite enables AEGPs to get and set the text associated with text layers.
     ///
-    /// Note: to get started, retrieve an [`TextDocumentHandle`] by calling [`suites::Stream::layer_stream_value()`](aegp::suites::Stream::layer_stream_value), above, and passing [`StreamType::TextDocument`] as the `StreamType`.
+    /// Note: to get started, retrieve an [`aegp::TextDocumentHandle`] by calling [`suites::Stream::layer_stream_value()`](aegp::suites::Stream::layer_stream_value), above, and passing [`aegp::StreamType::TextDocument`] as the `StreamType`.
     MaskOutlineSuite,
     AEGP_MaskOutlineSuite3,
     kAEGPMaskOutlineSuite,
@@ -393,7 +393,7 @@ define_suite_item_wrapper!(
     ///
     /// This suite enables AEGPs to get and set the text associated with text layers.
     ///
-    /// Note: to get started, retrieve an [`TextDocumentHandle`] by calling [`suites::Stream::layer_stream_value()`](aegp::suites::Stream::layer_stream_value), above, and passing [`StreamType::TextDocument`] as the `StreamType`.
+    /// Note: to get started, retrieve an [`aegp::TextDocumentHandle`] by calling [`suites::Stream::layer_stream_value()`](aegp::suites::Stream::layer_stream_value), above, and passing [`aegp::StreamType::TextDocument`] as the `StreamType`.
     MaskOutline {
         dispose: ;
 

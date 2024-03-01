@@ -1,5 +1,6 @@
 use crate::*;
 
+register_handle!(DRAWBOT_DrawRef);
 register_handle!(DRAWBOT_SupplierRef);
 register_handle!(DRAWBOT_SurfaceRef);
 define_handle_wrapper!(SupplierRef, DRAWBOT_SupplierRef);
@@ -41,6 +42,7 @@ define_suite!(
 pub struct Drawbot {
     pub(crate) handle: ae_sys::DRAWBOT_DrawRef,
     pub(crate) suite: DrawbotSuite,
+    pub(crate) theme_suite: Result<pf::suites::EffectCustomUIOverlayTheme, Error>,
 }
 impl Drawbot {
     /// Get the supplier reference.
@@ -55,6 +57,20 @@ impl Drawbot {
         Ok(Surface::from_raw(
             call_suite_fn_single!(self.suite, GetSurface -> ae_sys::DRAWBOT_SurfaceRef, self.handle)?
         ))
+    }
+
+    /// Fills the path with overlay theme foreground color.
+    ///
+    /// Optionally draw the shadow using the overlay theme shadow color.
+    pub fn fill_theme_path(&self, path: impl AsPtr<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
+        let Ok(ref suite) = self.theme_suite else { return Err(Error::MissingSuite) };
+        suite.fill_path(self.handle, path, draw_shadow)
+    }
+
+    /// Fills a square vertex around the center point using the overlay theme foreground color and vertex size.
+    pub fn fill_theme_vertex(&self, center_point: FloatPoint, draw_shadow: bool) -> Result<(), Error> {
+        let Ok(ref suite) = self.theme_suite else { return Err(Error::MissingSuite) };
+        suite.fill_vertex(self.handle, center_point, draw_shadow)
     }
 }
 impl AsRef<ae_sys::DRAWBOT_DrawRef> for Drawbot {

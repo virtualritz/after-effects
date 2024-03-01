@@ -9,7 +9,8 @@ define_suite_item_wrapper!(
     pf_interface: aegp::suites::PFInterface,
     pf_utility: pf::suites::Utility,
     effect_sequence_data: pf::suites::EffectSequenceData,
-    ///
+    param_utils: pf::suites::ParamUtils,
+    /// TODO: write docs for Effect
     Effect {
         dispose: ;
 
@@ -27,7 +28,7 @@ define_suite_item_wrapper!(
         /// NOTE: In cases where the effect's input layer has square pixels, but is in a non-square pixel composition,
         /// you must correct for the pixel aspect ratio by premultiplying the matrix by `(1/parF, 1, 1)`.
         ///
-        /// The model view for the camera matrix is inverse of the matrix obtained from [`effect_camera_matrix()`](Self::effect_camera_matrix).
+        /// The model view for the camera matrix is inverse of the matrix obtained from [`camera_matrix()`](Self::camera_matrix).
         ///
         /// Also note that our matrix is row-based; OpenGL's is column-based.
         ///
@@ -139,6 +140,75 @@ define_suite_item_wrapper!(
 
         /// Retrieves the read-only const sequence_data object for a rendering thread when Multi-Frame Rendering is enabled for an effect.
         const_sequence_data() -> ae_sys::PF_ConstHandle => effect_sequence_data.const_sequence_data,
+
+        // ―――――――――――――――――――――――――――― Param utils suite functions ――――――――――――――――――――――――――――
+
+        /// Force After Effects to refresh the parameter's UI, in the effect controls palette.
+        ///
+        /// Starting in CC 2014, After Effects will now honor a change to a custom UI height. Simply change the ui_height of your custom UI PF_ParamDef and then call PF_UpdateParamUI.
+        /// The effect's custom UI height will be updated in the Effect Control Window.
+        ///
+        /// Starting in CS6, when a plug-in disables a parameter, we now save that state in the UI flags so that the plug-in can check that flag in the future to see if it is disabled.
+        ///
+        /// NOTE: Never pass param\[0\] to this function.
+        ///
+        /// You can call this function for each param whose UI settings you want to change when handling a `Command::UserChangedParam` or `Command::UpdateParamsUi`.
+        /// These changes are cosmetic only, and don't go into the undo buffer.
+        ///
+        /// The ONLY fields that can be changed in this way are:
+        ///     PF_ParamDef
+        ///         ui_flags: `PF_PUI_ECW_SEPARATOR`, `PF_PUI_DISABLED` only (and `PF_PUI_INVISIBLE` in Premiere).
+        ///         ui_width
+        ///         ui_height
+        ///         name
+        ///         flags: `PF_ParamFlag_COLLAPSE_TWIRLY` only
+        ///     PF_ParamDefUnion:
+        ///         slider_min, slider_max, precision, display_flags of any slider type
+        /// For `PF_PUI_STD_CONTROL_ONLY` params, you can also change the value field by setting `PF_ChangeFlag_CHANGED_VALUE` before returning.
+        /// But you are not allowed to change the value during `PF_Cmd_UPDATE_PARAMS_UI`.
+        update_param_ui(param_index: i32, param_def: &ParamDef) -> () => param_utils.update_param_ui,
+
+        /// This API, combined with [`are_states_identical()`](Self::are_states_identical) below, lets you determine if a set of inputs (either layers, other properties, or both)
+        /// are different between when you first called [`current_state()`](Self::current_state) and a current call, so it can be used for caching.
+        /// You can specify a range of time to consider or all of time.
+        ///
+        /// Updated in CS6 to add `param_index`, `start`, and `duration`. Pre-defined constants for `param_index` are as follows:
+        ///
+        ///   - [`PARAM_INDEX_CHECK_ALL`] - check every parameter, including every layer referred to by a layer parameter.
+        ///   - [`PARAM_INDEX_CHECK_ALL_EXCEPT_LAYER_PARAMS`] - omit all layers. Pass a specific layer parameter index to include that as the only layer parameter tested.
+        ///   - [`PARAM_INDEX_CHECK_ALL_HONOR_EXCLUDE`] - Similar to CHECK_ALL, but honor `PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED`.
+        ///
+        /// Passing in `None` for both start and duration indicates all time.
+        /// For effects that do simulation across time and therefore set `PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT`, when you ask about a time range,
+        /// it will be expanded to include any times needed to produce that range.
+        ///
+        /// Populates a `PF_State`, an opaque data type used as a receipt for the current state of the effect's parameters (the `PF_State` is used in our internal frame caching database).
+        current_param_state(param_index: i32, start: Option<Time>, duration: Option<Time>) -> ae_sys::PF_State => param_utils.current_state,
+
+        /// New in CS6. Compare two different states, retrieved using `PF_GetCurrentState`, above.
+        are_param_states_identical(state1: &ae_sys::PF_State, state2: &ae_sys::PF_State) -> bool => param_utils.are_states_identical,
+
+        /// Returns `true` if a parameter's value is the same at the two passed times.
+        ///
+        /// Note: the times need not be contiguous; there could be different intervening values.
+        is_param_identical_checkout(param_index: i32, what_time1: i32, time_step1: i32, time_scale1: u32, what_time2: i32, time_step2: i32, time_scale2: u32) -> bool => param_utils.is_identical_checkout,
+
+        /// Searches (in the specified direction) for the next keyframe in the parameter's stream. The last three parameters are optional.
+        ///
+        /// Returns a tuple containing: (found, key_index, key_time, key_timescale)
+        find_keyframe_time(param_index: i32, what_time: i32, time_scale: u32, time_dir: TimeDir) -> (bool, i32, i32, u32) => param_utils.find_keyframe_time,
+
+        /// Returns the number of keyframes in the parameter's stream.
+        keyframe_count(param_index: i32) -> i32 => param_utils.keyframe_count,
+
+        /// Checks a keyframe for the specified parameter out of our keyframe database. `param_index` is zero-based. You can request time, timescale, or neither; useful if you're performing your own motion blur.
+        checkout_keyframe(param_index: i32, key_index: i32) -> (i32, u32, ae_sys::PF_ParamDef) => param_utils.checkout_keyframe,
+
+        /// All calls to `checkout_keyframe` must be balanced with this check-in, or pain will ensue.
+        checkin_keyframe(param: ae_sys::PF_ParamDef) -> () => param_utils.checkin_keyframe,
+
+        /// Returns the time (and timescale) of the specified keyframe.
+        key_index_to_time(param_index: i32, key_index: i32) ->(i32, u32) => param_utils.key_index_to_time,
     }
 );
 
