@@ -1,5 +1,4 @@
 // FIXME: make ALL the functions below return Result-wrapped values
-#![allow(temporary_cstring_as_ptr)]
 //! High(er) level bindings for the Adobe AfterEffects® (Ae) SDK.
 //!
 //! This wraps many of the API suites in the Ae SDK and exposes them in safe
@@ -102,8 +101,7 @@ pub use parking_lot;
 pub use paste;
 
 thread_local!(
-    pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> =
-        RefCell::new(ptr::null_mut())
+    pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> = RefCell::new(ptr::null_mut())
 );
 
 #[inline]
@@ -262,31 +260,6 @@ impl From<std::collections::TryReserveError> for Error {
         Error::OutOfMemory
     }
 }
-
-/*
-impl From<Error> for ae_sys::A_Err {
-    fn from(err: Error) -> ae_sys::A_Err {
-        err as ae_sys::A_Err
-    }
-}*/
-
-/*
-impl From<Result<(), Error>> for AeError {
-    #[inline]
-    fn from(result: Result<(), Error>) -> Self {
-        match result {
-            Ok(()) => AeError(0),
-            Err(e) => AeError(e.into()),
-        }
-    }
-}
-
-impl From<AeError> for i32 {
-    #[inline]
-    fn from(ae_error: AeError) -> Self {
-        ae_error.0
-    }
-}*/
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]

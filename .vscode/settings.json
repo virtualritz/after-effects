@@ -8,6 +8,7 @@
         "./after-effects-sys/Cargo.toml",
         "./pipl/Cargo.toml",
         "./examples/portable/Cargo.toml",
-        "./examples/simplest/Cargo.toml"
+        "./examples/simplest/Cargo.toml",
+        "./examples/custom_ecw_ui/Cargo.toml"
     ]
 }

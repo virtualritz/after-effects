@@ -4958,6 +4958,71 @@ pub struct _PF_AppProgressDialog {
 pub type PF_AppProgressDialogP = *mut _PF_AppProgressDialog;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct PFAppSuite6 {
+    pub PF_AppGetBgColor:
+        ::std::option::Option<unsafe extern "C" fn(bg_colorP: *mut PF_App_Color) -> PF_Err>,
+    pub PF_AppGetColor: ::std::option::Option<
+        unsafe extern "C" fn(color_type: PF_App_ColorType, app_colorP: *mut PF_App_Color) -> PF_Err,
+    >,
+    pub PF_AppGetLanguage:
+        ::std::option::Option<unsafe extern "C" fn(lang_tagZ: *mut A_char) -> PF_Err>,
+    pub PF_GetPersonalInfo:
+        ::std::option::Option<unsafe extern "C" fn(ptiP: *mut PF_AppPersonalTextInfo) -> PF_Err>,
+    pub PF_GetFontStyleSheet: ::std::option::Option<
+        unsafe extern "C" fn(
+            sheet: PF_FontStyleSheet,
+            font_nameP0: *mut PF_FontName,
+            font_numPS0: *mut A_short,
+            sizePS0: *mut A_short,
+            stylePS0: *mut A_short,
+        ) -> PF_Err,
+    >,
+    pub PF_SetCursor: ::std::option::Option<unsafe extern "C" fn(cursor: PF_CursorType) -> PF_Err>,
+    pub PF_IsRenderEngine:
+        ::std::option::Option<unsafe extern "C" fn(render_enginePB: *mut PF_Boolean) -> PF_Err>,
+    pub PF_AppColorPickerDialog: ::std::option::Option<
+        unsafe extern "C" fn(
+            dialog_titleZ0: *const A_char,
+            sample_colorP: *const PF_PixelFloat,
+            use_ws_to_monitor_xformB: PF_Boolean,
+            new_colorP: *mut PF_PixelFloat,
+        ) -> PF_Err,
+    >,
+    pub PF_GetMouse: ::std::option::Option<unsafe extern "C" fn(pointP: *mut PF_Point) -> PF_Err>,
+    pub PF_InvalidateRect: ::std::option::Option<
+        unsafe extern "C" fn(contextH: PF_ContextH, rectP0: *const PF_Rect) -> PF_Err,
+    >,
+    pub PF_ConvertLocalToGlobal: ::std::option::Option<
+        unsafe extern "C" fn(localP: *const PF_Point, globalP: *mut PF_Point) -> PF_Err,
+    >,
+    pub PF_GetColorAtGlobalPoint: ::std::option::Option<
+        unsafe extern "C" fn(
+            globalP: *const PF_Point,
+            eyeSize: A_short,
+            mode: PF_EyeDropperSampleMode,
+            outColorP: *mut PF_PixelFloat,
+        ) -> PF_Err,
+    >,
+    pub PF_CreateNewAppProgressDialog: ::std::option::Option<
+        unsafe extern "C" fn(
+            titleZ: *const A_UTF16Char,
+            cancel_strZ0: *const A_UTF16Char,
+            indeterminateB: PF_Boolean,
+            prog_dlgPP: *mut PF_AppProgressDialogP,
+        ) -> PF_Err,
+    >,
+    pub PF_AppProgressDialogUpdate: ::std::option::Option<
+        unsafe extern "C" fn(
+            prog_dlgP: PF_AppProgressDialogP,
+            countL: A_long,
+            totalL: A_long,
+        ) -> PF_Err,
+    >,
+    pub PF_DisposeAppProgressDialog:
+        ::std::option::Option<unsafe extern "C" fn(prog_dlgP: PF_AppProgressDialogP) -> PF_Err>,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct PF_EffectUISuite1 {
     pub PF_SetOptionsButtonName: ::std::option::Option<
         unsafe extern "C" fn(effect_ref: PF_ProgPtr, nameZ: *const A_char) -> PF_Err,
@@ -5106,6 +5171,100 @@ pub struct PF_ParamUtilsSuite1 {
             key_indexP: PF_KeyIndex,
             key_timeP: *mut A_long,
             key_timescaleP: *mut A_u_long,
+        ) -> PF_Err,
+    >,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct PFAppSuite4 {
+    pub PF_AppGetBgColor:
+        ::std::option::Option<unsafe extern "C" fn(bg_colorP: *mut PF_App_Color) -> PF_Err>,
+    pub PF_AppGetColor: ::std::option::Option<
+        unsafe extern "C" fn(color_type: PF_App_ColorType, app_colorP: *mut PF_App_Color) -> PF_Err,
+    >,
+    pub PF_GetPersonalInfo:
+        ::std::option::Option<unsafe extern "C" fn(ptiP: *mut PF_AppPersonalTextInfo) -> PF_Err>,
+    pub PF_GetFontStyleSheet: ::std::option::Option<
+        unsafe extern "C" fn(
+            sheet: PF_FontStyleSheet,
+            font_nameP0: *mut PF_FontName,
+            font_numPS0: *mut A_short,
+            sizePS0: *mut A_short,
+            stylePS0: *mut A_short,
+        ) -> PF_Err,
+    >,
+    pub PF_SetCursor: ::std::option::Option<unsafe extern "C" fn(cursor: PF_CursorType) -> PF_Err>,
+    pub PF_IsRenderEngine:
+        ::std::option::Option<unsafe extern "C" fn(render_enginePB: *mut PF_Boolean) -> PF_Err>,
+    pub PF_AppColorPickerDialog: ::std::option::Option<
+        unsafe extern "C" fn(
+            dialog_titleZ0: *const A_char,
+            sample_colorP: *const PF_PixelFloat,
+            use_ws_to_monitor_xformB: PF_Boolean,
+            new_colorP: *mut PF_PixelFloat,
+        ) -> PF_Err,
+    >,
+    pub PF_GetMouse: ::std::option::Option<unsafe extern "C" fn(pointP: *mut PF_Point) -> PF_Err>,
+    pub PF_InvalidateRect: ::std::option::Option<
+        unsafe extern "C" fn(contextH: PF_ContextH, rectP0: *const PF_Rect) -> PF_Err,
+    >,
+    pub PF_ConvertLocalToGlobal: ::std::option::Option<
+        unsafe extern "C" fn(localP: *const PF_Point, globalP: *mut PF_Point) -> PF_Err,
+    >,
+    pub PF_GetColorAtGlobalPoint: ::std::option::Option<
+        unsafe extern "C" fn(
+            globalP: *const PF_Point,
+            eyeSize: A_short,
+            mode: PF_EyeDropperSampleMode,
+            outColorP: *mut PF_PixelFloat,
+        ) -> PF_Err,
+    >,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct PFAppSuite5 {
+    pub PF_AppGetBgColor:
+        ::std::option::Option<unsafe extern "C" fn(bg_colorP: *mut PF_App_Color) -> PF_Err>,
+    pub PF_AppGetColor: ::std::option::Option<
+        unsafe extern "C" fn(color_type: PF_App_ColorType, app_colorP: *mut PF_App_Color) -> PF_Err,
+    >,
+    pub PF_AppGetLanguage:
+        ::std::option::Option<unsafe extern "C" fn(lang_tagZ: *mut A_char) -> PF_Err>,
+    pub PF_GetPersonalInfo:
+        ::std::option::Option<unsafe extern "C" fn(ptiP: *mut PF_AppPersonalTextInfo) -> PF_Err>,
+    pub PF_GetFontStyleSheet: ::std::option::Option<
+        unsafe extern "C" fn(
+            sheet: PF_FontStyleSheet,
+            font_nameP0: *mut PF_FontName,
+            font_numPS0: *mut A_short,
+            sizePS0: *mut A_short,
+            stylePS0: *mut A_short,
+        ) -> PF_Err,
+    >,
+    pub PF_SetCursor: ::std::option::Option<unsafe extern "C" fn(cursor: PF_CursorType) -> PF_Err>,
+    pub PF_IsRenderEngine:
+        ::std::option::Option<unsafe extern "C" fn(render_enginePB: *mut PF_Boolean) -> PF_Err>,
+    pub PF_AppColorPickerDialog: ::std::option::Option<
+        unsafe extern "C" fn(
+            dialog_titleZ0: *const A_char,
+            sample_colorP: *const PF_PixelFloat,
+            use_ws_to_monitor_xformB: PF_Boolean,
+            new_colorP: *mut PF_PixelFloat,
+        ) -> PF_Err,
+    >,
+    pub PF_GetMouse: ::std::option::Option<unsafe extern "C" fn(pointP: *mut PF_Point) -> PF_Err>,
+    pub PF_InvalidateRect: ::std::option::Option<
+        unsafe extern "C" fn(contextH: PF_ContextH, rectP0: *const PF_Rect) -> PF_Err,
+    >,
+    pub PF_ConvertLocalToGlobal: ::std::option::Option<
+        unsafe extern "C" fn(localP: *const PF_Point, globalP: *mut PF_Point) -> PF_Err,
+    >,
+    pub PF_GetColorAtGlobalPoint: ::std::option::Option<
+        unsafe extern "C" fn(
+            globalP: *const PF_Point,
+            eyeSize: A_short,
+            mode: PF_EyeDropperSampleMode,
+            outColorP: *mut PF_PixelFloat,
         ) -> PF_Err,
     >,
 }

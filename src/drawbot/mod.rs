@@ -169,32 +169,32 @@ pub struct Path {
 }
 impl Path {
     /// Move to a point.
-    pub fn move_to(&self, x: f32, y: f32) -> Result<(), Error> {
+    pub fn move_to(&mut self, x: f32, y: f32) -> Result<(), Error> {
         call_suite_fn!(self.suite, MoveTo, self.handle, x, y)
     }
 
     /// Add a line to the path.
-    pub fn line_to(&self, x: f32, y: f32) -> Result<(), Error> {
+    pub fn line_to(&mut self, x: f32, y: f32) -> Result<(), Error> {
         call_suite_fn!(self.suite, LineTo, self.handle, x, y)
     }
 
     /// Add a cubic bezier to the path.
-    pub fn bezier_to(&self, pt1: &PointF32, pt2: &PointF32, pt3: &PointF32) -> Result<(), Error> {
+    pub fn bezier_to(&mut self, pt1: &PointF32, pt2: &PointF32, pt3: &PointF32) -> Result<(), Error> {
         call_suite_fn!(self.suite, BezierTo, self.handle, pt1, pt2, pt3)
     }
 
     /// Add a rect to the path.
-    pub fn add_rect(&self, rect: &RectF32) -> Result<(), Error> {
+    pub fn add_rect(&mut self, rect: &RectF32) -> Result<(), Error> {
         call_suite_fn!(self.suite, AddRect, self.handle, rect)
     }
 
     /// Add a arc to the path. Zero start degrees == 3 o'clock. Sweep is clockwise. Units for angle are in degrees.
-    pub fn add_arc(&self, center: &PointF32, radius: f32, start_angle: f32, sweep: f32) -> Result<(), Error> {
+    pub fn add_arc(&mut self, center: &PointF32, radius: f32, start_angle: f32, sweep: f32) -> Result<(), Error> {
         call_suite_fn!(self.suite, AddArc, self.handle, center, radius, start_angle, sweep)
     }
 
     /// Close the path.
-    pub fn close(&self) -> Result<(), Error> {
+    pub fn close(&mut self) -> Result<(), Error> {
         call_suite_fn!(self.suite, Close, self.handle)
     }
 }

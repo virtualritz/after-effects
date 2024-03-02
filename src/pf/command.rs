@@ -65,7 +65,7 @@ impl Command {
             },
             RawCommand::UpdateParamsUi => Command::UpdateParamsUi,
             RawCommand::Event => Command::Event {
-                extra: unsafe { EventExtra::from_raw(*(extra as *mut ae_sys::PF_EventExtra)) },
+                extra: EventExtra::from_raw(extra as *mut ae_sys::PF_EventExtra),
             },
             RawCommand::GetExternalDependencies => Command::GetExternalDependencies {
                 extra: extra as *mut ae_sys::PF_ExtDependenciesExtra,
@@ -76,9 +76,7 @@ impl Command {
             RawCommand::AudioSetup => Command::AudioSetup,
             RawCommand::AudioSetdown => Command::AudioSetdown,
             RawCommand::ArbitraryCallback => Command::ArbitraryCallback {
-                extra: unsafe {
-                    ArbParamsExtra::from_raw(*(extra as *mut ae_sys::PF_ArbParamsExtra))
-                },
+                extra: ArbParamsExtra::from_raw(extra as *mut ae_sys::PF_ArbParamsExtra),
             },
             RawCommand::SmartPreRender => Command::SmartPreRender {
                 extra: PreRenderExtra::from_raw(extra as *mut _),

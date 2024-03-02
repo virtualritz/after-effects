@@ -22,6 +22,9 @@ mod util_callbacks;     pub use util_callbacks::*;
 
 pub mod suites {
     pub(crate) mod effect_sequence_data;  pub use effect_sequence_data::EffectSequenceDataSuite  as EffectSequenceData;
+    pub(crate) mod effect_ui;             pub use effect_ui           ::EffectUISuite as EffectUI;
+    pub(crate) mod app;                   pub use app                 ::{ AppSuite as App,
+                                                                          AdvAppSuite as AdvApp };
     pub(crate) mod custom_ui;             pub use custom_ui           ::{ EffectCustomUISuite as EffectCustomUI,
                                                                           EffectCustomUIOverlayThemeSuite as EffectCustomUIOverlayTheme };
     pub(crate) mod iterate;               pub use iterate             ::{ Iterate8Suite     as Iterate8,
@@ -31,13 +34,27 @@ pub mod suites {
     pub(crate) mod utility;               pub use utility             ::UtilitySuite        as Utility;
     pub(crate) mod world;                 pub use world               ::WorldSuite          as World;
     pub(crate) mod handle;                pub use handle              ::HandleSuite         as Handle;
+    pub(crate) mod helper;                pub use helper              ::{ HelperSuite       as Helper,
+                                                                          HelperSuite2      as Helper2 };
     pub(crate) mod param_utils;           pub use param_utils         ::ParamUtilsSuite     as ParamUtils;
     pub(crate) mod gpu_device;            pub use gpu_device          ::GPUDeviceSuite      as GPUDevice;
 }
 
+pub use suites::app::{
+    AppColorType,
+    AppPersonalTextInfo,
+    AppProgressDialog,
+    CursorType,
+    EyeDropperSampleMode,
+    FontStyleSheet,
+};
 pub use suites::custom_ui::{
     ContextHandle,
-    CustomUIInfo
+    CustomUIInfo,
+};
+pub use suites::helper::{
+    SuiteTool,
+    ExtendedSuiteTool
 };
 pub use suites::param_utils::{
     PARAM_INDEX_NONE,
@@ -414,9 +431,9 @@ bitflags! {
         const CMD_CTRL_KEY    = ae_sys::PF_Mod_CMD_CTRL_KEY    as ae_sys::A_long;
         const SHIFT_KEY       = ae_sys::PF_Mod_SHIFT_KEY       as ae_sys::A_long;
         const CAPS_LOCK_KEY   = ae_sys::PF_Mod_CAPS_LOCK_KEY   as ae_sys::A_long;
-        // Option on macOS, alt on Windows.
+        /// Option on macOS, alt on Windows.
         const OPT_ALT_KEY     = ae_sys::PF_Mod_OPT_ALT_KEY     as ae_sys::A_long;
-        // Mac control key only
+        /// Mac control key only
         const MAC_CONTROL_KEY = ae_sys::PF_Mod_MAC_CONTROL_KEY as ae_sys::A_long;
     }
 }

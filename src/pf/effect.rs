@@ -10,6 +10,7 @@ define_suite_item_wrapper!(
     pf_utility: pf::suites::Utility,
     effect_sequence_data: pf::suites::EffectSequenceData,
     param_utils: pf::suites::ParamUtils,
+    effect_ui: pf::suites::EffectUI,
     /// TODO: write docs for Effect
     Effect {
         dispose: ;
@@ -209,6 +210,15 @@ define_suite_item_wrapper!(
 
         /// Returns the time (and timescale) of the specified keyframe.
         key_index_to_time(param_index: i32, key_index: i32) ->(i32, u32) => param_utils.key_index_to_time,
+
+        // ―――――――――――――――――――――――――――― Effect UI suite functions ――――――――――――――――――――――――――――
+
+        /// Changes the text on the options button in the effect controls palette.
+        ///
+        /// Button name can be up to 31 characters.
+        ///
+        /// NOTE: This must be called during [`Command::ParamSetup`].
+        set_options_button_name(name: &str) -> () => effect_ui.set_options_button_name,
     }
 );
 

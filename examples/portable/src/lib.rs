@@ -89,7 +89,7 @@ impl AdobePluginGlobal for Plugin {
         true
     }
 
-    fn params_setup(&self, params: &mut ae::Parameters<Params>) -> Result<(), Error> {
+    fn params_setup(&self, params: &mut ae::Parameters<Params>, _in_data: InData, _out_data: OutData) -> Result<(), Error> {
         params.add_param(
             Params::MixChannels,
             "Mix channels",
@@ -106,12 +106,7 @@ impl AdobePluginGlobal for Plugin {
         Ok(())
     }
 
-    fn handle_command(
-        &mut self,
-        cmd: ae::Command,
-        in_data: ae::InData,
-        mut out_data: ae::OutData,
-    ) -> Result<(), ae::Error> {
+    fn handle_command(&mut self, cmd: ae::Command, in_data: ae::InData, mut out_data: ae::OutData, _params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("Portable, v3.3\rThis example shows how to detect and respond to different hosts.\rCopyright 2007-2023 Adobe Inc.");

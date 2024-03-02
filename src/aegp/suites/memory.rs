@@ -28,7 +28,8 @@ impl MemorySuite {
     /// Use `name` to identify the memory you are asking for.
     /// After Effects uses the string to display any related error messages.
     pub fn new_mem_handle(&self, plugin_id: PluginId, name: &str, size: usize) -> Result<AEGP_MemHandle, Error> {
-        call_suite_fn_single!(self, AEGP_NewMemHandle -> AEGP_MemHandle, plugin_id, CString::new(name).unwrap().as_ptr(), size as u32, 0)
+        let name = CString::new(name).unwrap();
+        call_suite_fn_single!(self, AEGP_NewMemHandle -> AEGP_MemHandle, plugin_id, name.as_ptr(), size as u32, 0)
     }
 
     /// Release a handle you allocated using AEGP_NewMemHandle().
@@ -54,7 +55,8 @@ impl MemorySuite {
 
     /// Changes the allocated size of the handle.
     pub fn resize_mem_handle(&self, what: &str, new_size: usize, mem_handle: AEGP_MemHandle) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_ResizeMemHandle, CString::new(what).unwrap().as_ptr(), new_size as AEGP_MemSize, mem_handle)
+        let what = CString::new(what).unwrap();
+        call_suite_fn!(self, AEGP_ResizeMemHandle, what.as_ptr(), new_size as AEGP_MemSize, mem_handle)
     }
 
     /// If After Effects runs into problems with the memory handling, the error should be reported to the user.

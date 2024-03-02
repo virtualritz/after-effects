@@ -93,8 +93,23 @@ impl EffectCustomUIOverlayThemeSuite {
 }
 
 // ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
+
 register_handle!(PF_ContextH);
 define_handle_wrapper!(ContextHandle, PF_ContextH);
+
+impl ContextHandle {
+    pub fn drawing_reference(&self) -> Result<drawbot::Drawbot, Error> {
+        let suite = EffectCustomUISuite::new()?;
+        suite.drawing_reference(self.0)
+    }
+
+    pub fn window_type(&self) -> WindowType {
+        assert!(!self.as_ptr().is_null());
+        let inner = unsafe { *self.as_ptr() };
+        assert!(!inner.is_null());
+        unsafe { (*inner).w_type }.into()
+    }
+}
 
 #[derive(Copy, Clone, Debug)]
 pub struct CustomUIInfo(ae_sys::PF_CustomUIInfo);

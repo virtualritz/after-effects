@@ -23,9 +23,9 @@ macro_rules! define_plugin {
         trait AdobePluginGlobal : Default {
             fn can_load(host_name: &str, host_version: &str) -> bool;
 
-            fn params_setup(&self, params: &mut Parameters<$params_type>) -> Result<(), Error>;
+            fn params_setup(&self, params: &mut Parameters<$params_type>, in_data: InData, out_data: OutData) -> Result<(), Error>;
 
-            fn handle_command(&mut self, command: Command, in_data: InData, out_data: OutData, ) -> Result<(), Error>;
+            fn handle_command(&mut self, command: Command, in_data: InData, out_data: OutData, params: &mut Parameters<$params_type>) -> Result<(), Error>;
         }
         trait AdobePluginInstance : Default {
             fn flatten(&self) -> Result<(u16, Vec<u8>), Error>;
@@ -140,7 +140,7 @@ macro_rules! define_plugin {
             if cmd == RawCommand::ParamsSetup {
                 let mut params = Parameters::<$params_type>::new(global_inst.params_map.clone());
                 params.set_in_data(in_data_ptr);
-                global_inst.plugin_instance.params_setup(&mut params)?;
+                global_inst.plugin_instance.params_setup(&mut params, InData::from_raw(in_data_ptr), OutData::from_raw(out_data_ptr))?;
                 global_inst.params_num = params.num_params();
                 (*out_data_ptr).num_params = params.num_params() as i32;
             }
@@ -155,7 +155,7 @@ macro_rules! define_plugin {
 
             let command = Command::from_entry_point(cmd, in_data_ptr, params, output, extra);
 
-            let global_err = plugin_state.global.handle_command(command, in_data, out_data);
+            let global_err = plugin_state.global.handle_command(command, in_data, out_data, plugin_state.params);
             let mut sequence_err = None;
 
             if let Some((mut sequence_handle, needs_lock)) = sequence_handle {

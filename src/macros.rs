@@ -174,26 +174,27 @@ macro_rules! define_handle_wrapper {
 macro_rules! define_struct_wrapper {
     ($wrapper_pretty_name:ident, $data_type:ident) => {
         #[derive(Copy, Clone)]
-        pub struct $wrapper_pretty_name(after_effects_sys::$data_type);
+        pub struct $wrapper_pretty_name(*mut after_effects_sys::$data_type);
 
         impl $wrapper_pretty_name {
-            pub fn from_raw(ae_struct: after_effects_sys::$data_type) -> Self {
+            pub fn from_raw(ae_struct: *mut after_effects_sys::$data_type) -> Self {
+                assert!(!ae_struct.is_null());
                 Self(ae_struct)
-            }
-
-            pub fn into_raw(def: $wrapper_pretty_name) -> after_effects_sys::$data_type {
-                def.0
             }
         }
         impl AsRef<after_effects_sys::$data_type> for $wrapper_pretty_name {
             fn as_ref(&self) -> &after_effects_sys::$data_type {
-                &self.0
+                unsafe { &*self.0 }
             }
         }
-
-        impl From<$wrapper_pretty_name> for after_effects_sys::$data_type {
-            fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
-                handle_wrapper.0
+        impl AsMut<after_effects_sys::$data_type> for $wrapper_pretty_name {
+            fn as_mut(&mut self) -> &mut after_effects_sys::$data_type {
+                unsafe { &mut *self.0 }
+            }
+        }
+        impl AsPtr<*mut after_effects_sys::$data_type> for $wrapper_pretty_name {
+            fn as_ptr(&self) -> *mut after_effects_sys::$data_type {
+                self.0
             }
         }
     };
@@ -361,7 +362,7 @@ macro_rules! define_struct {
         pub struct $name {
             $(
                 $(#[$fattr])*
-                $field: $type,
+                pub $field: $type,
             )*
         }
         impl From<$name> for $raw_type {

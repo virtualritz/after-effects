@@ -107,6 +107,7 @@ impl SurfaceSuite {
 define_enum! {
     ae_sys::DRAWBOT_FillType,
     FillType {
+        // Default = ae_sys::kDRAWBOT_FillType_Winding,
         EvenOdd = ae_sys::kDRAWBOT_FillType_EvenOdd,
         Winding = ae_sys::kDRAWBOT_FillType_Winding,
     }

@@ -95,7 +95,8 @@ AfterEffectsSDK
 
 # Wrapped suites:
 ## After Effects:
-- [ ] AE Plugin Helper
+- [x] AE Plugin Helper
+- [x] AE Plugin Helper 2
 - [ ] AEGP Artisan Util
 - [x] AEGP Camera
 - [x] AEGP Canvas
@@ -151,10 +152,10 @@ AfterEffectsSDK
 - [x] DRAWBOT Pen
 - [x] DRAWBOT Supplier
 - [x] DRAWBOT Surface
-- [ ] PF AE Adv App
+- [x] PF AE Adv App
 - [ ] PF AE Adv Item
 - [ ] PF AE Adv Time
-- [ ] PF AE App
+- [x] PF AE App
 - [ ] PF AngleParam
 - [ ] PF ANSI
 - [ ] PF Background Frame
@@ -168,7 +169,7 @@ AfterEffectsSDK
 - [x] PF Effect Custom UI
 - [x] PF Effect Custom UI Overlay Theme
 - [x] PF Effect Sequence Data
-- [ ] PF Effect UI
+- [x] PF Effect UI
 - [ ] PF Fill Matte
 - [x] PF GPU Device
 - [ ] PF Handle

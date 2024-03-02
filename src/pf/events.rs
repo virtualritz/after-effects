@@ -18,11 +18,11 @@ define_struct_wrapper!(ClickEventInfo, PF_DoClickEventInfo);
 
 impl ClickEventInfo {
     pub fn screen_point(&self) -> Point {
-        self.0.screen_point.into()
+        self.as_ref().screen_point.into()
     }
 
     pub fn num_clicks(&self) -> u32 {
-        self.0.num_clicks as _
+        self.as_ref().num_clicks as _
     }
 }
 
@@ -76,17 +76,21 @@ define_struct_wrapper!(EventExtra, PF_EventExtra);
 
 impl std::fmt::Debug for EventExtra {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EventExtra")
-            .field("event", &self.event())
-            .field("window_type", &self.window_type())
-            .field("param_index", &self.param_index())
-            .field("effect_area", &self.effect_area())
-            .field("current_frame", &self.current_frame())
-            .field("param_title_frame", &self.param_title_frame())
-            .field("horiz_offset", &self.horiz_offset())
-            .field("modifiers", &self.modifiers())
-            .field("last_time", &self.last_time())
-            .finish()
+        let mut dbg = f.debug_struct("EventExtra");
+        dbg.field("event", &self.event());
+        dbg.field("window_type", &self.window_type());
+        dbg.field("param_index", &self.param_index());
+        dbg.field("effect_area", &self.effect_area());
+        dbg.field("current_frame", &self.current_frame());
+        dbg.field("param_title_frame", &self.param_title_frame());
+        dbg.field("horiz_offset", &self.horiz_offset());
+        if [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG, ae_sys::PF_Event_ADJUST_CURSOR].contains(&self.as_ref().e_type) {
+            dbg.field("modifiers", &self.modifiers());
+        }
+        if [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type) {
+            dbg.field("last_time", &self.last_time());
+        }
+        dbg.finish()
     }
 }
 
@@ -110,105 +114,115 @@ define_enum! {
 
 impl EventExtra {
     pub fn context_handle(&self) -> ContextHandle {
-        ContextHandle::from_raw(self.0.contextH)
+        ContextHandle::from_raw(self.as_ref().contextH)
     }
 
     pub fn event(&self) -> Event {
-        match self.0.e_type {
+        match self.as_ref().e_type {
             ae_sys::PF_Event_NEW_CONTEXT => Event::NewContext,
             ae_sys::PF_Event_ACTIVATE => Event::Activate,
             ae_sys::PF_Event_DO_CLICK => {
-                Event::Click(ClickEventInfo::from_raw(unsafe { self.0.u.do_click }))
+                Event::Click(ClickEventInfo::from_raw(unsafe { &self.as_ref().u.do_click as *const _ as *mut _ }))
             }
             ae_sys::PF_Event_DRAG => {
-                Event::Drag(ClickEventInfo::from_raw(unsafe { self.0.u.do_click }))
+                Event::Drag(ClickEventInfo::from_raw(unsafe { &self.as_ref().u.do_click as *const _ as *mut _ }))
             }
-            ae_sys::PF_Event_DRAW => Event::Draw(DrawEventInfo::from_raw(unsafe { self.0.u.draw })),
+            ae_sys::PF_Event_DRAW => Event::Draw(DrawEventInfo::from_raw(unsafe { &self.as_ref().u.draw as *const _ as *mut _ })),
             ae_sys::PF_Event_DEACTIVATE => Event::Deactivate,
             ae_sys::PF_Event_CLOSE_CONTEXT => Event::CloseContext,
             ae_sys::PF_Event_IDLE => Event::Idle,
             ae_sys::PF_Event_ADJUST_CURSOR => {
                 Event::AdjustCursor(AdjustCursorEventInfo::from_raw(unsafe {
-                    self.0.u.adjust_cursor
+                    &self.as_ref().u.adjust_cursor as *const _ as *mut _
                 }))
             }
             ae_sys::PF_Event_KEYDOWN => {
-                Event::Keydown(KeyDownEventInfo::from_raw(unsafe { self.0.u.key_down }))
+                Event::Keydown(KeyDownEventInfo::from_raw(unsafe { &self.as_ref().u.key_down as *const _ as *mut _ }))
             }
             ae_sys::PF_Event_MOUSE_EXITED => Event::MouseExited,
             _ => unreachable!(),
         }
     }
 
+    pub fn set_cursor(&mut self, cursor: CursorType) {
+        self.as_mut().u.adjust_cursor.set_cursor = cursor.into();
+    }
+
     pub fn window_type(&self) -> WindowType {
-        WindowType::try_from(unsafe { **self.0.contextH }.w_type).unwrap()
+        unsafe { **self.as_ref().contextH }.w_type.into()
     }
 
     pub fn event_out_flags(&mut self, flags: EventOutFlags) {
-        self.0.evt_out_flags = flags.bits() as _;
+        self.as_mut().evt_out_flags = flags.bits() as _;
     }
 
     pub fn param_index(&self) -> usize {
-        self.0.effect_win.index as _
+        self.as_ref().effect_win.index as _
     }
 
     pub fn effect_area(&self) -> EffectArea {
-        self.0.effect_win.area.into()
+        self.as_ref().effect_win.area.into()
     }
 
     pub fn current_frame(&self) -> Rect {
-        unsafe { std::mem::transmute(self.0.effect_win.current_frame) }
+        self.as_ref().effect_win.current_frame.into()
     }
 
     pub fn param_title_frame(&self) -> Rect {
-        unsafe { std::mem::transmute(self.0.effect_win.param_title_frame) }
+        self.as_ref().effect_win.param_title_frame.into()
     }
 
     pub fn horiz_offset(&self) -> i32 {
-        self.0.effect_win.horiz_offset
+        self.as_ref().effect_win.horiz_offset
     }
 
     pub fn modifiers(&self) -> Modifiers {
         debug_assert!(
-            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.0.e_type),
-            "The modifiers() method is only valid if event() is Click or Drag."
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG, ae_sys::PF_Event_ADJUST_CURSOR].contains(&self.as_ref().e_type),
+            "The modifiers() method is only valid if event() is Click, Drag or AdjustCursor."
         );
-        unsafe { Modifiers::from_bits(self.0.u.do_click.modifiers as _).unwrap() }
+        log::info!("type: {}", self.as_ref().e_type);
+        log::info!("modifiers: {}", unsafe { self.as_ref().u.do_click.modifiers } );
+        if self.as_ref().e_type == ae_sys::PF_Event_ADJUST_CURSOR {
+            return unsafe { Modifiers::from_bits_truncate(self.as_ref().u.adjust_cursor.modifiers as _) }
+        }
+
+        unsafe { Modifiers::from_bits_truncate(self.as_ref().u.do_click.modifiers as _) }
     }
 
     pub fn set_continue_refcon(&mut self, index: usize, value: ae_sys::A_intptr_t) {
         debug_assert!(
-            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.0.e_type),
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
             "The continue_refcon() method is only valid if event() is Click or Drag."
         );
         debug_assert!(index < 4);
         unsafe {
-            self.0.u.do_click.continue_refcon[index] = value;
+            self.as_mut().u.do_click.continue_refcon[index] = value;
         }
     }
 
     pub fn continue_refcon(&self, index: usize) -> ae_sys::A_intptr_t {
         debug_assert!(
-            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.0.e_type),
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
             "The get_continue_refcon() method is only valid if event() is Click or Drag."
         );
         debug_assert!(index < 4);
-        unsafe { self.0.u.do_click.continue_refcon[index] }
+        unsafe { self.as_ref().u.do_click.continue_refcon[index] }
     }
 
     pub fn send_drag(&mut self, send: bool) {
         debug_assert!(
-            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.0.e_type),
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
             "The send_drag() method is only valid if event() is Click or Drag."
         );
-        self.0.u.do_click.send_drag = send as _;
+        self.as_mut().u.do_click.send_drag = send as _;
     }
 
     pub fn last_time(&self) -> bool {
         debug_assert!(
-            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.0.e_type),
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
             "The last_time() method is only valid if event() is Click or Drag."
         );
-        unsafe { self.0.u.do_click.last_time != 0 }
+        unsafe { self.as_ref().u.do_click.last_time != 0 }
     }
 }
