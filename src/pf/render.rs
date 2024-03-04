@@ -90,11 +90,9 @@ impl PreRenderExtra {
         assert!(!self.as_mut().output.is_null());
         unsafe {
             if val {
-                (*self.as_mut().output).flags |=
-                    ae_sys::PF_RenderOutputFlag_GPU_RENDER_POSSIBLE as i16;
+                (*self.as_mut().output).flags |= ae_sys::PF_RenderOutputFlag_GPU_RENDER_POSSIBLE as i16;
             } else {
-                (*self.as_mut().output).flags &=
-                    !ae_sys::PF_RenderOutputFlag_GPU_RENDER_POSSIBLE as i16;
+                (*self.as_mut().output).flags &= !ae_sys::PF_RenderOutputFlag_GPU_RENDER_POSSIBLE as i16;
             }
         }
     }
@@ -180,7 +178,7 @@ impl SmartRenderExtra {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).bitdepth }
     }
-    pub fn gpu_data<'a, T: Any>(&'a self) -> Option<&'a T> {
+    pub fn gpu_data<T: Any>(&self) -> Option<&T> {
         assert!(!self.as_ref().input.is_null());
         if unsafe { (*(*self.ptr).input).gpu_data.is_null() } {
             return None;
@@ -193,7 +191,7 @@ impl SmartRenderExtra {
             None => panic!("Invalid type for gpu_data"),
         }
     }
-    pub fn pre_render_data<'a, T: Any>(&'a self) -> Option<&'a T> {
+    pub fn pre_render_data< T: Any>(&self) -> Option<&T> {
         assert!(!self.as_ref().input.is_null());
         if unsafe { (*(*self.ptr).input).pre_render_data.is_null() } {
             return None;

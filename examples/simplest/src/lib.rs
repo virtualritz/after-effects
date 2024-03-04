@@ -15,12 +15,12 @@ impl AdobePluginGlobal for Plugin {
     fn can_load(_host_name: &str, _host_version: &str) -> bool { true }
 
     fn params_setup(&self, params: &mut ae::Parameters<Params>, _: ae::InData, _: ae::OutData) -> Result<(), Error> {
-        params.add_param(Params::Opacity, "Opacity", ae::FloatSliderDef::new()
-            .set_slider_min(0.0)
-            .set_slider_max(100.0)
-            .set_valid_min(0.0)
-            .set_valid_max(100.0)
-        );
+        params.add_param(Params::Opacity, "Opacity", ae::FloatSliderDef::setup(|f| {
+            f.set_slider_min(0.0);
+            f.set_slider_max(100.0);
+            f.set_valid_min(0.0);
+            f.set_valid_max(100.0);
+        }));
         Ok(())
     }
     fn handle_command(&mut self, _: ae::Command, _: ae::InData, _: ae::OutData, _: &mut ae::Parameters<Params>) -> Result<(), ae::Error> { Ok(()) }
@@ -33,7 +33,7 @@ impl AdobePluginInstance for Instance {
     fn user_changed_param(&mut self, _: &mut PluginState, _: Params) -> Result<(), ae::Error> { Ok(()) }
 
     fn render(&self, plugin: &mut PluginState, in_layer: &Layer, out_layer: &mut Layer) -> Result<(), ae::Error> {
-        let slider_value = plugin.params.get_float_slider(Params::Opacity, None, None, None).unwrap().value();
+        let slider_value = plugin.params.get(Params::Opacity, None, None, None)?.as_float_slider()?.value();
 
         let extent_hint = plugin.in_data.extent_hint();
 

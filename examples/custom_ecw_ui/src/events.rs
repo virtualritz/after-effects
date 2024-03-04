@@ -3,16 +3,15 @@ use super::*;
 static mut PPRO_GRAY: f32 = 0.0;
 
 pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> Result<(), ae::Error> {
-    let param = params.get_color(Params::Color, None, None, None).unwrap();
-    let param_color = param.value();
-
 	// Premiere Pro/Elements does not support a standard parameter type with custom UI (bug #1235407), so we can't use the color values.
-	// Use an static grey value instead.
+	// Use an static gray value instead.
 	let drawbot_color = if in_data.application_id() != *b"PrMr" {
+        let param_color = params.get(Params::Color, None, None, None)?.as_color()?.value();
+
         ae::drawbot::ColorRgba {
-            red:   param_color.red as f32 / 255.0,
+            red:   param_color.red   as f32 / 255.0,
             green: param_color.green as f32 / 255.0,
-            blue:  param_color.blue as f32 / 255.0,
+            blue:  param_color.blue  as f32 / 255.0,
             alpha: 1.0,
         }
 	} else {
@@ -78,9 +77,9 @@ pub fn drag(params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> 
         if event.effect_area() == ae::EffectArea::Control {
             let mouse_down = drag.screen_point();
             event.set_continue_refcon(1, mouse_down.h as _);
-            let param = params.get_param_def_mut(Params::Color, None, None, None).unwrap();
+            let mut param = params.get_mut(Params::Color, None, None, None)?;
+            let mut color = param.as_color_mut()?;
 
-            let Param::Color(mut color) = param.to_param() else { return Err(ae::Error::InvalidParms) };
             let current_color = color.value();
             color.set_value(ae::Pixel8 {
                 red:   (((mouse_down.h as u16) << 8) / UI_BOX_WIDTH) as u8,

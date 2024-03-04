@@ -57,7 +57,7 @@ impl ParamUtilsSuite {
 	/// For `PF_PUI_STD_CONTROL_ONLY` params, you can also change the value field by setting `PF_ChangeFlag_CHANGED_VALUE` before returning.
     /// But you are not allowed to change the value during `PF_Cmd_UPDATE_PARAMS_UI`.
     pub fn update_param_ui(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, param_def: &ParamDef) -> Result<(), Error> {
-        call_suite_fn!(self, PF_UpdateParamUI, effect_ref.as_ptr(), param_index, param_def.as_ptr())
+        call_suite_fn!(self, PF_UpdateParamUI, effect_ref.as_ptr(), param_index, param_def.as_ref())
     }
 
     /// This API, combined with [`are_states_identical()`](Self::are_states_identical) below, lets you determine if a set of inputs (either layers, other properties, or both)

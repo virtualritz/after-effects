@@ -1,31 +1,32 @@
 use super::*;
 use c_vec::CVec;
-use std::ffi::CStr;
-use std::ffi::CString;
+use std::ffi::{ CStr, CString };
+use ae_sys::PF_PathID;
 
-#[derive(Clone, Copy, Debug)]
-#[repr(i32)]
-pub enum ParamType {
-    Reserved = ae_sys::PF_Param_RESERVED,
-    Layer = ae_sys::PF_Param_LAYER,
-    Slider = ae_sys::PF_Param_SLIDER,
-    FixSlider = ae_sys::PF_Param_FIX_SLIDER,
-    Angle = ae_sys::PF_Param_ANGLE,
-    CheckBox = ae_sys::PF_Param_CHECKBOX,
-    Color = ae_sys::PF_Param_COLOR,
-    Point = ae_sys::PF_Param_POINT,
-    PopUp = ae_sys::PF_Param_POPUP,
-    Custom = ae_sys::PF_Param_CUSTOM,
-    NoData = ae_sys::PF_Param_NO_DATA,
-    FloatSlider = ae_sys::PF_Param_FLOAT_SLIDER,
-    ArbitraryData = ae_sys::PF_Param_ARBITRARY_DATA,
-    Path = ae_sys::PF_Param_PATH,
-    GroupStart = ae_sys::PF_Param_GROUP_START,
-    GroupEnd = ae_sys::PF_Param_GROUP_END,
-    Button = ae_sys::PF_Param_BUTTON,
-    Reserved2 = ae_sys::PF_Param_RESERVED2,
-    Reserved3 = ae_sys::PF_Param_RESERVED3,
-    Point3D = ae_sys::PF_Param_POINT_3D,
+define_enum! {
+    ae_sys::PF_ParamType,
+    ParamType {
+        Reserved      = ae_sys::PF_Param_RESERVED,
+        Layer         = ae_sys::PF_Param_LAYER,
+        Slider        = ae_sys::PF_Param_SLIDER,
+        FixSlider     = ae_sys::PF_Param_FIX_SLIDER,
+        Angle         = ae_sys::PF_Param_ANGLE,
+        CheckBox      = ae_sys::PF_Param_CHECKBOX,
+        Color         = ae_sys::PF_Param_COLOR,
+        Point         = ae_sys::PF_Param_POINT,
+        PopUp         = ae_sys::PF_Param_POPUP,
+        Custom        = ae_sys::PF_Param_CUSTOM,
+        NoData        = ae_sys::PF_Param_NO_DATA,
+        FloatSlider   = ae_sys::PF_Param_FLOAT_SLIDER,
+        ArbitraryData = ae_sys::PF_Param_ARBITRARY_DATA,
+        Path          = ae_sys::PF_Param_PATH,
+        GroupStart    = ae_sys::PF_Param_GROUP_START,
+        GroupEnd      = ae_sys::PF_Param_GROUP_END,
+        Button        = ae_sys::PF_Param_BUTTON,
+        Reserved2     = ae_sys::PF_Param_RESERVED2,
+        Reserved3     = ae_sys::PF_Param_RESERVED3,
+        Point3D       = ae_sys::PF_Param_POINT_3D,
+    }
 }
 
 bitflags! {
@@ -35,16 +36,16 @@ bitflags! {
         const TOPIC = ae_sys::PF_PUI_TOPIC as ae_sys::A_long;
         /// Effect has custom UI and wants events for this params' control (portion invisible when twirled up).
         const CONTROL = ae_sys::PF_PUI_CONTROL as ae_sys::A_long;
-        // Param will be used as UI only, no data.
+        /// Param will be used as UI only, no data.
         const CONTROL_ONLY = ae_sys::PF_PUI_STD_CONTROL_ONLY as ae_sys::A_long;
-        // Stop param from appearing in Effect Controls (which in PPro also means you won't see a keyframe track there).
+        /// Stop param from appearing in Effect Controls (which in PPro also means you won't see a keyframe track there).
         const NO_ECW_UI = ae_sys::PF_PUI_NO_ECW_UI as ae_sys::A_long;
-        // Draw a thick separating line above this param; not used by Ae.
+        /// Draw a thick separating line above this param; not used by Ae.
         const ECW_SEPARATOR = ae_sys::PF_PUI_ECW_SEPARATOR as ae_sys::A_long;
-        // Disable (gray-out) UI for this parameter.
+        /// Disable (gray-out) UI for this parameter.
         const DISABLED = ae_sys::PF_PUI_DISABLED as ae_sys::A_long;
-        // Ae will not erase the ECW topic, it's up to the FX to erase/draw every pixel.
-        // Handy if FX author implements an offscreen, prevents flashing.
+        /// Ae will not erase the ECW topic, it's up to the FX to erase/draw every pixel.
+        /// Handy if FX author implements an offscreen, prevents flashing.
         const DO_NOT_ERASE_TOPIC = ae_sys::PF_PUI_DONT_ERASE_TOPIC as ae_sys::A_long;
         const DO_NOT_ERASE_CONTROL = ae_sys::PF_PUI_DONT_ERASE_CONTROL as ae_sys::A_long;
         /// Display as a radio-button group; only valid for PF_Param_POPUP; ignored by Ae.
@@ -59,27 +60,51 @@ bitflags! {
 
 bitflags! {
     pub struct ParamFlag: ae_sys::A_long {
-        const RESERVED1                        = ae_sys::PF_ParamFlag_RESERVED1                        as ae_sys::A_long;
-        const CANNOT_TIME_VARY                 = ae_sys::PF_ParamFlag_CANNOT_TIME_VARY                 as ae_sys::A_long;
-        const CANNOT_INTERP                    = ae_sys::PF_ParamFlag_CANNOT_INTERP                    as ae_sys::A_long;
-        const RESERVED2                        = ae_sys::PF_ParamFlag_RESERVED2                        as ae_sys::A_long;
-        const RESERVED3                        = ae_sys::PF_ParamFlag_RESERVED3                        as ae_sys::A_long;
-        const TWIRLY                           = ae_sys::PF_ParamFlag_COLLAPSE_TWIRLY                  as ae_sys::A_long;
-        const SUPERVISE                        = ae_sys::PF_ParamFlag_SUPERVISE                        as ae_sys::A_long;
-        const START_COLLAPSED                  = ae_sys::PF_ParamFlag_START_COLLAPSED                  as ae_sys::A_long;
-        const USE_VALUE_FOR_OLD_PROJECTS       = ae_sys::PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS       as ae_sys::A_long;
-        const LAYER_PARAM_IS_TRACKMATTE        = ae_sys::PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE        as ae_sys::A_long;
+        /// If this is passed, the parameter will not be allowed to vary over time -- no keyframe controller will appear at the right.
+        const CANNOT_TIME_VARY = ae_sys::PF_ParamFlag_CANNOT_TIME_VARY as ae_sys::A_long;
+        /// If this is passed, parameter values are not interpolated between. You can still use no interp and discontinuous interp.
+        const CANNOT_INTERP = ae_sys::PF_ParamFlag_CANNOT_INTERP as ae_sys::A_long;
+        /// Set this flag if you want the parameter's twirly arrow in the Effect Control Window to be twirled up by default when the effect is first applied.
+        /// New in AE 4.0: you can now set & clear this bit when handling `PF_Cmd_UPDATE_PARAMS_UI` and `PF_Cmd_USER_CHANGED_PARAM` messages, so as to twirl your parameters and groups up and down at will.
+        ///
+        /// Same as [`ParamFlag::START_COLLAPSED`]
+        const TWIRLY = ae_sys::PF_ParamFlag_COLLAPSE_TWIRLY as ae_sys::A_long;
+        /// If this is passed, PF_Cmd_USER_CHANGED_PARAM will be sent when this parameter changes.
+        const SUPERVISE = ae_sys::PF_ParamFlag_SUPERVISE as ae_sys::A_long;
+        /// Set this flag if you want the parameter's twirly arrow in the Effect Control Window to be twirled up by default when the effect is first applied.
+        /// New in AE 4.0: you can now set & clear this bit when handling `PF_Cmd_UPDATE_PARAMS_UI` and `PF_Cmd_USER_CHANGED_PARAM` messages, so as to twirl your parameters and groups up and down at will.
+        ///
+        /// Same as [`ParamFlag::TWIRLY`]
+        const START_COLLAPSED = ae_sys::PF_ParamFlag_START_COLLAPSED as ae_sys::A_long;
+        /// This only affects the loading of projects saved with an older version of the effect which lacks parameters added later.
+        /// When set, the PF_ParamDef "value" field set in PF_ADD_PARAM will be used to initialize the missing parameter,
+        /// but the "dephault" field will still be used for initial value of the parameter when the effect is newly applied or reset.
+        /// This is useful for when you want a parameter to default to one value but need it set to something else to preserve rendering behaviour for older projects.
+        ///
+        /// This flag is valid for all PF_Param types except PF_Param_LAYER
+        const USE_VALUE_FOR_OLD_PROJECTS = ae_sys::PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS as ae_sys::A_long;
+        /// For PF_Param_LAYER, this flag indicates that the layer parameter is to be presented as a track matte. Supported by Premiere, ignored in AE.
+        const LAYER_PARAM_IS_TRACKMATTE = ae_sys::PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE as ae_sys::A_long;
+        /// See doc for [`pf::suites::ParamUtils::are_states_identical()`].
         const EXCLUDE_FROM_HAVE_INPUTS_CHANGED = ae_sys::PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED as ae_sys::A_long;
-        const SKIP_REVEAL_WHEN_UNHIDDEN        = ae_sys::PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN        as ae_sys::A_long;
+        /// When this param is "un hidden" (cuz it may hide and show), then the GUI is NOT to cause the parameter to be "revealed", ie: it won't twirl down it's parents and scroll it into view
+        const SKIP_REVEAL_WHEN_UNHIDDEN = ae_sys::PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN as ae_sys::A_long;
     }
 }
 
 bitflags! {
     pub struct ChangeFlag: ae_sys::A_long {
-        const NONE            = ae_sys::PF_ChangeFlag_NONE            as ae_sys::A_long;
-        const CHANGED_VALUE   = ae_sys::PF_ChangeFlag_CHANGED_VALUE   as ae_sys::A_long;
-        const RESERVED        = ae_sys::PF_ChangeFlag_RESERVED        as ae_sys::A_long;
-        const SET_TO_VARY     = ae_sys::PF_ChangeFlag_SET_TO_VARY     as ae_sys::A_long;
+        const NONE = ae_sys::PF_ChangeFlag_NONE as ae_sys::A_long;
+        /// Set this flag for each param whose value you change when handling a `PF_Cmd_USER_CHANGED_PARAM` or specific `PF_Cmd_EVENT` events (`PF_Event_DO_CLICK`, `PF_Event_DRAG`, & `PF_Event_KEYDOWN`).
+        /// If set during `PF_Cmd_EVENT`, but sure to also set `PF_EO_HANDLED_EVENT` before returning.
+        ///
+		/// You can change as many params as you want at once. These changes are undoable and re-doable by the user.
+        ///
+        /// Exception: do not set PF_PUI_STD_CONTROL_ONLY param values with this flag, use PF_UpdateParamUI() instead.
+        const CHANGED_VALUE = ae_sys::PF_ChangeFlag_CHANGED_VALUE as ae_sys::A_long;
+        /// Not yet implemented.  Same restrictions as PF_ChangeFlag_CHANGED_VALUE.
+        const SET_TO_VARY = ae_sys::PF_ChangeFlag_SET_TO_VARY as ae_sys::A_long;
+        /// Not yet implemented.  Same restrictions as PF_ChangeFlag_CHANGED_VALUE.
         const SET_TO_CONSTANT = ae_sys::PF_ChangeFlag_SET_TO_CONSTANT as ae_sys::A_long;
     }
 }
@@ -87,374 +112,268 @@ bitflags! {
 bitflags! {
     pub struct ValueDisplayFlag: u16 {
         const NONE = ae_sys::PF_ValueDisplayFlag_NONE as u16;
+        /// Append % to value display for A_FpShort sliders (for fixed-point sliders, also maps range into 0-100%)
         const PERCENT = ae_sys::PF_ValueDisplayFlag_PERCENT as u16;
+        /// Assume 0..1 is a pixel value, either 0..255,  0..32768, or 0..1.0 in UI (value will always be 0..1),
         const PIXEL = ae_sys::PF_ValueDisplayFlag_PIXEL as u16;
-        const RESERVED = ae_sys::PF_ValueDisplayFlag_RESERVED1 as u16;
+        /// Presentation negates values. eg: a true -5 would be presented as "5", and typing in "22" would store in the model as -22
         const REVERSE = ae_sys::PF_ValueDisplayFlag_REVERSE as u16;
     }
 }
 
-//define_param_wrapper!(ButtonDef, PF_ButtonDef, button_def);
-
-#[repr(C)]
-#[derive(Clone)]
-pub struct ButtonDef(ae_sys::PF_ButtonDef, CString);
-
-//define_param_value_str_wrapper!(ButtonDef, button_def);
-//define_param_value_desc_wrapper!(ButtonDef, button_def);
-
-impl ButtonDef {
-    pub fn new() -> Self {
-        Self(
-            unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
-            CString::new("").unwrap(),
-        )
+bitflags! {
+    pub struct FSliderFlag: u16 {
+        const NONE = ae_sys::PF_FSliderFlag_NONE as u16;
+        /// Works for audio effects only
+        const WANT_PHASE = ae_sys::PF_FSliderFlag_WANT_PHASE as u16;
     }
+}
 
-    pub fn from_raw(def: ae_sys::PF_ButtonDef) -> Self {
-        Self(def, CString::new("").unwrap())
-    }
-
-    pub fn label(mut self, label: &str) -> Self {
-        self.1 = CString::new(label).unwrap();
-        self.0.u.namesptr = self.1.as_ptr();
+// ―――――――――――――――――――――――――――――――――――― Angle ―――――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_ANGLE, PF_AngleDef, ad,
+    Param::Angle,
+    AngleDef { },
+    impl value: Fixed,
+}
+impl AngleDef<'_> {
+    pub fn set_default(&mut self, v: f32) -> &mut Self {
+        self.def.dephault = Fixed::from(v).into();
         self
     }
+    pub fn default(&self) -> f32 {
+        Fixed::from(self.def.dephault).into()
+    }
+}
+// ―――――――――――――――――――――――――――――――――――― Angle ―――――――――――――――――――――――――――――――――――――
 
-    pub fn from(param: &ParamDef) -> Option<Self> {
-        if ae_sys::PF_Param_BUTTON == param.param_def_boxed.param_type {
-            Some(Self(unsafe { param.param_def_boxed.u.button_d }, unsafe {
-                CString::from_raw(param.param_def_boxed.u.button_d.u.namesptr as _)
-            }))
+// ―――――――――――――――――――――――――――――――――――― Button ―――――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_BUTTON, PF_ButtonDef, button_d,
+    Param::Button,
+    ButtonDef {
+        label: CString,
+    },
+    impl label: String,
+}
+// ―――――――――――――――――――――――――――――――――――― Button ―――――――――――――――――――――――――――――――――――――
+
+// ――――――――――――――――――――――――――――――――――― Checkbox ――――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_CHECKBOX, PF_CheckBoxDef, bd,
+    Param::CheckBox,
+    CheckBoxDef {
+        label: CString,
+    },
+    impl value: bool,
+}
+impl<'a> CheckBoxDef<'_> {
+    pub fn set_default(&mut self, v: bool) -> &mut Self {
+        self.def.dephault = if v { 1 } else { 0 };
+        self
+    }
+    pub fn default(&self) -> bool {
+        self.def.dephault != 0
+    }
+    pub fn set_label(&mut self, v: &str) -> &mut Self {
+        self.label = CString::new(v).unwrap();
+        self.def.u.nameptr = self.label.as_ptr();
+        self
+    }
+    pub fn label(&self) -> &str {
+        unsafe { CStr::from_ptr(self.def.u.nameptr).to_str().unwrap() }
+    }
+}
+// ――――――――――――――――――――――――――――――――――― Checkbox ――――――――――――――――――――――――――――――――――――
+
+// ―――――――――――――――――――――――――――――――――――― Color ――――――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_COLOR, PF_ColorDef, cd,
+    Param::Color,
+    ColorDef { },
+    impl value: Pixel8,
+    impl default: Pixel8,
+}
+// ―――――――――――――――――――――――――――――――――――― Color ――――――――――――――――――――――――――――――――――――――
+
+// ―――――――――――――――――――――――――――――――――――― Slider ―――――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_SLIDER, PF_SliderDef, sd,
+    Param::Slider,
+    SliderDef { },
+    impl value: i32,
+    impl default: i32,
+    impl valid_min: i32,
+    impl valid_max: i32,
+    impl slider_min: i32,
+    impl slider_max: i32,
+    impl value_str: ShortString,
+    impl value_desc: ShortString,
+}
+// ―――――――――――――――――――――――――――――――――――― Slider ―――――――――――――――――――――――――――――――――――――
+
+// Adobe recommends not using fixed (point) sliders any more and instead use float sliders.
+// Do not define FixedSliderDef
+
+// ―――――――――――――――――――――――――――――――――― FloatSlider ――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_FLOAT_SLIDER, PF_FloatSliderDef, fs_d,
+    Param::FloatSlider,
+    FloatSliderDef { },
+    impl value: f64,
+    impl phase: f64,
+    impl default: f64,
+    impl precision: i16,
+    impl curve_tolerance: f32,
+    impl valid_min: f32,
+    impl valid_max: f32,
+    impl slider_min: f32,
+    impl slider_max: f32,
+    impl value_desc: ShortString,
+}
+impl FloatSliderDef<'_> {
+    pub fn set_display_flags(&mut self, flags: ValueDisplayFlag) -> &mut Self {
+        self.def.display_flags = flags.bits() as _;
+        self
+    }
+    pub fn display_flags(&self) -> ValueDisplayFlag {
+        ValueDisplayFlag::from_bits_truncate(self.def.display_flags as _)
+    }
+    pub fn set_flags(&mut self, flags: FSliderFlag) -> &mut Self {
+        self.def.fs_flags = flags.bits() as _;
+        self
+    }
+    pub fn flags(&self) -> FSliderFlag {
+        FSliderFlag::from_bits_truncate(self.def.fs_flags as _)
+    }
+    pub fn set_exponent(&mut self, v: f32) -> &mut Self {
+        self.def.exponent = v;
+        self.def.useExponent = 1;
+        self
+    }
+    pub fn exponent(&self) -> Option<f32> {
+        if self.def.useExponent == 1 {
+            Some(self.def.exponent)
         } else {
             None
         }
     }
+}
+// ―――――――――――――――――――――――――――――――――― FloatSlider ――――――――――――――――――――――――――――――――――
 
-    pub fn into_raw(def: ButtonDef) -> ae_sys::PF_ButtonDef {
-        let ret = def.0;
-        std::mem::forget(def);
-        ret
+// ―――――――――――――――――――――――――――――――――――― Path ―――――――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_PATH, PF_PathDef, path_d,
+    Param::Path,
+    /// Path parameters give access to the mask/path/shapes of the layer on which the effect is applied.
+    /// For more information on how to use these paths, see the `PF_PathQuerySuite`, and the `PF_PathDataSuite`
+    /// * `path_id` - to be used with `PF_CheckoutPath()` note that path_id != `PF_PathID_NONE` does not guarantee that `PF_CheckoutPath` will return a valid path (it may have been deleted)
+    /// * `default` - 0 means that the default is NONE, other numbers are the 1-based index of the path, if the path doesn't exist, the `path_id` value will be `PF_PathID_NONE`.
+    PathDef { },
+    impl path_id: PF_PathID,
+    impl default: i32,
+}
+// ―――――――――――――――――――――――――――――――――――― Path ―――――――――――――――――――――――――――――――――――――――
+
+// ―――――――――――――――――――――――――――――――――――― Point ――――――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_POINT, PF_PointDef, td,
+    Param::Point,
+    /// The values for the point use the source's coordinate system, with the origin at the top left.
+    ///
+    /// The defaults are expressed as percentages with the origin at the top left.
+    /// The percent can be negative, but should not be smaller than -600%. It should not be greater than 600%.
+    ///
+    /// If restrict_bounds is `true`, the user will not be allowed to specify points outside the bounds of the layer to which they are applying the effect.
+    /// If this is `true`, the dephaults should be between 0.0 and 100.0.
+    PointDef { },
+    impl restrict_bounds: bool,
+    impl x_value: Fixed,
+    impl y_value: Fixed,
+}
+impl PointDef<'_> {
+    pub fn set_default_x(&mut self, v: f32) -> &mut Self { self.def.x_dephault = Fixed::from(v).into(); self }
+    pub fn set_default_y(&mut self, v: f32) -> &mut Self { self.def.y_dephault = Fixed::from(v).into(); self }
+    pub fn default_x(&self) -> f32 { Fixed::from(self.def.x_dephault).into() }
+    pub fn default_y(&self) -> f32 { Fixed::from(self.def.y_dephault).into() }
+}
+
+define_param_wrapper! {
+    PF_Param_POINT_3D, PF_Point3DDef, point3d_d,
+    Param::Point3D,
+    /// Just like POINT, with an extra dimension. Supported in AE starting with version 10.5 (CS 5.5).
+    /// * `x_dephault` - percentage of layer width; note: use 50 for halfway, not 0.5; this matches the old PF_PointDef behavior
+    /// * `y_dephault` - percentage of layer height
+    /// * `z_dephault` - percentage of layer _height_ (since typical layers are zero depth)
+    Point3DDef { },
+    impl x_value: f64,
+    impl y_value: f64,
+    impl z_value: f64,
+}
+impl Point3DDef<'_> {
+    pub fn set_default_x(&mut self, v: f64) -> &mut Self { self.def.x_dephault = v; self }
+    pub fn set_default_y(&mut self, v: f64) -> &mut Self { self.def.y_dephault = v; self }
+    pub fn set_default_z(&mut self, v: f64) -> &mut Self { self.def.z_dephault = v; self }
+    pub fn default_x(&self) -> f64 { self.def.x_dephault }
+    pub fn default_y(&self) -> f64 { self.def.y_dephault }
+    pub fn default_z(&self) -> f64 { self.def.z_dephault }
+}
+// ―――――――――――――――――――――――――――――――――――― Point ――――――――――――――――――――――――――――――――――――――
+
+// ―――――――――――――――――――――――――――――――――――― Popup ―――――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_POPUP, PF_PopupDef, pd,
+    Param::Popup,
+    PopupDef {
+        options: CString,
+    },
+    impl value: i32,
+    impl default: i16,
+}
+impl<'a> PopupDef<'a> {
+    pub fn set_options(&'a mut self, options: &[&str]) {
+        // Build a string in the format "list|of|choices|", the format Ae expects.
+        self.options = CString::new(options.join("|")).unwrap();
+        self.def.u.namesptr = self.options.as_ptr();
+        self.def.num_choices = options.len().try_into().unwrap();
+    }
+    pub fn options(&self) -> Vec<&str> {
+        let options = unsafe { CStr::from_ptr(self.def.u.namesptr).to_str().unwrap() };
+        options.split('|').collect()
     }
 }
-impl Into<Param> for ButtonDef {
-    fn into(self) -> Param {
-        Param::Button(self)
-    }
+// ―――――――――――――――――――――――――――――――――――― Popup ―――――――――――――――――――――――――――――――――――――
+
+// ―――――――――――――――――――――――――――――――――― Arbitrary ―――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_ARBITRARY_DATA, PF_ArbitraryDef, arb_d,
+    Param::Arbitrary,
+    ArbitraryDef { },
 }
-
-#[repr(C)]
-#[derive(Clone)]
-pub struct PopupDef(ae_sys::PF_PopupDef, CString);
-
-define_param_basic_wrapper!(PopupDef, PF_PopupDef, i32, u16);
-//define_param_value_str_wrapper!(PopupDef, popup_def);
-//define_param_value_desc_wrapper!(PopupDef, popup_def);
-
-impl PopupDef {
-    pub fn new() -> Self {
-        Self(
-            unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
-            CString::new("").unwrap(),
-        )
-    }
-
-    pub fn from_raw(def: ae_sys::PF_PopupDef) -> Self {
-        Self(def, CString::new("").unwrap())
-    }
-
-    pub fn into_raw(def: Self) -> ae_sys::PF_PopupDef {
-        def.0
-    }
-
-    pub fn names(&mut self, names: Vec<&str>) -> &mut Self {
-        // Build a string in the format "list|of|choices|", the
-        // format Ae expects. Ae ignores the trailing '|'.
-        let mut names_tmp = String::new();
-        names
-            .iter()
-            .for_each(|s| write!(names_tmp, "{}|", *s).unwrap());
-        self.1 = CString::new(names_tmp).unwrap();
-        self.0.u.namesptr = self.1.as_ptr();
-        self.0.num_choices = names.len().try_into().unwrap();
+impl ArbitraryDef<'_> {
+    pub fn set_default(&mut self, value_handle: FlatHandle) -> &mut Self {
+        self.def.dephault = FlatHandle::into_raw(value_handle);
         self
     }
 
-    pub fn from(param: &ParamDef) -> Option<Self> {
-        if ae_sys::PF_Param_POPUP == param.param_def_boxed.param_type {
-            Some(Self(
-                unsafe { param.param_def_boxed.u.pd },
-                CString::new("").unwrap(),
-            ))
-        } else {
-            None
-        }
-    }
-
-    //pub fn check_out()
-
-    pub fn value(&self) -> u16 {
-        self.0.value as u16
-    }
-}
-impl Into<Param> for PopupDef {
-    fn into(self) -> Param {
-        Param::Popup(self)
-    }
-}
-
-define_param_wrapper!(AngleDef, PF_AngleDef);
-//define_param_value_str_wrapper!(AngleDef, angle_def);
-//define_param_value_desc_wrapper!(AngleDef, angle_def);
-
-impl AngleDef {
-    pub fn set_value(mut self, value: f32) -> Self {
-        self.0.value = Fixed::from(value).into();
+    pub fn set_refcon(&mut self, refcon: *mut std::ffi::c_void) -> &mut Self {
+        self.def.refconPV = refcon as _;
         self
     }
 
-    pub fn set_default(mut self, default: f32) -> Self {
-        self.0.dephault = Fixed::from(default).into();
+    pub fn set_value(&mut self, value_handle: FlatHandle) -> &mut Self {
+        self.def.value = FlatHandle::into_raw(value_handle);
+        self.set_value_changed();
         self
     }
-
-    pub fn from(param: &ParamDef) -> Option<Self> {
-        if ae_sys::PF_Param_ANGLE == param.param_def_boxed.param_type {
-            Some(Self(unsafe { param.param_def_boxed.u.ad }))
-        } else {
-            None
-        }
-    }
-
-    pub fn value(&self) -> f32 {
-        Fixed::from(self.0.value).into()
-    }
-}
-impl Into<Param> for AngleDef {
-    fn into(self) -> Param {
-        Param::Angle(self)
-    }
-}
-
-define_param_wrapper!(ColorDef, PF_ColorDef);
-
-impl ColorDef {
-    pub fn from(param: &ParamDef) -> Option<Self> {
-        if ae_sys::PF_Param_COLOR == param.param_def_boxed.param_type {
-            Some(Self(unsafe { param.param_def_boxed.u.cd }))
-        } else {
-            None
-        }
-    }
-
-    pub fn value(&self) -> Pixel8 {
-        Pixel8::from(self.0.value)
-    }
-
-    pub fn set_value(&mut self, value: Pixel8) -> &mut Self {
-        self.0.value = ae_sys::PF_Pixel::from(value);
-        self
-    }
-
-    pub fn default(&mut self, default: Pixel8) -> &mut Self {
-        self.0.dephault = ae_sys::PF_Pixel::from(default);
-        self
-    }
-}
-impl Into<Param> for ColorDef {
-    fn into(self) -> Param {
-        Param::Color(self)
-    }
-}
-
-define_param_wrapper!(SliderDef, PF_SliderDef);
-define_param_basic_wrapper!(SliderDef, PF_SliderDef, i32, i32);
-define_param_valid_min_max_wrapper!(SliderDef, i32);
-define_param_slider_min_max_wrapper!(SliderDef, i32);
-define_param_value_str_wrapper!(SliderDef);
-define_param_value_desc_wrapper!(SliderDef);
-
-impl SliderDef {
-    pub fn from(param: &ParamDef) -> Option<Self> {
-        if ae_sys::PF_Param_SLIDER == param.param_def_boxed.param_type {
-            Some(Self(unsafe { param.param_def_boxed.u.sd }))
-        } else {
-            None
-        }
-    }
-
-    pub fn value(&self) -> i32 {
-        self.0.value
-    }
-}
-impl Into<Param> for SliderDef {
-    fn into(self) -> Param {
-        Param::Slider(self)
-    }
-}
-/* Adobe recommends not useing fixed (point) sliders any more and
- * instead to use float sliders instead.
-
-    define_param_wrapper!(FixedSliderDef, PF_FixedSliderDef, slider_def);
-    define_param_basic_wrapper!(FixedSliderDef, PF_FixedSliderDef, slider_def, i32, i32);
-    define_param_slider_min_max_wrapper!(FixedSliderDef, PF_FixedSliderDef, slider_def, i32);
-    define_param_value_str_wrapper!(FixedSliderDef, slider_def);
-    define_param_value_desc_wrapper!(FixedSliderDef, slider_def);
-
-    impl FixedSliderDef {
-        pub fn precision<'a>(&'a mut self, precision: u16) -> &'a mut FixedSliderDef {
-            self.slider_def.precision = precision as i16;
-            self
-        }
-
-        pub fn display_flags<'a>(&'a mut self, display_flags: ValueDisplayFlag) -> &'a mut FixedSliderDef {
-            self.slider_def.display_flags = display_flags.bits() as i16;
-            self
-        }
-
- *
-}*/
-
-// Float Slider
-define_param_wrapper!(FloatSliderDef, PF_FloatSliderDef);
-define_param_basic_wrapper!(FloatSliderDef, PF_FloatSliderDef, f64, f32);
-define_param_valid_min_max_wrapper!(FloatSliderDef, f32);
-define_param_slider_min_max_wrapper!(FloatSliderDef, f32);
-define_param_value_desc_wrapper!(FloatSliderDef);
-
-impl FloatSliderDef {
-    pub fn display_flags(mut self, display_flags: ValueDisplayFlag) -> Self {
-        self.0.display_flags = display_flags.bits() as i16;
-        self
-    }
-
-    pub fn precision(mut self, precision: u8) -> Self {
-        self.0.precision = precision as i16;
-        self
-    }
-
-    pub fn from(param: &ParamDef) -> Option<Self> {
-        if ae_sys::PF_Param_FLOAT_SLIDER == param.param_def_boxed.param_type {
-            Some(Self(unsafe { param.param_def_boxed.u.fs_d }))
-        } else {
-            None
-        }
-    }
-
-    pub fn value(&self) -> f64 {
-        self.0.value
-    }
-}
-impl Into<Param> for FloatSliderDef {
-    fn into(self) -> Param {
-        Param::FloatSlider(self)
-    }
-}
-
-// Checkbox
-
-// PF_CheckBoxDef does not implement Debug trait so we can't use
-// the define_param_basic_wrapper!() macro.
-#[repr(C)]
-#[derive(Clone)]
-pub struct CheckBoxDef(ae_sys::PF_CheckBoxDef, CString);
-
-impl CheckBoxDef {
-    pub fn new() -> Self {
-        Self(
-            unsafe { std::mem::MaybeUninit::zeroed().assume_init() },
-            CString::new("").unwrap(),
-        )
-    }
-
-    pub fn from_raw(def: ae_sys::PF_CheckBoxDef) -> Self {
-        Self(def, CString::new("").unwrap())
-    }
-
-    pub fn into_raw(def: Self) -> ae_sys::PF_CheckBoxDef {
-        let ret = def.0;
-        std::mem::forget(def);
-        ret
-    }
-
-    pub fn label(mut self, label: &str) -> Self {
-        self.1 = CString::new(label).unwrap();
-        self.0.u.nameptr = self.1.as_ptr();
-        self
-    }
-
-    pub fn from(param: &ParamDef) -> Option<Self> {
-        if ae_sys::PF_Param_CHECKBOX == param.param_def_boxed.param_type {
-            Some(Self(unsafe { param.param_def_boxed.u.bd }, unsafe {
-                CString::from_raw(param.param_def_boxed.u.bd.u.nameptr as _)
-            }))
-        } else {
-            None
-        }
-    }
-
-    pub fn value(&self) -> bool {
-        self.0.value != 0
-    }
-}
-impl Into<Param> for CheckBoxDef {
-    fn into(self) -> Param {
-        Param::CheckBox(self)
-    }
-}
-
-define_param_basic_wrapper!(CheckBoxDef, PF_CheckBoxDef, i32, bool);
-pub struct ArbitraryDef(ae_sys::PF_ArbitraryDef);
-
-impl ArbitraryDef {
-    pub fn new() -> Self {
-        Self(unsafe { std::mem::MaybeUninit::zeroed().assume_init() })
-    }
-
-    pub fn into_raw(def: ArbitraryDef) -> ae_sys::PF_ArbitraryDef {
-        def.0
-    }
-
-    pub fn from_raw(def: ae_sys::PF_ArbitraryDef) -> Self {
-        Self(def)
-    }
-
-    pub fn finalize(self) -> Self {
-        self
-    }
-
-    pub fn set_value(mut self, value_handle: FlatHandle) -> Self {
-        self.0.value = FlatHandle::into_raw(value_handle);
-        self
-    }
-
-    pub fn default(mut self, value_handle: FlatHandle) -> Self {
-        self.0.dephault = FlatHandle::into_raw(value_handle);
-        self
-    }
-
-    pub fn refcon(mut self, refcon: usize) -> Self {
-        self.0.refconPV = refcon as _;
-        self
-    }
-
-    pub fn has_refcon(&self, refcon: usize) -> bool {
-        self.0.refconPV == refcon as _
-    }
-
     pub fn value(&self) -> Result<FlatHandle, Error> {
-        FlatHandle::from_raw(self.0.value)
+        FlatHandle::from_raw(self.def.value)
     }
-
     pub fn value_owned(&self) -> Result<FlatHandle, Error> {
-        FlatHandle::from_raw_owned(self.0.value)
+        FlatHandle::from_raw_owned(self.def.value)
     }
 }
-impl Into<Param> for ArbitraryDef {
-    fn into(self) -> Param {
-        Param::Arbitrary(self)
-    }
-}
+// ―――――――――――――――――――――――――――――――――― Arbitrary ―――――――――――――――――――――――――――――――――――
 
 pub trait ArbitraryData<T> {
     fn default() -> T;
@@ -726,219 +645,242 @@ impl ArbParamsExtra {
         Ok(())
     }
 }
+macro_rules! define_param_cast {
+    ($name:tt, $enm:ident, $type:ty) => {
+        paste::item! {
+            pub fn [<as_ $name>]<'a>(&'a self) -> Result<$type<'a>, Error> where 'p: 'a {
+                match self.as_param()? {
+                    Param::$enm(x) => Ok(x),
+                    x => {
+                        log::error!("Invalid param type! Requested {:?}, but the param is {:?}", stringify!($name), x);
+                        Err(Error::InvalidParms)
+                    }
+                }
+            }
+            pub fn [<as_ $name _mut>]<'a>(&'a mut self) -> Result<$type<'a>, Error> where 'p: 'a {
+                match self.as_param_mut()? {
+                    Param::$enm(x) => Ok(x),
+                    x => {
+                        log::error!("Invalid param type! Requested {:?}, but the param is {:?}", stringify!($name), x);
+                        Err(Error::InvalidParms)
+                    }
+                }
+            }
+        }
+    };
+}
 
-#[repr(C)]
-//#[derive(Clone)]
-pub enum Param {
-    Popup(PopupDef),
-    Angle(AngleDef),
-    CheckBox(CheckBoxDef),
-    Slider(SliderDef),
-    FloatSlider(FloatSliderDef),
-    Color(ColorDef),
-    Button(ButtonDef),
-    //FixedSliderDef(FixedSliderDef),
-    Arbitrary(ArbitraryDef),
+pub enum Param<'p> {
+    Angle(AngleDef<'p>),
+    Arbitrary(ArbitraryDef<'p>),
+    Button(ButtonDef<'p>),
+    CheckBox(CheckBoxDef<'p>),
+    Color(ColorDef<'p>),
+    FloatSlider(FloatSliderDef<'p>),
+    Path(PathDef<'p>),
+    Point(PointDef<'p>),
+    Point3D(Point3DDef<'p>),
+    Popup(PopupDef<'p>),
+    Slider(SliderDef<'p>),
+}
+
+impl Debug for Param<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Param::Angle(_)       => write!(f, "Angle"),
+            Param::Arbitrary(_)   => write!(f, "Arbitrary"),
+            Param::Button(_)      => write!(f, "Button"),
+            Param::CheckBox(_)    => write!(f, "CheckBox"),
+            Param::Color(_)       => write!(f, "Color"),
+            Param::FloatSlider(_) => write!(f, "FloatSlider"),
+            Param::Path(_)        => write!(f, "Path"),
+            Param::Point(_)       => write!(f, "Point"),
+            Param::Point3D(_)     => write!(f, "Point3D"),
+            Param::Popup(_)       => write!(f, "Popup"),
+            Param::Slider(_)      => write!(f, "Slider"),
+        }
+    }
 }
 
 #[derive(Clone)]
-pub struct ParamDef {
-    param_def_boxed: std::mem::ManuallyDrop<Box<ae_sys::PF_ParamDef>>,
-    drop: bool,
+pub struct ParamDef<'p> {
+    param_def: Ownership<'p, ae_sys::PF_ParamDef>,
+    checkin_on_drop: bool,
     index: Option<i32>,
-    in_data_ptr: *const ae_sys::PF_InData,
+    in_data: InData,
 }
 
-fn zeroed_raw_param_def() -> ae_sys::PF_ParamDef {
-    ae_sys::PF_ParamDef {
-        // all fields same size, no uninitialized memory
-        uu: unsafe { std::mem::zeroed() },
-        ui_flags: 0,
-        ui_width: 0,
-        ui_height: 0,
-        param_type: 0,
-        name: [0; 32],
-        flags: 0,
-        unused: 0,
-        u: unsafe { std::mem::zeroed() },
-    }
-}
-
-impl ParamDef {
-    pub fn new_from_ptr(in_data_ptr: *const ae_sys::PF_InData) -> Self {
+impl<'p> ParamDef<'p> {
+    pub fn new(in_data: InData) -> Self {
         Self {
-            param_def_boxed: std::mem::ManuallyDrop::new(Box::new(zeroed_raw_param_def())),
-            drop: true,
-            in_data_ptr,
+            param_def: Ownership::Rust(unsafe { std::mem::zeroed() }),
+            checkin_on_drop: false,
+            in_data,
             index: None,
         }
     }
-    pub fn new(in_data_handle: InData) -> Self {
-        Self {
-            param_def_boxed: std::mem::ManuallyDrop::new(Box::new(zeroed_raw_param_def())),
-            drop: true,
-            in_data_ptr: in_data_handle.as_ptr(),
-            index: None,
-        }
+
+    pub fn as_ref(&self) -> &ae_sys::PF_ParamDef {
+        &*self.param_def
     }
-    pub fn as_ptr(&self) -> *const ae_sys::PF_ParamDef {
-        self.param_def_boxed.as_ref()
+    pub fn as_mut(&mut self) -> &mut ae_sys::PF_ParamDef {
+        &mut *self.param_def
     }
 
-    pub fn update_param_ui(&self) {
-        if let Ok(suite) = pf::suites::ParamUtils::new() {
-            if let Some(index) = self.index {
-                suite.update_param_ui(unsafe { (*self.in_data_ptr).effect_ref }, index, self);
-            }
+    pub fn update_param_ui(&self) -> Result<(), Error> {
+        if let Some(index) = self.index {
+            pf::suites::ParamUtils::new()?
+                .update_param_ui(self.in_data.effect_ref(), index, self)
         } else {
-            log::error!("failed to get params suite");
+            Err(Error::InvalidIndex)
         }
     }
-    pub fn keyframe_count(&self) -> i32 {
-        (|| -> Option<i32> {
-            pf::suites::ParamUtils::new()
-                .ok()?
-                .keyframe_count(unsafe { (*self.in_data_ptr).effect_ref }, self.index?)
-                .ok()
-        })()
-        .unwrap_or(0)
+    pub fn keyframe_count(&self) -> Result<i32, Error> {
+        if let Some(index) = self.index {
+            pf::suites::ParamUtils::new()?
+                .keyframe_count(self.in_data.effect_ref(), index)
+        } else {
+            Err(Error::InvalidIndex)
+        }
     }
 
-    pub fn from_raw(
-        in_data_ptr: *const ae_sys::PF_InData,
-        param_def: *mut ae_sys::PF_ParamDef,
-        index: Option<i32>,
-    ) -> Self {
-        debug_assert!(!param_def.is_null());
+    pub fn from_raw(in_data: InData, param_def: &'p mut ae_sys::PF_ParamDef, index: Option<i32>) -> Self {
         Self {
-            param_def_boxed: unsafe { std::mem::ManuallyDrop::new(Box::from_raw(param_def)) },
-            drop: false,
-            in_data_ptr,
+            param_def: Ownership::AfterEffectsMut(param_def),
+            checkin_on_drop: false,
+            in_data,
             index,
         }
     }
 
-    pub fn add(&mut self, index: i32) {
-        unsafe {
-            (*self.in_data_ptr).inter.add_param.unwrap()(
-                (*self.in_data_ptr).effect_ref,
-                index,
-                &mut **self.param_def_boxed,
-            );
-        }
-        // Parameters we just added are not checked out
-        // so they do not need to be checked in.
-        self.drop = false;
+    pub fn add(&mut self, index: i32) -> Result<(), Error> {
+        self.in_data.interact().add_param(index, &*self.param_def)?;
         if index != -1 {
             self.index = Some(index);
         }
+        Ok(())
     }
 
-    pub fn checkout(
-        in_data_handle: InData,
-        index: i32,
-        what_time: i32,
-        time_step: i32,
-        time_scale: u32,
-    ) -> ParamDef {
-        let mut param_def_boxed = std::mem::ManuallyDrop::new(Box::new(zeroed_raw_param_def()));
-        let in_data_ptr = in_data_handle.as_ptr();
-        unsafe {
-            (*in_data_ptr).inter.checkout_param.unwrap()(
-                (*in_data_ptr).effect_ref,
-                index,
-                what_time,
-                time_step,
-                time_scale,
-                &mut **param_def_boxed,
-            );
-        }
-        ParamDef {
-            param_def_boxed,
-            drop: true,
-            in_data_ptr,
+    pub fn checkout(in_data: InData, index: i32, what_time: i32, time_step: i32, time_scale: u32) -> Result<Self, Error> {
+        let param_def = in_data.interact().checkout_param(index, what_time, time_step, time_scale)?;
+        Ok(Self {
+            param_def: Ownership::Rust(param_def),
+            checkin_on_drop: true,
+            in_data,
             index: Some(index),
-        }
+        })
     }
 
-    pub fn do_not_checkin(&mut self) {
-        self.drop = false;
-    }
-
-    pub fn param(&mut self, param: Param) -> &mut ParamDef {
+    pub fn set_param(&mut self, param: &Param) {
         match param {
             Param::Popup(pd) => {
-                self.param_def_boxed.u.pd = PopupDef::into_raw(pd);
-                self.param_def_boxed.param_type = ae_sys::PF_Param_POPUP;
+                self.param_def.u.pd = *pd.def;
+                self.param_def.param_type = ae_sys::PF_Param_POPUP;
             }
             Param::Angle(ad) => {
-                self.param_def_boxed.u.ad = AngleDef::into_raw(ad);
-                self.param_def_boxed.param_type = ae_sys::PF_Param_ANGLE;
+                self.param_def.u.ad = *ad.def;
+                self.param_def.param_type = ae_sys::PF_Param_ANGLE;
             }
             Param::CheckBox(bd) => {
-                self.param_def_boxed.u.bd = CheckBoxDef::into_raw(bd);
-                self.param_def_boxed.param_type = ae_sys::PF_Param_CHECKBOX;
+                self.param_def.u.bd = *bd.def;
+                self.param_def.param_type = ae_sys::PF_Param_CHECKBOX;
             }
             Param::Color(cd) => {
-                self.param_def_boxed.u.cd = ColorDef::into_raw(cd);
-                self.param_def_boxed.param_type = ae_sys::PF_Param_COLOR;
+                self.param_def.u.cd = *cd.def;
+                self.param_def.param_type = ae_sys::PF_Param_COLOR;
             }
             Param::Slider(sd) => {
-                self.param_def_boxed.u.sd = SliderDef::into_raw(sd);
-                self.param_def_boxed.param_type = ae_sys::PF_Param_SLIDER;
+                self.param_def.u.sd = *sd.def;
+                self.param_def.param_type = ae_sys::PF_Param_SLIDER;
             }
             Param::FloatSlider(fs_d) => {
-                self.param_def_boxed.u.fs_d = FloatSliderDef::into_raw(fs_d);
-                self.param_def_boxed.param_type = ae_sys::PF_Param_FLOAT_SLIDER;
-            } /* Param::FixedSliderDef(sd) => { */
-            //self.param_def_boxed.u.fd = FixedSliderDef::into_raw(sd);
-            //self.param_def_boxed.param_type = ae_sys::PF_Param_FIX_SLIDER;
-            //}
+                self.param_def.u.fs_d = *fs_d.def;
+                self.param_def.param_type = ae_sys::PF_Param_FLOAT_SLIDER;
+            }
             Param::Button(button_d) => {
-                self.param_def_boxed.u.button_d = ButtonDef::into_raw(button_d);
-                self.param_def_boxed.param_type = ae_sys::PF_Param_BUTTON;
+                self.param_def.u.button_d = *button_d.def;
+                self.param_def.param_type = ae_sys::PF_Param_BUTTON;
+            }
+            Param::Path(path_d) => {
+                self.param_def.u.path_d = *path_d.def;
+                self.param_def.param_type = ae_sys::PF_Param_PATH;
+            }
+            Param::Point(td) => {
+                self.param_def.u.td = *td.def;
+                self.param_def.param_type = ae_sys::PF_Param_POINT;
+            }
+            Param::Point3D(point3d_d) => {
+                self.param_def.u.point3d_d = *point3d_d.def;
+                self.param_def.param_type = ae_sys::PF_Param_POINT_3D;
             }
             Param::Arbitrary(arb_d) => {
-                self.param_def_boxed.u.arb_d = ArbitraryDef::into_raw(arb_d);
-                self.param_def_boxed.param_type = ae_sys::PF_Param_ARBITRARY_DATA;
+                self.param_def.u.arb_d = *arb_d.def;
+                self.param_def.param_type = ae_sys::PF_Param_ARBITRARY_DATA;
             }
         }
-        self
     }
 
-    pub fn to_param(&self) -> Param {
-        match self.param_def_boxed.param_type {
-            ae_sys::PF_Param_ANGLE => {
-                Param::Angle(AngleDef::from_raw(unsafe { self.param_def_boxed.u.ad }))
+    define_param_cast!("popup",        Popup,       PopupDef);
+    define_param_cast!("angle",        Angle,       AngleDef);
+    define_param_cast!("checkbox",     CheckBox,    CheckBoxDef);
+    define_param_cast!("color",        Color,       ColorDef);
+    define_param_cast!("slider",       Slider,      SliderDef);
+    define_param_cast!("float_slider", FloatSlider, FloatSliderDef);
+    define_param_cast!("button",       Button,      ButtonDef);
+    define_param_cast!("arbitrary",    Arbitrary,   ArbitraryDef);
+    define_param_cast!("point",        Point,       PointDef);
+    define_param_cast!("point3d",      Point3D,     Point3DDef);
+    define_param_cast!("path",         Path,        PathDef);
+
+    pub fn as_param<'a>(&'a self) -> Result<Param<'a>, Error> where 'p: 'a {
+        let param_def = &*self.param_def;
+        unsafe {
+            match param_def.param_type {
+                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_ref(&param_def.u.ad))),
+                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_ref(&param_def.u.arb_d))),
+                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_ref(&param_def.u.button_d))),
+                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_ref(&param_def.u.bd))),
+                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_ref(&param_def.u.cd))),
+                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_ref(&param_def.u.fs_d))),
+                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_ref(&param_def.u.pd))),
+                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_ref(&param_def.u.sd))),
+                ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_ref(&param_def.u.td))),
+                ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_ref(&param_def.u.point3d_d))),
+                ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_ref(&param_def.u.path_d))),
+                _ => {
+                    log::error!("Invalid parameter type: {}", param_def.param_type);
+                    Err(Error::InvalidParms)
+                }
             }
-            ae_sys::PF_Param_ARBITRARY_DATA => Param::Arbitrary(ArbitraryDef::from_raw(unsafe {
-                self.param_def_boxed.u.arb_d
-            })),
-            ae_sys::PF_Param_BUTTON => Param::Button(ButtonDef::from_raw(unsafe {
-                self.param_def_boxed.u.button_d
-            })),
-            ae_sys::PF_Param_CHECKBOX => {
-                Param::CheckBox(CheckBoxDef::from_raw(unsafe { self.param_def_boxed.u.bd }))
+        }
+    }
+
+    pub fn as_param_mut<'a>(&'a mut self) -> Result<Param<'a>, Error> where 'p: 'a {
+        let param_def = &mut *self.param_def;
+        unsafe {
+            match param_def.param_type {
+                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_mut(&mut param_def.u.ad,        &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_mut(&mut param_def.u.arb_d,     &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_mut(&mut param_def.u.button_d,  &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_mut(&mut param_def.u.bd,        &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_mut(&mut param_def.u.cd,        &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_mut(&mut param_def.u.fs_d,      &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_mut(&mut param_def.u.pd,        &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_mut(&mut param_def.u.sd,        &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_mut(&mut param_def.u.td,        &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_mut(&mut param_def.u.point3d_d, &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_mut(&mut param_def.u.path_d,    &mut param_def.uu.change_flags))),
+                _ => {
+                    log::error!("Invalid parameter type: {}", param_def.param_type);
+                    Err(Error::InvalidParms)
+                }
             }
-            ae_sys::PF_Param_COLOR => {
-                Param::Color(ColorDef::from_raw(unsafe { self.param_def_boxed.u.cd }))
-            }
-            ae_sys::PF_Param_FLOAT_SLIDER => Param::FloatSlider(FloatSliderDef::from_raw(unsafe {
-                self.param_def_boxed.u.fs_d
-            })),
-            ae_sys::PF_Param_POPUP => {
-                Param::Popup(PopupDef::from_raw(unsafe { self.param_def_boxed.u.pd }))
-            }
-            ae_sys::PF_Param_SLIDER => {
-                Param::Slider(SliderDef::from_raw(unsafe { self.param_def_boxed.u.sd }))
-            }
-            _ => unreachable!(),
         }
     }
 
     pub fn is_valid(&self) -> bool {
         matches!(
-            self.param_def_boxed.param_type,
+            self.param_def.param_type,
             ae_sys::PF_Param_ANGLE
                 | ae_sys::PF_Param_ARBITRARY_DATA
                 | ae_sys::PF_Param_BUTTON
@@ -949,110 +891,72 @@ impl ParamDef {
                 | ae_sys::PF_Param_GROUP_END
                 | ae_sys::PF_Param_POPUP
                 | ae_sys::PF_Param_SLIDER
+                | ae_sys::PF_Param_POINT
+                | ae_sys::PF_Param_POINT_3D
+                | ae_sys::PF_Param_PATH
         )
     }
     pub fn param_type(&self) -> ParamType {
-        unsafe { std::mem::transmute(self.param_def_boxed.param_type) }
-    }
-
-    pub fn set_param_type(&mut self, param_type: ParamType) -> &mut Self {
-        self.param_def_boxed.param_type = param_type as i32;
-        self
+        self.param_def.param_type.into()
     }
 
     pub unsafe fn layer_def(&mut self) -> *mut ae_sys::PF_LayerDef {
-        &mut self.param_def_boxed.u.ld
+        &mut self.param_def.u.ld
     }
-    pub fn name(&mut self, name: &str) -> &mut Self {
+
+    pub fn set_name(&mut self, name: &str) {
         assert!(name.len() < 32);
         let name_cstr = CString::new(name).unwrap();
         let name_slice = name_cstr.to_bytes_with_nul();
-        self.param_def_boxed.name[0..name_slice.len()]
-            .copy_from_slice(unsafe { std::mem::transmute(name_slice) });
-        self
+        self.param_def.name[0..name_slice.len()].copy_from_slice(unsafe { std::mem::transmute(name_slice) });
     }
 
-    pub fn ui_flags(&mut self, flags: ParamUIFlags) -> &mut Self {
-        self.param_def_boxed.ui_flags = flags.bits() as _;
-        self
+    pub fn set_flags(&mut self, flags: ParamFlag) {
+        self.param_def.flags = flags.bits() as _;
     }
-    pub fn get_ui_flags(&self) -> ParamUIFlags {
-        ParamUIFlags::from_bits(self.param_def_boxed.ui_flags).unwrap()
+    pub fn set_change_flags(&mut self, change_flags: ChangeFlag) {
+        self.param_def.uu.change_flags = change_flags.bits() as _;
     }
-
-    pub fn ui_width(&mut self, width: u16) -> &mut Self {
-        self.param_def_boxed.ui_width = width as _;
-        self
+    pub fn set_ui_flags(&mut self, flags: ParamUIFlags) {
+        self.param_def.ui_flags = flags.bits() as _;
     }
-
-    pub fn ui_height(&mut self, height: u16) -> &mut Self {
-        self.param_def_boxed.ui_height = height as _;
-        self
+    pub fn ui_flags(&self) -> ParamUIFlags {
+        ParamUIFlags::from_bits(self.param_def.ui_flags).unwrap()
     }
 
-    pub fn flags(&mut self, flags: ParamFlag) -> &mut Self {
-        self.param_def_boxed.flags = flags.bits() as _;
-        self
+    pub fn set_ui_width(&mut self, width: u16) {
+        self.param_def.ui_width = width as _;
+    }
+    pub fn set_ui_height(&mut self, height: u16) {
+        self.param_def.ui_height = height as _;
     }
 
-    pub fn change_flags(&mut self, change_flags: ChangeFlag) -> &mut Self {
-        self.param_def_boxed.uu.change_flags = change_flags.bits() as _;
-        self
+    pub fn set_id(&mut self, id: i32) {
+        self.param_def.uu.id = id;
     }
 
-    pub fn set_id(&mut self, id: i32) -> &mut Self {
-        self.param_def_boxed.uu.id = id;
-        self
-    }
-
-    pub fn set_value_has_changed(&mut self) -> &mut Self {
-        self.param_def_boxed.uu.change_flags = ChangeFlag::CHANGED_VALUE.bits();
-        self
+    pub fn set_value_has_changed(&mut self) {
+        self.param_def.uu.change_flags = ChangeFlag::CHANGED_VALUE.bits();
     }
 }
 
-impl Drop for ParamDef {
+impl Drop for ParamDef<'_> {
     fn drop(&mut self) {
-        if self.drop {
-            unsafe {
-                (*self.in_data_ptr).inter.checkin_param.unwrap()(
-                    (*self.in_data_ptr).effect_ref,
-                    // ManuallyDrop ensures we do not double free the memory
-                    // after passing the pointer to the box contents to the FFI.
-                    &mut **self.param_def_boxed,
-                );
-            }
-            unsafe {
-                std::mem::ManuallyDrop::drop(&mut self.param_def_boxed);
-            }
+        if self.checkin_on_drop {
+            self.in_data.interact().checkin_param(&*self.param_def).unwrap()
         }
     }
 }
-impl Debug for ParamDef {
+impl Debug for ParamDef<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ParamDef")
             .field("type", &self.param_type())
-            .field("drop", &self.drop)
-            .field("in_data_ptr", &self.in_data_ptr)
+            .field("checkin_on_drop", &self.checkin_on_drop)
+            .field("in_data_ptr", &self.in_data.as_ptr())
             .finish()
     }
 }
 
-macro_rules! define_get_param {
-    ($name:tt, $enm:ident, $type:ty) => {
-        paste::item! {
-            pub fn [<get_ $name>](&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Option<$type> {
-                let param = self.get_param_def(type_, time, time_step, time_scale);
-                match param.map(|x| x.to_param()) {
-                    Some(Param::$enm(pd)) => Some(pd),
-                    _ => panic!("Invalid parameter type, expected {}, got {}. type: {type_:?}, params_len: {:?}, map: {:?}", $name, self.get_param_def(type_, time, time_step, time_scale).map(|x| format!("{:?}", x.param_type())).unwrap_or("Invalid".to_owned()), self.params.len(), self.map.borrow()),
-                }
-            }
-        }
-    };
-}
-
-use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -1060,18 +964,18 @@ use std::hash::Hash;
 use std::rc::Rc;
 
 #[derive(Clone)]
-pub struct Parameters<P: Eq + PartialEq + Hash + Copy + Debug> {
+pub struct Parameters<'p, P: Eq + PartialEq + Hash + Copy + Debug> {
     num_params: usize,
     in_data: *const ae_sys::PF_InData,
     pub map: Rc<RefCell<HashMap<P, usize>>>,
-    params: Vec<ParamDef>,
+    params: Vec<ParamDef<'p>>,
 }
-impl<P: Eq + PartialEq + Hash + Copy + Debug> Default for Parameters<P> {
+impl<P: Eq + PartialEq + Hash + Copy + Debug> Default for Parameters<'_, P> {
     fn default() -> Self {
         Self::new(Default::default())
     }
 }
-impl<P: Eq + PartialEq + Hash + Copy + Debug> Parameters<P> {
+impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     pub fn len(&self) -> usize {
         self.map.borrow().len()
     }
@@ -1089,22 +993,17 @@ impl<P: Eq + PartialEq + Hash + Copy + Debug> Parameters<P> {
             params: Vec::new(),
         }
     }
-    pub fn with_params(
-        in_data: *const ae_sys::PF_InData,
-        params: *mut *mut ae_sys::PF_ParamDef,
-        map: Rc<RefCell<HashMap<P, usize>>>,
-        num_params: usize,
-    ) -> Self {
+    pub fn with_params(in_data: *const ae_sys::PF_InData, params: &'p [*mut ae_sys::PF_ParamDef], map: Rc<RefCell<HashMap<P, usize>>>, num_params: usize) -> Self {
+        let in_data_obj = InData::from_raw(in_data);
         Self {
             in_data,
-            params: if params.is_null() {
+            params: if params.is_empty() {
                 Vec::new()
             } else {
-                let params = unsafe { std::slice::from_raw_parts(params, num_params) };
                 params
-                    .iter()
+                    .into_iter()
                     .enumerate()
-                    .map(|(i, p)| ParamDef::from_raw(in_data, *p, Some(i as i32)))
+                    .map(|(i, p)| ParamDef::from_raw(in_data_obj, unsafe { &mut **p }, Some(i as i32)))
                     .collect::<Vec<_>>()
             },
             num_params,
@@ -1120,106 +1019,77 @@ impl<P: Eq + PartialEq + Hash + Copy + Debug> Parameters<P> {
         hasher.finish() as i32
     }
 
-    pub fn add_group<F: FnOnce(&mut Self)>(
-        &mut self,
-        type_start: P,
-        type_end: P,
-        name: &str,
-        inner_cb: F,
-    ) {
+    pub fn add_group<F: FnOnce(&mut Self)>(&mut self, type_start: P, type_end: P, name: &str, inner_cb: F) {
         assert!(!self.in_data.is_null());
 
-        let mut param_def = ParamDef::new_from_ptr(self.in_data);
-        param_def.name(name);
-        param_def.set_param_type(ParamType::GroupStart);
+        let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
+        param_def.set_name(name);
+        param_def.as_mut().param_type = ParamType::GroupStart as _;
         param_def.set_id(Self::param_id(type_start));
-        param_def.add(-1);
+        param_def.add(-1).unwrap();
         self.map.borrow_mut().insert(type_start, self.num_params);
         self.num_params += 1;
 
         inner_cb(self);
 
-        let mut param_def = ParamDef::new_from_ptr(self.in_data);
-        param_def.set_param_type(ParamType::GroupEnd);
+        let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
+        param_def.as_mut().param_type = ParamType::GroupEnd as _;
         param_def.set_id(Self::param_id(type_end));
-        param_def.add(-1);
+        param_def.add(-1).unwrap();
         self.map.borrow_mut().insert(type_end, self.num_params);
         self.num_params += 1;
     }
 
-    pub fn add_param(&mut self, type_: P, name: &str, def: impl Into<Param>) {
+    pub fn add_param(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>) {
         assert!(!self.in_data.is_null());
 
-        let mut param_def = ParamDef::new_from_ptr(self.in_data);
-        param_def.name(name);
-        param_def.param(def.into());
+        let param = def.into(); // This must outlive the call to .add()
+
+        let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
+        param_def.set_name(name);
+        param_def.set_param(&param);
         param_def.set_id(Self::param_id(type_));
-        param_def.add(-1);
+        param_def.add(-1).unwrap();
         self.map.borrow_mut().insert(type_, self.num_params);
         self.num_params += 1;
     }
 
-    pub fn add_param_with_flags(
-        &mut self,
-        type_: P,
-        name: &str,
-        def: impl Into<Param>,
-        flags: ParamFlag,
-        ui_flags: ParamUIFlags,
-    ) {
+    pub fn add_param_with_flags(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>, flags: ParamFlag, ui_flags: ParamUIFlags) {
         assert!(!self.in_data.is_null());
 
-        let mut param_def = ParamDef::new_from_ptr(self.in_data);
-        param_def.name(name);
-        param_def.param(def.into());
+        let param = def.into(); // This must outlive the call to .add()
+
+        let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
+        param_def.set_name(name);
+        param_def.set_param(&param);
         param_def.set_id(Self::param_id(type_));
-        param_def.flags(flags);
-        param_def.ui_flags(ui_flags);
-        param_def.add(-1);
+        param_def.set_flags(flags);
+        param_def.set_ui_flags(ui_flags);
+        param_def.add(-1).unwrap();
         self.map.borrow_mut().insert(type_, self.num_params);
         self.num_params += 1;
     }
 
-    pub fn add_param_customized<F: FnOnce(&mut ParamDef) -> i32>(
-        &mut self,
-        type_: P,
-        name: &str,
-        def: impl Into<Param>,
-        cb: F,
-    ) -> ParamDef {
+    pub fn add_param_customized<F: FnOnce(&mut ParamDef) -> i32>(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>, cb: F) {
         assert!(!self.in_data.is_null());
 
-        let mut param_def = ParamDef::new_from_ptr(self.in_data);
-        param_def.name(name);
-        param_def.param(def.into());
+        let param = def.into(); // This must outlive the call to .add()
+
+        let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
+        param_def.set_name(name);
+        param_def.set_param(&param);
         param_def.set_id(Self::param_id(type_));
         let mut index = cb(&mut param_def);
-        param_def.add(index);
+        param_def.add(index).unwrap();
         if index == -1 {
             index = self.num_params as i32;
         }
         self.map.borrow_mut().insert(type_, index as usize);
         self.num_params += 1;
-        param_def
     }
 
-    define_get_param!("popup", Popup, PopupDef);
-    define_get_param!("angle", Angle, AngleDef);
-    define_get_param!("checkbox", CheckBox, CheckBoxDef);
-    define_get_param!("color", Color, ColorDef);
-    define_get_param!("slider", Slider, SliderDef);
-    define_get_param!("float_slider", FloatSlider, FloatSliderDef);
-    define_get_param!("button", Button, ButtonDef);
-    define_get_param!("arbitrary", Arbitrary, ArbitraryDef);
-
-    pub fn get_param_def(
-        &self,
-        type_: P,
-        time: Option<i32>,
-        time_step: Option<i32>,
-        time_scale: Option<u32>,
-    ) -> Option<Cow<ParamDef>> {
-        let index = self.index_for_type(type_)?;
+    pub fn get(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
+        let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
         if self.params.is_empty() || time.is_some() {
             let in_data = self.in_data();
             let param = ParamDef::checkout(
@@ -1228,22 +1098,17 @@ impl<P: Eq + PartialEq + Hash + Copy + Debug> Parameters<P> {
                 time.unwrap_or(in_data.current_time()),
                 time_step.unwrap_or(in_data.time_step()),
                 time_scale.unwrap_or(in_data.time_scale()),
-            );
+            )?;
             if !param.is_valid() {
-                return None;
+                return Err(Error::InvalidParms);
             }
-            return Some(Cow::Owned(param));
+            return Ok(Ownership::Rust(param));
         }
-        Some(Cow::Borrowed(self.params.get(index)?))
+        Ok(Ownership::AfterEffects(self.params.get(index).ok_or(Error::InvalidIndex)?))
     }
-    pub fn get_param_def_mut(
-        &mut self,
-        type_: P,
-        time: Option<i32>,
-        time_step: Option<i32>,
-        time_scale: Option<u32>,
-    ) -> Option<mucow::MuCow<ParamDef>> {
-        let index = self.index_for_type(type_)?;
+
+    pub fn get_mut(&mut self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
+        let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
         if self.params.is_empty() || time.is_some() {
             let in_data = self.in_data();
             let param = ParamDef::checkout(
@@ -1252,13 +1117,13 @@ impl<P: Eq + PartialEq + Hash + Copy + Debug> Parameters<P> {
                 time.unwrap_or(in_data.current_time()),
                 time_step.unwrap_or(in_data.time_step()),
                 time_scale.unwrap_or(in_data.time_scale()),
-            );
+            )?;
             if !param.is_valid() {
-                return None;
+                return Err(Error::InvalidParms);
             }
-            return Some(mucow::MuCow::Owned(param));
+            return Ok(Ownership::Rust(param));
         }
-        Some(mucow::MuCow::Borrowed(self.params.get_mut(index)?))
+        Ok(Ownership::AfterEffectsMut(self.params.get_mut(index).ok_or(Error::InvalidIndex)?))
     }
 
     pub fn num_params(&self) -> usize {

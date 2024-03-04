@@ -181,8 +181,6 @@ impl EventExtra {
             [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG, ae_sys::PF_Event_ADJUST_CURSOR].contains(&self.as_ref().e_type),
             "The modifiers() method is only valid if event() is Click, Drag or AdjustCursor."
         );
-        log::info!("type: {}", self.as_ref().e_type);
-        log::info!("modifiers: {}", unsafe { self.as_ref().u.do_click.modifiers } );
         if self.as_ref().e_type == ae_sys::PF_Event_ADJUST_CURSOR {
             return unsafe { Modifiers::from_bits_truncate(self.as_ref().u.adjust_cursor.modifiers as _) }
         }

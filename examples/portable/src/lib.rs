@@ -93,15 +93,16 @@ impl AdobePluginGlobal for Plugin {
         params.add_param(
             Params::MixChannels,
             "Mix channels",
-            ae::FloatSliderDef::new()
-                .set_valid_min(0.0)
-                .set_slider_min(0.0)
-                .set_valid_max(200.0)
-                .set_slider_max(200.0)
-                .set_value(10.0)
-                .set_default(10.0)
-                .precision(1)
-                .display_flags(ae::ValueDisplayFlag::PERCENT),
+            ae::FloatSliderDef::setup(|f| {
+                f.set_valid_min(0.0);
+                f.set_slider_min(0.0);
+                f.set_valid_max(200.0);
+                f.set_slider_max(200.0);
+                f.set_value(10.0);
+                f.set_default(10.0);
+                f.set_precision(1);
+                f.set_display_flags(ae::ValueDisplayFlag::PERCENT);
+            }),
         );
         Ok(())
     }
@@ -136,7 +137,7 @@ impl AdobePluginInstance for Instance {
         in_layer: &Layer,
         out_layer: &mut Layer,
     ) -> Result<(), ae::Error> {
-        let slider_value = plugin.params.get_float_slider(Params::MixChannels, None, None, None).unwrap().value() as f32;
+        let slider_value = plugin.params.get(Params::MixChannels, None, None, None)?.as_float_slider()?.value() as f32;
 
         // If the slider is 0 just make a direct copy.
         if slider_value < 0.001 {

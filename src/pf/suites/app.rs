@@ -82,11 +82,11 @@ impl AppSuite {
         ))
     }
 
-    /// Sets the cursor to any of After Effects' cursors. See AE_EffectUI.h for a complete enumeration.
+    /// Sets the cursor to any of After Effects' cursors. See [`CursorType`]` for a complete enumeration.
     ///
     /// Set to:
-    /// - `Cursor::None` to allow After Effects to set the cursor.
-    /// - `Cursor::Custom` if you've used OS-specific calls to change the cursor (After Effects will honor your changes).
+    /// - [`CursorType::None`] to allow After Effects to set the cursor.
+    /// - [`CursorType::Custom`] if you've used OS-specific calls to change the cursor (After Effects will honor your changes).
     pub fn set_cursor(&self, cursor: CursorType) -> Result<(), Error> {
         call_suite_fn!(self, PF_SetCursor, cursor.into())
     }
@@ -105,7 +105,7 @@ impl AppSuite {
     }
 
     /// Returns the position of the mouse in the custom UI coordinate space.
-    pub fn get_mouse(&self) -> Result<ae_sys::PF_Point, Error> {
+    pub fn mouse_position(&self) -> Result<ae_sys::PF_Point, Error> {
         call_suite_fn_single!(self, PF_GetMouse -> ae_sys::PF_Point)
     }
 
@@ -166,7 +166,7 @@ impl AdvAppSuite {
         call_suite_fn!(self, PF_SetProjectDirty,)
     }
 
-    /// Saves the project to the current path. To save the project elsewhere, use [`AEGP_SaveProjectToPath`](crate::suites::AEGPSuite::save_project_to_path).
+    /// Saves the project to the current path. To save the project elsewhere, use [`aegp::suites::Project::save_project_to_path`].
     pub fn save_project(&self) -> Result<(), Error> {
         call_suite_fn!(self, PF_SaveProject,)
     }

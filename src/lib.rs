@@ -264,11 +264,11 @@ impl From<std::collections::TryReserveError> for Error {
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
 pub struct Matrix3([[f64; 3]; 3]);
-impl Into<ae_sys::A_Matrix3> for Matrix3 {
+impl From<Matrix3> for ae_sys::A_Matrix3 {
     #[inline]
-    fn into(self) -> ae_sys::A_Matrix3 {
+    fn from(val: Matrix3) -> Self {
         ae_sys::A_Matrix3 {
-            mat: self.0
+            mat: val.0
         }
     }
 }
@@ -283,11 +283,11 @@ impl From<ae_sys::A_Matrix3> for Matrix3 {
 #[repr(C)]
 pub struct Matrix4([[f64; 4]; 4]);
 
-impl Into<ae_sys::A_Matrix4> for Matrix4 {
+impl From<Matrix4> for ae_sys::A_Matrix4 {
     #[inline]
-    fn into(self) -> ae_sys::A_Matrix4 {
+    fn from(val: Matrix4) -> Self {
         ae_sys::A_Matrix4 {
-            mat: self.0
+            mat: val.0
         }
     }
 }
@@ -561,6 +561,40 @@ impl From<Ratio> for f32 {
     fn from(ratio: Ratio) -> Self {
         debug_assert!(ratio.den != 0);
         ratio.num as Self / ratio.den as Self
+    }
+}
+
+pub enum Ownership<'a, T: Clone> {
+    AfterEffects(&'a T),
+    AfterEffectsMut(&'a mut T),
+    Rust(T),
+}
+impl<'a, T: Clone> Clone for Ownership<'a, T> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::AfterEffects(ptr)    => Self::Rust((*ptr).clone()),
+            Self::AfterEffectsMut(ptr) => Self::Rust((*ptr).clone()),
+            Self::Rust(ptr)            => Self::Rust(ptr.clone()),
+        }
+    }
+}
+impl<'a, T: Clone> std::ops::Deref for Ownership<'a, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::AfterEffects(ptr) => ptr,
+            Self::AfterEffectsMut(ptr) => ptr,
+            Self::Rust(ptr) => ptr,
+        }
+    }
+}
+impl<'a, T: Clone> std::ops::DerefMut for Ownership<'a, T> {
+    fn deref_mut(&mut self) -> &mut T {
+        match self {
+            Self::AfterEffects(_) => panic!("Tried to mutably borrow immutable data"),
+            Self::AfterEffectsMut(ptr) => ptr,
+            Self::Rust(ptr) => ptr,
+        }
     }
 }
 

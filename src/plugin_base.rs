@@ -6,10 +6,10 @@ macro_rules! define_plugin {
         use std::rc::Rc;
         use std::cell::RefCell;
 
-        struct PluginState<'global, 'sequence, 'params> {
+        struct PluginState<'main, 'global, 'sequence, 'params> {
             global: &'global mut $global_type,
             sequence: Option<&'sequence mut $sequence_type>,
-            params: &'params mut $crate::Parameters<$params_type>,
+            params: &'params mut $crate::Parameters<'main, $params_type>,
             in_data: $crate::InData,
             out_data: $crate::OutData
         }
@@ -108,7 +108,7 @@ macro_rules! define_plugin {
             output: *mut after_effects_sys::PF_LayerDef,
             extra: *mut std::ffi::c_void) -> Result<(), Error>
         {
-            let _pica = crate::PicaBasicSuite::from_pf_in_data_raw(in_data_ptr);
+            let _pica = $crate::PicaBasicSuite::from_pf_in_data_raw(in_data_ptr);
 
             let in_data = InData::from_raw(in_data_ptr);
             let out_data = OutData::from_raw(out_data_ptr);
@@ -145,10 +145,13 @@ macro_rules! define_plugin {
                 (*out_data_ptr).num_params = params.num_params() as i32;
             }
 
+            let params_slice = if params.is_null() || global_inst.params_num == 0 { &[] } else { unsafe { std::slice::from_raw_parts(params, global_inst.params_num) } };
+
+            let mut params_state = Parameters::<$params_type>::with_params(in_data_ptr, params_slice, global_inst.params_map.clone(), global_inst.params_num);
             let mut plugin_state = PluginState {
                 global: &mut global_inst.plugin_instance,
                 sequence: sequence_handle.as_ref().map(|x| x.0.as_mut().unwrap()),
-                params: &mut Parameters::<$params_type>::with_params(in_data_ptr, params, global_inst.params_map.clone(), global_inst.params_num),
+                params: &mut params_state,
                 in_data,
                 out_data
             };

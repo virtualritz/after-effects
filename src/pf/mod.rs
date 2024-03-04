@@ -2,7 +2,7 @@ use crate::*;
 use bitflags::bitflags;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
-    fmt::{Debug, Write},
+    fmt::Debug,
     marker::PhantomData,
 };
 
@@ -136,11 +136,11 @@ pub struct Point {
     pub h: i32,
     pub v: i32,
 }
-impl Into<ae_sys::PF_Point> for Point {
-    fn into(self) -> ae_sys::PF_Point {
+impl From<Point> for ae_sys::PF_Point {
+    fn from(val: Point) -> Self {
         ae_sys::PF_Point {
-            h: self.h,
-            v: self.v,
+            h: val.h,
+            v: val.v,
         }
     }
 }
@@ -471,9 +471,9 @@ impl Fixed {
         Self(value << 16)
     }
 }
-impl Into<ae_sys::PF_Fixed> for Fixed {
-    fn into(self) -> ae_sys::PF_Fixed {
-        self.0
+impl From<Fixed> for ae_sys::PF_Fixed {
+    fn from(val: Fixed) -> Self {
+        val.0
     }
 }
 impl From<ae_sys::PF_Fixed> for Fixed {
@@ -486,13 +486,13 @@ impl From<f32> for Fixed {
         Fixed((value * 65536.0 + (if value < 0.0 { -0.5 } else { 0.5 })) as _)
     }
 }
-impl Into<f32> for Fixed {
-    fn into(self) -> f32 {
-        self.0 as f32 / 65536.0
+impl From<Fixed> for f32 {
+    fn from(val: Fixed) -> Self {
+        val.0 as f32 / 65536.0
     }
 }
-impl Into<f64> for Fixed {
-    fn into(self) -> f64 {
-        self.0 as f64 / 65536.0
+impl From<Fixed> for f64 {
+    fn from(val: Fixed) -> Self {
+        val.0 as f64 / 65536.0
     }
 }

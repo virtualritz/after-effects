@@ -250,107 +250,136 @@ macro_rules! define_owned_handle_wrapper {
 }
 
 macro_rules! define_param_wrapper {
-    ($wrapper_pretty_name:ident, $data_type:ident) => {
-        #[derive(Copy, Clone, Debug)]
-        #[repr(C)]
-        pub struct $wrapper_pretty_name(after_effects_sys::$data_type);
-
-        impl $wrapper_pretty_name {
+    ($sys_enum:ident, $sys_type:ident, $sys_field:ident, $param_enum:path, $(#[$attr:meta])* $name:ident {
+        $($field_name:ident: $field_type:ty, )*
+    },
+    $(impl $impl_name:tt: $impl_type:tt, )*) => {
+        $(#[$attr])*
+        pub struct $name<'parent> {
+            pub(crate) def: Ownership<'parent, after_effects_sys::$sys_type>,
+            pub(crate) change_flags: Option<&'parent mut ae_sys::PF_ChangeFlags>,
+            $($field_name: $field_type, )*
+        }
+        impl<'parent> $name<'parent> {
             pub fn new() -> Self {
-                Self(unsafe { std::mem::MaybeUninit::zeroed().assume_init() })
+                Self {
+                    def: Ownership::Rust(unsafe { std::mem::zeroed() }),
+                    change_flags: None,
+                    $($field_name: Default::default(), )*
+                }
             }
-
-            pub fn from_raw(def: after_effects_sys::$data_type) -> Self {
-                Self(def)
+            pub fn setup(cb: fn(&mut Self)) -> Self {
+                let mut ret = Self::new();
+                cb(&mut ret);
+                ret
             }
-
-            pub fn into_raw(def: $wrapper_pretty_name) -> after_effects_sys::$data_type {
-                def.0
+            pub fn from_mut(def: &'parent mut after_effects_sys::$sys_type, change_flags: &'parent mut ae_sys::PF_ChangeFlags) -> Self {
+                Self {
+                    def: Ownership::AfterEffectsMut(def),
+                    change_flags: Some(change_flags),
+                    $($field_name: Default::default(), )*
+                }
+            }
+            pub fn from_ref(def: &'parent after_effects_sys::$sys_type) -> Self {
+                Self {
+                    def: Ownership::AfterEffects(def),
+                    change_flags: None,
+                    $($field_name: Default::default(), )*
+                }
+            }
+            pub fn from_owned(def: after_effects_sys::$sys_type) -> Self {
+                Self {
+                    def: Ownership::Rust(def),
+                    change_flags: None,
+                    $($field_name: Default::default(), )*
+                }
+            }
+            pub fn set_value_changed(&mut self) {
+                if let Some(ref mut change_flags) = self.change_flags {
+                    **change_flags = ChangeFlag::CHANGED_VALUE.bits();
+                }
+            }
+            $(
+                define_param_wrapper!(impl $impl_type, $impl_name);
+            )*
+        }
+        impl<'p> Into<Param<'p>> for $name<'p> {
+            fn into(self) -> Param<'p> {
+                $param_enum(self)
             }
         }
     };
-}
-
-macro_rules! define_param_basic_wrapper {
-    ($wrapper_pretty_name:ident, $data_type:ident, $value_type:ident, $value_type_ui:ident) => {
-        impl $wrapper_pretty_name {
-            pub fn set_value(mut self, value: $value_type) -> $wrapper_pretty_name {
-                self.0.value = value;
-                self
-            }
-
-            pub fn set_default(mut self, default: $value_type_ui) -> $wrapper_pretty_name {
-                self.0.dephault = default as _;
+    (impl String, $name:ident) => {
+        paste::item! {
+            pub fn [<set_ $name>](&'parent mut self, v: &str) -> &'parent mut Self {
+                self.$name = CString::new(v).unwrap();
+                { self.def.u.namesptr = self.$name.as_ptr(); }
                 self
             }
         }
+        pub fn $name(&self) -> &str {
+            unsafe { CStr::from_ptr(self.def.u.namesptr).to_str().unwrap() }
+        }
     };
-}
-
-macro_rules! define_param_valid_min_max_wrapper {
-    ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
-        impl $wrapper_pretty_name {
-            pub fn set_valid_min(mut self, valid_min: $value_type_ui) -> $wrapper_pretty_name {
-                self.0.valid_min = valid_min;
-                self
-            }
-
-            pub fn set_valid_max(mut self, valid_max: $value_type_ui) -> $wrapper_pretty_name {
-                self.0.valid_max = valid_max;
+    (impl ShortString, $name:ident) => {
+        paste::item! {
+            pub fn [<set_ $name>](&mut self, v: &str) -> &mut Self {
+                assert!(v.len() < 32);
+                let cstr = CString::new(v).unwrap();
+                let slice = cstr.to_bytes_with_nul();
+                self.def.$name[0..slice.len()].copy_from_slice(unsafe { std::mem::transmute(slice) });
                 self
             }
         }
+        pub fn $name(&self) -> &str {
+            let ptr = self.def.$name;
+            let u8_slice: &[u8] = unsafe { std::slice::from_raw_parts(ptr.as_ptr() as *const u8, ptr.len()) };
+            CStr::from_bytes_until_nul(u8_slice).unwrap().to_str().unwrap()
+        }
     };
-}
-
-macro_rules! define_param_slider_min_max_wrapper {
-    ($wrapper_pretty_name:ident, $value_type_ui:ident) => {
-        impl $wrapper_pretty_name {
-            pub fn set_slider_min(mut self, slider_min: $value_type_ui) -> $wrapper_pretty_name {
-                self.0.slider_min = slider_min;
-                self
-            }
-
-            pub fn set_slider_max(mut self, slider_max: $value_type_ui) -> $wrapper_pretty_name {
-                self.0.slider_max = slider_max;
+    (impl bool, $name:ident) => {
+        paste::item! {
+            pub fn [<set_ $name>](&mut self, v: bool) -> &mut Self {
+                self.def.$name = if v { 1 } else { 0 };
+                self.set_value_changed();
                 self
             }
         }
+        pub fn $name(&self) -> bool {
+            self.def.$name != 0
+        }
     };
-}
-
-macro_rules! define_param_value_str_wrapper {
-    ($wrapper_pretty_name:ident) => {
-        impl $wrapper_pretty_name {
-            pub fn set_value_str<'a>(
-                &'a mut self,
-                value_str: &str,
-            ) -> &'a mut $wrapper_pretty_name {
-                assert!(value_str.len() < 32);
-                let value_cstr = CString::new(value_str).unwrap();
-                let value_slice = value_cstr.to_bytes_with_nul();
-                self.0.value_str[0..value_slice.len()]
-                    .copy_from_slice(unsafe { std::mem::transmute(value_slice) });
+    (impl Fixed, $name:ident) => {
+        paste::item! {
+            pub fn [<set_ $name>](&mut self, v: f32) -> &mut Self {
+                self.def.$name = Fixed::from(v).into();
+                self.set_value_changed();
                 self
             }
         }
+        pub fn $name(&self) -> f32 {
+            Fixed::from(self.def.$name).into()
+        }
     };
-}
-
-macro_rules! define_param_value_desc_wrapper {
-    ($wrapper_pretty_name:ident) => {
-        impl $wrapper_pretty_name {
-            pub fn set_value_desc<'a>(
-                &'a mut self,
-                value_desc: &str,
-            ) -> &'a mut $wrapper_pretty_name {
-                assert!(value_desc.len() < 32);
-                let value_desc_cstr = CString::new(value_desc).unwrap();
-                let value_desc_slice = value_desc_cstr.to_bytes_with_nul();
-                self.0.value_desc[0..value_desc_slice.len()]
-                    .copy_from_slice(unsafe { std::mem::transmute(value_desc_slice) });
+    (impl $typ:ty, default) => {
+        pub fn set_default(&mut self, v: $typ) -> &mut Self {
+            self.def.dephault = v as _;
+            self
+        }
+        pub fn default(&self) -> $typ {
+            self.def.dephault as _
+        }
+    };
+    (impl $typ:ty, $name:ident) => {
+        paste::item! {
+            pub fn [<set_ $name>](&mut self, v: $typ) -> &mut Self {
+                self.def.$name = v.into();
+                self.set_value_changed();
                 self
             }
+        }
+        pub fn $name(&self) -> $typ {
+            self.def.$name.into()
         }
     };
 }

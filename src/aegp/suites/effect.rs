@@ -51,14 +51,17 @@ impl EffectSuite {
 
         unsafe {
             match param_type {
-                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_raw(u.ad))),
-                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_raw(u.arb_d))),
-                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_raw(u.button_d))),
-                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_raw(u.bd))),
-                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_raw(u.cd))),
-                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_raw(u.fs_d))),
-                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_raw(u.pd))),
-                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_raw(u.sd))),
+                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_owned(u.ad))),
+                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_owned(u.arb_d))),
+                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_owned(u.button_d))),
+                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_owned(u.bd))),
+                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_owned(u.cd))),
+                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_owned(u.fs_d))),
+                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_owned(u.pd))),
+                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_owned(u.sd))),
+                ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_owned(u.td))),
+                ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_owned(u.point3d_d))),
+                ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_owned(u.path_d))),
                 _ => Err(Error::InvalidParms),
             }
         }
