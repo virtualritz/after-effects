@@ -598,6 +598,28 @@ impl<'a, T: Clone> std::ops::DerefMut for Ownership<'a, T> {
     }
 }
 
+pub enum PointerOwnership<T> {
+    AfterEffects(*mut T),
+    Rust(T),
+}
+impl<T> std::ops::Deref for PointerOwnership<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::AfterEffects(ptr) => unsafe { &**ptr },
+            Self::Rust(ptr) => ptr,
+        }
+    }
+}
+impl<T> std::ops::DerefMut for PointerOwnership<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        match self {
+            Self::AfterEffects(ptr) => unsafe { &mut **ptr },
+            Self::Rust(ptr) => ptr,
+        }
+    }
+}
+
 // This is confusing: for some structs Ae expects the caller to
 // manage the memory and for others it doesn't (the caller only
 // deals with a pointer that gets dereferenced for actually

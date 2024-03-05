@@ -187,9 +187,8 @@ impl From<RationalScale> for f32 {
 pub type MaskFlags = u32;
 
 #[derive(Debug)]
-#[repr(C)]
 pub struct MaskWorld {
-    pub mask: EffectWorld,
+    pub mask: ae_sys::PF_EffectWorld,
     pub offset: Point,
     pub what_is_mask: MaskFlags,
 }
@@ -233,160 +232,8 @@ define_enum! {
         Invalid      = ae_sys::PF_TimeDisplay_Invalid,
     }
 }
-// FIXME: wrap this nicely
-/// An EffectWorld is a view on a WorldHandle that can be used to write to.
-#[derive(Debug, Copy, Clone)]
-pub struct EffectWorld {
-    pub effect_world: ae_sys::PF_EffectWorld,
-}
-
-pub struct EffectWorldConst {
-    pub effect_world: ae_sys::PF_EffectWorld,
-}
-
-unsafe impl Send for EffectWorldConst {}
-unsafe impl Sync for EffectWorldConst {}
 
 define_handle_wrapper!(EffectBlendingTables, PF_EffectBlendingTables);
-
-// FIXME: this is not safe.
-// We just use EffectWorld responsibly but another user of this care may not.
-unsafe impl Send for EffectWorld {}
-unsafe impl Sync for EffectWorld {}
-
-impl EffectWorld {
-    #[inline]
-    pub fn new(world_handle: &aegp::WorldHandle) -> Result<Self, crate::Error> {
-        aegp::suites::World::new()?.effect_world(world_handle)
-    }
-
-    pub fn from_raw(effect_world_ptr: *const ae_sys::PF_EffectWorld) -> Result<Self, crate::Error> {
-        if effect_world_ptr.is_null() {
-            Err(crate::Error::Generic)
-        } else {
-            Ok(EffectWorld {
-                effect_world: unsafe { *effect_world_ptr },
-            })
-        }
-    }
-
-    #[inline]
-    pub fn width(&self) -> usize {
-        self.effect_world.width as usize
-    }
-
-    #[inline]
-    pub fn height(&self) -> usize {
-        self.effect_world.height as usize
-    }
-
-    #[inline]
-    pub fn row_bytes(&self) -> usize {
-        self.effect_world.rowbytes as usize
-    }
-
-    #[inline]
-    pub fn data_as_ptr(&self) -> *const u8 {
-        self.effect_world.data as *const u8
-    }
-
-    #[inline]
-    pub fn data_as_ptr_mut(&self) -> *mut u8 {
-        self.effect_world.data as *mut u8
-    }
-
-    #[inline]
-    pub fn data_len(&self) -> usize {
-        self.height() * self.row_bytes()
-    }
-
-    pub fn row_padding_bytes(&self) -> usize {
-        self.row_bytes()
-            - self.width()
-                * 4
-                * match self.world_type() {
-                    aegp::WorldType::U15 => 2,
-                    aegp::WorldType::U8 => 1,
-                    aegp::WorldType::F32 => 4,
-                    aegp::WorldType::None => panic!(),
-                }
-    }
-
-    #[inline]
-    pub fn as_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
-        debug_assert!(
-            x < self.width() && y < self.height(),
-            "Coordinate is outside EffectWorld bounds."
-        );
-        unsafe { &mut *(self.data_as_ptr_mut().add(y * self.row_bytes()) as *mut Pixel8).add(x) }
-    }
-
-    #[inline]
-    pub fn as_pixel8(&self, x: usize, y: usize) -> &Pixel8 {
-        self.as_pixel8_mut(x, y)
-    }
-
-    #[inline]
-    pub fn as_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
-        debug_assert!(
-            x < self.width() && y < self.height(),
-            "Coordinate is outside EffectWorld bounds."
-        );
-        unsafe { &mut *(self.data_as_ptr_mut().add(y * self.row_bytes()) as *mut Pixel16).add(x) }
-    }
-
-    #[inline]
-    pub fn as_pixel16(&self, x: usize, y: usize) -> &Pixel16 {
-        self.as_pixel16_mut(x, y)
-    }
-
-    #[inline]
-    pub fn as_pixel32_mut(&self, x: usize, y: usize) -> &mut PixelF32 {
-        debug_assert!(
-            x < self.width() && y < self.height(),
-            "Coordinate is outside EffectWorld bounds."
-        );
-        unsafe { &mut *(self.data_as_ptr_mut().add(y * self.row_bytes()) as *mut PixelF32).add(x) }
-    }
-
-    #[inline]
-    pub fn as_pixel32(&self, x: usize, y: usize) -> &PixelF32 {
-        self.as_pixel32_mut(x, y)
-    }
-
-    #[inline]
-    pub fn world_type(&self) -> aegp::WorldType {
-        let flags = WorldFlags::from_bits(self.effect_world.world_flags as _).unwrap();
-        // Most frequent case is 16bit integer.
-        if flags.contains(WorldFlags::DEEP) {
-            aegp::WorldType::U15
-        } else if flags.contains(WorldFlags::RESERVED1) {
-            aegp::WorldType::F32
-        } else {
-            aegp::WorldType::U8
-        }
-    }
-
-    #[inline]
-    pub fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
-        &self.effect_world as *const ae_sys::PF_EffectWorld
-    }
-
-    #[inline]
-    pub fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
-        &mut self.effect_world as *mut ae_sys::PF_EffectWorld
-    }
-}
-
-pub fn progress(in_data: InData, count: u16, total: u16) -> i32 {
-    unsafe {
-        (*in_data.as_ptr()).inter.progress.unwrap()(
-            (*in_data.as_ptr()).effect_ref,
-            count as i32,
-            total as i32,
-        )
-    }
-}
 
 define_enum! {
     ae_sys::PF_ParamIndex,

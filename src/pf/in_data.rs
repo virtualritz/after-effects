@@ -109,6 +109,21 @@ impl InData {
         unsafe { (*self.ptr).time_scale }
     }
 
+    pub fn pre_effect_source_origin(&self) -> Point {
+        Point {
+            h: unsafe { (*self.ptr).pre_effect_source_origin_x },
+            v: unsafe { (*self.ptr).pre_effect_source_origin_y },
+        }
+    }
+
+    pub fn downsample_x(&self) -> RationalScale {
+        unsafe { (*self.ptr).downsample_x.into() }
+    }
+
+    pub fn downsample_y(&self) -> RationalScale {
+        unsafe { (*self.ptr).downsample_y.into() }
+    }
+
     #[inline]
     pub fn version(&self) -> (i16, i16) {
         unsafe { ((*self.ptr).version.major, (*self.ptr).version.minor) }

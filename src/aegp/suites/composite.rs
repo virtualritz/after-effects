@@ -16,8 +16,8 @@ impl CompositeSuite {
     }
 
     /// For the given [`EffectWorld`], sets the alpha to fully transparent except for the specified rectangle.
-    pub fn clear_alpha_except_rect(&self, clipped_dest_rect: Rect, dst_world: &mut EffectWorld) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_ClearAlphaExceptRect, &mut clipped_dest_rect.into() as *mut _, dst_world.as_mut_ptr())
+    pub fn clear_alpha_except_rect(&self, clipped_dest_rect: Rect, dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<(), Error> {
+        call_suite_fn!(self, AEGP_ClearAlphaExceptRect, &mut clipped_dest_rect.into() as *mut _, dst_world.as_ptr())
     }
 
     /// Blends two [`EffectWorld`]s using a transfer mode, with an optional mask.
@@ -28,17 +28,17 @@ impl CompositeSuite {
         quality: pf::Quality,
         alpha: pf::ModeFlags,
         field: pf::Field,
-        src_rect: &crate::Rect,
-        src_world: &EffectWorld,
+        src_rect: &Rect,
+        src_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>,
         comp_mode: &pf::CompositeMode,
         blending_tables: Option<&EffectBlendingTables>,
         mask_world: Option<pf::MaskWorld>,
         dst_x: u32,
         dst_y: u32,
-        dst_world: &mut EffectWorld,
+        dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>,
     ) -> Result<(), Error> {
         let mask_world = mask_world.map(|m| ae_sys::PF_MaskWorld {
-            mask: m.mask.effect_world,
+            mask: m.mask,
             offset: ae_sys::PF_Point {
                 v: m.offset.v,
                 h: m.offset.h,
@@ -58,7 +58,7 @@ impl CompositeSuite {
             mask_world.map_or(std::ptr::null(), |m| &m) as _,
             dst_x as i32,
             dst_y as i32,
-            dst_world.as_mut_ptr()
+            dst_world.as_ptr()
         )
     }
 
@@ -72,17 +72,35 @@ impl CompositeSuite {
     }
 
     /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one [`EffectWorld`] to another, at low quality.
-    pub fn copy_bits_lq(&self, src_world: &EffectWorld, src_r: Option<Rect>, dst_r: Option<Rect>, dst_world: &mut EffectWorld) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_CopyBits_LQ, src_world.as_ptr() as *mut _, src_r.map_or(std::ptr::null_mut(), |r| &mut r.into() as *mut _), dst_r.map_or(std::ptr::null_mut(), |r| &mut r.into() as *mut _), dst_world.as_mut_ptr())
+    pub fn copy_bits_lq(&self, src_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>, src_r: Option<Rect>, dst_r: Option<Rect>, dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<(), Error> {
+        call_suite_fn!(self,
+            AEGP_CopyBits_LQ,
+            src_world.as_ptr(),
+            src_r.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |r| r),
+            dst_r.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |r| r),
+            dst_world.as_ptr()
+        )
     }
 
     /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one [`EffectWorld`] to another, at high quality, with a straight alpha channel.
-    pub fn copy_bits_hq_straight(&self, src_world: &EffectWorld, src_r: Option<Rect>, dst_r: Option<Rect>, dst_world: &mut EffectWorld) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_CopyBits_HQ_Straight, src_world.as_ptr() as *mut _, src_r.map_or(std::ptr::null_mut(), |r| &mut r.into() as *mut _), dst_r.map_or(std::ptr::null_mut(), |r| &mut r.into() as *mut _), dst_world.as_mut_ptr())
+    pub fn copy_bits_hq_straight(&self, src_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>, src_r: Option<Rect>, dst_r: Option<Rect>, dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<(), Error> {
+        call_suite_fn!(self,
+            AEGP_CopyBits_HQ_Straight,
+            src_world.as_ptr(),
+            src_r.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |r| r),
+            dst_r.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |r| r),
+            dst_world.as_ptr()
+        )
     }
 
     /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one [`EffectWorld`] to another, at high quality, premultiplying the alpha channel.
-    pub fn copy_bits_hq_premul(&self, src_world: &EffectWorld, src_r: Option<Rect>, dst_r: Option<Rect>, dst_world: &mut EffectWorld) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_CopyBits_HQ_Premul, src_world.as_ptr() as *mut _, src_r.map_or(std::ptr::null_mut(), |r| &mut r.into() as *mut _), dst_r.map_or(std::ptr::null_mut(), |r| &mut r.into() as *mut _), dst_world.as_mut_ptr())
+    pub fn copy_bits_hq_premul(&self, src_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>, src_r: Option<Rect>, dst_r: Option<Rect>, dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<(), Error> {
+        call_suite_fn!(self,
+            AEGP_CopyBits_HQ_Premul,
+            src_world.as_ptr(),
+            src_r.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |r| r),
+            dst_r.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |r| r),
+            dst_world.as_ptr()
+        )
     }
 }

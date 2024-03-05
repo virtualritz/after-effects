@@ -53,8 +53,8 @@ impl Command {
             RawCommand::SequenceSetdown => Command::SequenceSetdown,
             RawCommand::DoDialog => Command::DoDialog,
             RawCommand::FrameSetup => Command::FrameSetup {
-                in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, InData::from_raw(in_data_ptr)) },
-                out_layer: Layer::from_raw(output, InData::from_raw(in_data_ptr)),
+                in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, InData::from_raw(in_data_ptr), None) },
+                out_layer: Layer::from_raw(output, InData::from_raw(in_data_ptr), None),
             },
             RawCommand::Render => Command::Render,
             RawCommand::FrameSetdown => Command::FrameSetdown,
@@ -82,14 +82,14 @@ impl Command {
                 extra: PreRenderExtra::from_raw(extra as *mut _),
             },
             RawCommand::SmartRender => Command::SmartRender {
-                extra: SmartRenderExtra::from_raw(extra as *mut _),
+                extra: SmartRenderExtra::from_raw(in_data_ptr, extra as *mut _),
             },
             RawCommand::GetFlattenedSequenceData => Command::GetFlattenedSequenceData,
             RawCommand::TranslateParamsToPrefs => Command::TranslateParamsToPrefs {
                 extra: extra as *mut ae_sys::PF_TranslateParamsToPrefsExtra,
             },
             RawCommand::SmartRenderGpu => Command::SmartRenderGpu {
-                extra: SmartRenderExtra::from_raw(extra as *mut _),
+                extra: SmartRenderExtra::from_raw(in_data_ptr, extra as *mut _),
             },
             RawCommand::GpuDeviceSetup => Command::GpuDeviceSetup {
                 extra: GpuDeviceSetupExtra::from_raw(extra as *mut _),

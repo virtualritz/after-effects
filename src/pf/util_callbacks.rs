@@ -50,7 +50,7 @@ macro_rules! define_iterate {
         /// Pass the max number as zero to turn off progress reporting.
         ///
         /// This is quality independent.
-        pub fn $name<F>(&self $(, $in_data: $in_data_ty)?, src: Option<*mut PF_EffectWorld>, dst: *mut PF_EffectWorld, progress_base: i32, progress_final: i32, area: Option<Rect> $(, $additional: $additional_type)?, cb: F) -> Result<(), Error>
+        pub fn $name<F>(&self $(, $in_data: $in_data_ty)?, src: Option<*const PF_EffectWorld>, dst: *mut PF_EffectWorld, progress_base: i32, progress_final: i32, area: Option<Rect> $(, $additional: $additional_type)?, cb: F) -> Result<(), Error>
         where
             F: Fn(i32, i32, &$pixel, &mut $pixel) -> Result<(), Error>,
         {
@@ -85,7 +85,7 @@ macro_rules! define_iterate {
                     _in_data_ptr as *mut _,
                     progress_base,
                     progress_final,
-                    src.unwrap_or(std::ptr::null_mut()),
+                    src.map_or(std::ptr::null_mut(), |x| x as *mut _),
                     area.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
                     $($additional.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x), )?
                     refcon as *mut _,
@@ -304,9 +304,9 @@ impl UtilCallbacks {
     /// This blits a region from one PF_EffectWorld to another.
     /// This is an alpha-preserving (unlike CopyBits), 32-bit only, non-antialiased stretch blit.
     /// The high qual version does an anti-aliased blit (ie. it interpolates).
-    pub fn copy(&self, src: *mut PF_EffectWorld, dst: *mut PF_EffectWorld, src_rect: Option<Rect>, dst_rect: Option<Rect>) -> Result<(), Error> {
+    pub fn copy(&self, src: *const PF_EffectWorld, dst: *mut PF_EffectWorld, src_rect: Option<Rect>, dst_rect: Option<Rect>) -> Result<(), Error> {
         if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, copy, src, dst, src_rect.map_or(std::ptr::null_mut(), |x| &mut x.into()), dst_rect.map_or(std::ptr::null_mut(), |x| &mut x.into()))
+        call_fn!(self, copy, src as *mut _, dst, src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x), dst_rect.map_or(std::ptr::null_mut(), |x| &mut x.into()))
     }
 
     // Helpers for the define_iterate macros
@@ -347,15 +347,17 @@ impl UtilCallbacks {
     }
 
     /// This creates a new [`EffectWorld`] for scratch for you. You must dispose of it. This is quality independent.
-    pub fn new_world(&self, width: i32, height: i32, flags: NewWorldFlags) -> Result<EffectWorld, Error> {
+    pub fn new_world(&self, width: i32, height: i32, flags: NewWorldFlags) -> Result<Layer, Error> {
         let mut world = unsafe { std::mem::zeroed() };
         call_fn!(self, new_world, width as _, height as _, flags.bits() as _, &mut world)?;
-        Ok(EffectWorld { effect_world: world })
+        Ok(Layer::from_owned(world, self.0.clone(), |self_layer| {
+            UtilCallbacks::new(self_layer.in_data.clone()).dispose_world(self_layer.as_mut_ptr()).unwrap();
+        }))
     }
 
     /// This disposes a [`EffectWorld`], deallocating pixels, etc. Only call it on worlds you have created. Quality independent.
-    pub fn dispose_world(&self, world: EffectWorld) -> Result<(), Error> {
-        call_fn!(self, dispose_world, world.as_ptr() as *mut _)
+    pub fn dispose_world(&self, world: *mut ae_sys::PF_EffectWorld) -> Result<(), Error> {
+        call_fn!(self, dispose_world, world)
     }
 
     /// Blends using a transfer mode, with an optional mask.

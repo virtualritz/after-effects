@@ -16,26 +16,27 @@ impl WorldSuite {
         crate::Suite::new()
     }
 
-    /// Creates a new [`EffectWorld`].
-    pub fn new_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, width: i32, height: i32, clear_pix: bool, pixel_format: PixelFormat) -> Result<EffectWorld, Error> {
-        Ok(EffectWorld {
-            effect_world: call_suite_fn_single!(self, PF_NewWorld -> ae_sys::PF_EffectWorld, effect_ref.as_ptr(), width, height, clear_pix as _, pixel_format.into())?
-        })
+    /// Creates a new [`Layer`].
+    pub fn new_world(&self, in_data: &InData, width: i32, height: i32, clear_pix: bool, pixel_format: PixelFormat) -> Result<Layer, Error> {
+        let layer = call_suite_fn_single!(self, PF_NewWorld -> ae_sys::PF_EffectWorld, (*in_data.as_ptr()).effect_ref, width, height, clear_pix as _, pixel_format.into())?;
+        Ok(Layer::from_owned(layer, in_data.clone(), |self_layer| {
+            WorldSuite::new().unwrap().dispose_world(self_layer.in_data.effect_ref(), self_layer.as_mut_ptr()).unwrap();
+        }))
     }
 
-    /// Dispose of an [`EffectWorld`].
-    pub fn dispose_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, effect_world: EffectWorld) -> Result<(), Error> {
-        call_suite_fn!(self, PF_DisposeWorld, effect_ref.as_ptr(), effect_world.as_ptr() as *mut _)
+    /// Dispose of an [`Layer`].
+    pub fn dispose_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, effect_world: *mut ae_sys::PF_EffectWorld) -> Result<(), Error> {
+        call_suite_fn!(self, PF_DisposeWorld, effect_ref.as_ptr(), effect_world)
     }
 
-    /// Get the pixel format for a given [`EffectWorld`].
+    /// Get the pixel format for a given [`Layer`].
     ///
     /// Result can be:
     ///
     /// * [`PixelFormat::Argb32`] - standard 8-bit RGB
     /// * [`PixelFormat::Argb64`] - 16-bit RGB
     /// * [`PixelFormat::Argb128`] - 32-bit floating point RGB
-    pub fn pixel_format(&self, effect_world: &EffectWorld) -> Result<PixelFormat, Error> {
+    pub fn pixel_format(&self, effect_world: impl AsPtr<*const ae_sys::PF_EffectWorld>) -> Result<PixelFormat, Error> {
         Ok(call_suite_fn_single!(self, PF_GetPixelFormat -> ae_sys::PF_PixelFormat, effect_world.as_ptr())?.into())
     }
 }

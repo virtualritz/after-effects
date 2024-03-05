@@ -115,41 +115,43 @@ impl GPUDeviceSuite {
     /// * `pixel_format` - The pixel format of the effect world, only gpu formats are accepted.
     /// * `clear_pix` - Pass in 'true' for a transparent black frame.
     /// Returns the handle to the effect world to be created.
-    pub fn create_gpu_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, width: i32, height: i32, pixel_aspect_ratio: RationalScale, field_type: Field, pixel_format: pf::PixelFormat, clear_pix: bool) -> Result<EffectWorld, Error> {
-        EffectWorld::from_raw(
-            call_suite_fn_single!(self, CreateGPUWorld -> *mut PF_EffectWorld, effect_ref.as_ptr(), device_index as _, width, height, pixel_aspect_ratio.into(), field_type.into(), pixel_format.into(), clear_pix as _)?
-        )
+    pub fn create_gpu_world(&self, in_data: &InData, device_index: usize, width: i32, height: i32, pixel_aspect_ratio: RationalScale, field_type: Field, pixel_format: pf::PixelFormat, clear_pix: bool) -> Result<Layer, Error> {
+        let layer = call_suite_fn_single!(self, CreateGPUWorld -> *mut PF_EffectWorld, in_data.effect_ref().as_ptr(), device_index as _, width, height, pixel_aspect_ratio.into(), field_type.into(), pixel_format.into(), clear_pix as _)?;
+
+        Ok(Layer::from_raw(layer, in_data.clone(), Some(|self_layer| {
+            GPUDeviceSuite::new().unwrap().dispose_gpu_world(self_layer.in_data.effect_ref().as_ptr(), self_layer.as_mut_ptr()).unwrap();
+        })))
     }
 
     /// This will free this effect world. The effect world is no longer valid after this function is called.
     /// Plugin module is only allowed to dispose of gpu effect worlds they create.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to dispose.
-    pub fn dispose_gpu_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: EffectWorld) -> Result<(), Error> {
-        call_suite_fn!(self, DisposeGPUWorld, effect_ref.as_ptr(), world.as_ptr() as *mut _)
+    pub fn dispose_gpu_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: *mut ae_sys::PF_EffectWorld) -> Result<(), Error> {
+        call_suite_fn!(self, DisposeGPUWorld, effect_ref.as_ptr(), world)
     }
 
     /// This will return the gpu buffer address of the given effect world.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
     /// Returns the gpu buffer address.
-    pub fn gpu_world_data(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: &EffectWorld) -> Result<*mut std::ffi::c_void, Error> {
-        call_suite_fn_single!(self, GetGPUWorldData -> *mut c_void, effect_ref.as_ptr(), world.as_ptr() as *mut _)
+    pub fn gpu_world_data(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<*mut std::ffi::c_void, Error> {
+        call_suite_fn_single!(self, GetGPUWorldData -> *mut c_void, effect_ref.as_ptr(), world.as_ptr())
     }
 
     /// This will return the size of the total data in the effect world.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
     /// Returns the size of the total data in the effect world.
-    pub fn gpu_world_size(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: &EffectWorld) -> Result<usize, Error> {
-        Ok(call_suite_fn_single!(self, GetGPUWorldSize -> usize, effect_ref.as_ptr(), world.as_ptr() as *mut _)?)
+    pub fn gpu_world_size(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<usize, Error> {
+        Ok(call_suite_fn_single!(self, GetGPUWorldSize -> usize, effect_ref.as_ptr(), world.as_ptr())?)
     }
 
     /// This will return device index the gpu effect world is associated with.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
     /// Returns the device index of the given effect world.
-    pub fn gpu_world_device_index(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: &EffectWorld) -> Result<usize, Error> {
-        Ok(call_suite_fn_single!(self, GetGPUWorldDeviceIndex -> A_u_long, effect_ref.as_ptr(), world.as_ptr() as *mut _)? as usize)
+    pub fn gpu_world_device_index(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<usize, Error> {
+        Ok(call_suite_fn_single!(self, GetGPUWorldDeviceIndex -> A_u_long, effect_ref.as_ptr(), world.as_ptr())? as usize)
     }
 }

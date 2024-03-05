@@ -148,6 +148,7 @@ unsafe extern "C" fn delete_pre_render_data(data: *mut std::ffi::c_void) {
 
 #[derive(Clone, Copy, Debug)]
 pub struct SmartRenderExtra {
+    pub(crate) in_data_ptr: *const ae_sys::PF_InData,
     pub(crate) ptr: *mut ae_sys::PF_SmartRenderExtra,
 }
 impl AsRef<ae_sys::PF_SmartRenderExtra> for SmartRenderExtra {
@@ -156,15 +157,15 @@ impl AsRef<ae_sys::PF_SmartRenderExtra> for SmartRenderExtra {
     }
 }
 impl SmartRenderExtra {
-    pub fn from_raw(ptr: *mut ae_sys::PF_SmartRenderExtra) -> Self {
+    pub fn from_raw(in_data_ptr: *const ae_sys::PF_InData, ptr: *mut ae_sys::PF_SmartRenderExtra) -> Self {
         assert!(!ptr.is_null());
-        Self { ptr }
+        Self { in_data_ptr, ptr }
     }
     pub fn as_ptr(&self) -> *mut ae_sys::PF_SmartRenderExtra {
         self.ptr
     }
     pub fn callbacks(&self) -> SmartRenderCallbacks {
-        unsafe { SmartRenderCallbacks::from_raw((*self.ptr).cb) }
+        unsafe { SmartRenderCallbacks::from_raw(self.in_data_ptr, (*self.ptr).cb) }
     }
     pub fn what_gpu(&self) -> GpuFramework {
         assert!(!self.as_ref().input.is_null());
@@ -265,37 +266,31 @@ impl PreRenderCallbacks {
 
 #[derive(Copy, Clone, Debug)]
 pub struct SmartRenderCallbacks {
+    pub(crate) in_data_ptr: *const ae_sys::PF_InData,
     pub(crate) rc_ptr: *const ae_sys::PF_SmartRenderCallbacks,
 }
 
 impl SmartRenderCallbacks {
-    pub fn from_raw(rc_ptr: *const ae_sys::PF_SmartRenderCallbacks) -> Self {
-        Self { rc_ptr }
+    pub fn from_raw(in_data_ptr: *const ae_sys::PF_InData, rc_ptr: *const ae_sys::PF_SmartRenderCallbacks) -> Self {
+        Self { in_data_ptr, rc_ptr }
     }
 
     pub fn as_ptr(&self) -> *const ae_sys::PF_SmartRenderCallbacks {
         self.rc_ptr
     }
 
-    pub fn checkout_layer_pixels(
-        &self,
-        effect_ref: impl AsPtr<PF_ProgPtr>,
-        checkout_id: u32,
-    ) -> Result<EffectWorld, Error> {
+    pub fn checkout_layer_pixels(&self, checkout_id: u32) -> Result<Layer, Error> {
         if let Some(checkout_layer_pixels) = unsafe { *self.rc_ptr }.checkout_layer_pixels {
-            let mut effect_world_ptr =
-                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
+            let mut effect_world_ptr = std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
             match unsafe {
                 checkout_layer_pixels(
-                    effect_ref.as_ptr(),
+                    (*self.in_data_ptr).effect_ref,
                     checkout_id as i32,
                     effect_world_ptr.as_mut_ptr(),
                 )
             } {
-                0 => Ok(EffectWorld {
-                    effect_world: unsafe { *effect_world_ptr.assume_init() },
-                }),
+                0 => Ok(Layer::from_raw(unsafe { effect_world_ptr.assume_init() }, InData::from_raw(self.in_data_ptr), None)),
                 e => Err(Error::from(e)),
             }
         } else {
@@ -303,13 +298,9 @@ impl SmartRenderCallbacks {
         }
     }
 
-    pub fn checkin_layer_pixels(
-        &self,
-        effect_ref: impl AsPtr<PF_ProgPtr>,
-        checkout_id: u32,
-    ) -> Result<(), Error> {
+    pub fn checkin_layer_pixels(&self, checkout_id: u32) -> Result<(), Error> {
         if let Some(checkin_layer_pixels) = unsafe { *self.rc_ptr }.checkin_layer_pixels {
-            match unsafe { checkin_layer_pixels(effect_ref.as_ptr(), checkout_id as i32) } {
+            match unsafe { checkin_layer_pixels((*self.in_data_ptr).effect_ref, checkout_id as i32) } {
                 0 => Ok(()),
                 e => Err(Error::from(e)),
             }
@@ -318,15 +309,12 @@ impl SmartRenderCallbacks {
         }
     }
 
-    pub fn checkout_output(&self, effect_ref: impl AsPtr<PF_ProgPtr>) -> Result<EffectWorld, Error> {
+    pub fn checkout_output(&self) -> Result<Layer, Error> {
         if let Some(checkout_output) = unsafe { *self.rc_ptr }.checkout_output {
-            let mut effect_world_ptr =
-                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
+            let mut effect_world_ptr = std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
-            match unsafe { checkout_output(effect_ref.as_ptr(), effect_world_ptr.as_mut_ptr()) } {
-                0 => Ok(EffectWorld {
-                    effect_world: unsafe { *effect_world_ptr.assume_init() },
-                }),
+            match unsafe { checkout_output((*self.in_data_ptr).effect_ref, effect_world_ptr.as_mut_ptr()) } {
+                0 => Ok(Layer::from_raw(unsafe { effect_world_ptr.assume_init() }, InData::from_raw(self.in_data_ptr), None)),
                 e => Err(Error::from(e)),
             }
         } else {

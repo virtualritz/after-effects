@@ -73,10 +73,8 @@ impl WorldSuite {
     ///
     /// NOTE: This does not give your plug-in ownership of the world referenced; destroy the source [`WorldHandle`] only if you allocated it.
     /// It just returns an [`EffectWorld`] that points to the same pixel buffer.
-    pub fn effect_world(&self, world: impl AsPtr<AEGP_WorldH>) -> Result<EffectWorld, Error> {
-        Ok(EffectWorld {
-            effect_world: call_suite_fn_single!(self, AEGP_FillOutPFEffectWorld -> ae_sys::PF_EffectWorld, world.as_ptr())?
-        })
+    pub fn fill_out_pf_effect_world(&self, world: impl AsPtr<AEGP_WorldH>, handle: &mut ae_sys::PF_EffectWorld) -> Result<(), Error> {
+       call_suite_fn!(self, AEGP_FillOutPFEffectWorld, world.as_ptr(), handle)
     }
 
     /// Performs a fast blur on a given [`WorldHandle`].
@@ -158,12 +156,6 @@ define_suite_item_wrapper!(
 
         /// Performs a fast blur on this world.
         fast_blur(radius: f64, mode: ModeFlags, quality: Quality) -> () => suite.fast_blur,
-
-        /// Returns a [`EffectWorld`] representing this world, for use with numerous pixel processing callbacks.
-        ///
-        /// NOTE: This does not give your plug-in ownership of the world referenced; destroy the source [`WorldHandle`] only if you allocated it.
-        /// It just returns an [`EffectWorld`] that points to the same pixel buffer.
-        effect_world() -> EffectWorld => suite.effect_world,
     }
 );
 
@@ -175,5 +167,13 @@ impl World {
             suite: once_cell::sync::Lazy::new(|| WorldSuite::new()),
             is_owned: true,
         })
+    }
+
+    /// Returns a [`pf::Layer`] representing this world, for use with numerous pixel processing callbacks.
+    ///
+    /// NOTE: This does not give your plug-in ownership of the world referenced; destroy the source [`WorldHandle`] only if you allocated it.
+    /// It just returns an [`EffectWorld`] that points to the same pixel buffer.
+    pub fn pf_layer(&self, in_data: &InData) -> Result<pf::Layer, Error> {
+        pf::Layer::from_handle(in_data, self.handle.as_ptr())
     }
 }

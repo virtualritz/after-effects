@@ -24,18 +24,19 @@ impl PixelFormatSuite {
         call_suite_fn!(self, ClearSupportedPixelFormats, effect_ref.as_ptr())
     }
 
-    pub fn new_world_of_pixel_format(&self, effect_ref: impl AsPtr<PF_ProgPtr>, width: u32, height: u32, flags: pf::NewWorldFlags, pixel_format: pr::PixelFormat) -> Result<EffectWorld, Error> {
-        Ok(EffectWorld {
-            effect_world: call_suite_fn_single!(self, NewWorldOfPixelFormat -> ae_sys::PF_EffectWorld, effect_ref.as_ptr(), width, height, flags.bits(), pixel_format.into())?
-        })
+    pub fn new_world_of_pixel_format(&self, in_data: &InData, effect_ref: impl AsPtr<PF_ProgPtr>, width: u32, height: u32, flags: pf::NewWorldFlags, pixel_format: pr::PixelFormat) -> Result<Layer, Error> {
+        let layer = call_suite_fn_single!(self, NewWorldOfPixelFormat -> ae_sys::PF_EffectWorld, effect_ref.as_ptr(), width, height, flags.bits(), pixel_format.into())?;
+        Ok(Layer::from_owned(layer, in_data.clone(), |self_layer| {
+            PixelFormatSuite::new().unwrap().dispose_world(self_layer.in_data.effect_ref(), self_layer.as_mut_ptr()).unwrap();
+        }))
     }
 
-    pub fn dispose_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: &EffectWorld) -> Result<(), Error> {
-        call_suite_fn!(self, DisposeWorld, effect_ref.as_ptr(), world.as_ptr() as *mut _)
+    pub fn dispose_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: *mut ae_sys::PF_EffectWorld) -> Result<(), Error> {
+        call_suite_fn!(self, DisposeWorld, effect_ref.as_ptr(), world)
     }
 
-    pub fn pixel_format(&self, world: &EffectWorld) -> Result<pr::PixelFormat, Error> {
-        Ok(call_suite_fn_single!(self, GetPixelFormat -> ae_sys::PrPixelFormat, world.as_ptr() as *mut _)?.into())
+    pub fn pixel_format(&self, world: impl AsPtr<ae_sys::PF_EffectWorldPtr>) -> Result<pr::PixelFormat, Error> {
+        Ok(call_suite_fn_single!(self, GetPixelFormat -> ae_sys::PrPixelFormat, world.as_ptr())?.into())
     }
 
     /// Retrieves the minimum i.e. "black" value for a give pixel type.

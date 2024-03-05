@@ -111,42 +111,126 @@ impl PIPLType {
 
 bitflags::bitflags! {
     #[derive(Debug)]
+	/// The out_flags field of the OutData can be set to an OR-ed combination of these flags to communicate various things to the driver program.
     pub struct OutFlags: u32 {
+        /// This is the "empty" setting -- no outflags.
         const None = 0;
-                                                      // which PF_Cmds each flag is relevant for:
+        /// Obsoleted in AE 2015 (does nothing when set).
+        ///
+		/// Set this flag if your effect expects its Macintosh resource fork to be open at any time other than global setup.  Note that this does not mean that
+		/// the resource fork will be kept open at all times, just whenever the effect is being executed.
         const KeepResourceOpen             = 1 << 0;  // PF_Cmd_GLOBAL_SETUP
+        /// Set this flag if the effect calls get_param to inquire a parameter at a time besides the current one (e.g. to get the previous video frame).
+        /// This should be sent, if it is going to be sent, at PF_Cmd_GLOBAL_SETUP. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.
+        ///
+        /// As of AE10, this flag is no longer recommended. It still works the same way and is safe to set, but there's a more efficient option.
+        /// See PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT.
         const WideTimeInput                = 1 << 1;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
+        /// Set this if the effect uses information other than the parameters in the param list to generate its output at the current time.
+        /// For instance, if the effect uses the current time of the frame or some random value to decide the output, set this flag.
+        /// This flag should be sent at PF_Cmd_GLOBAL_SETUP.
+        /// If the effect produces changing frames when applied to a still image and all parameters are constant, that's a sure sign that this bit should be set (e.g. Wave Warp).
+        /// Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.
         const NonParamVary                 = 1 << 2;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
-        const Reserved6                    = 1 << 3;
+        // const Reserved6                    = 1 << 3;
+        /// When you allocate a sequence data handle, the app may write the handle out to disk and reuse it later.
+        /// Pass this flag if the handle is not "flat" (i.e. has pointers or handles hanging off of it).
+        /// Basically, this gives you a chance to alter the handle contents before it is written out to disk, so you won't get invalid handles or pointers.
+        /// Once you have flattened a handle, you will get an opportunity to un-flatten it before the effect needs to continue.
+        /// For sequence data, you will be invoked with a PF_Cmd_SEQUENCE_RESETUP call.
+        /// You should store a boolean at a common offset in your unflattened and flattened data that says whether the data is flat or not.
+        /// If you get a PF_Cmd_SEQUENCE_RESETUP and the boolean indicated the data is flattened, you should unflatten the data,
+        /// free the flattened data handle, and set the sequence_data handle in the PF_OutData.
+        /// If you ever set the data to NULL when you flatten it, you will NOT get the sequence resetup call to unflatten it.
+        /// Instead, you may just get a RENDER call with NULL data. Forewarned is forearmed. This flag, indicating if the data will need to be flattened, should be set at PF_Cmd_GLOBAL_SETUP time.
         const SequenceDataNeedsFlattening  = 1 << 4;  // PF_Cmd_GLOBAL_SETUP
+        /// Set this is the effect responds to a PF_Cmd_DO_DIALOG, i.e. Does this effect bring up an options dialog box.
+        /// PF_Cmd_DO_DIALOG is generated when the user presses the Options button on the Effect floater.
+        /// This flag should be set at PF_Cmd_GLOBAL_SETUP time.
         const IDoDialog                    = 1 << 5;  // PF_Cmd_GLOBAL_SETUP
+        /// The output layer is passed with an "extent rect" indicating the area of the layer that actually contains visible image data.
+        /// If the effect changes its behavior based on the extent rect (for instance, by not iterating over the entire image),
+        /// set this flag, so the application will know whether having the extent change should cause the frame to re-render.
+        /// Specify this flag at PF_Cmd_GLOBAL_SETUP.
         const UseOutputExtent              = 1 << 6;  // PF_Cmd_GLOBAL_SETUP
+        /// Some filters need their options dialog box to be brought up at least once to be valid.
+        /// You can set this flag, and the driver app will automatically send a PF_Cmd_DO_DIALOG to the effect when it is applied.
+        /// The DO_DIALOG will be sent after PF_Cmd_SEQUENCE_SETUP.  This flag should be set in PF_Cmd_SEQUENCE_SETUP if it is going to be set.
         const SendDoDialog                 = 1 << 7;  // PF_Cmd_SEQUENCE_SETUP
+        /// Whenever the return_msg field in the PF_OutData is set to a string, After Effects will bring up a simple dialog box containing that string.
+        /// If you set this flag, the dialog box will be made to look like an error message dialog box.
+        /// If you don't set this flag, it will be an undecorated dialog box.
+        /// Using this flag, an effects module can have and display its own error messages and not worry about the code for dialog boxes -- the program will do it for you.
+        /// This flag can be sent after any command.
         const DisplayErrorMessage          = 1 << 8;  // all PF_Cmds
+        /// Starting with After Effects 2.0, effects will be able to expand their buffers beyond the current layer's dimensions.
+        /// This has always been part of the PF specification, but as an extra precaution (and hint to the AE rendering engine) set this flag at PF_Cmd_GLOBAL_SETUP if you plan to expand your buffer.
         const IExpandBuffer                = 1 << 9;  // PF_Cmd_GLOBAL_SETUP
+        /// Set this flag if the output at a given pixel is not dependent on the values of the pixels around it.
+        /// If this is set, the pixels After Effects does not care about (because of field rendering, for example) could be filled with garbage colors.
+        /// Please set this flag at PF_Cmd_GLOBAL_SETUP. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.
         const PixIndependent               = 1 << 10; // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
+        /// Set this flag if your effect would like to write into the input buffer.
+        /// This can be useful if you need an scratch buffer, but it also invalidates some speedups in the AE rendering pipeline, so use it with some discretion.
+        /// Please set this flag at PF_Cmd_GLOBAL_SETUP.
         const IWriteInputBuffer            = 1 << 11; // PF_Cmd_GLOBAL_SETUP
+        /// Set this flag if you can shrink your buffer based on the extent-rects passed to you in order to be more memory efficient.
         const IShrinkBuffer                = 1 << 12; // PF_Cmd_GLOBAL_SETUP
         const WorksInPlace                 = 1 << 13; // PF_Cmd_GLOBAL_SETUP
-        const Reserved8                    = 1 << 14;
+        // const Reserved8                    = 1 << 14;
+        /// This flag must be set if your effect has a custom UI in the Effect Controls Window, Layer Window or Comp Window.
         const CustomUI                     = 1 << 15; // PF_Cmd_GLOBAL_SETUP
-        const Reserved7                    = 1 << 16;
+        // const Reserved7                    = 1 << 16;
+        /// Can be returned from PF_Cmd_EVENT, PF_Cmd_RENDER, and PF_Cmd_DO_DIALOG.
+        /// Causes the effects control window, layer window, and comp window to be re-drawn.
         const RefreshUI                    = 1 << 17; // PF_Cmd_EVENT, PF_Cmd_RENDER, PF_Cmd_DO_DIALOG
+        /// Set this flag in PF_Cmd_GLOBAL_SETUP if the render would never result in changes to the source image (or audio?). For example, an expression control would set this.
         const NopRender                    = 1 << 18; // PF_Cmd_GLOBAL_SETUP
+        /// Must be set at PF_Cmd_GLOBAL_SETUP time if the effect uses the shutter_angle or the shutter_phase.
+        /// Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.
         const IUseShutterAngle             = 1 << 19; // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
+        /// Must be set at PF_Cmd_GLOBAL_SETUP time for a visual effect that calls the audio checkout calls.
         const IUseAudio                    = 1 << 20; // PF_Cmd_GLOBAL_SETUP
+        /// Set at PF_Cmd_GLOBAL_SETUP time for effects that don't want to appear in the AE Effects menu (but will still be invoked if you load a project that has an old copy of the effect applied).
         const IAmObsolete                  = 1 << 21; // PF_Cmd_GLOBAL_SETUP
+        /// Set at PF_Cmd_EVENT if the effect modified sequence data, or did anything else that requires the effect needs to re-render.
+        /// Note that setting PF_ChangeFlag_CHANGED_VALUE automatically causes a re-render, so don't worry about setting PF_OutFlag_FORCE_RERENDER in that case.
+        /// Also, I_MIX_GUID_DEPENDENCIES can be used to trigger a rerender on dependant changes if sequence_data has not been changed.
+        ///
+        /// IMPORTANT: FORCE_RERENDER should be used as a last resort. Long term we should be eliminating the need for this
+        /// because it causes forced cache invalidation that doesn't work well with undo.
+        /// Once we have the full set of APIs in place needed to manage render state, we will be able to deprecate this.
+        /// Prefer using ARB data + CHANGED_VALUE or I_MIX_GUID_DEPENDENCIES when possible instead.
+        ///
+        /// In 13.5 the split between a UI and render threads means that FORCE_RERENDER will now also have the needed side effect of copying sequence_data state to the render project.
+        /// This can be expensive if the sequence_data is large.
+        /// Support GET_FLATTENED_SEQUENCE_DATA to prevent deallocation of your sequence_data, which can help.
+        /// GET_FLATTENED_SEQUENCE_DATA support is required for FORCE_RERENDER use in custom mouse/key events.
         const ForceRerender                = 1 << 22; // PF_Cmd_EVENT, PF_Cmd_USER_CHANGED_PARAM, PF_Cmd_UPDATE_PARAMS_UI
+        /// Valid only for setting in your PiPL. When set out_flags will be ignored at PF_Cmd_GLOBAL_SETUP time (& thus don't need to match).
         const PiplOverridesOutdataOutflags = 1 << 23; // PiPL-only-flag
+        /// Set this flag at PF_Cmd_GLOBAL_SETUP time if the effect has dependencies that the user should know about before transporting their project to a different machine.
+        /// For example, dependencies on an installed font, or on an external file.
+        /// If set, the effect will receive a PF_Cmd_GET_EXTERNAL_DEPENDENCIES request, where the extra param will be a PF_ExtDependenciesExtra,
+        /// and the effect should report its information based on the given sequence_data.
         const IHaveExternalDependencies    = 1 << 24; // PF_Cmd_GLOBAL_SETUP
+        /// Marks the plugin as aware of 16-bpc pixels. This is a hint to the host that the plugin can handle 16-bpc pixels.
         const DeepColorAware               = 1 << 25; // PF_Cmd_GLOBAL_SETUP
+        /// Set this flag at PF_Cmd_GLOBAL_SETUP time if you want to receive PF_Cmd_UPDATE_PARAMS_UI messages.
         const SendUpdateParamsUI           = 1 << 26; // PF_Cmd_GLOBAL_SETUP
 
         // audio flags (pfOutflagAudio_EFFECT_TOO or PF_OutFlag_AUDIO_EFFECT_ONLY required for audio effects)
+        /// Set this flag if you only want to receive PF_SIGNED_FLOAT data when processing audio data.
+        /// Requires PF_OutFlag_AUDIO_EFFECT_TOO or PF_OutFlag_AUDIO_EFFECT_ONLY.
         const AudioFloatOnly               = 1 << 27; // PF_Cmd_GLOBAL_SETUP
+        /// Set this flag at PF_Cmd_GLOBAL_SETUP time if you are an Infinite-Impulse-Response audio filter (i.e. your output at a given time depends on your output from previous times).
         const AudioIir                     = 1 << 28; // PF_Cmd_GLOBAL_SETUP
+        /// Set this flag at PF_Cmd_GLOBAL_SETUP time if you generate audio even when handed silence.
+        /// Requires PF_OutFlag_AUDIO_EFFECT_TOO or PF_OutFlag_AUDIO_EFFECT_ONLY.
         const ISynthesizeAudio             = 1 << 29; // PF_Cmd_GLOBAL_SETUP
+        /// Must be set at PF_Cmd_GLOBAL_SETUP time for an effect that wants to filter the audio too (as opposed to just reading the audio).
         const AudioEffectToo               = 1 << 30; // PF_Cmd_GLOBAL_SETUP
+        /// Must be set at PF_Cmd_GLOBAL_SETUP time for an effect that only filters audio (no video).
         const AudioEffectOnly              = 1 << 31; // PF_Cmd_GLOBAL_SETUP
     }
 }
@@ -154,34 +238,109 @@ bitflags::bitflags! {
     #[derive(Debug)]
     pub struct OutFlags2: u32 {
         const None = 0;
-                                                             // which PF_Cmds each flag is relevant for:
+        /// Set this during PF_Cmd_GLOBAL_SETUP if the effect handles PF_Cmd_QUERY_DYNAMIC_FLAGS.
+        /// Supporting this command can dramatically improve performance for certain effects, because it provides dynamic
+        /// information to the host about what can be cached (as opposed to PIPL bits which cannot be changed at run-time)
         const SupportsQueryDynamicFlags           = 1 << 0;  // PF_Cmd_GLOBAL_SETUP
+        /// This bit must be set if the effect ever uses the AEGP PF_Interface suite to access camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.
         const IUse3DCamera                        = 1 << 1;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
+        /// This bit must be set if the effect ever uses the AEGP PF_Interface suite to access camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.
         const IUse3DLights                        = 1 << 2;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
+        /// If you want a parameter group to honor the PF_ParamFlag_COLLAPSE_TWIRLY or PF_ParamFlag_START_COLLAPSED flag, set this bit.
+        /// Otherwise, all parameter groups will be collapsed by default.
         const ParamGroupStartCollapsedFlag        = 1 << 3;  // PF_Cmd_GLOBAL_SETUP
         const IAmThreadsafe                       = 1 << 4;  // PF_Cmd_GLOBAL_SETUP (unused)
         const CanCombineWithDestination           = 1 << 5;  // Premiere only (as of AE 6.0)
+        /// Added for render optimizations; shrinks the input buffer passed to the effect to exclude any empty pixels (where empty means "zero alpha" unless PF_OutFlag2_REVEALS_ZERO_ALPHA is set, in which case RGB must be zero as well.)
+        /// The origin of the trimmed buffer can be found in in_data->pre_effect_source_origin.
+        /// Effects with both this flag and PF_OutFlag_I_EXPAND_BUFFER set may get called with a null input buffer if their input is completely empty, and must be able to handle this case without crashing.
+        /// This flag can be cleared dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.
         const DoesntNeedEmptyPixels               = 1 << 6;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
+        /// The effect can take pixels with zero alpha and reveal the RGB data in them (like our Set Channels effect).
+        /// This tells After Effects not to trim such pixels when determining the input for the effect.
+        /// This flag can be cleared dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.
         const RevealsZeroAlpha                    = 1 << 7;  // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
         const PreservesFullyOpaquePixels          = 1 << 8;  // Premiere only (as of AE 6.0)
         const SupportsSmartRender                 = 1 << 10; // PF_Cmd_GLOBAL_SETUP
-        const Reserved9                           = 1 << 11; // PF_Cmd_GLOBAL_SETUP
+        // const Reserved9                           = 1 << 11; // PF_Cmd_GLOBAL_SETUP
         const FloatColorAware                     = 1 << 12; // PF_Cmd_GLOBAL_SETUP, may require PF_OutFlag2_SUPPORTS_SMART_RENDER
         const IUseColorspaceEnumeration           = 1 << 13; // PF_Cmd_GLOBAL_SETUP, not implemented in AE7 (may be impl in Premiere Pro)
+        /// this effect is still available, and shows up under user-visible "Obsolete" category in the UI.
+        /// Setting this flag means "there's a better way to do this, but this effect may still be useful in some situations".
+        /// Distinct from PF_OutFlag_I_AM_OBSOLETE in that these will still show up in the GUI and the user can still apply them to new projects.
+        /// The category that is set by the effect is pretty much ignored, as it will instead always go into the "Obsolete" category
         const IAmDeprecated                       = 1 << 14; // PF_Cmd_GLOBAL_SETUP
         const PproDoNotCloneSequenceDataForRender = 1 << 15; // PF_Cmd_GLOBAL_SETUP, Premiere only, CS4.1 and later
-        const Reserved10                          = 1 << 16; // PF_Cmd_GLOBAL_SETUP
+        // const Reserved10                          = 1 << 16; // PF_Cmd_GLOBAL_SETUP
+        /// New in AE 10. Requires setting of PF_OutFlag_WIDE_TIME_INPUT (which allows you to support old hosts), but effectively overrides that flag.
+        /// When set, all parameter checkouts are tracked so over-time dependencies are known by AE.
+        /// Note that if you use this new flag, and you cache any time-dependent data in your sequence data (or anywhere else),
+        /// you must validate that cache using the new PF_HaveInputsChangedOverTimeSpan() before using it.
+        ///
+        /// This only works for smart effects (those that set PF_OutFlag2_SUPPORTS_SMART_RENDER).
+        /// If you haven't set that, After Effects will silently treat this as PF_OutFlag_WIDE_TIME_INPUT instead.
+        ///
+        /// To test that it's working, apply your effect with one parameter keyframed on every frame.
+        /// RAM Preview to fill the cache, then change one of the keyframes.
+        /// The related frame and all dependent frames (e.g. later frames, in the case of a simulation) should lose their cache marks and require re-rendering.
+        /// Simlarly, upstream changes to sources of layer parameters should cause time-selective invalidation of the cache.
         const AutomaticWideTimeInput              = 1 << 17; // PF_Cmd_GLOBAL_SETUP, falls back to PF_OutFlag_WIDE_TIME_INPUT if not PF_OutFlag2_SUPPORTS_SMART_RENDER
+        /// New in AE 9.0. The effect depends on the Composition's timecode or a layer's source footage timecode.
+        /// If the underlying timecode changes the effects will be asked to rerender.
         const IUseTimecode                        = 1 << 18; // PF_Cmd_GLOBAL_SETUP
+        /// Set this if you are going to look at paths that aren't directly referenced by a path param, e.g. if you are going to draw a stroke on all masks.
         const DependsOnUnreferencedMasks          = 1 << 19; // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
+        /// Set this if your output is going to be watermarked in some way that makes it unsuitable for final use, probably because the user is using an unlicensed demo version.
+        /// It is ok to change this state during the course of app session, if e.g. a floating license status changes.
+        /// Plugin authors that actually do have this state changing asynchronously must be careful to have the next render match the last state
+        /// returned from QUERY_DYNAMIC_FLAGS otherwise race conditions could cause incorrect frames to be cached. (This is a non-issue if you only change this in response to DO_DIALOG.)
         const OutputIsWatermarked                 = 1 << 20; // PF_Cmd_GLOBAL_SETUP, PF_Cmd_QUERY_DYNAMIC_FLAGS
+        /// Smart effects only. With this option, FORCE_RERENDER becomes a cache-savvy more efficient MAYBE rerender.
+        /// If custom UI or DO_DIALOG change sequence data, returning FORCE_RERENDER requests AE to check whether rerender needs to occur.
+        /// During PreRender, the effect uses the GuidMixInPtr callback to mix any additional state that affects the render into our internal GUID for the cached frame.
+        /// AE can then tell whether the frame already exists and if so, no longer needs to render.
+        /// This also means that DO_DIALOG no longer always blows the cache and that undo works across DO_DIALOG.
+        /// Cancelation of DO_DIALOG no longer blows the cache either.
+        /// This also means that I_USE_* flags are now basically redundant since any dependency could be mixed in.
+        /// Just be sure to mix in everything that can uniquely affect resulting rendered pixels (that is not already an AE stream parameter).
+        /// But don't mixin things that are disabled and have no render effect (this results in less cache efficiency).
         const IMixGuidDependencies                = 1 << 21; // PF_Cmd_GLOBAL_SETUP
         const Ae135Threadsafe                     = 1 << 22; // PF_Cmd_GLOBAL_SETUP (unused)
         const SupportsGetFlattenedSequenceData    = 1 << 23; // PF_Cmd_GLOBAL_SETUP, support required if both PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING and PF_OutFlag2_SUPPORTS_THREADED_RENDERING is set
+        /// This flags enables use of AEGP_CheckoutOrRender_*_AsyncManager() calls which avoid the need for plugin management of the lifetime of async custom UI renders from the UI thread.
+        /// The plugin asks for what frames it needs and the manager calls PF_Event_DRAW again when they are available (or cancels them as needed automatically).
+        /// The plugin responds in PF_Event_DRAW by asking for what it needs and drawing what it can from what is available.
+        ///
+        /// Due to separation of Render thread and UI thread in 13.5, frames for custom UI should no longer be rendered synchronously (see RenderSuite5 for more details).
+        /// The manager simplifies this, especially when there are multiple requests needed for DRAW.
+        ///
+        /// When enabled, this flag associates a "PF_AsyncManager" with the NEW_CONTEXT/CLOSE_CONTEXT and PF_Event_DRAW that will
+        /// automatically track completion of 1 or more asynch render requests made for drawing custom UI.
+        /// As requests complete, PF_Event_DRAW will be called again and the current state of the CUSTOM_UI can be drawn.
+        /// Such requests may be canceled automatically as the user scrubs the time needle or project changes are made and become invalid.
+        ///
+        /// This flag is used in addition to the CUSTOM_UI flag during PF_Cmd_GLOBAL_SETUP
         const CustomUIAsyncManager                = 1 << 24; // PF_Cmd_GLOBAL_SETUP
         const SupportsGpuRenderF32                = 1 << 25; // PF_Cmd_GLOBAL_SETUP, PF_Cmd_GPU_DEVICE_SETUP. Must also set PF_RenderOutputFlag_GPU_RENDER_POSSIBLE at pre-render to enable GPU rendering.
-        const Reserved12                          = 1 << 26; // PF_Cmd_GLOBAL_SETUP
+        // const Reserved12                          = 1 << 26; // PF_Cmd_GLOBAL_SETUP
+        /// Indicates the effect supports rendering on multiple threads at the same time.
+        /// Single or multiple applications of this effect on a layer can be called to render at the same time on multiple threads.
+        ///
+        /// UI selectors are still sent on the main thread, however Sequence Setup, Sequence Resetup, Sequence SetDown, PreRender, and Render may be sent on
+        /// multiple threads at the same time as the UI selectors are being handled so all of these selectors must be thread safe.
+        ///
+        /// Global Setup and Global Setdown selectors are unaffected by this flag.
+        /// Regardless whether this flag is set or not, they will only be sent on the main thread, and will not be sent at the same time as any other selectors.
+        ///
+        /// If the effect sets PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING indicating the sequence data needs flattening then it must also set PF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA.
+        ///
+        /// sequence_data is read-only at render time and must be accessed with PF_EffectSequenceDataSuite. in_data->sequence_data will be NULL during render.
+        /// AEGP_ComputeCacheSuite is suggested if writing to sequence_data at render time is needed for caching.
+        /// This suite unifies cache entries so multiple threads do not recompute the same cache value.
+        /// If neither of these solutions work, see the next flag, PF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER.
         const SupportsThreadedRendering           = 1 << 27; // PF_Cmd_GLOBAL_SETUP
+        /// Indicates the effect needs sequence_data replicated for each render thread, thus allowing each render to have sequence_data which can be written to.
+        /// Note that changes to sequence_data will be discarded regularly, currently after each span of frames is rendered such as single RAM Preview or Render Queue export.
         const MutableRenderSequenceDataSlower     = 1 << 28; // PF_Cmd_GLOBAL_SETUP
     }
 }
