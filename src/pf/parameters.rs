@@ -1130,7 +1130,17 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         self.num_params += 1;
     }
 
-    pub fn get(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
+    #[inline(always)]
+    pub fn get(&self, type_: P) -> Result<Ownership<ParamDef<'p>>, Error> {
+        self.get_at(type_, None, None, None)
+    }
+
+    #[inline(always)]
+    pub fn get_mut(&mut self, type_: P) -> Result<Ownership<ParamDef<'p>>, Error> {
+        self.get_mut_at(type_, None, None, None)
+    }
+
+    pub fn get_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
         let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
         if self.params.is_empty() || time.is_some() {
             let in_data = self.in_data();
@@ -1149,7 +1159,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         Ok(Ownership::AfterEffects(self.params.get(index).ok_or(Error::InvalidIndex)?))
     }
 
-    pub fn get_mut(&mut self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
+    pub fn get_mut_at(&mut self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
         let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
         if self.params.is_empty() || time.is_some() {
             let in_data = self.in_data();

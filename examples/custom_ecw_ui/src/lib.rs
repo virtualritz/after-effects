@@ -97,9 +97,9 @@ impl AdobePluginInstance for Instance {
 
     fn render(&self, plugin: &mut PluginState, in_layer: &Layer, out_layer: &mut Layer) -> Result<(), ae::Error> {
         let color: ae::Pixel8 = if plugin.in_data.application_id() != *b"PrMr" {
-            plugin.params.get(Params::Color, None, None, None)?.as_color()?.value()
+            plugin.params.get(Params::Color)?.as_color()?.value()
         } else {
-            unsafe { std::mem::zeroed() }//plugin.params.get_arbitrary(Params::Color, None, None, None).unwrap().value()
+            unsafe { std::mem::zeroed() }//plugin.params.get_arbitrary(Params::Color).unwrap().value()
         };
 
         let extent_hint = plugin.in_data.extent_hint();

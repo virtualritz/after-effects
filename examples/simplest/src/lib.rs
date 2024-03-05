@@ -33,7 +33,7 @@ impl AdobePluginInstance for Instance {
     fn user_changed_param(&mut self, _: &mut PluginState, _: Params) -> Result<(), ae::Error> { Ok(()) }
 
     fn render(&self, plugin: &mut PluginState, in_layer: &Layer, out_layer: &mut Layer) -> Result<(), ae::Error> {
-        let slider_value = plugin.params.get(Params::Opacity, None, None, None)?.as_float_slider()?.value();
+        let slider_value = plugin.params.get(Params::Opacity)?.as_float_slider()?.value();
 
         let extent_hint = plugin.in_data.extent_hint();
 

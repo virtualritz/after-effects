@@ -133,7 +133,7 @@ impl AdobePluginInstance for Instance {
         in_layer: &Layer,
         out_layer: &mut Layer,
     ) -> Result<(), ae::Error> {
-        let slider_value = plugin.params.get(Params::MixChannels, None, None, None)?.as_float_slider()?.value() as f32;
+        let slider_value = plugin.params.get(Params::MixChannels)?.as_float_slider()?.value() as f32;
 
         // If the slider is 0 just make a direct copy.
         if slider_value < 0.001 {
