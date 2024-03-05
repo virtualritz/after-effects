@@ -344,6 +344,29 @@ impl<'a> PopupDef<'a> {
 }
 // ―――――――――――――――――――――――――――――――――――― Popup ―――――――――――――――――――――――――――――――――――――
 
+// ―――――――――――――――――――――――――――――――――――― Layer ―――――――――――――――――――――――――――――――――――――
+define_param_wrapper! {
+    PF_Param_LAYER, PF_LayerDef, ld,
+    Param::Layer,
+    LayerDef { },
+}
+// ―――――――――――――――――――――――――――――――――――― Layer ―――――――――――――――――――――――――――――――――――――
+
+// ―――――――――――――――――――――――――――――――――――― Null ―――――――――――――――――――――――――――――――――――――
+#[allow(dead_code)]
+pub struct NullDef<'a>(&'a ());
+impl<'a> NullDef<'a> {
+    pub fn new() -> Self {
+        Self(&())
+    }
+}
+impl<'p> Into<Param<'p>> for NullDef<'p> {
+    fn into(self) -> Param<'p> {
+        Param::Null(self)
+    }
+}
+// ―――――――――――――――――――――――――――――――――――― Null ―――――――――――――――――――――――――――――――――――――
+
 // ―――――――――――――――――――――――――――――――――― Arbitrary ―――――――――――――――――――――――――――――――――――
 define_param_wrapper! {
     PF_Param_ARBITRARY_DATA, PF_ArbitraryDef, arb_d,
@@ -682,6 +705,8 @@ pub enum Param<'p> {
     Point3D(Point3DDef<'p>),
     Popup(PopupDef<'p>),
     Slider(SliderDef<'p>),
+    Layer(LayerDef<'p>),
+    Null(NullDef<'p>),
 }
 
 impl Debug for Param<'_> {
@@ -698,6 +723,8 @@ impl Debug for Param<'_> {
             Param::Point3D(_)     => write!(f, "Point3D"),
             Param::Popup(_)       => write!(f, "Popup"),
             Param::Slider(_)      => write!(f, "Slider"),
+            Param::Layer(_)       => write!(f, "Layer"),
+            Param::Null(_)        => write!(f, "Null"),
         }
     }
 }
@@ -817,6 +844,13 @@ impl<'p> ParamDef<'p> {
                 self.param_def.u.arb_d = *arb_d.def;
                 self.param_def.param_type = ae_sys::PF_Param_ARBITRARY_DATA;
             }
+            Param::Layer(ld) => {
+                self.param_def.u.ld = *ld.def;
+                self.param_def.param_type = ae_sys::PF_Param_LAYER;
+            }
+            Param::Null(_) => {
+                self.param_def.param_type = ae_sys::PF_Param_NO_DATA;
+            }
         }
     }
 
@@ -831,6 +865,8 @@ impl<'p> ParamDef<'p> {
     define_param_cast!("point",        Point,       PointDef);
     define_param_cast!("point3d",      Point3D,     Point3DDef);
     define_param_cast!("path",         Path,        PathDef);
+    define_param_cast!("layer",        Layer,       LayerDef);
+    define_param_cast!("null",         Null,        NullDef);
 
     pub fn as_param<'a>(&'a self) -> Result<Param<'a>, Error> where 'p: 'a {
         let param_def = &*self.param_def;
@@ -847,6 +883,8 @@ impl<'p> ParamDef<'p> {
                 ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_ref(&param_def.u.td))),
                 ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_ref(&param_def.u.point3d_d))),
                 ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_ref(&param_def.u.path_d))),
+                ae_sys::PF_Param_LAYER          => Ok(Param::Layer      (LayerDef      ::from_ref(&param_def.u.ld))),
+                ae_sys::PF_Param_NO_DATA        => Ok(Param::Null       (NullDef       ::new())),
                 _ => {
                     log::error!("Invalid parameter type: {}", param_def.param_type);
                     Err(Error::InvalidParms)
@@ -870,6 +908,8 @@ impl<'p> ParamDef<'p> {
                 ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_mut(&mut param_def.u.td,        &mut param_def.uu.change_flags))),
                 ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_mut(&mut param_def.u.point3d_d, &mut param_def.uu.change_flags))),
                 ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_mut(&mut param_def.u.path_d,    &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_LAYER          => Ok(Param::Layer      (LayerDef      ::from_mut(&mut param_def.u.ld,        &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_NO_DATA        => Ok(Param::Null       (NullDef       ::new())),
                 _ => {
                     log::error!("Invalid parameter type: {}", param_def.param_type);
                     Err(Error::InvalidParms)
@@ -894,6 +934,8 @@ impl<'p> ParamDef<'p> {
                 | ae_sys::PF_Param_POINT
                 | ae_sys::PF_Param_POINT_3D
                 | ae_sys::PF_Param_PATH
+                | ae_sys::PF_Param_LAYER
+                | ae_sys::PF_Param_NO_DATA
         )
     }
     pub fn param_type(&self) -> ParamType {

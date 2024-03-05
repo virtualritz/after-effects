@@ -90,20 +90,16 @@ impl AdobePluginGlobal for Plugin {
     }
 
     fn params_setup(&self, params: &mut ae::Parameters<Params>, _in_data: InData, _out_data: OutData) -> Result<(), Error> {
-        params.add_param(
-            Params::MixChannels,
-            "Mix channels",
-            ae::FloatSliderDef::setup(|f| {
-                f.set_valid_min(0.0);
-                f.set_slider_min(0.0);
-                f.set_valid_max(200.0);
-                f.set_slider_max(200.0);
-                f.set_value(10.0);
-                f.set_default(10.0);
-                f.set_precision(1);
-                f.set_display_flags(ae::ValueDisplayFlag::PERCENT);
-            }),
-        );
+        params.add_param(Params::MixChannels, "Mix channels", ae::FloatSliderDef::setup(|f| {
+            f.set_valid_min(0.0);
+            f.set_slider_min(0.0);
+            f.set_valid_max(200.0);
+            f.set_slider_max(200.0);
+            f.set_value(10.0);
+            f.set_default(10.0);
+            f.set_precision(1);
+            f.set_display_flags(ae::ValueDisplayFlag::PERCENT);
+        }));
         Ok(())
     }
 
