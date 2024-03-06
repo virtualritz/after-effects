@@ -13,7 +13,7 @@ pub enum Command {
     SequenceSetdown,
     DoDialog,
     FrameSetup               { in_layer: Layer, out_layer: Layer },
-    Render,
+    Render                   { in_layer: Layer, out_layer: Layer },
     FrameSetdown,
     UserChangedParam         { param_index: usize },
     UpdateParamsUi,
@@ -56,7 +56,10 @@ impl Command {
                 in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, InData::from_raw(in_data_ptr), None) },
                 out_layer: Layer::from_raw(output, InData::from_raw(in_data_ptr), None),
             },
-            RawCommand::Render => Command::Render,
+            RawCommand::Render => Command::Render {
+                in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, InData::from_raw(in_data_ptr), None) },
+                out_layer: Layer::from_raw(output, InData::from_raw(in_data_ptr), None),
+            },
             RawCommand::FrameSetdown => Command::FrameSetdown,
             RawCommand::UserChangedParam => Command::UserChangedParam {
                 param_index: unsafe {

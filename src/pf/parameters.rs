@@ -331,7 +331,7 @@ define_param_wrapper! {
     impl default: i16,
 }
 impl<'a> PopupDef<'a> {
-    pub fn set_options(&'a mut self, options: &[&str]) {
+    pub fn set_options(&mut self, options: &[&str]) {
         // Build a string in the format "list|of|choices|", the format Ae expects.
         self.options = CString::new(options.join("|")).unwrap();
         self.def.u.namesptr = self.options.as_ptr();
@@ -1061,14 +1061,14 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         hasher.finish() as i32
     }
 
-    pub fn add_group<F: FnOnce(&mut Self)>(&mut self, type_start: P, type_end: P, name: &str, inner_cb: F) {
+    pub fn add_group<F: FnOnce(&mut Self)>(&mut self, type_start: P, type_end: P, name: &str, inner_cb: F) -> Result<(), Error> {
         assert!(!self.in_data.is_null());
 
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
         param_def.set_name(name);
         param_def.as_mut().param_type = ParamType::GroupStart as _;
         param_def.set_id(Self::param_id(type_start));
-        param_def.add(-1).unwrap();
+        param_def.add(-1)?;
         self.map.borrow_mut().insert(type_start, self.num_params);
         self.num_params += 1;
 
@@ -1077,12 +1077,13 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
         param_def.as_mut().param_type = ParamType::GroupEnd as _;
         param_def.set_id(Self::param_id(type_end));
-        param_def.add(-1).unwrap();
+        param_def.add(-1)?;
         self.map.borrow_mut().insert(type_end, self.num_params);
         self.num_params += 1;
+        Ok(())
     }
 
-    pub fn add_param(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>) {
+    pub fn add(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>) -> Result<(), Error> {
         assert!(!self.in_data.is_null());
 
         let param = def.into(); // This must outlive the call to .add()
@@ -1091,12 +1092,13 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         param_def.set_name(name);
         param_def.set_param(&param);
         param_def.set_id(Self::param_id(type_));
-        param_def.add(-1).unwrap();
+        param_def.add(-1)?;
         self.map.borrow_mut().insert(type_, self.num_params);
         self.num_params += 1;
+        Ok(())
     }
 
-    pub fn add_param_with_flags(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>, flags: ParamFlag, ui_flags: ParamUIFlags) {
+    pub fn add_with_flags(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>, flags: ParamFlag, ui_flags: ParamUIFlags) -> Result<(), Error> {
         assert!(!self.in_data.is_null());
 
         let param = def.into(); // This must outlive the call to .add()
@@ -1107,12 +1109,13 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         param_def.set_id(Self::param_id(type_));
         param_def.set_flags(flags);
         param_def.set_ui_flags(ui_flags);
-        param_def.add(-1).unwrap();
+        param_def.add(-1)?;
         self.map.borrow_mut().insert(type_, self.num_params);
         self.num_params += 1;
+        Ok(())
     }
 
-    pub fn add_param_customized<F: FnOnce(&mut ParamDef) -> i32>(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>, cb: F) {
+    pub fn add_customized<F: FnOnce(&mut ParamDef) -> i32>(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>, cb: F) -> Result<(), Error> {
         assert!(!self.in_data.is_null());
 
         let param = def.into(); // This must outlive the call to .add()
@@ -1122,12 +1125,13 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         param_def.set_param(&param);
         param_def.set_id(Self::param_id(type_));
         let mut index = cb(&mut param_def);
-        param_def.add(index).unwrap();
+        param_def.add(index)?;
         if index == -1 {
             index = self.num_params as i32;
         }
         self.map.borrow_mut().insert(type_, index as usize);
         self.num_params += 1;
+        Ok(())
     }
 
     #[inline(always)]

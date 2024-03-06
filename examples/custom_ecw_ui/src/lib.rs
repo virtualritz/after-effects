@@ -49,15 +49,14 @@ impl AdobePluginGlobal for Plugin {
 
         // Premiere Pro/Elements does not support a standard parameter type with custom UI (bug #1235407). Use an arbitrary or null parameter instead.
         if in_data.application_id() != *b"PrMr" {
-            params.add_param_customized(Params::Color, "Fill Color", ae::ColorDef::new(), param_cb);
+            params.add_customized(Params::Color, "Fill Color", ae::ColorDef::new(), param_cb)?;
         } else {
-            params.add_param_customized(Params::Color, "Fill Color", ae::ArbitraryDef::new(), param_cb);
+            params.add_customized(Params::Color, "Fill Color", ae::ArbitraryDef::new(), param_cb)?;
         }
 
         in_data.interact().register_ui(
             CustomUIInfo::new()
                 .events(ae::CustomEventFlags::EFFECT)
-                .finalize()
         )?;
 
         Ok(())

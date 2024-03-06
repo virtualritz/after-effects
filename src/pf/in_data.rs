@@ -68,6 +68,10 @@ impl InData {
         [bytes[3], bytes[2], bytes[1], bytes[0]]
     }
 
+    pub fn quality(&self) -> Quality {
+        unsafe { (*self.ptr).quality.into() }
+    }
+
     pub fn extent_hint(&self) -> Rect {
         Rect::from(unsafe { (*self.ptr).extent_hint })
     }

@@ -73,6 +73,10 @@ impl OutData {
         assert!(msg.len() < 256);
         self.as_mut().return_msg[..msg.len()].copy_from_slice(unsafe { std::mem::transmute(msg) });
     }
+    pub fn set_error_msg(&mut self, msg: &str) {
+        self.set_return_msg(msg);
+        self.as_mut().out_flags |= ae_sys::PF_OutFlag_DISPLAY_ERROR_MESSAGE as ae_sys::PF_OutFlags;
+    }
     pub fn set_version(&mut self, v: u32) {
         self.as_mut().my_version = v as ae_sys::A_u_long;
     }

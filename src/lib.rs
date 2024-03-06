@@ -659,3 +659,8 @@ pub trait AsPtr<T> {
     where
         T: Sized;
 }
+
+pub trait AsMutPtr<T> {
+    fn as_mut_ptr(&mut self) -> T
+    where T: Sized;
+}

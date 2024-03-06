@@ -112,6 +112,7 @@ impl ContextHandle {
 }
 
 #[derive(Copy, Clone, Debug)]
+#[repr(transparent)]
 pub struct CustomUIInfo(ae_sys::PF_CustomUIInfo);
 
 impl CustomUIInfo {
@@ -123,42 +124,38 @@ impl CustomUIInfo {
         &self.0
     }
 
-    pub fn events(&mut self, events: CustomEventFlags) -> &mut Self {
+    pub fn events(mut self, events: CustomEventFlags) -> Self {
         self.0.events = events.bits() as _;
         self
     }
 
-    pub fn comp_ui_width(&mut self, width: u16) -> &mut Self {
+    pub fn comp_ui_width(mut self, width: u16) -> Self {
         self.0.comp_ui_width = width as _;
         self
     }
 
-    pub fn comp_ui_height(&mut self, height: u16) -> &mut Self {
+    pub fn comp_ui_height(mut self, height: u16) -> Self {
         self.0.comp_ui_height = height as _;
         self
     }
 
-    pub fn layer_ui_width(&mut self, width: u16) -> &mut Self {
+    pub fn layer_ui_width(mut self, width: u16) -> Self {
         self.0.layer_ui_width = width as _;
         self
     }
 
-    pub fn layer_ui_height(&mut self, height: u16) -> &mut Self {
+    pub fn layer_ui_height(mut self, height: u16) -> Self {
         self.0.layer_ui_height = height as _;
         self
     }
 
-    pub fn preview_ui_width(&mut self, width: u16) -> &mut Self {
+    pub fn preview_ui_width(mut self, width: u16) -> Self {
         self.0.preview_ui_width = width as _;
         self
     }
 
-    pub fn preview_ui_height(&mut self, height: u16) -> &mut Self {
+    pub fn preview_ui_height(mut self, height: u16) -> Self {
         self.0.preview_ui_height = height as _;
-        self
-    }
-
-    pub fn finalize(self) -> Self {
         self
     }
 }

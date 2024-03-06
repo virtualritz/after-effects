@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! define_plugin {
-	($global_type:ty, $sequence_type:ty, $params_type:ty) => {
+	($global_type:ty, $sequence_type:tt, $params_type:ty) => {
         use $crate::*;
         use std::collections::HashMap;
         use std::rc::Rc;
@@ -307,7 +307,7 @@ macro_rules! define_plugin {
                 assert_impl::<$sequence_type>();
             }
 
-            const _: () = assert!(std::mem::size_of::<$sequence_type>() > 0, concat!("Instance type `", stringify!($sequence_type), "` cannot be zero-sized"));
+            define_plugin!(check_size: $sequence_type);
 
             // log::info!("EffectMain start {:?} {:?}", RawCommand::from(cmd), std::thread::current().id());
             // struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", RawCommand::from(self.cmd), std::thread::current().id()); } }
@@ -322,4 +322,8 @@ macro_rules! define_plugin {
             }
         }
 	};
+    (check_size: ()) => { };
+    (check_size: $t:tt) => {
+        const _: () = assert!(std::mem::size_of::<$t>() > 0, concat!("Type `", stringify!($t), "` cannot be zero-sized"));
+    };
 }

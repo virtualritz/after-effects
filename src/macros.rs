@@ -311,7 +311,7 @@ macro_rules! define_param_wrapper {
     };
     (impl String, $name:ident) => {
         paste::item! {
-            pub fn [<set_ $name>](&'parent mut self, v: &str) -> &'parent mut Self {
+            pub fn [<set_ $name>](&mut self, v: &str) -> &mut Self {
                 self.$name = CString::new(v).unwrap();
                 { self.def.u.namesptr = self.$name.as_ptr(); }
                 self

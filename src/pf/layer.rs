@@ -51,10 +51,6 @@ impl Layer {
         Self { in_data, layer: PointerOwnership::AfterEffects(layer_ptr), drop_fn }
     }
 
-    pub fn as_mut_ptr(&mut self) -> *mut PF_LayerDef {
-        &mut *self.layer
-    }
-
     pub fn width(&self) -> usize {
         self.layer.width as usize
     }
@@ -105,14 +101,14 @@ impl Layer {
     }
 
     pub fn copy_from(&mut self, src: &Self, src_rect: Option<Rect>, dst_rect: Option<Rect>) -> Result<(), Error> {
-        self.in_data.utils().copy(src.as_ptr(), self.as_mut_ptr(), src_rect, dst_rect)
+        self.in_data.utils().copy(src, self, src_rect, dst_rect)
     }
 
     pub fn fill(&mut self, color: Option<Pixel8>, rect: Option<Rect>) -> Result<(), Error> {
-        self.in_data.utils().fill(self.as_mut_ptr(), color, rect)
+        self.in_data.utils().fill(self, color, rect)
     }
     pub fn fill16(&mut self, color: Option<Pixel16>, rect: Option<Rect>) -> Result<(), Error> {
-        self.in_data.utils().fill16(self.as_mut_ptr(), color, rect)
+        self.in_data.utils().fill16(self, color, rect)
     }
 
     pub fn iterate_with<F>(&self, output: &mut Self, progress_base: i32, progress_final: i32, area: Option<Rect>, cb: F) -> Result<(), Error>
@@ -254,3 +250,15 @@ impl AsPtr<*const ae_sys::PF_EffectWorld> for &Layer {
         &*self.layer
     }
 }
+
+impl AsMutPtr<*mut ae_sys::PF_EffectWorld> for Layer {
+    fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
+        &mut *self.layer
+    }
+}
+impl AsMutPtr<*mut ae_sys::PF_EffectWorld> for &mut Layer {
+    fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
+        &mut *self.layer
+    }
+}
+
