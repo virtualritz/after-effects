@@ -19,6 +19,7 @@ impl AdobePluginGlobal for Plugin {
             f.set_valid_max(100.0);
         }))
     }
+
     fn handle_command(&mut self, cmd: ae::Command, in_data: ae::InData, _: ae::OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
         match cmd {
             ae::Command::Render { in_layer, mut out_layer } => {

@@ -27,15 +27,16 @@ enum Params {
     Downsample,
     Point3D,
     Button,
+    Layer,
 }
 
-struct Plugin { _unused: u8 }
+struct Plugin { }
 
 ae::define_plugin!(Plugin, (), Params);
 
 impl Default for Plugin {
     fn default() -> Self {
-        Self { _unused: 0 }
+        Self { }
     }
 }
 
@@ -102,6 +103,8 @@ impl AdobePluginGlobal for Plugin {
             params.add_with_flags(Params::Button, "Button", ae::ButtonDef::setup(|f| {
                 f.set_label("Button Label");
             }), ae::ParamFlag::SUPERVISE, ae::ParamUIFlags::empty())?;
+
+            params.add(Params::Layer, "Layer", ae::LayerDef::new())?;
         }
 
         Ok(())
@@ -118,13 +121,13 @@ impl AdobePluginGlobal for Plugin {
                 // If sharpen is set to 0, just copy the source to the destination
                 if sharpen == 0.0 {
                     // Premiere Pro/Elements doesn't support WorldTransformSuite1, but it does support many of the callbacks in utils
-                    //if in_data.quality() == ae::Quality::Hi && in_data.application_id() != *b"PrMr" {
-                        // ERR(suites.WorldTransformSuite1()->copy_hq(in_data->effect_ref, &params[0]->u.ld, output, NULL, NULL));
-                    //} else if in_data.application_id() != *b"PrMr" {
-                        // ERR(suites.WorldTransformSuite1()->copy(in_data->effect_ref, &params[0]->u.ld, output, NULL, NULL));
-                    //} else {
+                    if in_data.quality() == ae::Quality::Hi && in_data.application_id() != *b"PrMr" {
+                        ae::pf::suites::WorldTransform::new()?.copy_hq(in_data.effect_ref(), in_layer, out_layer, None, None)?;
+                    } else if in_data.application_id() != *b"PrMr" {
+                        ae::pf::suites::WorldTransform::new()?.copy(in_data.effect_ref(), in_layer, out_layer, None, None)?;
+                    } else {
                         out_layer.copy_from(&in_layer, None, None)?;
-                    //}
+                    }
                 } else {
                     let mut kernel_sum = 256.0 * 9.0;
                     let mut conv_kernel = [0u32; 9];
@@ -138,9 +141,20 @@ impl AdobePluginGlobal for Plugin {
                     let kernel_ptr = conv_kernel.as_mut_ptr() as *mut _;
 
                     // Premiere Pro/Elements doesn't support WorldTransformSuite1, but it does support many of the callbacks in utils
-                    //if in_data.application_id() != *b"PrMr"	{
-                        // ERR(suites.WorldTransformSuite1()->convolve(in_data->effect_ref, &params[0]->u.ld, &in_data->extent_hint, PF_KernelFlag_2D | PF_KernelFlag_CLAMP, KERNEL_SIZE, convKer, convKer, convKer, convKer, output));
-                    //} else {
+                    if in_data.application_id() != *b"PrMr"	{
+                        ae::pf::suites::WorldTransform::new()?.convolve(
+                            in_data.effect_ref(),
+                            &in_layer,
+                            Some(in_data.extent_hint()),
+                            ae::KernelFlags::TWO_D | ae::KernelFlags::CLAMP,
+                            KERNEL_SIZE,
+                            kernel_ptr,
+                            kernel_ptr,
+                            kernel_ptr,
+                            kernel_ptr,
+                            &mut out_layer
+                        )?;
+                    } else {
                         in_data.utils().convolve(
                             &in_layer,
                             Some(in_data.extent_hint()),
@@ -152,8 +166,7 @@ impl AdobePluginGlobal for Plugin {
                             kernel_ptr,
                             &mut out_layer
                         )?;
-                        // in_data->utils->convolve(in_data->effect_ref, &params[0]->u.ld, &in_data->extent_hint, PF_KernelFlag_2D | PF_KernelFlag_CLAMP, KERNEL_SIZE, convKer, convKer, convKer, convKer, output);
-                    //}
+                    }
                 }
             }
             ae::Command::UserChangedParam { param_index } => {

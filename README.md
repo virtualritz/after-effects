@@ -95,86 +95,86 @@ AfterEffectsSDK
 
 # Wrapped suites:
 ## After Effects:
-| AEGP                                   | PF                                               | DRAWBOT                    | Other                                |
-|----------------------------------------|--------------------------------------------------|----------------------------|--------------------------------------|
-| <small>🔳 Artisan Util         </small> | <small>✅ AE Adv App                     </small> | <small>✅ Draw     </small> | <small>✅ AE Plugin Helper   </small> |
-| <small>✅ Camera               </small> | <small>🔳 AE Adv Item                    </small> | <small>✅ Image    </small> | <small>✅ AE Plugin Helper 2 </small> |
-| <small>✅ Canvas               </small> | <small>🔳 AE Adv Time                    </small> | <small>✅ Path     </small> |                                      |
-| <small>🔳 Collection           </small> | <small>✅ AE App                         </small> | <small>✅ Pen      </small> |                                      |
-| <small>🔳 Command              </small> | <small>🔳 AngleParam                     </small> | <small>✅ Supplier </small> |                                      |
-| <small>✅ Comp                 </small> | <small>🔳 ANSI                           </small> | <small>✅ Surface  </small> |                                      |
-| <small>✅ Composite            </small> | <small>🔳 Background Frame               </small> |                            |                                      |
-| <small>🔳 Compute              </small> | <small>🔳 Batch Sampling                 </small> |                            |                                      |
-| <small>✅ Dynamic Stream       </small> | <small>🔳 Cache On Load                  </small> |                            |                                      |
-| <small>✅ Effect               </small> | <small>✅ Color Settings                 </small> |                            |                                      |
-| <small>🔳 File Import Manager  </small> | <small>🔳 Color                          </small> |                            |                                      |
-| <small>✅ Footage              </small> | <small>🔳 Color16                        </small> |                            |                                      |
-| <small>🔳 Hash                 </small> | <small>🔳 ColorFloat                     </small> |                            |                                      |
-| <small>✅ IO In                </small> | <small>🔳 ColorParam                     </small> |                            |                                      |
-| <small>🔳 IO Out               </small> | <small>✅ Effect Custom UI               </small> |                            |                                      |
-| <small>✅ Item                 </small> | <small>✅ Effect Custom UI Overlay Theme </small> |                            |                                      |
-| <small>🔳 Item View            </small> | <small>✅ Effect Sequence Data           </small> |                            |                                      |
-| <small>🔳 Iterate              </small> | <small>✅ Effect UI                      </small> |                            |                                      |
-| <small>✅ Keyframe             </small> | <small>🔳 Fill Matte                     </small> |                            |                                      |
-| <small>🔳 Layer Mask           </small> | <small>✅ GPU Device                     </small> |                            |                                      |
-| <small>🔳 Layer Render Options </small> | <small>🔳 Handle                         </small> |                            |                                      |
-| <small>✅ Layer                </small> | <small>✅ Iterate8                       </small> |                            |                                      |
-| <small>✅ Light                </small> | <small>✅ iterate16                      </small> |                            |                                      |
-| <small>🔳 Marker               </small> | <small>✅ iterateFloat                   </small> |                            |                                      |
-| <small>✅ Mask Outline         </small> | <small>✅ Param Utils                    </small> |                            |                                      |
-| <small>✅ Mask                 </small> | <small>🔳 Path Data                      </small> |                            |                                      |
-| <small>🔳 Math                 </small> | <small>🔳 Path Query                     </small> |                            |                                      |
-| <small>✅ Memory               </small> | <small>🔳 Pixel Data                     </small> |                            |                                      |
-| <small>🔳 Output Module        </small> | <small>✅ Pixel Format                   </small> |                            |                                      |
-| <small>🔳 Persistent Data      </small> | <small>🔳 PointParam                     </small> |                            |                                      |
-| <small>✅ PF Interface         </small> | <small>🔳 Sampling8                      </small> |                            |                                      |
-| <small>🔳 Proj                 </small> | <small>🔳 Sampling16                     </small> |                            |                                      |
-| <small>🔳 QueryXform           </small> | <small>🔳 SamplingFloat                  </small> |                            |                                      |
-| <small>🔳 Register             </small> | <small>🔳 Source Settings                </small> |                            |                                      |
-| <small>🔳 Render Asyc Manager  </small> | <small>🔳 Transition                     </small> |                            |                                      |
-| <small>🔳 Render Options       </small> | <small>✅ Utility                        </small> |                            |                                      |
-| <small>🔳 Render Queue Item    </small> | <small>✅ World                          </small> |                            |                                      |
-| <small>🔳 Render Queue         </small> | <small>✅ World Transform                </small> |                            |                                      |
-| <small>🔳 Render               </small> |                                                  |                            |                                      |
-| <small>🔳 RenderQueue Monitor  </small> |                                                  |                            |                                      |
-| <small>🔳 Sound Data           </small> |                                                  |                            |                                      |
-| <small>✅ Stream               </small> |                                                  |                            |                                      |
-| <small>🔳 Text Document        </small> |                                                  |                            |                                      |
-| <small>🔳 Text Layer           </small> |                                                  |                            |                                      |
-| <small>🔳 Tracker              </small> |                                                  |                            |                                      |
-| <small>🔳 Tracker Utility      </small> |                                                  |                            |                                      |
-| <small>✅ Utility              </small> |                                                  |                            |                                      |
-| <small>🔳 Workspace Panel      </small> |                                                  |                            |                                      |
-| <small>✅ World                </small> |                                                  |                            |                                      |
+| AEGP                   | PF                               | DRAWBOT    | Other                |
+|------------------------|----------------------------------|------------|----------------------|
+| 🔳 Artisan Util         | ✅ AE Adv App                     | ✅ Draw     | ✅ AE Plugin Helper   |
+| ✅ Camera               | 🔳 AE Adv Item                    | ✅ Image    | ✅ AE Plugin Helper 2 |
+| ✅ Canvas               | 🔳 AE Adv Time                    | ✅ Path     |                      |
+| 🔳 Collection           | ✅ AE App                         | ✅ Pen      |                      |
+| 🔳 Command              | 🔳 AngleParam                     | ✅ Supplier |                      |
+| ✅ Comp                 | 🔳 ANSI                           | ✅ Surface  |                      |
+| ✅ Composite            | 🔳 Background Frame               |            |                      |
+| 🔳 Compute              | 🔳 Batch Sampling                 |            |                      |
+| ✅ Dynamic Stream       | 🔳 Cache On Load                  |            |                      |
+| ✅ Effect               | ✅ Color Settings                 |            |                      |
+| 🔳 File Import Manager  | 🔳 Color                          |            |                      |
+| ✅ Footage              | 🔳 Color16                        |            |                      |
+| 🔳 Hash                 | 🔳 ColorFloat                     |            |                      |
+| ✅ IO In                | 🔳 ColorParam                     |            |                      |
+| 🔳 IO Out               | ✅ Effect Custom UI               |            |                      |
+| ✅ Item                 | ✅ Effect Custom UI Overlay Theme |            |                      |
+| 🔳 Item View            | ✅ Effect Sequence Data           |            |                      |
+| 🔳 Iterate              | ✅ Effect UI                      |            |                      |
+| ✅ Keyframe             | 🔳 Fill Matte                     |            |                      |
+| 🔳 Layer Mask           | ✅ GPU Device                     |            |                      |
+| 🔳 Layer Render Options | 🔳 Handle                         |            |                      |
+| ✅ Layer                | ✅ Iterate8                       |            |                      |
+| ✅ Light                | ✅ iterate16                      |            |                      |
+| 🔳 Marker               | ✅ iterateFloat                   |            |                      |
+| ✅ Mask Outline         | ✅ Param Utils                    |            |                      |
+| ✅ Mask                 | 🔳 Path Data                      |            |                      |
+| 🔳 Math                 | 🔳 Path Query                     |            |                      |
+| ✅ Memory               | 🔳 Pixel Data                     |            |                      |
+| 🔳 Output Module        | ✅ Pixel Format                   |            |                      |
+| 🔳 Persistent Data      | 🔳 PointParam                     |            |                      |
+| ✅ PF Interface         | 🔳 Sampling8                      |            |                      |
+| 🔳 Proj                 | 🔳 Sampling16                     |            |                      |
+| 🔳 QueryXform           | 🔳 SamplingFloat                  |            |                      |
+| 🔳 Register             | 🔳 Source Settings                |            |                      |
+| 🔳 Render Asyc Manager  | 🔳 Transition                     |            |                      |
+| 🔳 Render Options       | ✅ Utility                        |            |                      |
+| 🔳 Render Queue Item    | ✅ World                          |            |                      |
+| 🔳 Render Queue         | ✅ World Transform                |            |                      |
+| 🔳 Render               |                                  |            |                      |
+| 🔳 RenderQueue Monitor  |                                  |            |                      |
+| 🔳 Sound Data           |                                  |            |                      |
+| ✅ Stream               |                                  |            |                      |
+| 🔳 Text Document        |                                  |            |                      |
+| 🔳 Text Layer           |                                  |            |                      |
+| 🔳 Tracker              |                                  |            |                      |
+| 🔳 Tracker Utility      |                                  |            |                      |
+| ✅ Utility              |                                  |            |                      |
+| 🔳 Workspace Panel      |                                  |            |                      |
+| ✅ World                |                                  |            |                      |
 
 ## Premiere:
-| Premiere                                 | MediaCore                                      | Control Surface                                | Other                                   |
-|------------------------------------------|------------------------------------------------|------------------------------------------------|-----------------------------------------|
-| <small>🔳 Audio                  </small> | <small>🔳 Accelerated Render Invocation</small> | <small>🔳 ControlSurface               </small> | <small>🔳 PF Background Frame   </small> |
-| <small>🔳 Clip Render            </small> | <small>🔳 App Info                     </small> | <small>🔳 ControlSurface Command       </small> | <small>🔳 PF Cache On Load      </small> |
-| <small>🔳 Deferred Processing    </small> | <small>🔳 Application Settings         </small> | <small>🔳 ControlSurface Lumetri       </small> | <small>🔳 PF Pixel Format       </small> |
-| <small>🔳 Error                  </small> | <small>🔳 Async File Reader            </small> | <small>🔳 ControlSurface Marker        </small> | <small>🔳 PF Source Settings    </small> |
-| <small>🔳 Export Audio Param     </small> | <small>🔳 Async Operation              </small> | <small>🔳 ControlSurface Mixer         </small> | <small>🔳 PF Transition         </small> |
-| <small>🔳 Export Standard Param  </small> | <small>🔳 Export File                  </small> | <small>🔳 ControlSurface Transport     </small> | <small>🔳 PF Utility            </small> |
-| <small>🔳 ExportController       </small> | <small>🔳 Export Info                  </small> | <small>🔳 ControlSurfaceHost           </small> | <small>✅ Opaque Effect Data    </small> |
-| <small>🔳 File Registration      </small> | <small>🔳 Export Param                 </small> | <small>🔳 ControlSurfaceHost Command   </small> | <small>🔳 Captioning            </small> |
-| <small>🔳 Image Processing       </small> | <small>🔳 Export Progress              </small> | <small>🔳 ControlSurfaceHost Lumetri   </small> | <small>🔳 Effect Stream Label   </small> |
-| <small>🔳 Legacy                 </small> | <small>🔳 Exporter Utility             </small> | <small>🔳 ControlSurfaceHost Marker    </small> | <small>🔳 FlashCueMarkerData    </small> |
-| <small>🔳 Media Accelerator      </small> | <small>✅ GPU Device                   </small> | <small>🔳 ControlSurfaceHost Mixer     </small> | <small>🔳 Importer File Manager </small> |
-| <small>✅ Memory Manager         </small> | <small>✅ GPU Image Processing         </small> | <small>🔳 ControlSurfaceHost Transport </small> | <small>🔳 Marker                </small> |
-| <small>🔳 Palette                </small> | <small>🔳 Playmod Immersive Video      </small> | <small>🔳 ControlSurfacePlugin         </small> |                                         |
-| <small>🔳 Pixel Format           </small> | <small>🔳 Playmod Overlay              </small> | <small>🔳 String                       </small> |                                         |
-| <small>🔳 Playmod Audio          </small> | <small>🔳 Sequence Audio               </small> |                                                |                                         |
-| <small>🔳 Playmod Device Control </small> | <small>✅ Sequence Info                </small> |                                                |                                         |
-| <small>✅ PPix                   </small> | <small>🔳 Sequence Render              </small> |                                                |                                         |
-| <small>✅ PPix 2                 </small> | <small>🔳 Smart Rendering              </small> |                                                |                                         |
-| <small>🔳 PPix Cache             </small> | <small>🔳 String                       </small> |                                                |                                         |
-| <small>🔳 PPix Creator           </small> | <small>🔳 Transmit Invocation          </small> |                                                |                                         |
-| <small>🔳 PPix Creator 2         </small> | <small>✅ Video Segment                </small> |                                                |                                         |
-| <small>🔳 RollCrawl              </small> | <small>🔳 Video Segment Render         </small> |                                                |                                         |
-| <small>🔳 Threaded Work          </small> |                                                |                                                |                                         |
-| <small>✅ Time                   </small> |                                                |                                                |                                         |
-| <small>🔳 Window                 </small> |                                                |                                                |                                         |
+| Premiere                 | MediaCore                       | Control Surface                | Other                   |
+|--------------------------|---------------------------------|--------------------------------|-------------------------|
+| 🔳 Audio                  | 🔳 Accelerated Render Invocation | 🔳 ControlSurface               | 🔳 PF Background Frame   |
+| 🔳 Clip Render            | 🔳 App Info                      | 🔳 ControlSurface Command       | 🔳 PF Cache On Load      |
+| 🔳 Deferred Processing    | 🔳 Application Settings          | 🔳 ControlSurface Lumetri       | 🔳 PF Pixel Format       |
+| 🔳 Error                  | 🔳 Async File Reader             | 🔳 ControlSurface Marker        | 🔳 PF Source Settings    |
+| 🔳 Export Audio Param     | 🔳 Async Operation               | 🔳 ControlSurface Mixer         | 🔳 PF Transition         |
+| 🔳 Export Standard Param  | 🔳 Export File                   | 🔳 ControlSurface Transport     | 🔳 PF Utility            |
+| 🔳 ExportController       | 🔳 Export Info                   | 🔳 ControlSurfaceHost           | ✅ Opaque Effect Data    |
+| 🔳 File Registration      | 🔳 Export Param                  | 🔳 ControlSurfaceHost Command   | 🔳 Captioning            |
+| 🔳 Image Processing       | 🔳 Export Progress               | 🔳 ControlSurfaceHost Lumetri   | 🔳 Effect Stream Label   |
+| 🔳 Legacy                 | 🔳 Exporter Utility              | 🔳 ControlSurfaceHost Marker    | 🔳 FlashCueMarkerData    |
+| 🔳 Media Accelerator      | ✅ GPU Device                    | 🔳 ControlSurfaceHost Mixer     | 🔳 Importer File Manager |
+| ✅ Memory Manager         | ✅ GPU Image Processing          | 🔳 ControlSurfaceHost Transport | 🔳 Marker                |
+| 🔳 Palette                | 🔳 Playmod Immersive Video       | 🔳 ControlSurfacePlugin         |                         |
+| 🔳 Pixel Format           | 🔳 Playmod Overlay               | 🔳 String                       |                         |
+| 🔳 Playmod Audio          | 🔳 Sequence Audio                |                                |                         |
+| 🔳 Playmod Device Control | ✅ Sequence Info                 |                                |                         |
+| ✅ PPix                   | 🔳 Sequence Render               |                                |                         |
+| ✅ PPix 2                 | 🔳 Smart Rendering               |                                |                         |
+| 🔳 PPix Cache             | 🔳 String                        |                                |                         |
+| 🔳 PPix Creator           | 🔳 Transmit Invocation           |                                |                         |
+| 🔳 PPix Creator 2         | ✅ Video Segment                 |                                |                         |
+| 🔳 RollCrawl              | 🔳 Video Segment Render          |                                |                         |
+| 🔳 Threaded Work          |                                 |                                |                         |
+| ✅ Time                   |                                 |                                |                         |
+| 🔳 Window                 |                                 |                                |                         |
 
 ## License
 

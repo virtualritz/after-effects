@@ -641,22 +641,40 @@ bitflags::bitflags! {
 }
 
 bitflags::bitflags! {
+    /// Functions such as `convolve` or gaussian kernel work with kernels, or matrices of filter weight values. These matrices can be in any format.
+    /// The kernel flags describe how the matrices should be created and used. OR together any flags you need.
+    ///
+    /// The flags relevant to given routines are documented along with the routine prototype.
+    /// The first entry in the left column is always the default and has value 0.
     pub struct KernelFlags: ae_sys::A_long {
+        /// Specifies a two dimensional kernel.
         const TWO_D                 = ae_sys::PF_KernelFlag_2D                    as ae_sys::A_long;
+        /// Specifies an one dimensional kernel.
         const ONE_D                 = ae_sys::PF_KernelFlag_1D                    as ae_sys::A_long;
         const UNNORMALIZED          = ae_sys::PF_KernelFlag_UNNORMALIZED          as ae_sys::A_long;
+        /// `NORMALIZED` equalizes the kernel; the volume under the kernel surface is the same as the volume under the covered area of pixels.
         const NORMALIZED            = ae_sys::PF_KernelFlag_NORMALIZED            as ae_sys::A_long;
+        /// `CLAMP` restricts values to the valid range for their data type.
         const CLAMP                 = ae_sys::PF_KernelFlag_CLAMP                 as ae_sys::A_long;
         const NO_CLAMP              = ae_sys::PF_KernelFlag_NO_CLAMP              as ae_sys::A_long;
+        /// `USE_LONG` defines the kernel as an array of longs valued from 0 to 255. This is the only only implemented flag.
         const USE_LONG              = ae_sys::PF_KernelFlag_USE_LONG              as ae_sys::A_long;
+        /// `USE_CHAR` defines the kernel as an array of unsigned chars from 0 to 255.
         const USE_CHAR              = ae_sys::PF_KernelFlag_USE_CHAR              as ae_sys::A_long;
+        /// `USE_FIXED` defines the kernel as an array of fixeds from 0 to 1.
         const USE_FIXED             = ae_sys::PF_KernelFlag_USE_FIXED             as ae_sys::A_long;
         const USE_UNDEFINED         = ae_sys::PF_KernelFlag_USE_UNDEFINED         as ae_sys::A_long;
+        /// Specifies the direction of the convolution.
         const HORIZONTAL            = ae_sys::PF_KernelFlag_HORIZONTAL            as ae_sys::A_long;
+        /// Specifies the direction of the convolution.
         const VERTICAL              = ae_sys::PF_KernelFlag_VERTICAL              as ae_sys::A_long;
+        /// Use `REPLICATE_BORDERS` to replicate border pixels when sampling off the edge. `REPLICATE_BORDERS` is not implemented and will be ignored.
         const TRANSPARENT_BORDERS   = ae_sys::PF_KernelFlag_TRANSPARENT_BORDERS   as ae_sys::A_long;
+        /// Use `TRANSPARENT_BORDERS` to treat pixels off the edge as alpha zero (black).
         const REPLICATE_BORDERS     = ae_sys::PF_KernelFlag_REPLICATE_BORDERS     as ae_sys::A_long;
+        /// Use `STRAIGHT_CONVOLVE` to indicate straight convolution,
         const STRAIGHT_CONVOLVE     = ae_sys::PF_KernelFlag_STRAIGHT_CONVOLVE     as ae_sys::A_long;
+        /// Use `ALPHA_WEIGHT_CONVOLVE` to tell the convolution code to alpha-weight the contributions of pixels to the resulting convolved output. `ALPHA_WEIGHT_CONVOLVE` is not implemented and will be ignored.
         const ALPHA_WEIGHT_CONVOLVE = ae_sys::PF_KernelFlag_ALPHA_WEIGHT_CONVOLVE as ae_sys::A_long;
     }
 }

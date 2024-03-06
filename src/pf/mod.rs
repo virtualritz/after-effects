@@ -33,6 +33,7 @@ pub mod suites {
     pub(crate) mod pixel_format;          pub use pixel_format        ::PixelFormatSuite    as PixelFormat;
     pub(crate) mod utility;               pub use utility             ::UtilitySuite        as Utility;
     pub(crate) mod world;                 pub use world               ::WorldSuite          as World;
+    pub(crate) mod world_transform;       pub use world_transform     ::WorldTransformSuite as WorldTransform;
     pub(crate) mod handle;                pub use handle              ::HandleSuite         as Handle;
     pub(crate) mod helper;                pub use helper              ::{ HelperSuite       as Helper,
                                                                           HelperSuite2      as Helper2 };
