@@ -95,103 +95,59 @@ AfterEffectsSDK
 
 # Wrapped suites:
 ## After Effects:
-- [x] AE Plugin Helper
-- [x] AE Plugin Helper 2
-- [ ] AEGP Artisan Util
-- [x] AEGP Camera
-- [x] AEGP Canvas
-- [ ] AEGP Collection
-- [ ] AEGP Command
-- [x] AEGP Comp
-- [x] AEGP Composite
-- [ ] AEGP Compute
-- [x] AEGP Dynamic Stream
-- [x] AEGP Effect
-- [ ] AEGP File Import Manager
-- [x] AEGP Footage
-- [ ] AEGP Hash
-- [x] AEGP IO In
-- [ ] AEGP IO Out
-- [x] AEGP Item
-- [ ] AEGP Item View
-- [ ] AEGP Iterate
-- [x] AEGP Keyframe
-- [ ] AEGP Layer Mask
-- [ ] AEGP Layer Render Options
-- [x] AEGP Layer
-- [x] AEGP Light
-- [ ] AEGP Marker
-- [x] AEGP Mask Outline
-- [x] AEGP Mask
-- [ ] AEGP Math
-- [x] AEGP Memory
-- [ ] AEGP Output Module
-- [ ] AEGP Persistent Data
-- [x] AEGP PF Interface
-- [ ] AEGP Proj
-- [ ] AEGP QueryXform
-- [ ] AEGP Register
-- [ ] AEGP Render Asyc Manager
-- [ ] AEGP Render Options
-- [ ] AEGP Render Queue Item
-- [ ] AEGP Render Queue
-- [ ] AEGP Render
-- [ ] AEGP RenderQueue Monitor
-- [ ] AEGP Sound Data
-- [x] AEGP Stream
-- [ ] AEGP Text Document
-- [ ] AEGP Text Layer
-- [ ] AEGP Tracker
-- [ ] AEGP Tracker Utility
-- [x] AEGP Utility
-- [ ] AEGP Workspace Panel
-- [x] AEGP World
-- [x] DRAWBOT Draw
-- [x] DRAWBOT Image
-- [x] DRAWBOT Path
-- [x] DRAWBOT Pen
-- [x] DRAWBOT Supplier
-- [x] DRAWBOT Surface
-- [x] PF AE Adv App
-- [ ] PF AE Adv Item
-- [ ] PF AE Adv Time
-- [x] PF AE App
-- [ ] PF AngleParam
-- [ ] PF ANSI
-- [ ] PF Background Frame
-- [ ] PF Batch Sampling
-- [ ] PF Cache On Load
-- [x] PF Color Settings
-- [ ] PF Color
-- [ ] PF Color16
-- [ ] PF ColorFloat
-- [ ] PF ColorParam
-- [x] PF Effect Custom UI
-- [x] PF Effect Custom UI Overlay Theme
-- [x] PF Effect Sequence Data
-- [x] PF Effect UI
-- [ ] PF Fill Matte
-- [x] PF GPU Device
-- [ ] PF Handle
-- [x] PF Iterate8
-- [x] PF iterate16
-- [x] PF iterateFloat
-- [x] PF Param Utils
-- [ ] PF Path Data
-- [ ] PF Path Query
-- [ ] PF Pixel Data
-- [x] PF Pixel Format
-- [ ] PF PointParam
-- [ ] PF Sampling8
-- [ ] PF Sampling16
-- [ ] PF SamplingFloat
-- [ ] PF Source Settings
-- [ ] PF Transition
-- [x] PF Utility
-- [x] PF World
-- [ ] PF World Transform
+| AEGP                                            | PF                                                      | DRAWBOT                                | Other                                    |
+|-------------------------------------------------|---------------------------------------------------------|----------------------------------------|------------------------------------------|
+| :white_square_button: AEGP Artisan Util         | :white_check_mark:    PF AE Adv App                     | :white_check_mark:    DRAWBOT Draw     | :white_check_mark:    AE Plugin Helper   |
+| :white_check_mark:    AEGP Camera               | :white_square_button: PF AE Adv Item                    | :white_check_mark:    DRAWBOT Image    | :white_check_mark:    AE Plugin Helper 2 |
+| :white_check_mark:    AEGP Canvas               | :white_square_button: PF AE Adv Time                    | :white_check_mark:    DRAWBOT Path     |                                          |
+| :white_square_button: AEGP Collection           | :white_check_mark:    PF AE App                         | :white_check_mark:    DRAWBOT Pen      |                                          |
+| :white_square_button: AEGP Command              | :white_square_button: PF AngleParam                     | :white_check_mark:    DRAWBOT Supplier |                                          |
+| :white_check_mark:    AEGP Comp                 | :white_square_button: PF ANSI                           | :white_check_mark:    DRAWBOT Surface  |                                          |
+| :white_check_mark:    AEGP Composite            | :white_square_button: PF Background Frame               |                                        |                                          |
+| :white_square_button: AEGP Compute              | :white_square_button: PF Batch Sampling                 |                                        |                                          |
+| :white_check_mark:    AEGP Dynamic Stream       | :white_square_button: PF Cache On Load                  |                                        |                                          |
+| :white_check_mark:    AEGP Effect               | :white_check_mark:    PF Color Settings                 |                                        |                                          |
+| :white_square_button: AEGP File Import Manager  | :white_square_button: PF Color                          |                                        |                                          |
+| :white_check_mark:    AEGP Footage              | :white_square_button: PF Color16                        |                                        |                                          |
+| :white_square_button: AEGP Hash                 | :white_square_button: PF ColorFloat                     |                                        |                                          |
+| :white_check_mark:    AEGP IO In                | :white_square_button: PF ColorParam                     |                                        |                                          |
+| :white_square_button: AEGP IO Out               | :white_check_mark:    PF Effect Custom UI               |                                        |                                          |
+| :white_check_mark:    AEGP Item                 | :white_check_mark:    PF Effect Custom UI Overlay Theme |                                        |                                          |
+| :white_square_button: AEGP Item View            | :white_check_mark:    PF Effect Sequence Data           |                                        |                                          |
+| :white_square_button: AEGP Iterate              | :white_check_mark:    PF Effect UI                      |                                        |                                          |
+| :white_check_mark:    AEGP Keyframe             | :white_square_button: PF Fill Matte                     |                                        |                                          |
+| :white_square_button: AEGP Layer Mask           | :white_check_mark:    PF GPU Device                     |                                        |                                          |
+| :white_square_button: AEGP Layer Render Options | :white_square_button: PF Handle                         |                                        |                                          |
+| :white_check_mark:    AEGP Layer                | :white_check_mark:    PF Iterate8                       |                                        |                                          |
+| :white_check_mark:    AEGP Light                | :white_check_mark:    PF iterate16                      |                                        |                                          |
+| :white_square_button: AEGP Marker               | :white_check_mark:    PF iterateFloat                   |                                        |                                          |
+| :white_check_mark:    AEGP Mask Outline         | :white_check_mark:    PF Param Utils                    |                                        |                                          |
+| :white_check_mark:    AEGP Mask                 | :white_square_button: PF Path Data                      |                                        |                                          |
+| :white_square_button: AEGP Math                 | :white_square_button: PF Path Query                     |                                        |                                          |
+| :white_check_mark:    AEGP Memory               | :white_square_button: PF Pixel Data                     |                                        |                                          |
+| :white_square_button: AEGP Output Module        | :white_check_mark:    PF Pixel Format                   |                                        |                                          |
+| :white_square_button: AEGP Persistent Data      | :white_square_button: PF PointParam                     |                                        |                                          |
+| :white_check_mark:    AEGP PF Interface         | :white_square_button: PF Sampling8                      |                                        |                                          |
+| :white_square_button: AEGP Proj                 | :white_square_button: PF Sampling16                     |                                        |                                          |
+| :white_square_button: AEGP QueryXform           | :white_square_button: PF SamplingFloat                  |                                        |                                          |
+| :white_square_button: AEGP Register             | :white_square_button: PF Source Settings                |                                        |                                          |
+| :white_square_button: AEGP Render Asyc Manager  | :white_square_button: PF Transition                     |                                        |                                          |
+| :white_square_button: AEGP Render Options       | :white_check_mark:    PF Utility                        |                                        |                                          |
+| :white_square_button: AEGP Render Queue Item    | :white_check_mark:    PF World                          |                                        |                                          |
+| :white_square_button: AEGP Render Queue         | :white_check_mark:    PF World Transform                |                                        |                                          |
+| :white_square_button: AEGP Render               |                                                         |                                        |                                          |
+| :white_square_button: AEGP RenderQueue Monitor  |                                                         |                                        |                                          |
+| :white_square_button: AEGP Sound Data           |                                                         |                                        |                                          |
+| :white_check_mark:    AEGP Stream               |                                                         |                                        |                                          |
+| :white_square_button: AEGP Text Document        |                                                         |                                        |                                          |
+| :white_square_button: AEGP Text Layer           |                                                         |                                        |                                          |
+| :white_square_button: AEGP Tracker              |                                                         |                                        |                                          |
+| :white_square_button: AEGP Tracker Utility      |                                                         |                                        |                                          |
+| :white_check_mark:    AEGP Utility              |                                                         |                                        |                                          |
+| :white_square_button: AEGP Workspace Panel      |                                                         |                                        |                                          |
+| :white_check_mark:    AEGP World                |                                                         |                                        |                                          |
 
-## Adobe Premiere:
+## Premiere:
 - [ ] ADOBESDK ControlSurface
 - [ ] ADOBESDK ControlSurface Command
 - [ ] ADOBESDK ControlSurface Lumetri
