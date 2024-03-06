@@ -52,15 +52,17 @@ impl AdobePluginGlobal for Plugin {
             f.set_slider_min(PARAMARAMA_AMOUNT_MIN);
             f.set_slider_max(PARAMARAMA_AMOUNT_MAX);
             f.set_default(PARAMARAMA_AMOUNT_DFLT);
+            f.set_value(f.default());
         }))?;
 
         params.add(Params::Color, "Color to mix", ae::ColorDef::setup(|f| {
             f.set_default(ae::Pixel8 {
-                red: DEFAULT_RED,
+                red:   DEFAULT_RED,
                 green: DEFAULT_GREEN,
-                blue: DEFAULT_BLUE,
+                blue:  DEFAULT_BLUE,
                 alpha: 255
             });
+            f.set_value(f.default());
         }))?;
 
         params.add(Params::FloatVal, "Some float value", ae::FloatSliderDef::setup(|f| {
@@ -71,29 +73,32 @@ impl AdobePluginGlobal for Plugin {
             f.set_default(DEFAULT_FLOAT_VAL);
             f.set_curve_tolerance(AEFX_AUDIO_DEFAULT_CURVE_TOLERANCE);
             f.set_flags(ae::FSliderFlag::WANT_PHASE);
+            f.set_value(f.default());
         }))?;
 
         params.add(Params::Downsample, "Some checkbox", ae::CheckBoxDef::setup(|f| {
             f.set_default(false);
             f.set_label("(with comment!)");
+            f.set_value(f.default());
         }))?;
 
         params.add(Params::Angle, "An angle control", ae::AngleDef::setup(|f| {
             f.set_default(DEFAULT_ANGLE_VAL);
+            f.set_value(f.default());
         }))?;
 
         params.add(Params::Popup, "Pop-up param", ae::PopupDef::setup(|f| {
             f.set_options(&["Make Slower", "Make Jaggy", "(-", "Plan A", "Plan B"]);
             f.set_default(1);
+            f.set_value(f.default());
         }))?;
 
         // Only add 3D point and button where supported, starting in AE CS5.5
         if in_data.version().0 >= ae_sys::PF_AE105_PLUG_IN_VERSION as _ && in_data.version().1 >= ae_sys::PF_AE105_PLUG_IN_SUBVERS as _ {
-            if in_data.application_id() != *b"FXTC" {
+            if in_data.application_id() == *b"FXTC" {
                 params.add(Params::Point3D, "3D Point", ae::Point3DDef::setup(|f| {
-                    f.set_default_x(DEFAULT_POINT_VALS);
-                    f.set_default_y(DEFAULT_POINT_VALS);
-                    f.set_default_z(DEFAULT_POINT_VALS);
+                    f.set_default((DEFAULT_POINT_VALS, DEFAULT_POINT_VALS, DEFAULT_POINT_VALS));
+                    f.set_value(f.default());
                 }))?;
             } else {
                 // Add a placeholder for hosts that don't support 3D points
@@ -130,14 +135,14 @@ impl AdobePluginGlobal for Plugin {
                     }
                 } else {
                     let mut kernel_sum = 256.0 * 9.0;
-                    let mut conv_kernel = [0u32; 9];
-                    conv_kernel[4] = (sharpen * kernel_sum).round() as _;
+                    let mut conv_kernel = [0i32; 9];
+                    conv_kernel[4] = (sharpen * kernel_sum).trunc() as _;
                     kernel_sum	= (256.0 * 9.0 - conv_kernel[4] as f32) / 4.0;
-                    let kernel_sum_rounded = kernel_sum.round() as _;
-                    conv_kernel[1] = kernel_sum_rounded;
-                    conv_kernel[3] = kernel_sum_rounded;
-                    conv_kernel[5] = kernel_sum_rounded;
-                    conv_kernel[7] = kernel_sum_rounded;
+                    let sum_long = kernel_sum.trunc() as _;
+                    conv_kernel[1] = sum_long;
+                    conv_kernel[3] = sum_long;
+                    conv_kernel[5] = sum_long;
+                    conv_kernel[7] = sum_long;
                     let kernel_ptr = conv_kernel.as_mut_ptr() as *mut _;
 
                     // Premiere Pro/Elements doesn't support WorldTransformSuite1, but it does support many of the callbacks in utils

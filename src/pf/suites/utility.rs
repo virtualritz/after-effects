@@ -6,7 +6,7 @@ define_suite!(
     UtilitySuite,
     PF_UtilitySuite,
     kPFUtilitySuite,
-    kPFUtilitySuiteVersion
+    kPFUtilitySuiteVersion9
 );
 
 impl UtilitySuite {

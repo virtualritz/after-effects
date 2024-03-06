@@ -317,6 +317,26 @@ impl Point3DDef<'_> {
     pub fn default_x(&self) -> f64 { self.def.x_dephault }
     pub fn default_y(&self) -> f64 { self.def.y_dephault }
     pub fn default_z(&self) -> f64 { self.def.z_dephault }
+
+    pub fn set_default(&mut self, v: (f64, f64, f64)) -> &mut Self {
+        self.def.x_dephault = v.0;
+        self.def.y_dephault = v.1;
+        self.def.z_dephault = v.2;
+        self
+    }
+    pub fn default(&self) -> (f64, f64, f64) {
+        (self.def.x_dephault, self.def.y_dephault, self.def.z_dephault)
+    }
+
+    pub fn set_value(&mut self, v: (f64, f64, f64)) -> &mut Self {
+        self.def.x_value = v.0;
+        self.def.y_value = v.1;
+        self.def.z_value = v.2;
+        self
+    }
+    pub fn value(&self) -> (f64, f64, f64) {
+        (self.def.x_value, self.def.y_value, self.def.z_value)
+    }
 }
 // ―――――――――――――――――――――――――――――――――――― Point ――――――――――――――――――――――――――――――――――――――
 
@@ -328,7 +348,7 @@ define_param_wrapper! {
         options: CString,
     },
     impl value: i32,
-    impl default: i16,
+    impl default: i32,
 }
 impl<'a> PopupDef<'a> {
     pub fn set_options(&mut self, options: &[&str]) {
