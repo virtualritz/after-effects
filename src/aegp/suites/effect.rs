@@ -314,6 +314,19 @@ define_suite_item_wrapper!(
 );
 
 impl Effect {
+    /// Returns a new AEGP effect from the provided `effect_ref` and AEGP plugin ID.
+    pub fn new(effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, plugin_id: PluginId) -> Result<Self, Error> {
+        Ok(Self::from_handle(
+            aegp::suites::PFInterface::new()?.new_effect_for_effect(effect_ref, plugin_id)?,
+            true
+        ))
+    }
+
+    /// Creates a new [`aegp::LayerRenderOptions`] from this layer.
+    pub fn layer_render_options(&self, plugin_id: PluginId) -> Result<aegp::LayerRenderOptions, Error> {
+        aegp::LayerRenderOptions::from_upstream_of_effect(self.handle.as_ptr(), plugin_id)
+    }
+
     /// Returns the count of effects installed in After Effects.
     pub fn num_installed_effects() -> Result<i32, Error> {
         EffectSuite::new()?.num_installed_effects()

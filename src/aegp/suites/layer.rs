@@ -691,4 +691,10 @@ impl Layer {
         let Ok(ref suite) = *self.mask else { return Err(Error::MissingSuite); };
         suite.create_new_mask(self.handle.as_ptr()).map(|(mask, idx)| (mask.into(), idx))
     }
+
+    /// Creates a new [`aegp::LayerRenderOptions`] from this layer.
+    pub fn layer_render_options(&self, plugin_id: PluginId) -> Result<aegp::LayerRenderOptions, Error> {
+        aegp::LayerRenderOptions::from_layer(self.handle.as_ptr(), plugin_id)
+    }
+
 }

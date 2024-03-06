@@ -197,6 +197,11 @@ macro_rules! define_struct_wrapper {
                 self.0
             }
         }
+        impl AsPtr<*mut after_effects_sys::$data_type> for &$wrapper_pretty_name {
+            fn as_ptr(&self) -> *mut after_effects_sys::$data_type {
+                self.0
+            }
+        }
     };
 }
 
@@ -268,7 +273,7 @@ macro_rules! define_param_wrapper {
                     $($field_name: Default::default(), )*
                 }
             }
-            pub fn setup(cb: fn(&mut Self)) -> Self {
+            pub fn setup<F: FnOnce(&mut Self)>(cb: F) -> Self {
                 let mut ret = Self::new();
                 cb(&mut ret);
                 ret

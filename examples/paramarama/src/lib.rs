@@ -105,9 +105,9 @@ impl AdobePluginGlobal for Plugin {
                 params.add_with_flags(Params::Point3D, "3D Point", ae::ArbitraryDef::new(), ae::ParamFlag::empty(), ae::ParamUIFlags::NO_ECW_UI)?;
             }
 
-            params.add_with_flags(Params::Button, "Button", ae::ButtonDef::setup(|f| {
+            params.add(Params::Button, "Button", ae::ButtonDef::setup(|f| {
                 f.set_label("Button Label");
-            }), ae::ParamFlag::SUPERVISE, ae::ParamUIFlags::empty())?;
+            }))?;
 
             params.add(Params::Layer, "Layer", ae::LayerDef::new())?;
         }

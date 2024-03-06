@@ -82,7 +82,7 @@ impl Command {
                 extra: ArbParamsExtra::from_raw(extra as *mut ae_sys::PF_ArbParamsExtra),
             },
             RawCommand::SmartPreRender => Command::SmartPreRender {
-                extra: PreRenderExtra::from_raw(extra as *mut _),
+                extra: PreRenderExtra::from_raw(in_data_ptr, extra as *mut _),
             },
             RawCommand::SmartRender => Command::SmartRender {
                 extra: SmartRenderExtra::from_raw(in_data_ptr, extra as *mut _),

@@ -1,6 +1,5 @@
 use super::*;
 use std::any::Any;
-use ae_sys::PF_ProgPtr;
 
 /*
 pub const PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS: _bindgen_ty_30 = 1;
@@ -36,6 +35,7 @@ pub cb: *mut PF_PreRenderCallbacks,
 
 #[derive(Clone, Copy, Debug)]
 pub struct PreRenderExtra {
+    pub(crate) in_data_ptr: *const ae_sys::PF_InData,
     pub(crate) ptr: *mut ae_sys::PF_PreRenderExtra,
 }
 impl AsRef<ae_sys::PF_PreRenderExtra> for PreRenderExtra {
@@ -49,9 +49,10 @@ impl AsMut<ae_sys::PF_PreRenderExtra> for PreRenderExtra {
     }
 }
 impl PreRenderExtra {
-    pub fn from_raw(ptr: *mut ae_sys::PF_PreRenderExtra) -> Self {
+    pub fn from_raw(in_data_ptr: *const ae_sys::PF_InData, ptr: *mut ae_sys::PF_PreRenderExtra) -> Self {
+        assert!(!in_data_ptr.is_null());
         assert!(!ptr.is_null());
-        Self { ptr }
+        Self { in_data_ptr, ptr }
     }
     pub fn as_ptr(&self) -> *mut ae_sys::PF_PreRenderExtra {
         self.ptr
@@ -79,7 +80,7 @@ impl PreRenderExtra {
         }
     }
     pub fn callbacks(&self) -> PreRenderCallbacks {
-        unsafe { PreRenderCallbacks::from_raw((*self.ptr).cb) }
+        unsafe { PreRenderCallbacks::from_raw(self.in_data_ptr, (*self.ptr).cb) }
     }
 
     pub fn output_request(&self) -> ae_sys::PF_RenderRequest {
@@ -210,12 +211,13 @@ impl SmartRenderExtra {
 
 #[derive(Copy, Clone, Debug)]
 pub struct PreRenderCallbacks {
+    pub(crate) in_data_ptr: *const ae_sys::PF_InData,
     pub(crate) rc_ptr: *const ae_sys::PF_PreRenderCallbacks,
 }
 
 impl PreRenderCallbacks {
-    pub fn from_raw(rc_ptr: *const ae_sys::PF_PreRenderCallbacks) -> Self {
-        Self { rc_ptr }
+    pub fn from_raw(in_data_ptr: *const ae_sys::PF_InData, rc_ptr: *const ae_sys::PF_PreRenderCallbacks) -> Self {
+        Self { in_data_ptr, rc_ptr }
     }
 
     pub fn as_ptr(&self) -> *const ae_sys::PF_PreRenderCallbacks {
@@ -224,7 +226,6 @@ impl PreRenderCallbacks {
 
     pub fn checkout_layer(
         &self,
-        effect_ref: impl AsPtr<PF_ProgPtr>,
         index: i32,
         checkout_id: i32,
         // FIXME: warp this struct
@@ -238,7 +239,7 @@ impl PreRenderCallbacks {
 
             match unsafe {
                 checkout_layer(
-                    effect_ref.as_ptr(),
+                    (*self.in_data_ptr).effect_ref,
                     index,
                     checkout_id,
                     req,
@@ -255,13 +256,6 @@ impl PreRenderCallbacks {
             Err(Error::InvalidCallback)
         }
     }
-
-    /* FIXME
-    pub fn guid_mix_in_ptr(
-            effect_ref: ProgressInfo,
-            buf: [u8],
-        ) -> PF_Err,
-    >,*/
 }
 
 #[derive(Copy, Clone, Debug)]

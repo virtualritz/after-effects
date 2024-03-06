@@ -208,6 +208,8 @@ define_enum! {
         // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse arbitrary data from text
         CannotParseKeyframeText  = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT,
 
+        Reserved11               = ae_sys::A_Err_RESERVED_11,
+
         StringNotFound           = ae_sys::suiteError_StringNotFound,
         StringBufferTooSmall     = ae_sys::suiteError_StringBufferTooSmall,
         InvalidParms             = ae_sys::suiteError_InvalidParms,
@@ -237,6 +239,7 @@ impl From<Error> for &'static str {
             Error::StringNotFound           => "StringNotFound",
             Error::StringBufferTooSmall     => "StringBufferTooSmall",
             Error::InvalidParms             => "InvalidParms",
+            Error::Reserved11               => "Reserved11",
         }
     }
 }

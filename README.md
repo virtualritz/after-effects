@@ -117,7 +117,7 @@ AfterEffectsSDK
 | 🔳 Iterate              | ✅ Effect UI                      |            |                      |
 | ✅ Keyframe             | 🔳 Fill Matte                     |            |                      |
 | 🔳 Layer Mask           | ✅ GPU Device                     |            |                      |
-| 🔳 Layer Render Options | 🔳 Handle                         |            |                      |
+| ✅ Layer Render Options | 🔳 Handle                         |            |                      |
 | ✅ Layer                | ✅ Iterate8                       |            |                      |
 | ✅ Light                | ✅ iterate16                      |            |                      |
 | 🔳 Marker               | ✅ iterateFloat                   |            |                      |
@@ -131,13 +131,13 @@ AfterEffectsSDK
 | 🔳 Proj                 | 🔳 Sampling16                     |            |                      |
 | 🔳 QueryXform           | 🔳 SamplingFloat                  |            |                      |
 | 🔳 Register             | 🔳 Source Settings                |            |                      |
-| 🔳 Render Asyc Manager  | 🔳 Transition                     |            |                      |
-| 🔳 Render Options       | ✅ Utility                        |            |                      |
+| ✅ Render Asyc Manager  | 🔳 Transition                     |            |                      |
+| ✅ Render Options       | ✅ Utility                        |            |                      |
 | 🔳 Render Queue Item    | ✅ World                          |            |                      |
 | 🔳 Render Queue         | ✅ World Transform                |            |                      |
-| 🔳 Render               |                                  |            |                      |
+| ✅ Render               |                                  |            |                      |
 | 🔳 RenderQueue Monitor  |                                  |            |                      |
-| 🔳 Sound Data           |                                  |            |                      |
+| ✅ Sound Data           |                                  |            |                      |
 | ✅ Stream               |                                  |            |                      |
 | 🔳 Text Document        |                                  |            |                      |
 | 🔳 Text Layer           |                                  |            |                      |

@@ -33,7 +33,7 @@ impl Debug for Layer {
 //pub dephault: A_long,
 
 impl Layer {
-    pub fn from_handle(in_data: &InData, world_handle: impl AsPtr<ae_sys::AEGP_WorldH>) -> Result<Self, crate::Error> {
+    pub fn from_aegp_world(in_data: &InData, world_handle: impl AsPtr<ae_sys::AEGP_WorldH>) -> Result<Self, crate::Error> {
         let mut layer: PF_LayerDef = unsafe { std::mem::zeroed() };
 
         aegp::suites::World::new()?

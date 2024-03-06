@@ -1103,7 +1103,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         Ok(())
     }
 
-    pub fn add(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>) -> Result<(), Error> {
+    pub fn add<'a>(&mut self, type_: P, name: &str, def: impl Into<Param<'a>>) -> Result<(), Error> {
         assert!(!self.in_data.is_null());
 
         let param = def.into(); // This must outlive the call to .add()
@@ -1112,13 +1112,16 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         param_def.set_name(name);
         param_def.set_param(&param);
         param_def.set_id(Self::param_id(type_));
+        if matches!(param, Param::Button(_)) {
+            param_def.set_flags(ParamFlag::SUPERVISE);
+        }
         param_def.add(-1)?;
         self.map.borrow_mut().insert(type_, self.num_params);
         self.num_params += 1;
         Ok(())
     }
 
-    pub fn add_with_flags(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>, flags: ParamFlag, ui_flags: ParamUIFlags) -> Result<(), Error> {
+    pub fn add_with_flags<'a>(&mut self, type_: P, name: &str, def: impl Into<Param<'a>>, flags: ParamFlag, ui_flags: ParamUIFlags) -> Result<(), Error> {
         assert!(!self.in_data.is_null());
 
         let param = def.into(); // This must outlive the call to .add()
@@ -1135,7 +1138,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         Ok(())
     }
 
-    pub fn add_customized<F: FnOnce(&mut ParamDef) -> i32>(&mut self, type_: P, name: &str, def: impl Into<Param<'p>>, cb: F) -> Result<(), Error> {
+    pub fn add_customized<'a, F: FnOnce(&mut ParamDef) -> i32>(&mut self, type_: P, name: &str, def: impl Into<Param<'a>>, cb: F) -> Result<(), Error> {
         assert!(!self.in_data.is_null());
 
         let param = def.into(); // This must outlive the call to .add()

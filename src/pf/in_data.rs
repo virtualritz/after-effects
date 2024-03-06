@@ -120,6 +120,13 @@ impl InData {
         }
     }
 
+    pub fn output_origin(&self) -> Point {
+        Point {
+            h: unsafe { (*self.ptr).output_origin_x },
+            v: unsafe { (*self.ptr).output_origin_y },
+        }
+    }
+
     pub fn downsample_x(&self) -> RationalScale {
         unsafe { (*self.ptr).downsample_x.into() }
     }
@@ -176,5 +183,16 @@ impl InData {
 
     pub fn utils(&self) -> UtilCallbacks {
         UtilCallbacks::new(*self)
+    }
+}
+
+impl AsPtr<*const ae_sys::PF_InData> for InData {
+    fn as_ptr(&self) -> *const ae_sys::PF_InData {
+        self.ptr
+    }
+}
+impl AsPtr<*const ae_sys::PF_InData> for &InData {
+    fn as_ptr(&self) -> *const ae_sys::PF_InData {
+        self.ptr
     }
 }

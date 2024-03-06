@@ -174,6 +174,6 @@ impl World {
     /// NOTE: This does not give your plug-in ownership of the world referenced; destroy the source [`WorldHandle`] only if you allocated it.
     /// It just returns an [`EffectWorld`] that points to the same pixel buffer.
     pub fn pf_layer(&self, in_data: &InData) -> Result<pf::Layer, Error> {
-        pf::Layer::from_handle(in_data, self.handle.as_ptr())
+        pf::Layer::from_aegp_world(in_data, self.handle.as_ptr())
     }
 }

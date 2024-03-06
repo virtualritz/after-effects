@@ -23,7 +23,12 @@ impl EffectCustomUISuite {
         })
     }
 
-    // fn PF_GetContextAsyncManager(in_data: *mut PF_InData, extra: *mut PF_EventExtra, managerPP0: *mut PF_AsyncManagerP) -> PF_Err,
+    /// Obtain the [`aegp::AsyncManager`].
+    pub fn context_async_manager(&self, in_data: impl AsPtr<*const ae_sys::PF_InData>, extra: impl AsPtr<*mut ae_sys::PF_EventExtra>) -> Result<aegp::AsyncManager, Error> {
+        Ok(aegp::AsyncManager::from_raw(
+            call_suite_fn_single!(self, PF_GetContextAsyncManager -> ae_sys::PF_AsyncManagerP, in_data.as_ptr() as *mut _, extra.as_ptr())?
+        ))
+    }
 }
 
 define_suite!(

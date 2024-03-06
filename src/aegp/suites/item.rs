@@ -412,4 +412,9 @@ impl Item {
             Err(Error::Parameter)
         }
     }
+
+    /// Creates a new [`aegp::RenderOptions`] from this layer.
+    pub fn render_options(&self, plugin_id: PluginId) -> Result<aegp::RenderOptions, Error> {
+        aegp::RenderOptions::from_item(self.handle.as_ptr(), plugin_id)
+    }
 }
