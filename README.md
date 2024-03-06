@@ -95,132 +95,86 @@ AfterEffectsSDK
 
 # Wrapped suites:
 ## After Effects:
-| AEGP                                            | PF                                                      | DRAWBOT                                | Other                                    |
-|-------------------------------------------------|---------------------------------------------------------|----------------------------------------|------------------------------------------|
-| :white_square_button: AEGP Artisan Util         | :white_check_mark:    PF AE Adv App                     | :white_check_mark:    DRAWBOT Draw     | :white_check_mark:    AE Plugin Helper   |
-| :white_check_mark:    AEGP Camera               | :white_square_button: PF AE Adv Item                    | :white_check_mark:    DRAWBOT Image    | :white_check_mark:    AE Plugin Helper 2 |
-| :white_check_mark:    AEGP Canvas               | :white_square_button: PF AE Adv Time                    | :white_check_mark:    DRAWBOT Path     |                                          |
-| :white_square_button: AEGP Collection           | :white_check_mark:    PF AE App                         | :white_check_mark:    DRAWBOT Pen      |                                          |
-| :white_square_button: AEGP Command              | :white_square_button: PF AngleParam                     | :white_check_mark:    DRAWBOT Supplier |                                          |
-| :white_check_mark:    AEGP Comp                 | :white_square_button: PF ANSI                           | :white_check_mark:    DRAWBOT Surface  |                                          |
-| :white_check_mark:    AEGP Composite            | :white_square_button: PF Background Frame               |                                        |                                          |
-| :white_square_button: AEGP Compute              | :white_square_button: PF Batch Sampling                 |                                        |                                          |
-| :white_check_mark:    AEGP Dynamic Stream       | :white_square_button: PF Cache On Load                  |                                        |                                          |
-| :white_check_mark:    AEGP Effect               | :white_check_mark:    PF Color Settings                 |                                        |                                          |
-| :white_square_button: AEGP File Import Manager  | :white_square_button: PF Color                          |                                        |                                          |
-| :white_check_mark:    AEGP Footage              | :white_square_button: PF Color16                        |                                        |                                          |
-| :white_square_button: AEGP Hash                 | :white_square_button: PF ColorFloat                     |                                        |                                          |
-| :white_check_mark:    AEGP IO In                | :white_square_button: PF ColorParam                     |                                        |                                          |
-| :white_square_button: AEGP IO Out               | :white_check_mark:    PF Effect Custom UI               |                                        |                                          |
-| :white_check_mark:    AEGP Item                 | :white_check_mark:    PF Effect Custom UI Overlay Theme |                                        |                                          |
-| :white_square_button: AEGP Item View            | :white_check_mark:    PF Effect Sequence Data           |                                        |                                          |
-| :white_square_button: AEGP Iterate              | :white_check_mark:    PF Effect UI                      |                                        |                                          |
-| :white_check_mark:    AEGP Keyframe             | :white_square_button: PF Fill Matte                     |                                        |                                          |
-| :white_square_button: AEGP Layer Mask           | :white_check_mark:    PF GPU Device                     |                                        |                                          |
-| :white_square_button: AEGP Layer Render Options | :white_square_button: PF Handle                         |                                        |                                          |
-| :white_check_mark:    AEGP Layer                | :white_check_mark:    PF Iterate8                       |                                        |                                          |
-| :white_check_mark:    AEGP Light                | :white_check_mark:    PF iterate16                      |                                        |                                          |
-| :white_square_button: AEGP Marker               | :white_check_mark:    PF iterateFloat                   |                                        |                                          |
-| :white_check_mark:    AEGP Mask Outline         | :white_check_mark:    PF Param Utils                    |                                        |                                          |
-| :white_check_mark:    AEGP Mask                 | :white_square_button: PF Path Data                      |                                        |                                          |
-| :white_square_button: AEGP Math                 | :white_square_button: PF Path Query                     |                                        |                                          |
-| :white_check_mark:    AEGP Memory               | :white_square_button: PF Pixel Data                     |                                        |                                          |
-| :white_square_button: AEGP Output Module        | :white_check_mark:    PF Pixel Format                   |                                        |                                          |
-| :white_square_button: AEGP Persistent Data      | :white_square_button: PF PointParam                     |                                        |                                          |
-| :white_check_mark:    AEGP PF Interface         | :white_square_button: PF Sampling8                      |                                        |                                          |
-| :white_square_button: AEGP Proj                 | :white_square_button: PF Sampling16                     |                                        |                                          |
-| :white_square_button: AEGP QueryXform           | :white_square_button: PF SamplingFloat                  |                                        |                                          |
-| :white_square_button: AEGP Register             | :white_square_button: PF Source Settings                |                                        |                                          |
-| :white_square_button: AEGP Render Asyc Manager  | :white_square_button: PF Transition                     |                                        |                                          |
-| :white_square_button: AEGP Render Options       | :white_check_mark:    PF Utility                        |                                        |                                          |
-| :white_square_button: AEGP Render Queue Item    | :white_check_mark:    PF World                          |                                        |                                          |
-| :white_square_button: AEGP Render Queue         | :white_check_mark:    PF World Transform                |                                        |                                          |
-| :white_square_button: AEGP Render               |                                                         |                                        |                                          |
-| :white_square_button: AEGP RenderQueue Monitor  |                                                         |                                        |                                          |
-| :white_square_button: AEGP Sound Data           |                                                         |                                        |                                          |
-| :white_check_mark:    AEGP Stream               |                                                         |                                        |                                          |
-| :white_square_button: AEGP Text Document        |                                                         |                                        |                                          |
-| :white_square_button: AEGP Text Layer           |                                                         |                                        |                                          |
-| :white_square_button: AEGP Tracker              |                                                         |                                        |                                          |
-| :white_square_button: AEGP Tracker Utility      |                                                         |                                        |                                          |
-| :white_check_mark:    AEGP Utility              |                                                         |                                        |                                          |
-| :white_square_button: AEGP Workspace Panel      |                                                         |                                        |                                          |
-| :white_check_mark:    AEGP World                |                                                         |                                        |                                          |
+| AEGP                                       | PF                                                   | DRAWBOT                     | Other                                 |
+|--------------------------------------------|------------------------------------------------------|-----------------------------|---------------------------------------|
+| :white_square_button: Artisan Util         | :white_check_mark:    AE Adv App                     | :white_check_mark: Draw     | :white_check_mark: AE Plugin Helper   |
+| :white_check_mark:    Camera               | :white_square_button: AE Adv Item                    | :white_check_mark: Image    | :white_check_mark: AE Plugin Helper 2 |
+| :white_check_mark:    Canvas               | :white_square_button: AE Adv Time                    | :white_check_mark: Path     |                                       |
+| :white_square_button: Collection           | :white_check_mark:    AE App                         | :white_check_mark: Pen      |                                       |
+| :white_square_button: Command              | :white_square_button: AngleParam                     | :white_check_mark: Supplier |                                       |
+| :white_check_mark:    Comp                 | :white_square_button: ANSI                           | :white_check_mark: Surface  |                                       |
+| :white_check_mark:    Composite            | :white_square_button: Background Frame               |                             |                                       |
+| :white_square_button: Compute              | :white_square_button: Batch Sampling                 |                             |                                       |
+| :white_check_mark:    Dynamic Stream       | :white_square_button: Cache On Load                  |                             |                                       |
+| :white_check_mark:    Effect               | :white_check_mark:    Color Settings                 |                             |                                       |
+| :white_square_button: File Import Manager  | :white_square_button: Color                          |                             |                                       |
+| :white_check_mark:    Footage              | :white_square_button: Color16                        |                             |                                       |
+| :white_square_button: Hash                 | :white_square_button: ColorFloat                     |                             |                                       |
+| :white_check_mark:    IO In                | :white_square_button: ColorParam                     |                             |                                       |
+| :white_square_button: IO Out               | :white_check_mark:    Effect Custom UI               |                             |                                       |
+| :white_check_mark:    Item                 | :white_check_mark:    Effect Custom UI Overlay Theme |                             |                                       |
+| :white_square_button: Item View            | :white_check_mark:    Effect Sequence Data           |                             |                                       |
+| :white_square_button: Iterate              | :white_check_mark:    Effect UI                      |                             |                                       |
+| :white_check_mark:    Keyframe             | :white_square_button: Fill Matte                     |                             |                                       |
+| :white_square_button: Layer Mask           | :white_check_mark:    GPU Device                     |                             |                                       |
+| :white_square_button: Layer Render Options | :white_square_button: Handle                         |                             |                                       |
+| :white_check_mark:    Layer                | :white_check_mark:    Iterate8                       |                             |                                       |
+| :white_check_mark:    Light                | :white_check_mark:    iterate16                      |                             |                                       |
+| :white_square_button: Marker               | :white_check_mark:    iterateFloat                   |                             |                                       |
+| :white_check_mark:    Mask Outline         | :white_check_mark:    Param Utils                    |                             |                                       |
+| :white_check_mark:    Mask                 | :white_square_button: Path Data                      |                             |                                       |
+| :white_square_button: Math                 | :white_square_button: Path Query                     |                             |                                       |
+| :white_check_mark:    Memory               | :white_square_button: Pixel Data                     |                             |                                       |
+| :white_square_button: Output Module        | :white_check_mark:    Pixel Format                   |                             |                                       |
+| :white_square_button: Persistent Data      | :white_square_button: PointParam                     |                             |                                       |
+| :white_check_mark:    PF Interface         | :white_square_button: Sampling8                      |                             |                                       |
+| :white_square_button: Proj                 | :white_square_button: Sampling16                     |                             |                                       |
+| :white_square_button: QueryXform           | :white_square_button: SamplingFloat                  |                             |                                       |
+| :white_square_button: Register             | :white_square_button: Source Settings                |                             |                                       |
+| :white_square_button: Render Asyc Manager  | :white_square_button: Transition                     |                             |                                       |
+| :white_square_button: Render Options       | :white_check_mark:    Utility                        |                             |                                       |
+| :white_square_button: Render Queue Item    | :white_check_mark:    World                          |                             |                                       |
+| :white_square_button: Render Queue         | :white_check_mark:    World Transform                |                             |                                       |
+| :white_square_button: Render               |                                                      |                             |                                       |
+| :white_square_button: RenderQueue Monitor  |                                                      |                             |                                       |
+| :white_square_button: Sound Data           |                                                      |                             |                                       |
+| :white_check_mark:    Stream               |                                                      |                             |                                       |
+| :white_square_button: Text Document        |                                                      |                             |                                       |
+| :white_square_button: Text Layer           |                                                      |                             |                                       |
+| :white_square_button: Tracker              |                                                      |                             |                                       |
+| :white_square_button: Tracker Utility      |                                                      |                             |                                       |
+| :white_check_mark:    Utility              |                                                      |                             |                                       |
+| :white_square_button: Workspace Panel      |                                                      |                             |                                       |
+| :white_check_mark:    World                |                                                      |                             |                                       |
 
 ## Premiere:
-- [ ] ADOBESDK ControlSurface
-- [ ] ADOBESDK ControlSurface Command
-- [ ] ADOBESDK ControlSurface Lumetri
-- [ ] ADOBESDK ControlSurface Marker
-- [ ] ADOBESDK ControlSurface Mixer
-- [ ] ADOBESDK ControlSurface Transport
-- [ ] ADOBESDK ControlSurfaceHost
-- [ ] ADOBESDK ControlSurfaceHost Command
-- [ ] ADOBESDK ControlSurfaceHost Lumetri
-- [ ] ADOBESDK ControlSurfaceHost Marker
-- [ ] ADOBESDK ControlSurfaceHost Mixer
-- [ ] ADOBESDK ControlSurfaceHost Transport
-- [ ] ADOBESDK ControlSurfacePlugin
-- [ ] ADOBESDK String
-- [ ] Captioning
-- [ ] Effect Stream Label
-- [ ] FlashCueMarkerData
-- [ ] Importer File Manager
-- [ ] Marker
-- [ ] MediaCore Accelerated Render Invocation
-- [ ] MediaCore App Info
-- [ ] MediaCore Application Settings
-- [ ] MediaCore Async File Reader
-- [ ] MediaCore Async Operation
-- [ ] MediaCore Export File
-- [ ] MediaCore Export Info
-- [ ] MediaCore Export Param
-- [ ] MediaCore Export Progress
-- [ ] MediaCore Exporter Utility
-- [x] MediaCore GPU Device
-- [x] MediaCore GPU Image Processing
-- [ ] MediaCore Playmod Immersive Video
-- [ ] MediaCore Playmod Overlay
-- [ ] MediaCore Sequence Audio
-- [x] MediaCore Sequence Info
-- [ ] MediaCore Sequence Render
-- [ ] MediaCore Smart Rendering
-- [ ] MediaCore String
-- [ ] MediaCore Transmit Invocation
-- [x] MediaCore Video Segment
-- [ ] MediaCore Video Segment Render
-- [x] Opaque Effect Data
-- [ ] PF Background Frame
-- [ ] PF Cache On Load
-- [ ] PF Pixel Format
-- [ ] PF Source Settings
-- [ ] PF Transition
-- [ ] PF Utility
-- [ ] Premiere Audio
-- [ ] Premiere Clip Render
-- [ ] Premiere Deferred Processing
-- [ ] Premiere Error
-- [ ] Premiere Export Audio Param
-- [ ] Premiere Export Standard Param
-- [ ] Premiere ExportController
-- [ ] Premiere File Registration
-- [ ] Premiere Image Processing
-- [ ] Premiere Legacy
-- [ ] Premiere Media Accelerator
-- [x] Premiere Memory Manager
-- [ ] Premiere Palette
-- [ ] Premiere Pixel Format
-- [ ] Premiere Playmod Audio
-- [ ] Premiere Playmod Device Control
-- [x] Premiere PPix
-- [x] Premiere PPix 2
-- [ ] Premiere PPix Cache
-- [ ] Premiere PPix Creator
-- [ ] Premiere PPix Creator 2
-- [ ] Premiere RollCrawl
-- [ ] Premiere Threaded Work
-- [x] Premiere Time
-- [ ] Premiere Window
+| Premiere                                     | MediaCore                                           | PF                                     | ADOBESDK                                                    | Other                                       |
+|----------------------------------------------|-----------------------------------------------------|----------------------------------------|-------------------------------------------------------------|---------------------------------------------|
+| :white_square_button: Audio                  | :white_square_button: Accelerated Render Invocation | :white_square_button: Background Frame | :white_square_button: ADOBESDK ControlSurface               | :white_square_button: Captioning            |
+| :white_square_button: Clip Render            | :white_square_button: App Info                      | :white_square_button: Cache On Load    | :white_square_button: ADOBESDK ControlSurface Command       | :white_square_button: Effect Stream Label   |
+| :white_square_button: Deferred Processing    | :white_square_button: Application Settings          | :white_square_button: Pixel Format     | :white_square_button: ADOBESDK ControlSurface Lumetri       | :white_square_button: FlashCueMarkerData    |
+| :white_square_button: Error                  | :white_square_button: Async File Reader             | :white_square_button: Source Settings  | :white_square_button: ADOBESDK ControlSurface Marker        | :white_square_button: Importer File Manager |
+| :white_square_button: Export Audio Param     | :white_square_button: Async Operation               | :white_square_button: Transition       | :white_square_button: ADOBESDK ControlSurface Mixer         | :white_square_button: Marker                |
+| :white_square_button: Export Standard Param  | :white_square_button: Export File                   | :white_square_button: Utility          | :white_square_button: ADOBESDK ControlSurface Transport     | :white_check_mark:    Opaque Effect Data    |
+| :white_square_button: ExportController       | :white_square_button: Export Info                   |                                        | :white_square_button: ADOBESDK ControlSurfaceHost           |                                             |
+| :white_square_button: File Registration      | :white_square_button: Export Param                  |                                        | :white_square_button: ADOBESDK ControlSurfaceHost Command   |                                             |
+| :white_square_button: Image Processing       | :white_square_button: Export Progress               |                                        | :white_square_button: ADOBESDK ControlSurfaceHost Lumetri   |                                             |
+| :white_square_button: Legacy                 | :white_square_button: Exporter Utility              |                                        | :white_square_button: ADOBESDK ControlSurfaceHost Marker    |                                             |
+| :white_square_button: Media Accelerator      | :white_check_mark:    GPU Device                    |                                        | :white_square_button: ADOBESDK ControlSurfaceHost Mixer     |                                             |
+| :white_check_mark:    Memory Manager         | :white_check_mark:    GPU Image Processing          |                                        | :white_square_button: ADOBESDK ControlSurfaceHost Transport |                                             |
+| :white_square_button: Palette                | :white_square_button: Playmod Immersive Video       |                                        | :white_square_button: ADOBESDK ControlSurfacePlugin         |                                             |
+| :white_square_button: Pixel Format           | :white_square_button: Playmod Overlay               |                                        | :white_square_button: ADOBESDK String                       |                                             |
+| :white_square_button: Playmod Audio          | :white_square_button: Sequence Audio                |                                        |                                                             |                                             |
+| :white_square_button: Playmod Device Control | :white_check_mark:    Sequence Info                 |                                        |                                                             |                                             |
+| :white_check_mark:    PPix                   | :white_square_button: Sequence Render               |                                        |                                                             |                                             |
+| :white_check_mark:    PPix 2                 | :white_square_button: Smart Rendering               |                                        |                                                             |                                             |
+| :white_square_button: PPix Cache             | :white_square_button: String                        |                                        |                                                             |                                             |
+| :white_square_button: PPix Creator           | :white_square_button: Transmit Invocation           |                                        |                                                             |                                             |
+| :white_square_button: PPix Creator 2         | :white_check_mark:    Video Segment                 |                                        |                                                             |                                             |
+| :white_square_button: RollCrawl              | :white_square_button: Video Segment Render          |                                        |                                                             |                                             |
+| :white_square_button: Threaded Work          |                                                     |                                        |                                                             |                                             |
+| :white_check_mark:    Time                   |                                                     |                                        |                                                             |                                             |
+| :white_square_button: Window                 |                                                     |                                        |                                                             |                                             |
 
 ## License
 
