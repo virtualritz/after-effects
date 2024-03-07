@@ -127,6 +127,10 @@ impl InData {
         }
     }
 
+    pub fn pixel_aspect_ratio(&self) -> RationalScale {
+        unsafe { (*self.ptr).pixel_aspect_ratio.into() }
+    }
+
     pub fn downsample_x(&self) -> RationalScale {
         unsafe { (*self.ptr).downsample_x.into() }
     }

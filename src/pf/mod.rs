@@ -21,26 +21,32 @@ mod interact_callbacks; pub use interact_callbacks::*;
 mod util_callbacks;     pub use util_callbacks::*;
 
 pub mod suites {
+    pub(crate) mod adv_item;              pub use adv_item            ::AdvItemSuite             as AdvItem;
+    pub(crate) mod background_frame;      pub use background_frame    ::BackgroundFrameSuite     as BackgroundFrame;
+    pub(crate) mod cache_on_load;         pub use cache_on_load       ::CacheOnLoadSuite         as CacheOnLoad;
     pub(crate) mod effect_sequence_data;  pub use effect_sequence_data::EffectSequenceDataSuite  as EffectSequenceData;
-    pub(crate) mod effect_ui;             pub use effect_ui           ::EffectUISuite as EffectUI;
-    pub(crate) mod app;                   pub use app                 ::{ AppSuite as App,
-                                                                          AdvAppSuite as AdvApp };
-    pub(crate) mod custom_ui;             pub use custom_ui           ::{ EffectCustomUISuite as EffectCustomUI,
+    pub(crate) mod effect_ui;             pub use effect_ui           ::EffectUISuite            as EffectUI;
+    pub(crate) mod app;                   pub use app                 ::{ AppSuite               as App,
+                                                                          AdvAppSuite            as AdvApp };
+    pub(crate) mod custom_ui;             pub use custom_ui           ::{ EffectCustomUISuite    as EffectCustomUI,
                                                                           EffectCustomUIOverlayThemeSuite as EffectCustomUIOverlayTheme };
-    pub(crate) mod iterate;               pub use iterate             ::{ Iterate8Suite     as Iterate8,
-                                                                          Iterate16Suite    as Iterate16,
-                                                                          IterateFloatSuite as IterateFloat };
-    pub(crate) mod pixel_format;          pub use pixel_format        ::PixelFormatSuite    as PixelFormat;
-    pub(crate) mod utility;               pub use utility             ::UtilitySuite        as Utility;
-    pub(crate) mod world;                 pub use world               ::WorldSuite          as World;
-    pub(crate) mod world_transform;       pub use world_transform     ::WorldTransformSuite as WorldTransform;
-    pub(crate) mod handle;                pub use handle              ::HandleSuite         as Handle;
-    pub(crate) mod helper;                pub use helper              ::{ HelperSuite       as Helper,
-                                                                          HelperSuite2      as Helper2 };
-    pub(crate) mod param_utils;           pub use param_utils         ::ParamUtilsSuite     as ParamUtils;
-    pub(crate) mod gpu_device;            pub use gpu_device          ::GPUDeviceSuite      as GPUDevice;
+    pub(crate) mod iterate;               pub use iterate             ::{ Iterate8Suite          as Iterate8,
+                                                                          Iterate16Suite         as Iterate16,
+                                                                          IterateFloatSuite      as IterateFloat };
+    pub(crate) mod pixel_format;          pub use pixel_format        ::PixelFormatSuite         as PixelFormat;
+    pub(crate) mod source_settings;       pub use source_settings     ::SourceSettingsSuite      as SourceSettings;
+    pub(crate) mod transition;            pub use transition          ::TransitionSuite          as Transition;
+    pub(crate) mod utility;               pub use utility             ::UtilitySuite             as Utility;
+    pub(crate) mod world;                 pub use world               ::WorldSuite               as World;
+    pub(crate) mod world_transform;       pub use world_transform     ::WorldTransformSuite      as WorldTransform;
+    pub(crate) mod handle;                pub use handle              ::HandleSuite              as Handle;
+    pub(crate) mod helper;                pub use helper              ::{ HelperSuite            as Helper,
+                                                                          HelperSuite2           as Helper2 };
+    pub(crate) mod param_utils;           pub use param_utils         ::ParamUtilsSuite          as ParamUtils;
+    pub(crate) mod gpu_device;            pub use gpu_device          ::GPUDeviceSuite           as GPUDevice;
 }
 
+pub use suites::adv_item::Step;
 pub use suites::app::{
     AppColorType,
     AppPersonalTextInfo,
@@ -160,6 +166,11 @@ define_struct! {
     RationalScale {
         num: i32,
         den: u32,
+    }
+}
+impl RationalScale {
+    pub fn inv(&self) -> RationalScale {
+        RationalScale { num: self.den as _, den: self.num as _ }
     }
 }
 

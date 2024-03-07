@@ -8,6 +8,7 @@ mod time;                     pub use time::*;
 mod sequence_info;            pub use sequence_info::*;
 mod video_segment;            pub use video_segment::*;
 mod video_segment_properties; pub use video_segment_properties::*;
+mod string;                   pub use string::*;
 
 #[cfg(has_ae_sdk)]
 mod opaque_effect_data;
@@ -80,4 +81,15 @@ pub(crate) trait Suite {
     where
         Self: Sized;
 
+}
+
+pub trait AsPtr<T> {
+    fn as_ptr(&self) -> T
+    where
+        T: Sized;
+}
+
+pub trait AsMutPtr<T> {
+    fn as_mut_ptr(&mut self) -> T
+    where T: Sized;
 }

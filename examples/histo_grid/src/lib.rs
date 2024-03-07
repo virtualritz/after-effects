@@ -164,12 +164,6 @@ impl AdobePluginGlobal for Plugin {
     }
 
     fn handle_command(&mut self, cmd: ae::Command, _in_data: InData, mut out_data: OutData, _params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
-        let _ = log::set_logger(&win_dbg_logger::DEBUGGER_LOGGER);
-        log::set_max_level(log::LevelFilter::Debug);
-        log_panics::init();
-
-        log::info!("handle_command: {:?}, thread: {:?}, ptr: {:?}", cmd.as_raw(), std::thread::current().id(), self as *const _);
-
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("\rCopyright 2015-2023 Adobe Inc.\rHistoGrid sample.");

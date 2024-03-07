@@ -1,5 +1,5 @@
 use crate::*;
-use ae_sys::{ PF_ProgPtr, PF_InData };
+use pr_sys::{ PF_ProgPtr, PF_InData };
 
 define_suite!(
     /// Premiere pixel format suite. Not available in After Effects.
@@ -16,7 +16,7 @@ impl PixelFormatSuite {
         crate::Suite::new()
     }
 
-    pub fn add_supported_pixel_format(&self, effect_ref: impl AsPtr<PF_ProgPtr>, pixel_format: pr::PixelFormat) -> Result<(), Error> {
+    pub fn add_supported_pixel_format(&self, effect_ref: impl AsPtr<PF_ProgPtr>, pixel_format: PixelFormat) -> Result<(), Error> {
         call_suite_fn!(self, AddSupportedPixelFormat, effect_ref.as_ptr(), pixel_format.into())
     }
 
@@ -24,19 +24,16 @@ impl PixelFormatSuite {
         call_suite_fn!(self, ClearSupportedPixelFormats, effect_ref.as_ptr())
     }
 
-    pub fn new_world_of_pixel_format(&self, in_data: impl AsPtr<*mut PF_InData>, width: u32, height: u32, flags: pf::NewWorldFlags, pixel_format: pr::PixelFormat) -> Result<Layer, Error> {
-        let layer = call_suite_fn_single!(self, NewWorldOfPixelFormat -> ae_sys::PF_EffectWorld, (*in_data.as_ptr()).effect_ref, width, height, flags.bits(), pixel_format.into())?;
-        Ok(Layer::from_owned(layer, InData::from_raw(in_data.as_ptr()), |self_layer| {
-            PixelFormatSuite::new().unwrap().dispose_world(self_layer.in_data.effect_ref(), self_layer.as_mut_ptr()).unwrap();
-        }))
+    pub fn new_world_of_pixel_format(&self, in_data: impl AsPtr<*mut PF_InData>, width: u32, height: u32, flags: NewWorldFlags, pixel_format: PixelFormat) -> Result<pr_sys::PF_EffectWorld, Error> {
+        call_suite_fn_single!(self, NewWorldOfPixelFormat -> pr_sys::PF_EffectWorld, (*in_data.as_ptr()).effect_ref, width, height, flags.bits(), pixel_format.into())
     }
 
-    pub fn dispose_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: *mut ae_sys::PF_EffectWorld) -> Result<(), Error> {
+    pub fn dispose_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: *mut pr_sys::PF_EffectWorld) -> Result<(), Error> {
         call_suite_fn!(self, DisposeWorld, effect_ref.as_ptr(), world)
     }
 
-    pub fn pixel_format(&self, world: impl AsPtr<ae_sys::PF_EffectWorldPtr>) -> Result<pr::PixelFormat, Error> {
-        Ok(call_suite_fn_single!(self, GetPixelFormat -> ae_sys::PrPixelFormat, world.as_ptr())?.into())
+    pub fn pixel_format(&self, world: impl AsPtr<*mut pr_sys::PF_EffectWorld>) -> Result<PixelFormat, Error> {
+        Ok(call_suite_fn_single!(self, GetPixelFormat -> pr_sys::PrPixelFormat, world.as_ptr())?.into())
     }
 
     /// Retrieves the minimum i.e. "black" value for a give pixel type.
@@ -45,7 +42,7 @@ impl PixelFormatSuite {
     ///
     /// * `pixel_format` - the Premiere pixel format whose black level you want
     /// * `pixel_data` - a void pointer to data large enough to hold the pixel value (see note above)
-    pub fn black_for_pixel_format(&self, pixel_format: pr::PixelFormat) -> Result<Vec<u8>, Error> {
+    pub fn black_for_pixel_format(&self, pixel_format: PixelFormat) -> Result<Vec<u8>, Error> {
         let mut pixel_data = vec![0u8; pixel_size(pixel_format)];
         call_suite_fn!(self, GetBlackForPixelFormat, pixel_format.into(), pixel_data.as_mut_ptr() as *mut _)?;
         Ok(pixel_data)
@@ -57,7 +54,7 @@ impl PixelFormatSuite {
     ///
     /// * `pixel_format` - the Premiere pixel format whose white level you want
     /// * `pixel_data` - a void pointer to data large enough to hold the pixel value (see note above)
-    pub fn white_for_pixel_format(&self, pixel_format: pr::PixelFormat) -> Result<Vec<u8>, Error> {
+    pub fn white_for_pixel_format(&self, pixel_format: PixelFormat) -> Result<Vec<u8>, Error> {
         let mut pixel_data = vec![0u8; pixel_size(pixel_format)];
         call_suite_fn!(self, GetWhiteForPixelFormat, pixel_format.into(), pixel_data.as_mut_ptr() as *mut _)?;
         Ok(pixel_data)
@@ -73,15 +70,15 @@ impl PixelFormatSuite {
     /// * `green`        - green value (0.0 - 1.0)
     /// * `blue`         - blue value (0.0 - 1.0)
     /// * `pixel_data`   - a void pointer to data large enough to hold the pixel value (see note above)
-    pub fn convert_color_to_pixel_formatted_data(&self, pixel_format: pr::PixelFormat, alpha: f32, red: f32, green: f32, blue: f32) -> Result<Vec<u8>, Error> {
+    pub fn convert_color_to_pixel_formatted_data(&self, pixel_format: PixelFormat, alpha: f32, red: f32, green: f32, blue: f32) -> Result<Vec<u8>, Error> {
         let mut pixel_data = vec![0u8; pixel_size(pixel_format)];
         call_suite_fn!(self, ConvertColorToPixelFormattedData, pixel_format.into(), alpha, red, green, blue, pixel_data.as_mut_ptr() as *mut _)?;
         Ok(pixel_data)
     }
 }
 
-fn pixel_size(pixel_format: pr::PixelFormat) -> usize {
-    use pr::PixelFormat::*;
+fn pixel_size(pixel_format: PixelFormat) -> usize {
+    use PixelFormat::*;
     match pixel_format {
         Bgra4444_8u | Vuya4444_8u | Vuya4444_8u709 | Argb4444_8u | Bgrx4444_8u | Vuyx4444_8u | Vuyx4444_8u709 | Xrgb4444_8u | Bgrp4444_8u | Vuyp4444_8u |
         Vuyp4444_8u709 | Prgb4444_8u | Vuya4444_16u | Rgb444_10u | Yuyv422_8u601 | Yuyv422_8u709 | Uyvy422_8u601 | Uyvy422_8u709 | Xrgb4444_32fLinear => 4,
@@ -100,21 +97,10 @@ fn pixel_size(pixel_format: pr::PixelFormat) -> usize {
     }
 }
 
-// ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
-
-define_enum! {
-    ae_sys::PF_PixelFormat,
-    PixelFormat {
-        Argb32       = ae_sys::PF_PixelFormat_ARGB32,
-        Argb64       = ae_sys::PF_PixelFormat_ARGB64,
-        Argb128      = ae_sys::PF_PixelFormat_ARGB128,
-        GpuBgra128   = ae_sys::PF_PixelFormat_GPU_BGRA128,
-        Reserved     = ae_sys::PF_PixelFormat_RESERVED,
-        Bgra32       = ae_sys::PF_PixelFormat_BGRA32,
-        Vuya32       = ae_sys::PF_PixelFormat_VUYA32,
-        NtscDv25     = ae_sys::PF_PixelFormat_NTSCDV25,
-        PalDv25      = ae_sys::PF_PixelFormat_PALDV25,
-        Invalid      = ae_sys::PF_PixelFormat_INVALID,
-        ForceLongInt = ae_sys::PF_PixelFormat_FORCE_LONG_INT,
+bitflags::bitflags! {
+    pub struct NewWorldFlags: pr_sys::A_long {
+        const NONE         = pr_sys::PF_NewWorldFlag_NONE         as pr_sys::A_long;
+        const CLEAR_PIXELS = pr_sys::PF_NewWorldFlag_CLEAR_PIXELS as pr_sys::A_long;
+        const DEEP_PIXELS  = pr_sys::PF_NewWorldFlag_DEEP_PIXELS  as pr_sys::A_long;
     }
 }

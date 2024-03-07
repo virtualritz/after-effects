@@ -9,6 +9,17 @@ pub use types::*;
 mod suites;
 pub use suites::*;
 
+pub mod pf_suites {
+    pub(crate) mod background_frame; pub use background_frame::BackgroundFrameSuite as BackgroundFrame;
+    pub(crate) mod cache_on_load;    pub use cache_on_load   ::CacheOnLoadSuite     as CacheOnLoad;
+    pub(crate) mod pixel_format;     pub use pixel_format    ::PixelFormatSuite     as PixelFormat;
+    pub(crate) mod source_settings;  pub use source_settings ::SourceSettingsSuite  as SourceSettings;
+    pub(crate) mod transition;       pub use transition      ::TransitionSuite      as Transition;
+    pub(crate) mod utility;          pub use utility         ::UtilitySuite         as Utility;
+}
+pub use pf_suites::background_frame::TransferMode;
+pub use pf_suites::pixel_format::NewWorldFlags;
+
 mod gpu_filter;
 pub use gpu_filter::*;
 

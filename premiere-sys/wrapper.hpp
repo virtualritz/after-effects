@@ -41,6 +41,8 @@
 #include "PrSDKVideoSegmentSuite.h"
 #include "PrSDKWindowSuite.h"
 #ifdef HAS_AE_SDK
+#   include "AE_EffectCB.h"
+#   include "AE_CacheOnLoadSuite.h"
 #	include "PrSDKAESupport.h"
 #	include "PrSDKOpaqueEffectDataSuite.h"
 #	include "Smart_Utils.h"

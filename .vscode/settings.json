@@ -10,6 +10,7 @@
         "./examples/portable/Cargo.toml",
         "./examples/simplest/Cargo.toml",
         "./examples/custom_ecw_ui/Cargo.toml",
+        "./examples/paramarama/Cargo.toml",
         "./examples/histo_grid/Cargo.toml",
     ]
 }

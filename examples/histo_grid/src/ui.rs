@@ -1,8 +1,8 @@
 use super::*;
 
 pub fn histogrid_get_box_in_grid(origin: &ae::Point, grid_width: usize, grid_height: usize, box_across: usize, box_down: usize) -> ae::Rect {
-    let box_width    = (grid_width     / BOXES_ACROSS) as usize;
-    let box_height    = (grid_height    / BOXES_DOWN)   as usize;
+    let box_width  = (grid_width  / BOXES_ACROSS) as usize;
+    let box_height = (grid_height / BOXES_DOWN)   as usize;
 
     // Given the grid h+w and the box coord (0,0 through BOXES_ACROSS,BOXES_DOWN) return the rect of the box
 

@@ -17,4 +17,5 @@ premiere-sys = { path = "../premiere-sys" }
 log = "0.4"
 fastrand = "2.0"
 parking_lot = "0.12"
-base64 = "0.21"
+base64 = "0.22"
+bitflags = "2.4"

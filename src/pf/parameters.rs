@@ -296,6 +296,24 @@ impl PointDef<'_> {
     pub fn set_default_y(&mut self, v: f32) -> &mut Self { self.def.y_dephault = Fixed::from(v).into(); self }
     pub fn default_x(&self) -> f32 { Fixed::from(self.def.x_dephault).into() }
     pub fn default_y(&self) -> f32 { Fixed::from(self.def.y_dephault).into() }
+
+    pub fn set_default(&mut self, v: (f32, f32)) -> &mut Self {
+        self.def.x_dephault = Fixed::from(v.0).into();
+        self.def.y_dephault = Fixed::from(v.1).into();
+        self
+    }
+    pub fn default(&self) -> (f32, f32) {
+        (Fixed::from(self.def.x_dephault).into(), Fixed::from(self.def.y_dephault).into())
+    }
+
+    pub fn set_value(&mut self, v: (f32, f32)) -> &mut Self {
+        self.def.x_value = Fixed::from(v.0).into();
+        self.def.y_value = Fixed::from(v.1).into();
+        self
+    }
+    pub fn value(&self) -> (f32, f32) {
+        (Fixed::from(self.def.x_value).into(), Fixed::from(self.def.y_value).into())
+    }
 }
 
 define_param_wrapper! {

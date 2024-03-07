@@ -98,14 +98,14 @@ AfterEffectsSDK
 | AEGP                   | PF                               | DRAWBOT    | Other                |
 |------------------------|----------------------------------|------------|----------------------|
 | 🔳 Artisan Util         | ✅ AE Adv App                     | ✅ Draw     | ✅ AE Plugin Helper   |
-| ✅ Camera               | 🔳 AE Adv Item                    | ✅ Image    | ✅ AE Plugin Helper 2 |
+| ✅ Camera               | ✅ AE Adv Item                    | ✅ Image    | ✅ AE Plugin Helper 2 |
 | ✅ Canvas               | 🔳 AE Adv Time                    | ✅ Path     |                      |
 | 🔳 Collection           | ✅ AE App                         | ✅ Pen      |                      |
 | 🔳 Command              | 🔳 AngleParam                     | ✅ Supplier |                      |
 | ✅ Comp                 | 🔳 ANSI                           | ✅ Surface  |                      |
-| ✅ Composite            | 🔳 Background Frame               |            |                      |
+| ✅ Composite            | ✅ Background Frame               |            |                      |
 | 🔳 Compute              | 🔳 Batch Sampling                 |            |                      |
-| ✅ Dynamic Stream       | 🔳 Cache On Load                  |            |                      |
+| ✅ Dynamic Stream       | ✅ Cache On Load                  |            |                      |
 | ✅ Effect               | ✅ Color Settings                 |            |                      |
 | 🔳 File Import Manager  | 🔳 Color                          |            |                      |
 | ✅ Footage              | 🔳 Color16                        |            |                      |
@@ -130,8 +130,8 @@ AfterEffectsSDK
 | ✅ PF Interface         | 🔳 Sampling8                      |            |                      |
 | 🔳 Proj                 | 🔳 Sampling16                     |            |                      |
 | 🔳 QueryXform           | 🔳 SamplingFloat                  |            |                      |
-| 🔳 Register             | 🔳 Source Settings                |            |                      |
-| ✅ Render Asyc Manager  | 🔳 Transition                     |            |                      |
+| 🔳 Register             | ✅ Source Settings                |            |                      |
+| ✅ Render Asyc Manager  | ✅ Transition                     |            |                      |
 | ✅ Render Options       | ✅ Utility                        |            |                      |
 | 🔳 Render Queue Item    | ✅ World                          |            |                      |
 | 🔳 Render Queue         | ✅ World Transform                |            |                      |
@@ -150,12 +150,12 @@ AfterEffectsSDK
 ## Premiere:
 | Premiere                 | MediaCore                       | Control Surface                | Other                   |
 |--------------------------|---------------------------------|--------------------------------|-------------------------|
-| 🔳 Audio                  | 🔳 Accelerated Render Invocation | 🔳 ControlSurface               | 🔳 PF Background Frame   |
-| 🔳 Clip Render            | 🔳 App Info                      | 🔳 ControlSurface Command       | 🔳 PF Cache On Load      |
-| 🔳 Deferred Processing    | 🔳 Application Settings          | 🔳 ControlSurface Lumetri       | 🔳 PF Pixel Format       |
-| 🔳 Error                  | 🔳 Async File Reader             | 🔳 ControlSurface Marker        | 🔳 PF Source Settings    |
-| 🔳 Export Audio Param     | 🔳 Async Operation               | 🔳 ControlSurface Mixer         | 🔳 PF Transition         |
-| 🔳 Export Standard Param  | 🔳 Export File                   | 🔳 ControlSurface Transport     | 🔳 PF Utility            |
+| 🔳 Audio                  | 🔳 Accelerated Render Invocation | 🔳 ControlSurface               | ✅ PF Background Frame   |
+| 🔳 Clip Render            | 🔳 App Info                      | 🔳 ControlSurface Command       | ✅ PF Cache On Load      |
+| 🔳 Deferred Processing    | 🔳 Application Settings          | 🔳 ControlSurface Lumetri       | ✅ PF Pixel Format       |
+| 🔳 Error                  | 🔳 Async File Reader             | 🔳 ControlSurface Marker        | ✅ PF Source Settings    |
+| 🔳 Export Audio Param     | 🔳 Async Operation               | 🔳 ControlSurface Mixer         | ✅ PF Transition         |
+| 🔳 Export Standard Param  | 🔳 Export File                   | 🔳 ControlSurface Transport     | ✅ PF Utility            |
 | 🔳 ExportController       | 🔳 Export Info                   | 🔳 ControlSurfaceHost           | ✅ Opaque Effect Data    |
 | 🔳 File Registration      | 🔳 Export Param                  | 🔳 ControlSurfaceHost Command   | 🔳 Captioning            |
 | 🔳 Image Processing       | 🔳 Export Progress               | 🔳 ControlSurfaceHost Lumetri   | 🔳 Effect Stream Label   |
