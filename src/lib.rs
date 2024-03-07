@@ -479,6 +479,15 @@ define_struct_conv!(ae_sys::A_LegacyRect, Rect { left, top, right, bottom });
 define_struct_conv!(ae_sys::PF_LRect,     Rect { left, top, right, bottom });
 
 impl Rect {
+    pub fn empty() -> Self {
+        Self {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         (self.left >= self.right) || (self.top >= self.bottom)
     }

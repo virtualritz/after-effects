@@ -331,7 +331,7 @@ impl Fixed {
         self.0 as ae_sys::A_long >> 16
     }
     pub fn to_int_rounded(self) -> i32 {
-        self.to_int() + 32768
+        (self.0 as ae_sys::A_long + 32768) >> 16
     }
     pub fn from_int(value: i32) -> Self {
         Self(value << 16)
@@ -339,15 +339,12 @@ impl Fixed {
     pub fn as_f32(&self) -> f32 {
         self.0 as f32 / 65536.0
     }
-}
-impl From<Fixed> for ae_sys::PF_Fixed {
-    fn from(val: Fixed) -> Self {
-        val.0
+
+    pub fn as_fixed(&self) -> ae_sys::PF_Fixed {
+        self.0
     }
-}
-impl From<ae_sys::PF_Fixed> for Fixed {
-    fn from(value: ae_sys::PF_Fixed) -> Self {
-        Fixed(value)
+    pub fn from_fixed(value: ae_sys::PF_Fixed) -> Self {
+        Self(value)
     }
 }
 impl From<f32> for Fixed {

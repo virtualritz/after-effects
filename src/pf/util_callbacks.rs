@@ -780,7 +780,7 @@ impl Sampling {
         unsafe {
             let mut pixel = std::mem::zeroed();
             let f = (*(*self.in_data_ptr).utils).subpixel_sample.ok_or(Error::BadCallbackParameter)?;
-            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).into(), Fixed::from(y).into(), &self.params, &mut pixel) {
+            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).as_fixed(), Fixed::from(y).as_fixed(), &self.params, &mut pixel) {
                 0 => Ok(pixel),
                 e => Err(e.into()),
             }
@@ -793,7 +793,7 @@ impl Sampling {
         unsafe {
             let mut pixel = std::mem::zeroed();
             let f = (*(*self.in_data_ptr).utils).subpixel_sample16.ok_or(Error::BadCallbackParameter)?;
-            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).into(), Fixed::from(y).into(), &self.params, &mut pixel) {
+            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).as_fixed(), Fixed::from(y).as_fixed(), &self.params, &mut pixel) {
                 0 => Ok(pixel),
                 e => Err(e.into()),
             }
@@ -808,7 +808,7 @@ impl Sampling {
         unsafe {
             let mut pixel = std::mem::zeroed();
             let f = (*(*self.in_data_ptr).utils).area_sample.ok_or(Error::BadCallbackParameter)?;
-            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).into(), Fixed::from(y).into(), &self.params, &mut pixel) {
+            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).as_fixed(), Fixed::from(y).as_fixed(), &self.params, &mut pixel) {
                 0 => Ok(pixel),
                 e => Err(e.into()),
             }
@@ -822,7 +822,7 @@ impl Sampling {
         unsafe {
             let mut pixel = std::mem::zeroed();
             let f = (*(*self.in_data_ptr).utils).area_sample16.ok_or(Error::BadCallbackParameter)?;
-            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).into(), Fixed::from(y).into(), &self.params, &mut pixel) {
+            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).as_fixed(), Fixed::from(y).as_fixed(), &self.params, &mut pixel) {
                 0 => Ok(pixel),
                 e => Err(e.into()),
             }

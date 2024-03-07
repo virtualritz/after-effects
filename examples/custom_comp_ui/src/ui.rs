@@ -65,10 +65,10 @@ fn fixed_frame_from_params(in_data: &ae::InData, params: &ae::Parameters<Params>
     let par_inv = f32::from(in_data.pixel_aspect_ratio().inv());
 
     Ok(ae_sys::PF_FixedRect {
-        top   : ae::Fixed::from(center.1 - y_rad          ).into(),
-        bottom: ae::Fixed::from(center.1 + y_rad          ).into(),
-        left  : ae::Fixed::from(center.0 - x_rad * par_inv).into(),
-        right : ae::Fixed::from(center.0 + x_rad * par_inv).into(),
+        top   : ae::Fixed::from(center.1 - y_rad          ).as_fixed(),
+        bottom: ae::Fixed::from(center.1 + y_rad          ).as_fixed(),
+        left  : ae::Fixed::from(center.0 - x_rad * par_inv).as_fixed(),
+        right : ae::Fixed::from(center.0 + x_rad * par_inv).as_fixed(),
     })
 }
 
@@ -113,8 +113,8 @@ fn source_to_frame_rect(in_data: &ae::InData, event: &mut ae::EventExtra, fx_fra
 
 fn comp_frame_to_layer(in_data: &ae::InData, event: &mut ae::EventExtra, frame_pt: ae::Point, lyr_pt: &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
     let mut fix_lyr = ae_sys::PF_FixedPoint {
-        x: ae::Fixed::from(frame_pt.h).into(),
-        y: ae::Fixed::from(frame_pt.v).into()
+        x: ae::Fixed::from_int(frame_pt.h).as_fixed(),
+        y: ae::Fixed::from_int(frame_pt.v).as_fixed()
     };
 
     event.callbacks().frame_to_source(&mut fix_lyr)?;
@@ -130,43 +130,43 @@ fn comp_frame_to_layer(in_data: &ae::InData, event: &mut ae::EventExtra, frame_p
 
 fn layer_to_comp_frame(in_data: &ae::InData, event: &mut ae::EventExtra, layer_pt: ae::Point, frame_pt: &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
     let mut fix_frame = ae_sys::PF_FixedPoint {
-        x: ae::Fixed::from(layer_pt.h).into(),
-        y: ae::Fixed::from(layer_pt.v).into()
+        x: ae::Fixed::from_int(layer_pt.h).as_fixed(),
+        y: ae::Fixed::from_int(layer_pt.v).as_fixed()
     };
 
     event.callbacks().layer_to_comp(in_data.current_time(), in_data.time_scale(), &mut fix_frame)?;
     event.callbacks().source_to_frame(&mut fix_frame)?;
 
-	frame_pt.h = ae::Fixed::from(fix_frame.x).into();
-	frame_pt.v = ae::Fixed::from(fix_frame.y).into();
+	frame_pt.h = ae::Fixed::from_fixed(fix_frame.x).to_int();
+	frame_pt.v = ae::Fixed::from_fixed(fix_frame.y).to_int();
 
     Ok(fix_frame)
 }
 
 fn layer_frame_to_layer(_: &ae::InData, event: &mut ae::EventExtra, frame_pt: ae::Point, lyr_pt: &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
     let mut fix_lyr = ae_sys::PF_FixedPoint {
-        x: ae::Fixed::from(frame_pt.h).into(),
-        y: ae::Fixed::from(frame_pt.v).into()
+        x: ae::Fixed::from_int(frame_pt.h).to_int(),
+        y: ae::Fixed::from_int(frame_pt.v).to_int()
     };
 
     event.callbacks().frame_to_source(&mut fix_lyr)?;
 
-	lyr_pt.h = ae::Fixed::from(fix_lyr.x).into();
-	lyr_pt.v = ae::Fixed::from(fix_lyr.y).into();
+	lyr_pt.h = ae::Fixed::from_fixed(fix_lyr.x).to_int();
+	lyr_pt.v = ae::Fixed::from_fixed(fix_lyr.y).to_int();
 
     Ok(fix_lyr)
 }
 
 fn layer_to_layer_frame(_: &ae::InData, event: &mut ae::EventExtra, layer_pt: ae::Point, frame_pt: &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
     let mut fix_frame = ae_sys::PF_FixedPoint {
-        x: ae::Fixed::from(layer_pt.h).into(),
-        y: ae::Fixed::from(layer_pt.v).into()
+        x: ae::Fixed::from_int(layer_pt.h).as_fixed(),
+        y: ae::Fixed::from_int(layer_pt.v).as_fixed()
     };
 
     event.callbacks().source_to_frame(&mut fix_frame)?;
 
-    frame_pt.h = ae::Fixed::from(fix_frame.x).into();
-    frame_pt.v = ae::Fixed::from(fix_frame.y).into();
+    frame_pt.h = ae::Fixed::from_fixed(fix_frame.x).to_int();
+    frame_pt.v = ae::Fixed::from_fixed(fix_frame.y).to_int();
 
     Ok(fix_frame)
 }
@@ -180,10 +180,10 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
         let _points = source_to_frame_rect(in_data, event, &mut fx_frame);
 
         let frame = ae::Rect {
-            top   : ae::Fixed::from(fx_frame.top).to_int_rounded(),
-            bottom: ae::Fixed::from(fx_frame.bottom).to_int_rounded(),
-            left  : ae::Fixed::from(fx_frame.left).to_int_rounded(),
-            right : ae::Fixed::from(fx_frame.right).to_int_rounded(),
+            top   : ae::Fixed::from_fixed(fx_frame.top).to_int_rounded(),
+            bottom: ae::Fixed::from_fixed(fx_frame.bottom).to_int_rounded(),
+            left  : ae::Fixed::from_fixed(fx_frame.left).to_int_rounded(),
+            right : ae::Fixed::from_fixed(fx_frame.right).to_int_rounded(),
         };
 
         // Currently, EffectCustomUIOverlayThemeSuite is unsupported in Premiere Pro/Elements
@@ -300,8 +300,8 @@ where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Resu
     let par = f32::from(in_data.pixel_aspect_ratio());
 
 	// Calculate new radius
-	let new_x = (center.0 - ae::Fixed::from(mouse_layer.x).as_f32()) * par;
-	let new_y =  center.1 - ae::Fixed::from(mouse_layer.y).as_f32();
+	let new_x = (center.0 - ae::Fixed::from_fixed(mouse_layer.x).as_f32()) * par;
+	let new_y =  center.1 - ae::Fixed::from_fixed(mouse_layer.y).as_f32();
 
     params.get_mut(Params::XRadius)?.as_float_slider_mut()?.set_value(new_x.abs() as _);
     params.get_mut(Params::YRadius)?.as_float_slider_mut()?.set_value(new_y.abs() as _);

@@ -357,13 +357,13 @@ macro_rules! define_param_wrapper {
     (impl Fixed, $name:ident) => {
         paste::item! {
             pub fn [<set_ $name>](&mut self, v: f32) -> &mut Self {
-                self.def.$name = Fixed::from(v).into();
+                self.def.$name = Fixed::from(v).as_fixed();
                 self.set_value_changed();
                 self
             }
         }
         pub fn $name(&self) -> f32 {
-            Fixed::from(self.def.$name).into()
+            Fixed::from_fixed(self.def.$name).into()
         }
     };
     (impl $typ:ty, default) => {

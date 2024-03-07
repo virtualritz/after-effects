@@ -72,12 +72,6 @@ impl AdobePluginGlobal for Plugin {
     }
 
     fn handle_command(&mut self, cmd: ae::Command, in_data: InData, mut out_data: OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
-        let _ = log::set_logger(&win_dbg_logger::DEBUGGER_LOGGER);
-        log::set_max_level(log::LevelFilter::Debug);
-        log_panics::init();
-
-        log::info!("handle_command: {:?}, thread: {:?}, ptr: {:?}", ae::RawCommand::from(cmd.as_raw()), std::thread::current().id(), self as *const _);
-
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("Custom Comp UI, v3.3,\rManages a custom Comp (and Layer) window UI.\rCopyright 1994-2023\rAdobe Inc.");
@@ -85,7 +79,6 @@ impl AdobePluginGlobal for Plugin {
             ae::Command::Event { mut extra } => {
                 match extra.event() {
                     ae::Event::Click(_) => {
-                        log::info!("event click, send_drag: {}", extra.send_drag());
                         if extra.send_drag() {
                             ui::drag(&in_data, params, &mut extra)?;
                         } else {
@@ -93,7 +86,7 @@ impl AdobePluginGlobal for Plugin {
                         }
                     }
                     ae::Event::Drag(_) => { ui::drag(&in_data, params, &mut extra)?; }
-                    ae::Event::Draw(_) => { ui::draw(&in_data, params, &mut extra)?; log::info!("drawn"); }
+                    ae::Event::Draw(_) => { ui::draw(&in_data, params, &mut extra)?; }
                     _ => {}
                 }
             }

@@ -12,8 +12,6 @@ crate-type = ["cdylib"]
 after-effects = { path = "../../" }
 after-effects-sys = { path = "../../after-effects-sys" }
 log = "0.4"
-log-panics = "*"
-win_dbg_logger = "0.1"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }
