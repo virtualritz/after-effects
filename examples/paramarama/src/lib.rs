@@ -30,15 +30,10 @@ enum Params {
     Layer,
 }
 
+#[derive(Default)]
 struct Plugin { }
 
 ae::define_plugin!(Plugin, (), Params);
-
-impl Default for Plugin {
-    fn default() -> Self {
-        Self { }
-    }
-}
 
 impl AdobePluginGlobal for Plugin {
     fn can_load(_host_name: &str, _host_version: &str) -> bool {

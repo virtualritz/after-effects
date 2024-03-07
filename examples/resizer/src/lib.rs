@@ -16,15 +16,10 @@ enum Params {
     Use3D,
 }
 
+#[derive(Default)]
 struct Plugin { }
 
 ae::define_plugin!(Plugin, (), Params);
-
-impl Default for Plugin {
-    fn default() -> Self {
-        Self { }
-    }
-}
 
 impl AdobePluginGlobal for Plugin {
     fn can_load(_host_name: &str, _host_version: &str) -> bool {
@@ -219,20 +214,10 @@ impl AdobePluginGlobal for Plugin {
             }
             ae::Command::QueryDynamicFlags => {
                 // The parameter array passed with PF_Cmd_QUERY_DYNAMIC_FLAGS contains invalid values; use PF_CHECKOUT_PARAM() to obtain valid values.
-                let def = ae::pf::ParamDef::checkout(
-                    in_data,
-                    params.index_for_type(Params::Use3D).unwrap() as _,
-                    in_data.current_time(),
-                    in_data.time_step(),
-                    in_data.time_scale()
-                )?;
-                if def.as_checkbox()?.value() {
-                    out_data.set_out_flag2(ae_sys::PF_OutFlag2_I_USE_3D_LIGHTS, true);
-                    out_data.set_out_flag2(ae_sys::PF_OutFlag2_I_USE_3D_CAMERA, true);
-                } else {
-                    out_data.set_out_flag2(ae_sys::PF_OutFlag2_I_USE_3D_LIGHTS, false);
-                    out_data.set_out_flag2(ae_sys::PF_OutFlag2_I_USE_3D_CAMERA, false);
-                }
+                let use_3d = params.checkout(Params::Use3D)?.as_checkbox()?.value();
+
+                out_data.set_out_flag2(ae_sys::PF_OutFlag2_I_USE_3D_LIGHTS, use_3d);
+                out_data.set_out_flag2(ae_sys::PF_OutFlag2_I_USE_3D_CAMERA, use_3d);
             }
             _ => {}
         }

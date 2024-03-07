@@ -1185,42 +1185,43 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         self.get_mut_at(type_, None, None, None)
     }
 
+    #[inline(always)]
+    pub fn checkout(&self, type_: P) -> Result<Ownership<ParamDef<'p>>, Error> {
+        self.checkout_at(type_, None, None, None)
+    }
+
     pub fn get_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
-        let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
         if self.params.is_empty() || time.is_some() {
-            let in_data = self.in_data();
-            let param = ParamDef::checkout(
-                in_data,
-                index as i32,
-                time.unwrap_or(in_data.current_time()),
-                time_step.unwrap_or(in_data.time_step()),
-                time_scale.unwrap_or(in_data.time_scale()),
-            )?;
-            if !param.is_valid() {
-                return Err(Error::InvalidParms);
-            }
-            return Ok(Ownership::Rust(param));
+            self.checkout_at(type_, time, time_step, time_scale)
+        } else {
+            let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
+            Ok(Ownership::AfterEffects(self.params.get(index).ok_or(Error::InvalidIndex)?))
         }
-        Ok(Ownership::AfterEffects(self.params.get(index).ok_or(Error::InvalidIndex)?))
     }
 
     pub fn get_mut_at(&mut self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
-        let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
         if self.params.is_empty() || time.is_some() {
-            let in_data = self.in_data();
-            let param = ParamDef::checkout(
-                in_data,
-                index as i32,
-                time.unwrap_or(in_data.current_time()),
-                time_step.unwrap_or(in_data.time_step()),
-                time_scale.unwrap_or(in_data.time_scale()),
-            )?;
-            if !param.is_valid() {
-                return Err(Error::InvalidParms);
-            }
-            return Ok(Ownership::Rust(param));
+            self.checkout_at(type_, time, time_step, time_scale)
+        } else {
+            let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
+            Ok(Ownership::AfterEffectsMut(self.params.get_mut(index).ok_or(Error::InvalidIndex)?))
         }
-        Ok(Ownership::AfterEffectsMut(self.params.get_mut(index).ok_or(Error::InvalidIndex)?))
+    }
+
+    pub fn checkout_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
+        let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
+        let in_data = self.in_data();
+        let param = ParamDef::checkout(
+            in_data,
+            index as i32,
+            time.unwrap_or(in_data.current_time()),
+            time_step.unwrap_or(in_data.time_step()),
+            time_scale.unwrap_or(in_data.time_scale()),
+        )?;
+        if !param.is_valid() {
+            return Err(Error::InvalidParms);
+        }
+        return Ok(Ownership::Rust(param));
     }
 
     pub fn num_params(&self) -> usize {
