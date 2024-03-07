@@ -1,6 +1,6 @@
 use crate::*;
 use crate::aegp::*;
-use ae_sys::AEGP_LayerH;
+use ae_sys::{AEGP_CompH, AEGP_LayerH};
 
 define_suite!(
     /// This suite provides information about layers within a composition, and the relationship(s) between the source and layer times.
@@ -30,12 +30,12 @@ impl LayerSuite {
     }
 
     /// Obtains the number of layers in a composition.
-    pub fn comp_num_layers(&self, comp_handle: &CompHandle) -> Result<usize, Error> {
+    pub fn comp_num_layers(&self, comp_handle: impl AsPtr<AEGP_CompH>) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetCompNumLayers -> i32, comp_handle.as_ptr())? as usize)
     }
 
     /// Get a [`LayerHandle`] from a composition. Zero is the foremost layer.
-    pub fn comp_layer_by_index(&self, comp_handle: &CompHandle, layer_index: usize) -> Result<LayerHandle, Error> {
+    pub fn comp_layer_by_index(&self, comp_handle: impl AsPtr<AEGP_CompH>, layer_index: usize) -> Result<LayerHandle, Error> {
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetCompLayerByIndex -> ae_sys::AEGP_LayerH, comp_handle.as_ptr(), layer_index as _)?
         ))
@@ -188,14 +188,14 @@ impl LayerSuite {
     /// A composition cannot be added to itself, or to any compositions which it contains; other conditions can preclude successful adding too.
     ///
     /// Adding a layer without first using this function will produce undefined results.
-    pub fn is_add_layer_valid(&self, item_handle: &ItemHandle, comp_handle: &CompHandle) -> Result<bool, Error> {
+    pub fn is_add_layer_valid(&self, item_handle: &ItemHandle, comp_handle: impl AsPtr<AEGP_CompH>) -> Result<bool, Error> {
         Ok(call_suite_fn_single!(self, AEGP_IsAddLayerValid -> ae_sys::A_Boolean, item_handle.as_ptr(), comp_handle.as_ptr())? != 0)
     }
 
     /// Add an item to the composition, above all other layers. Undo-able.
     ///
     /// Use [`Self::is_add_layer_valid()`] first, to confirm that it's possible.
-    pub fn add_layer(&self, item_handle: &ItemHandle, comp_handle: &CompHandle) -> Result<LayerHandle, Error> {
+    pub fn add_layer(&self, item_handle: &ItemHandle, comp_handle: impl AsPtr<AEGP_CompH>) -> Result<LayerHandle, Error> {
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(self, AEGP_AddLayer -> ae_sys::AEGP_LayerH, item_handle.as_ptr(), comp_handle.as_ptr())?
         ))
@@ -476,7 +476,7 @@ define_suite_item_wrapper!(
         source_item_id() -> i32 => suite.layer_source_item_id,
 
         /// Get the AEGP_CompH of the composition containing the layer.
-        parent_comp() -> CompHandle => suite.layer_parent_comp,
+        parent_comp() -> Composition => suite.layer_parent_comp,
 
         /// Get the name of a layer.
         name(plugin_id: PluginId) -> (String, String) => suite.layer_name,

@@ -18,7 +18,7 @@ pub enum Command {
     UserChangedParam         { param_index: usize },
     UpdateParamsUi,
     Event                    { extra: EventExtra },
-    GetExternalDependencies  { extra: *mut ae_sys::PF_ExtDependenciesExtra },
+    GetExternalDependencies  { extra: ExternalDependenciesExtra },
     CompletelyGeneral,
     QueryDynamicFlags,
     AudioRender,
@@ -71,7 +71,7 @@ impl Command {
                 extra: EventExtra::from_raw(extra as *mut ae_sys::PF_EventExtra),
             },
             RawCommand::GetExternalDependencies => Command::GetExternalDependencies {
-                extra: extra as *mut ae_sys::PF_ExtDependenciesExtra,
+                extra: ExternalDependenciesExtra::from_raw(extra as *mut ae_sys::PF_ExtDependenciesExtra),
             },
             RawCommand::CompletelyGeneral => Command::CompletelyGeneral,
             RawCommand::QueryDynamicFlags => Command::QueryDynamicFlags,

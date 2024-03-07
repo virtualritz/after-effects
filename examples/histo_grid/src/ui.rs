@@ -173,7 +173,7 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
         }
     }
 
-    event.event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
+    event.set_event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
 
     Ok(())
 }

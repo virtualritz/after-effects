@@ -1,6 +1,6 @@
 use crate::*;
 use std::ffi::c_void;
-use ae_sys::{ PF_ProgPtr, PF_EffectWorld, PF_CompositeMode, PF_MaskWorld, _PF_UtilCallbacks, PF_Pixel, PF_Pixel16, PF_FloatMatrix };
+use ae_sys::{ PF_ProgPtr, PF_EffectWorld, _PF_UtilCallbacks, PF_Pixel, PF_Pixel16, PF_FloatMatrix };
 
 define_enum! {
     ae_sys::PF_Quality,
@@ -125,10 +125,10 @@ macro_rules! define_iterate_lut_and_generic {
                     progress_final,
                     src,
                     area.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
-                    a_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
-                    r_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
-                    g_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
-                    b_lut.map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
+                    a_lut.as_ref().map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
+                    r_lut.as_ref().map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
+                    g_lut.as_ref().map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
+                    b_lut.as_ref().map_or(std::ptr::null_mut(), |x| x.as_ptr() as *mut _),
                     dst,
                 ) {
                     0 => Ok(()),
@@ -289,7 +289,7 @@ impl UtilCallbacks {
     /// Quality setting doesn't matter.
     pub fn fill(&self, mut world: impl AsMutPtr<*mut PF_EffectWorld>, color: Option<Pixel8>, rect: Option<Rect>) -> Result<(), Error> {
         if world.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, fill, color.map_or(std::ptr::null_mut(), |x| &x), rect.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x), world.as_mut_ptr())
+        call_fn!(self, fill, color.as_ref().map_or(std::ptr::null(), |x| x), rect.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x), world.as_mut_ptr())
     }
 
     /// This fills a rectangle in the 8-bit image with the given color.
@@ -298,7 +298,7 @@ impl UtilCallbacks {
     /// Quality setting doesn't matter.
     pub fn fill16(&self, mut world: impl AsMutPtr<*mut PF_EffectWorld>, color: Option<Pixel16>, rect: Option<Rect>) -> Result<(), Error> {
         if world.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, fill16, color.map_or(std::ptr::null_mut(), |x| &x), rect.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x), world.as_mut_ptr())
+        call_fn!(self, fill16, color.as_ref().map_or(std::ptr::null(), |x| x), rect.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x), world.as_mut_ptr())
     }
 
     /// This blits a region from one PF_EffectWorld to another.
@@ -361,11 +361,10 @@ impl UtilCallbacks {
     }
 
     /// Blends using a transfer mode, with an optional mask.
-    pub fn transfer_rect(&self, quality: Quality, flags: ModeFlags, field: Field, src_rect: Option<Rect>, src: *const PF_EffectWorld, comp_mode: &CompositeMode, mask_world: Option<&MaskWorld>, dest_x: i32, dest_y: i32, dst: *mut PF_EffectWorld) -> Result<(), Error> {
+    pub fn transfer_rect(&self, quality: Quality, flags: ModeFlags, field: Field, src_rect: Option<Rect>, src: *const PF_EffectWorld, comp_mode: CompositeMode, mask_world: Option<MaskWorld>, dest_x: i32, dest_y: i32, dst: *mut PF_EffectWorld) -> Result<(), Error> {
         if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
 
-        const _: () = assert!(std::mem::size_of::<PF_CompositeMode>() == std::mem::size_of::<CompositeMode>());
-        const _: () = assert!(std::mem::size_of::<PF_MaskWorld>()     == std::mem::size_of::<MaskWorld>());
+        let comp_mode: ae_sys::PF_CompositeMode = comp_mode.into();
 
         call_fn!(self,
             transfer_rect,
@@ -374,12 +373,8 @@ impl UtilCallbacks {
             field.into(),
             src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x),
             src,
-            std::mem::transmute(comp_mode),
-            if let Some(mask_world) = mask_world {
-                std::mem::transmute(mask_world)
-            } else {
-                std::ptr::null()
-            },
+            &comp_mode,
+            mask_world.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
             dest_x,
             dest_y,
             dst
@@ -391,10 +386,12 @@ impl UtilCallbacks {
     /// The matrices pointer points to a matrix array used for motion-blur.
     ///
     /// When is a transform not a transform? A Z-scale transform is not a transform, unless the transformed layer is a parent of other layers that do not all lie in the z=0 plane.
-    pub fn transform_world(&self, quality: Quality, mode_flags: ModeFlags, field: Field, src: *const PF_EffectWorld, comp_mode: &CompositeMode, mask_world: Option<&MaskWorld>, matrices: &[Matrix3], src2dst_matrix: bool, dest_rect: Option<Rect>, dst: *mut PF_EffectWorld) -> Result<(), Error> {
+    pub fn transform_world(&self, quality: Quality, mode_flags: ModeFlags, field: Field, src: *const PF_EffectWorld, comp_mode: CompositeMode, mask_world: Option<MaskWorld>, matrices: &[Matrix3], src2dst_matrix: bool, dest_rect: Option<Rect>, dst: *mut PF_EffectWorld) -> Result<(), Error> {
         if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
 
         const _: () = assert!(std::mem::size_of::<PF_FloatMatrix>() == std::mem::size_of::<Matrix3>());
+
+        let comp_mode: ae_sys::PF_CompositeMode = comp_mode.into();
 
         call_fn!(self,
             transform_world,
@@ -402,12 +399,8 @@ impl UtilCallbacks {
             mode_flags.into(),
             field.into(),
             src,
-            std::mem::transmute(comp_mode),
-            if let Some(mask_world) = mask_world {
-                std::mem::transmute(mask_world)
-            } else {
-                std::ptr::null()
-            },
+            &comp_mode,
+            mask_world.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
             matrices.as_ptr() as *const _,
             matrices.len() as _,
             src2dst_matrix as _,

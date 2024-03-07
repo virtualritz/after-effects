@@ -259,12 +259,12 @@ impl EventExtra {
     }
 }
 
-pub struct EventCallbacks {
-    ptr: *const ae_sys::PF_EventCallbacks,
+pub struct EventCallbacks<'a> {
+    ptr: &'a ae_sys::PF_EventCallbacks,
     ctx: ae_sys::PF_ContextH
 }
 
-impl EventCallbacks {
+impl<'a> EventCallbacks<'a> {
     pub fn layer_to_comp(&self, curr_time: i32, time_scale: u32, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
         let ret = unsafe {
             ((*self.ptr).layer_to_comp.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, pt)
@@ -304,22 +304,49 @@ impl EventCallbacks {
             e => Err(Error::from(e))
         }
     }
-}
 
-/*
-    pub get_comp2layer_xform(
-            refcon: *mut ::std::os::raw::c_void,
-            context: PF_ContextH,
-            curr_time: A_long,
-            time_scale: A_long,
-            exists: *mut A_long,
-            c2l: *mut PF_FloatMatrix) -> PF_Err,
-    pub get_layer2comp_xform(
-            refcon: *mut ::std::os::raw::c_void,
-            context: PF_ContextH,
-            curr_time: A_long,
-            time_scale: A_long,
-            l2c: *mut PF_FloatMatrix) -> PF_Err,
-    pub info_draw_color(refcon: *mut ::std::os::raw::c_void, color: PF_Pixel) -> PF_Err,
-    pub info_draw_text(refcon: *mut ::std::os::raw::c_void, text1Z0: *const A_char, text2Z0: *const A_char) -> PF_Err,
-*/
+    pub fn comp2layer_xform(&self, curr_time: i32, time_scale: u32) -> Result<Option<Matrix3>, Error> {
+        let mut exists: ae_sys::A_long = 0;
+        let mut matrix: ae_sys::PF_FloatMatrix = unsafe { std::mem::zeroed() };
+        let ret = unsafe {
+            ((*self.ptr).get_comp2layer_xform.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, &mut exists, &mut matrix)
+        };
+        match ret {
+            0 => Ok(if exists == 1 { Some(unsafe { std::mem::transmute(matrix) }) } else { None }),
+            e => Err(Error::from(e))
+        }
+    }
+
+    pub fn layer2comp_xform(&self, curr_time: i32, time_scale: u32) -> Result<Matrix3, Error> {
+        let mut matrix: ae_sys::PF_FloatMatrix = unsafe { std::mem::zeroed() };
+        let ret = unsafe {
+            ((*self.ptr).get_layer2comp_xform.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, &mut matrix)
+        };
+        match ret {
+            0 => Ok(unsafe { std::mem::transmute(matrix) }),
+            e => Err(Error::from(e))
+        }
+    }
+
+    pub fn info_draw_color(&self, color: Pixel8) -> Result<(), Error> {
+        let ret = unsafe {
+            ((*self.ptr).info_draw_color.unwrap())((*self.ptr).refcon, color)
+        };
+        match ret {
+            0 => Ok(()),
+            e => Err(Error::from(e))
+        }
+    }
+
+    pub fn info_draw_text(&self, text1: &str, text2: &str) -> Result<(), Error> {
+        let text1 = std::ffi::CString::new(text1).unwrap();
+        let text2 = std::ffi::CString::new(text2).unwrap();
+        let ret = unsafe {
+            ((*self.ptr).info_draw_text.unwrap())((*self.ptr).refcon, text1.as_ptr(), text2.as_ptr())
+        };
+        match ret {
+            0 => Ok(()),
+            e => Err(Error::from(e))
+        }
+    }
+}

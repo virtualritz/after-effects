@@ -391,12 +391,13 @@ bitflags::bitflags! {
 define_suite_item_wrapper!(
     ae_sys::AEGP_CompH, CompHandle,
     suite: CompSuite,
+    layers: aegp::suites::Layer,
     /// Provide information about the compositions in a project, and create cameras, lights, and solids.
     Composition {
         dispose: ;
 
         /// Used to get the item handle.
-        item() -> ItemHandle => suite.item_from_comp,
+        item() -> Item => suite.item_from_comp,
 
         /// Returns current downsample factor. Measured in pixels X by Y.
         ///
@@ -481,17 +482,17 @@ define_suite_item_wrapper!(
         ///
         /// If you pass `None` for the duration, After Effects uses its preference for the duration of a new still.
         /// If you pass `None`, or an invalid time scale, duration is set to the length of the composition.
-        create_solid(name: &str, width: i32, height: i32, color: ae_sys::AEGP_ColorVal, duration: Option<Time>) -> LayerHandle => suite.create_solid_in_comp,
+        create_solid(name: &str, width: i32, height: i32, color: ae_sys::AEGP_ColorVal, duration: Option<Time>) -> aegp::Layer => suite.create_solid_in_comp,
 
         /// Creates and adds a camera to the specified composition.
         /// Once created, you can manipulate the camera's parameter streams using the [`suites::Stream`](aegp::suites::Stream).
         ///
         /// To specify a two-node camera, use [`suites::Layer::set_layer_flag()`](aegp::suites::Layer::set_layer_flag) to set [`LayerFlags::LOOK_AT_POI`].
-        create_camera(name: &str, center_point: ae_sys::A_FloatPoint) -> LayerHandle => suite.create_camera_in_comp,
+        create_camera(name: &str, center_point: ae_sys::A_FloatPoint) -> aegp::Layer => suite.create_camera_in_comp,
 
         /// Creates and adds a light to the specified composition.
         /// Once created, you can manipulate the light's parameter streams using the AEGP [`suites::Stream`](aegp::suites::Stream).
-        create_light(name: &str, center_point: ae_sys::A_FloatPoint) -> LayerHandle => suite.create_light_in_comp,
+        create_light(name: &str, center_point: ae_sys::A_FloatPoint) -> aegp::Layer => suite.create_light_in_comp,
 
         /// Creates a new [`Collection2Handle`] from the items selected in the given composition.
         ///
@@ -517,28 +518,28 @@ define_suite_item_wrapper!(
         ///
         /// If you pass `None` for the duration, After Effects uses its preference for the duration of a new still.
         /// If you pass 0, or an invalid time scale, duration is set to the length of the composition.
-        create_null(name: &str, duration: Option<Time>) -> LayerHandle => suite.create_null_in_comp,
+        create_null(name: &str, duration: Option<Time>) -> aegp::Layer => suite.create_null_in_comp,
 
         /// Sets the pixel aspect ratio of a composition.
         set_pixel_aspect_ratio(pixel_aspect_ratio: Ratio) -> () => suite.set_comp_pixel_aspect_ratio,
 
         /// Updated in CS6. Creates a text layer in the composition, and returns its [`LayerHandle`].
-        create_text_layer(select_new_layer: bool) -> LayerHandle => suite.create_text_layer_in_comp,
+        create_text_layer(select_new_layer: bool) -> aegp::Layer => suite.create_text_layer_in_comp,
 
         /// Updated in CS6. Creates a new box text layer, and returns its [`LayerHandle`].
-        create_box_text_layer(select_new_layer: bool, box_dimensions: FloatPoint) -> LayerHandle => suite.create_box_text_layer_in_comp,
+        create_box_text_layer(select_new_layer: bool, box_dimensions: FloatPoint) -> aegp::Layer => suite.create_box_text_layer_in_comp,
 
         /// Sets the dimensions of the composition. Undoable.
         set_dimensions(width: i32, height: i32) -> () => suite.set_comp_dimensions,
 
         /// Duplicates the composition. Undoable.
-        duplicate_comp() -> CompHandle => suite.duplicate_comp,
+        duplicate_comp() -> Composition => suite.duplicate_comp,
 
         /// Retrieves the duration of a frame in a composition.
         frame_duration() -> Time => suite.comp_frame_duration,
 
         /// Creates and returns a handle to a new vector layer.
-        create_vector_layer() -> LayerHandle => suite.create_vector_layer_in_comp,
+        create_vector_layer() -> aegp::Layer => suite.create_vector_layer_in_comp,
 
         /// Returns an [`StreamReferenceHandle`] to the composition's marker stream.
         ///
@@ -553,6 +554,14 @@ define_suite_item_wrapper!(
 
         /// Move the selection to a certain layer index. Use along with [`set_selection()`](Self::set_selection).
         reorder_comp_selection(layer_index: i32) -> () => suite.reorder_comp_selection,
+
+        // ―――――――――――――――――――――――――――― Layer suite functions ――――――――――――――――――――――――――――
+
+        /// Obtains the number of layers in a composition.
+        num_layers() -> usize => layers.comp_num_layers,
+
+        /// Get a [`Layer`] from a composition. Zero is the foremost layer.
+        layer_by_index(index: usize) -> aegp::Layer => layers.comp_layer_by_index,
     }
 );
 

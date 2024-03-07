@@ -83,8 +83,8 @@ impl FootageSuite {
                 AEGP_NewFootage -> ae_sys::AEGP_FootageH,
                 plugin_id,
                 path.as_ptr(),
-                layer_info.map_or(std::ptr::null(), |li| &li as *const _),
-                sequence_options.map_or(std::ptr::null(), |so| &so as *const _),
+                layer_info.as_ref().map_or(std::ptr::null(), |li| li),
+                sequence_options.as_ref().map_or(std::ptr::null(), |so| so),
                 interp_style.into(),
                 std::ptr::null_mut()
             )?

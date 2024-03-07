@@ -116,10 +116,10 @@ impl CanvasSuite {
                 AEGP_RenderTexture -> ae_sys::AEGP_WorldH,
                 render_ctx.as_ptr(),
                 layer_ctx.as_ptr(),
-                render_hints as i32 as _,
-                suggested_scale   .map(|x| &mut x.into() as *mut _).unwrap_or(std::ptr::null_mut()),
-                suggested_src_rect.map(|x| &mut x.into() as *mut _).unwrap_or(std::ptr::null_mut()),
-                src_matrix        .map(|x| &mut x.into() as *mut _).unwrap_or(std::ptr::null_mut())
+                render_hints.into(),
+                suggested_scale   .map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x),
+                suggested_src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x),
+                src_matrix        .map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x)
             )?
         ))
     }
@@ -201,14 +201,14 @@ impl CanvasSuite {
 
     /// Renders a texture into an [`WorldHandle`], and provides an [`RenderReceiptHandle`] for the operation.
     pub fn render_texture_with_receipt(&self, render_ctx: impl AsPtr<PR_RenderContextH>, layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, render_hints: RenderHints, num_effects: RenderNumEffects, suggested_scale: Option<FloatPoint>, suggested_src_rect: Option<FloatRect>, src_matrix: Option<Matrix3>) -> Result<(RenderReceiptHandle, WorldHandle), Error> {
-        let suggested_scale    = suggested_scale   .map(|x| &mut Into::<ae_sys::A_FloatPoint>::into(x) as *mut _).unwrap_or(std::ptr::null_mut());
-        let suggested_src_rect = suggested_src_rect.map(|x| &mut Into::<ae_sys::A_FloatRect> ::into(x) as *mut _).unwrap_or(std::ptr::null_mut());
-        let src_matrix         = src_matrix        .map(|x| &mut Into::<ae_sys::A_Matrix3>   ::into(x) as *mut _).unwrap_or(std::ptr::null_mut());
+        let suggested_scale    = suggested_scale   .map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x);
+        let suggested_src_rect = suggested_src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x);
+        let src_matrix         = src_matrix        .map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x);
         let (receipt, world) = call_suite_fn_double!(self,
             AEGP_RenderTextureWithReceipt -> ae_sys::AEGP_RenderReceiptH, ae_sys::AEGP_WorldH,
             render_ctx.as_ptr(),
             layer_ctx.as_ptr(),
-            render_hints as i32 as _,
+            render_hints.into(),
             num_effects.into(),
             suggested_scale,
             suggested_src_rect,

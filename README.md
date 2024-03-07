@@ -115,7 +115,7 @@ AfterEffectsSDK
 | ✅ Item                 | ✅ Effect Custom UI Overlay Theme |            |                      |
 | 🔳 Item View            | ✅ Effect Sequence Data           |            |                      |
 | 🔳 Iterate              | ✅ Effect UI                      |            |                      |
-| ✅ Keyframe             | 🔳 Fill Matte                     |            |                      |
+| ✅ Keyframe             | ✅ Fill Matte                     |            |                      |
 | 🔳 Layer Mask           | ✅ GPU Device                     |            |                      |
 | ✅ Layer Render Options | ✅ Handle                         |            |                      |
 | ✅ Layer                | ✅ Iterate8                       |            |                      |

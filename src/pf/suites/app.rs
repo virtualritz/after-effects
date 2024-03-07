@@ -101,7 +101,7 @@ impl AppSuite {
     /// Will return `Error::InterruptCancel` if user cancels dialog. Returned color is in the project's working color space.
     pub fn color_picker_dialog(&self, dialog_title: Option<&str>, sample_color: &pf::PixelF32, use_ws_to_monitor_xform: bool) -> Result<pf::PixelF32, Error> {
         let dialog_title = dialog_title.map(|s| CString::new(s).unwrap());
-        call_suite_fn_single!(self, PF_AppColorPickerDialog -> ae_sys::PF_PixelFloat, dialog_title.map_or(std::ptr::null(), |x| x.as_ptr()), sample_color, use_ws_to_monitor_xform as _)
+        call_suite_fn_single!(self, PF_AppColorPickerDialog -> ae_sys::PF_PixelFloat, dialog_title.as_ref().map_or(std::ptr::null(), |x| x.as_ptr()), sample_color, use_ws_to_monitor_xform as _)
     }
 
     /// Returns the position of the mouse in the custom UI coordinate space.

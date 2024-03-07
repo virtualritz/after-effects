@@ -37,25 +37,17 @@ impl CompositeSuite {
         dst_y: u32,
         dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>,
     ) -> Result<(), Error> {
-        let mask_world = mask_world.map(|m| ae_sys::PF_MaskWorld {
-            mask: m.mask,
-            offset: ae_sys::PF_Point {
-                v: m.offset.v,
-                h: m.offset.h,
-            },
-            what_is_mask: m.what_is_mask as i32,
-        });
         call_suite_fn!(
             self,
             AEGP_TransferRect,
-            quality as i32,
-            alpha as i32,
-            field as i32,
+            quality.into(),
+            alpha.into(),
+            field.into(),
             src_rect as *const _ as _,
             src_world.as_ptr(),
             comp_mode as *const _ as _,
-            blending_tables.map_or(std::ptr::null(), |b| b.as_ptr()) as _,
-            mask_world.map_or(std::ptr::null(), |m| &m) as _,
+            blending_tables.as_ref().map_or(std::ptr::null(), |b| b.as_ptr()) as _,
+            mask_world     .map(Into::into).as_ref().map_or(std::ptr::null(), |m| m),
             dst_x as i32,
             dst_y as i32,
             dst_world.as_ptr()
@@ -68,7 +60,7 @@ impl CompositeSuite {
     /// rather, you can simply pass the data pointer from within the [`EffectWorld`].
     /// This can be confusing, but as a bonus, the function pads output appropriately so that `num_pix` pixels are always output.
     pub fn prep_track_matte(&self, num_pix: i32, deep: bool, src_mask: &[ae_sys::PF_Pixel], mask_flags: MaskFlags, dst_mask: &mut [ae_sys::PF_Pixel]) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_PrepTrackMatte, num_pix, deep as _, src_mask.as_ptr(), mask_flags as i32, dst_mask.as_mut_ptr())
+        call_suite_fn!(self, AEGP_PrepTrackMatte, num_pix, deep as _, src_mask.as_ptr(), mask_flags.into(), dst_mask.as_mut_ptr())
     }
 
     /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one [`EffectWorld`] to another, at low quality.

@@ -226,7 +226,7 @@ impl MaskOutlineSuite {
 
     /// Creates a feather at the given index. Returns the index of new feather.
     pub fn create_mask_outline_feather(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, feather: Option<ae_sys::AEGP_MaskFeather>) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_CreateMaskOutlineFeather -> ae_sys::AEGP_FeatherIndex, mask_outline.as_ptr(), feather.map_or(std::ptr::null_mut(), |t| &t))? as i32)
+        Ok(call_suite_fn_single!(self, AEGP_CreateMaskOutlineFeather -> ae_sys::AEGP_FeatherIndex, mask_outline.as_ptr(), feather.as_ref().map_or(std::ptr::null_mut(), |t| t))? as i32)
     }
 
     /// Deletes a feather from the mask.

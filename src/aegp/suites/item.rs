@@ -167,7 +167,7 @@ impl ItemSuite {
             call_suite_fn_single!(self,
                 AEGP_CreateNewFolder -> ae_sys::AEGP_ItemH,
                 name.as_ptr(),
-                parent_folder.map_or(std::ptr::null_mut(), |f| f.as_ptr())
+                parent_folder.as_ref().map_or(std::ptr::null_mut(), |f| f.as_ptr())
             )?
         ))
     }

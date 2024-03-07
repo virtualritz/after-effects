@@ -17,8 +17,9 @@ mod parameters; pub use parameters::*;
 mod pixel;      pub use pixel::*;
 mod render;     pub use render::*;
 mod effect;     pub use effect::*;
-mod interact_callbacks; pub use interact_callbacks::*;
-mod util_callbacks;     pub use util_callbacks::*;
+mod interact_callbacks;    pub use interact_callbacks::*;
+mod util_callbacks;        pub use util_callbacks::*;
+mod external_dependencies; pub use external_dependencies::*;
 
 pub mod suites {
     pub(crate) mod adv_item;              pub use adv_item            ::AdvItemSuite               as AdvItem;
@@ -51,6 +52,7 @@ pub mod suites {
                                                                           ColorParamSuite          as ColorParam,
                                                                           PointParamSuite          as PointParam };
     pub(crate) mod gpu_device;            pub use gpu_device          ::GPUDeviceSuite             as GPUDevice;
+    pub(crate) mod fill_matte;            pub use fill_matte          ::FillMatteSuite             as FillMatte;
 }
 
 pub use suites::adv_item::Step;
@@ -131,7 +133,6 @@ define_enum! {
 pub type XferMode = TransferMode;
 
 #[derive(Debug, Copy, Clone, Hash)]
-#[repr(C)]
 pub struct CompositeMode {
     pub xfer: TransferMode,
     /// For TransferMode::DissolveRandomized.
@@ -139,9 +140,32 @@ pub struct CompositeMode {
     /// 0-255.
     pub opacity: u8,
     /// Ignored TransferMode::MutiplyAlpha* modes.
-    pub rgb_only: u8,
+    pub rgb_only: bool,
     /// For deep color only.
     pub opacity_su: u16,
+}
+
+impl From<ae_sys::PF_CompositeMode> for CompositeMode {
+    fn from(mode: ae_sys::PF_CompositeMode) -> Self {
+        Self {
+            xfer: mode.xfer.into(),
+            rand_seed: mode.rand_seed,
+            opacity: mode.opacity,
+            rgb_only: mode.rgb_only != 0,
+            opacity_su: mode.opacitySu,
+        }
+    }
+}
+impl From<CompositeMode> for ae_sys::PF_CompositeMode {
+    fn from(mode: CompositeMode) -> Self {
+        Self {
+            xfer: mode.xfer.into(),
+            rand_seed: mode.rand_seed,
+            opacity: mode.opacity,
+            rgb_only: mode.rgb_only as _,
+            opacitySu: mode.opacity_su,
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, Hash)]
@@ -202,14 +226,44 @@ impl From<RationalScale> for f32 {
         ratio.num as Self / ratio.den as Self
     }
 }
-
-pub type MaskFlags = u32;
+define_enum! {
+    ae_sys::PF_MaskFlags,
+    MaskFlags {
+        None     = ae_sys::PF_MaskFlag_NONE,
+        Inverted  = ae_sys::PF_MaskFlag_INVERTED,
+        Luminance = ae_sys::PF_MaskFlag_LUMINANCE,
+    }
+}
 
 #[derive(Debug)]
 pub struct MaskWorld {
     pub mask: ae_sys::PF_EffectWorld,
     pub offset: Point,
     pub what_is_mask: MaskFlags,
+}
+impl From<ae_sys::PF_MaskWorld> for MaskWorld {
+    fn from(mask: ae_sys::PF_MaskWorld) -> Self {
+        Self {
+            mask: mask.mask,
+            offset: Point {
+                v: mask.offset.v,
+                h: mask.offset.h,
+            },
+            what_is_mask: mask.what_is_mask.into(),
+        }
+    }
+}
+impl From<MaskWorld> for ae_sys::PF_MaskWorld {
+    fn from(mask: MaskWorld) -> Self {
+        Self {
+            mask: mask.mask,
+            offset: ae_sys::PF_Point {
+                v: mask.offset.v,
+                h: mask.offset.h,
+            },
+            what_is_mask: mask.what_is_mask.into(),
+        }
+    }
 }
 
 define_enum! {

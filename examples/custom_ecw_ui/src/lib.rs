@@ -81,6 +81,7 @@ impl AdobePluginGlobal for Plugin {
                 } else {
                     unsafe { std::mem::zeroed() }// plugin.params.get_arbitrary(Params::Color).unwrap().value()
                 };
+                let color16 = ae::pixel8_to_16(color);
 
                 let extent_hint = in_data.extent_hint();
 
@@ -94,11 +95,10 @@ impl AdobePluginGlobal for Plugin {
                             out_pixel.blue  = ((pixel.blue  as u16 + color.blue  as u16) >> 1) as u8;
                         }
                         (ae::GenericPixel::Pixel16(pixel), ae::GenericPixelMut::Pixel16(out_pixel)) => {
-                            fn convert_8_to_16(x: u8) -> u16 { (((x as u32 * ae_sys::PF_MAX_CHAN16) + ae_sys::PF_HALF_CHAN8) / ae_sys::PF_MAX_CHAN8) as u16 }
                             out_pixel.alpha = pixel.alpha as _;
-                            out_pixel.red   = (pixel.red   + convert_8_to_16(color.red))   >> 1;
-                            out_pixel.green = (pixel.green + convert_8_to_16(color.green)) >> 1;
-                            out_pixel.blue  = (pixel.blue  + convert_8_to_16(color.blue))  >> 1;
+                            out_pixel.red   = (pixel.red   + color16.red)   >> 1;
+                            out_pixel.green = (pixel.green + color16.green) >> 1;
+                            out_pixel.blue  = (pixel.blue  + color16.blue)  >> 1;
                         }
                         _ => return Err(Error::BadCallbackParameter)
                     }

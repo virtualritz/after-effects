@@ -19,7 +19,7 @@ impl StreamSuite {
 
     /// Determines if the given stream is appropriate for the given layer.
     pub fn is_stream_legal(&self, layer_handle: impl AsPtr<AEGP_LayerH>, stream: LayerStream) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_IsStreamLegal -> ae_sys::A_Boolean, layer_handle.as_ptr(), stream as _)? != 0)
+        Ok(call_suite_fn_single!(self, AEGP_IsStreamLegal -> ae_sys::A_Boolean, layer_handle.as_ptr(), stream.into())? != 0)
     }
 
     /// Given a stream, returns whether or not a stream is time-variant (and can be keyframed).
@@ -39,7 +39,7 @@ impl StreamSuite {
     /// Note that this will not provide keyframe access; Use the [`KeyframeSuite`](aegp::suites::Keyframe) instead.
     pub fn new_layer_stream(&self, layer_handle: impl AsPtr<AEGP_LayerH>, plugin_id: PluginId, stream_name: LayerStream) -> Result<StreamReferenceHandle, Error> {
         Ok(StreamReferenceHandle(
-            call_suite_fn_single!(self, AEGP_GetNewLayerStream -> ae_sys::AEGP_StreamRefH, plugin_id, layer_handle.as_ptr(), stream_name as _)?,
+            call_suite_fn_single!(self, AEGP_GetNewLayerStream -> ae_sys::AEGP_StreamRefH, plugin_id, layer_handle.as_ptr(), stream_name.into())?,
             true, // is_owned
         ))
     }
@@ -156,7 +156,7 @@ impl StreamSuite {
         let (stream_value, stream_type) = call_suite_fn_double!(self,
             AEGP_GetLayerStreamValue -> ae_sys::AEGP_StreamVal2, ae_sys::AEGP_StreamType,
             layer_handle.as_ptr(),
-            stream as i32,
+            stream.into(),
             time_mode.into(),
             &time.into() as *const _,
             pre_expression as u8

@@ -1,5 +1,5 @@
 use crate::*;
-use ae_sys::{ PF_ProgPtr, PF_EffectWorld, PF_FloatMatrix, PF_CompositeMode, PF_MaskWorld };
+use ae_sys::{ PF_ProgPtr, PF_EffectWorld, PF_FloatMatrix };
 use std::ffi::c_void;
 
 define_suite!(
@@ -71,11 +71,10 @@ impl WorldTransformSuite {
     }
 
     /// Blends using a transfer mode, with an optional mask.
-    pub fn transfer_rect(&self, effect_ref: impl AsPtr<PF_ProgPtr>, quality: Quality, flags: ModeFlags, field: Field, src_rect: Option<Rect>, src: *const PF_EffectWorld, comp_mode: &CompositeMode, mask_world: Option<&MaskWorld>, dest_x: i32, dest_y: i32, dst: *mut PF_EffectWorld) -> Result<(), Error> {
+    pub fn transfer_rect(&self, effect_ref: impl AsPtr<PF_ProgPtr>, quality: Quality, flags: ModeFlags, field: Field, src_rect: Option<Rect>, src: *const PF_EffectWorld, comp_mode: CompositeMode, mask_world: Option<MaskWorld>, dest_x: i32, dest_y: i32, dst: *mut PF_EffectWorld) -> Result<(), Error> {
         if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
 
-        const _: () = assert!(std::mem::size_of::<PF_CompositeMode>() == std::mem::size_of::<CompositeMode>());
-        const _: () = assert!(std::mem::size_of::<PF_MaskWorld>()     == std::mem::size_of::<MaskWorld>());
+        let comp_mode: ae_sys::PF_CompositeMode = comp_mode.into();
 
         call_suite_fn!(self,
             transfer_rect,
@@ -85,12 +84,8 @@ impl WorldTransformSuite {
             field.into(),
             src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x),
             src,
-            std::mem::transmute(comp_mode),
-            if let Some(mask_world) = mask_world {
-                std::mem::transmute(mask_world)
-            } else {
-                std::ptr::null()
-            },
+            &comp_mode,
+            mask_world.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
             dest_x,
             dest_y,
             dst
@@ -102,10 +97,12 @@ impl WorldTransformSuite {
     /// The matrices pointer points to a matrix array used for motion-blur.
     ///
     /// When is a transform not a transform? A Z-scale transform is not a transform, unless the transformed layer is a parent of other layers that do not all lie in the z=0 plane.
-    pub fn transform_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, quality: Quality, mode_flags: ModeFlags, field: Field, src: *const PF_EffectWorld, comp_mode: &CompositeMode, mask_world: Option<&MaskWorld>, matrices: &[Matrix3], src2dst_matrix: bool, dest_rect: Option<Rect>, dst: *mut PF_EffectWorld) -> Result<(), Error> {
+    pub fn transform_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, quality: Quality, mode_flags: ModeFlags, field: Field, src: *const PF_EffectWorld, comp_mode: CompositeMode, mask_world: Option<MaskWorld>, matrices: &[Matrix3], src2dst_matrix: bool, dest_rect: Option<Rect>, dst: *mut PF_EffectWorld) -> Result<(), Error> {
         if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
 
         const _: () = assert!(std::mem::size_of::<PF_FloatMatrix>() == std::mem::size_of::<Matrix3>());
+
+        let comp_mode: ae_sys::PF_CompositeMode = comp_mode.into();
 
         call_suite_fn!(self,
             transform_world,
@@ -114,12 +111,8 @@ impl WorldTransformSuite {
             mode_flags.into(),
             field.into(),
             src,
-            std::mem::transmute(comp_mode),
-            if let Some(mask_world) = mask_world {
-                std::mem::transmute(mask_world)
-            } else {
-                std::ptr::null()
-            },
+            &comp_mode,
+            mask_world.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
             matrices.as_ptr() as *const _,
             matrices.len() as _,
             src2dst_matrix as _,

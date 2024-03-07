@@ -211,7 +211,7 @@ impl IOInSuite {
             None
         };
 
-        call_suite_fn!(self, AEGP_SetInSpecEmbeddedColorProfile, in_spec_handle.as_ptr(), color_profile.unwrap_or(std::ptr::null()), profile_desc.map_or(std::ptr::null(), |pd| pd.as_ptr()))
+        call_suite_fn!(self, AEGP_SetInSpecEmbeddedColorProfile, in_spec_handle.as_ptr(), color_profile.unwrap_or(std::ptr::null()), profile_desc.as_ref().map_or(std::ptr::null(), |pd| pd.as_ptr()))
     }
 
     /// Assign a valid RGB color profile to the footage.

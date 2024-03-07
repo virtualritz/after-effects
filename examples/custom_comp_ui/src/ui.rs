@@ -2,10 +2,10 @@ use super::*;
 
 // Calculates the points for an oval bounded by oval_frame
 fn calculate_oval(oval_frame: &ae::Rect) -> [ae::drawbot::PointF32; OVAL_PTS] {
-	let oval_width  = (oval_frame.right  - oval_frame.left) as f32 / 2.0;
-	let oval_height = (oval_frame.bottom - oval_frame.top) as f32  / 2.0;
+    let oval_width  = (oval_frame.right  - oval_frame.left) as f32 / 2.0;
+    let oval_height = (oval_frame.bottom - oval_frame.top) as f32  / 2.0;
 
-	// Calculate center point for oval
+    // Calculate center point for oval
     let center_point = ae::drawbot::PointF32 {
         x: oval_frame.left as f32 + oval_width,
         y: oval_frame.top  as f32 + oval_height,
@@ -13,37 +13,37 @@ fn calculate_oval(oval_frame: &ae::Rect) -> [ae::drawbot::PointF32; OVAL_PTS] {
 
     let mut poly_oval = [ae::drawbot::PointF32 { x: 0.0, y: 0.0 }; OVAL_PTS];
 
-	// Plot out the oval with OVAL_PTS number of points
-	for i in 0..OVAL_PTS {
-		let rad = (2.0 * std::f32::consts::PI * i as f32) / OVAL_PTS as f32;
+    // Plot out the oval with OVAL_PTS number of points
+    for i in 0..OVAL_PTS {
+        let rad = (2.0 * std::f32::consts::PI * i as f32) / OVAL_PTS as f32;
 
-		poly_oval[i].x = rad.sin();
-		poly_oval[i].y = rad.cos();
+        poly_oval[i].x = rad.sin();
+        poly_oval[i].y = rad.cos();
 
-		// Transform the point on a unit circle to the corresponding point on the oval
-		poly_oval[i].x = poly_oval[i].x * oval_width  + center_point.x;
-		poly_oval[i].y = poly_oval[i].y * oval_height + center_point.y;
-	}
+        // Transform the point on a unit circle to the corresponding point on the oval
+        poly_oval[i].x = poly_oval[i].x * oval_width  + center_point.x;
+        poly_oval[i].y = poly_oval[i].y * oval_height + center_point.y;
+    }
 
     poly_oval
 }
 
 // Draws an oval
 fn draw_oval(in_data: &ae::InData, oval_frame: &ae::Rect, drawbot: &drawbot::Drawbot) -> Result<(), ae::Error> {
-	let poly_oval = calculate_oval(oval_frame);
+    let poly_oval = calculate_oval(oval_frame);
 
     let mut path = drawbot.supplier()?.new_path()?;
     path.move_to(poly_oval[0].x, poly_oval[0].y)?;
 
-	for i in 0..OVAL_PTS {
+    for i in 0..OVAL_PTS {
         path.line_to(poly_oval[i].x, poly_oval[i].y)?;
-	}
+    }
     path.line_to(poly_oval[0].x, poly_oval[0].y)?;
 
-	// Currently, EffectCustomUIOverlayThemeSuite is unsupported in Premiere Pro/Elements
-	if in_data.application_id() != *b"PrMr" {
+    // Currently, EffectCustomUIOverlayThemeSuite is unsupported in Premiere Pro/Elements
+    if in_data.application_id() != *b"PrMr" {
         ae::pf::suites::EffectCustomUIOverlayTheme::new()?.stroke_path(drawbot, &path, false)?;
-	} else {
+    } else {
         let foreground_color = ae::drawbot::ColorRgba {
             red:   0.9,
             green: 0.9,
@@ -52,7 +52,7 @@ fn draw_oval(in_data: &ae::InData, oval_frame: &ae::Rect, drawbot: &drawbot::Dra
         };
         let pen = drawbot.supplier()?.new_pen(&foreground_color, 1.0)?;
         drawbot.surface()?.stroke_path(&pen, &path)?;
-	}
+    }
 
     Ok(())
 }
@@ -94,19 +94,19 @@ fn source_to_frame_rect(in_data: &ae::InData, event: &mut ae::EventExtra, fx_fra
         ae_sys::PF_FixedPoint { x: fx_frame.left,  y: fx_frame.bottom },
     ];
 
-	if event.window_type() == ae::WindowType::Comp {
-		for i in 0..4 {
-			event.callbacks().layer_to_comp(in_data.current_time(), in_data.time_scale(), &mut bounding_box[i])?;
-		}
-	}
-	for j in 0..4 {
+    if event.window_type() == ae::WindowType::Comp {
+        for i in 0..4 {
+            event.callbacks().layer_to_comp(in_data.current_time(), in_data.time_scale(), &mut bounding_box[i])?;
+        }
+    }
+    for j in 0..4 {
         event.callbacks().source_to_frame(&mut bounding_box[j])?;
-	}
+    }
 
-	fx_frame.left   = bounding_box[0].x;
-	fx_frame.top    = bounding_box[0].y;
-	fx_frame.right  = bounding_box[1].x;
-	fx_frame.bottom = bounding_box[2].y;
+    fx_frame.left   = bounding_box[0].x;
+    fx_frame.top    = bounding_box[0].y;
+    fx_frame.right  = bounding_box[1].x;
+    fx_frame.bottom = bounding_box[2].y;
 
     Ok(bounding_box)
 }
@@ -119,11 +119,11 @@ fn comp_frame_to_layer(in_data: &ae::InData, event: &mut ae::EventExtra, frame_p
 
     event.callbacks().frame_to_source(&mut fix_lyr)?;
 
-	// Now back into layer space
+    // Now back into layer space
     event.callbacks().comp_to_layer(in_data.current_time(), in_data.time_scale(), &mut fix_lyr)?;
 
-	lyr_pt.h = fix_lyr.x;
-	lyr_pt.v = fix_lyr.y;
+    lyr_pt.h = fix_lyr.x;
+    lyr_pt.v = fix_lyr.y;
 
     Ok(fix_lyr)
 }
@@ -137,8 +137,8 @@ fn layer_to_comp_frame(in_data: &ae::InData, event: &mut ae::EventExtra, layer_p
     event.callbacks().layer_to_comp(in_data.current_time(), in_data.time_scale(), &mut fix_frame)?;
     event.callbacks().source_to_frame(&mut fix_frame)?;
 
-	frame_pt.h = ae::Fixed::from_fixed(fix_frame.x).to_int();
-	frame_pt.v = ae::Fixed::from_fixed(fix_frame.y).to_int();
+    frame_pt.h = ae::Fixed::from_fixed(fix_frame.x).to_int();
+    frame_pt.v = ae::Fixed::from_fixed(fix_frame.y).to_int();
 
     Ok(fix_frame)
 }
@@ -151,8 +151,8 @@ fn layer_frame_to_layer(_: &ae::InData, event: &mut ae::EventExtra, frame_pt: ae
 
     event.callbacks().frame_to_source(&mut fix_lyr)?;
 
-	lyr_pt.h = ae::Fixed::from_fixed(fix_lyr.x).to_int();
-	lyr_pt.v = ae::Fixed::from_fixed(fix_lyr.y).to_int();
+    lyr_pt.h = ae::Fixed::from_fixed(fix_lyr.x).to_int();
+    lyr_pt.v = ae::Fixed::from_fixed(fix_lyr.y).to_int();
 
     Ok(fix_lyr)
 }
@@ -187,7 +187,7 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
         };
 
         // Currently, EffectCustomUIOverlayThemeSuite is unsupported in Premiere Pro/Elements
-	    let foreground_color = if in_data.application_id() != *b"PrMr" {
+        let foreground_color = if in_data.application_id() != *b"PrMr" {
             ae::pf::suites::EffectCustomUIOverlayTheme::new()?.preferred_foreground_color()?
         } else {
             drawbot::ColorRgba {
@@ -241,42 +241,42 @@ where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Resu
         ae::Point { h: frame.left,  v: frame.bottom },
     ];
 
-	// let mut hit = -1;
+    // let mut hit = -1;
 
-	for i in 0..4 {
-		// Convert corners to comp frame
-		let mouse_layer = frame_func(in_data, event, corners[i], &mut corners[i])?;
+    for i in 0..4 {
+        // Convert corners to comp frame
+        let mouse_layer = frame_func(in_data, event, corners[i], &mut corners[i])?;
 
-		let mut slop = (corners[i].h - mouse_down_pt.h).abs();
-		slop        += (corners[i].v - mouse_down_pt.v).abs();
+        let mut slop = (corners[i].h - mouse_down_pt.h).abs();
+        slop        += (corners[i].v - mouse_down_pt.v).abs();
 
-		if slop < CCU_SLOP {
-			// hit = i as isize;
-			done = true;
+        if slop < CCU_SLOP {
+            // hit = i as isize;
+            done = true;
             event.set_send_drag(true);
             event.set_continue_refcon(0, Ccu::Handles as i64);
             event.set_continue_refcon(1, mouse_layer.x as i64);
             event.set_continue_refcon(2, mouse_layer.y as i64);
             event.set_continue_refcon(3, false as i64);
-			break;
-		}
-	}
+            break;
+        }
+    }
 
-	Ok(done)
+    Ok(done)
 }
 
 pub fn click(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> Result<(), ae::Error> {
     let frame = frame_from_params(in_data, params)?;
 
-	if event.window_type() == ae::WindowType::Layer {
-		if do_click_handles(in_data, &frame, layer_to_layer_frame, event)? {
+    if event.window_type() == ae::WindowType::Layer {
+        if do_click_handles(in_data, &frame, layer_to_layer_frame, event)? {
             event.set_event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
-		}
-	} else if event.window_type() == ae::WindowType::Comp {
-		if do_click_handles(in_data, &frame, layer_to_comp_frame, event)? {
+        }
+    } else if event.window_type() == ae::WindowType::Comp {
+        if do_click_handles(in_data, &frame, layer_to_comp_frame, event)? {
             event.set_event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
-		}
-	}
+        }
+    }
 
     Ok(())
 }
@@ -285,9 +285,9 @@ fn do_drag_handles<F>(in_data: &ae::InData, params: &mut ae::Parameters<Params>,
 where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
     let mut mouse_down_pt = event.screen_point();
 
-	// if event.in_flags().contains(ae::EventInFlags::DONT_DRAW) {
-	//     draw = false;
-	// }
+    // if event.in_flags().contains(ae::EventInFlags::DONT_DRAW) {
+    //     draw = false;
+    // }
 
     let mouse_layer = frame_func(in_data, event, mouse_down_pt, &mut mouse_down_pt)?;
 
@@ -299,9 +299,9 @@ where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Resu
     let center = params.get(Params::Point)?.as_point()?.value();
     let par = f32::from(in_data.pixel_aspect_ratio());
 
-	// Calculate new radius
-	let new_x = (center.0 - ae::Fixed::from_fixed(mouse_layer.x).as_f32()) * par;
-	let new_y =  center.1 - ae::Fixed::from_fixed(mouse_layer.y).as_f32();
+    // Calculate new radius
+    let new_x = (center.0 - ae::Fixed::from_fixed(mouse_layer.x).as_f32()) * par;
+    let new_y =  center.1 - ae::Fixed::from_fixed(mouse_layer.y).as_f32();
 
     params.get_mut(Params::XRadius)?.as_float_slider_mut()?.set_value(new_x.abs() as _);
     params.get_mut(Params::YRadius)?.as_float_slider_mut()?.set_value(new_y.abs() as _);
@@ -312,12 +312,12 @@ where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Resu
     event.set_continue_refcon(2, mouse_layer.y as i64);
     event.set_continue_refcon(3, true as i64);
 
-	if event.last_time() {
+    if event.last_time() {
         event.set_continue_refcon(0, Ccu::None as i64);
         event.set_send_drag(false);
-	}
+    }
 
-	Ok(())
+    Ok(())
 }
 
 pub fn drag(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> Result<(), ae::Error> {

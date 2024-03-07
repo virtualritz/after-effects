@@ -105,9 +105,19 @@ impl Layer {
     }
 
     pub fn fill(&mut self, color: Option<Pixel8>, rect: Option<Rect>) -> Result<(), Error> {
+        if self.in_data.application_id() != *b"PrMr" {
+            if let Ok(fill_suite) = pf::suites::FillMatte::new() {
+                return fill_suite.fill(self.in_data.effect_ref(), self, color, rect);
+            }
+        }
         self.in_data.utils().fill(self, color, rect)
     }
     pub fn fill16(&mut self, color: Option<Pixel16>, rect: Option<Rect>) -> Result<(), Error> {
+        if self.in_data.application_id() != *b"PrMr" {
+            if let Ok(fill_suite) = pf::suites::FillMatte::new() {
+                return fill_suite.fill16(self.in_data.effect_ref(), self, color, rect);
+            }
+        }
         self.in_data.utils().fill16(self, color, rect)
     }
 
