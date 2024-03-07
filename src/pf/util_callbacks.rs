@@ -448,7 +448,7 @@ impl UtilCallbacks {
 
     /// Obtain a pointer to a 8-bpc pixel within the specified world.
     ///
-    /// It will return [`Error::BadCallbackParameter`] if the world is not 16-bpc.
+    /// It will return [`Error::BadCallbackParameter`] if the world is not 8-bpc.
     ///
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
     pub fn get_pixel_data8(&self, world: *mut PF_EffectWorld, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel8, Error> {

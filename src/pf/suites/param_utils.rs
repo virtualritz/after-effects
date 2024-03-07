@@ -20,6 +20,19 @@ define_suite!(
     ///
     /// IMPORTANT: as of 13.5 to avoid threading deadlock problems, [`current_state()`](Self::current_state) returns a random state
     /// if used in the context of UPDATE_PARAMS_UI only. In other selectors this will behave normally.
+    ///
+    /// # Parameters & Floating Point Values
+    ///
+    /// We have something to admit to you; for years, even though we've given you 8 bit color values,
+    /// we've internally used floating point representations behind your back.
+    ///
+    /// That's right, even with over-bright colors, we'd only ever tell you '255, 255, 255'. Yeah, right.
+    ///
+    /// Use the [`AngleParamSuite`](crate::pf::suites::AngleParamSuite) to get floating point values for angle parameters.
+    ///
+    /// Use the [`ColorParamSuite`](crate::pf::suites::ColorParamSuite) to get floating point values for color parameters.
+    ///
+    /// Use the [`PointParamSuite`](crate::pf::suites::PointParamSuite) to get floating point values for point parameters.
     ParamUtilsSuite,
     PF_ParamUtilsSuite3,
     kPFParamUtilsSuite,
@@ -140,6 +153,60 @@ impl ParamUtilsSuite {
             time as i32,
             timesale as u32
         ))
+    }
+}
+
+define_suite!(
+    /// Use this suite to get floating point values for angle parameters.
+    AngleParamSuite,
+    PF_AngleParamSuite1,
+    kPFAngleParamSuite,
+    kPFAngleParamSuiteVersion1
+);
+impl AngleParamSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+
+    pub fn floating_point_value_from_angle_def(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, angle_def: *const ae_sys::PF_ParamDef) -> Result<f64, Error> {
+        call_suite_fn_single!(self, PF_GetFloatingPointValueFromAngleDef -> ae_sys::A_FpLong, effect_ref.as_ptr(), angle_def)
+    }
+}
+define_suite!(
+    /// Use this suite to get floating point values for color parameters.
+    ColorParamSuite,
+    PF_ColorParamSuite1,
+    kPFAngleParamSuite,
+    kPFAngleParamSuiteVersion1
+);
+impl ColorParamSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    pub fn floating_point_value_from_color_def(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, color_def: *const ae_sys::PF_ParamDef) -> Result<PixelF32, Error> {
+        call_suite_fn_single!(self, PF_GetFloatingPointColorFromColorDef -> ae_sys::PF_PixelFloat, effect_ref.as_ptr(), color_def)
+    }
+}
+define_suite!(
+    /// Use this suite to get floating point values for point parameters.
+    PointParamSuite,
+    PF_PointParamSuite1,
+    kPFPointParamSuite,
+    kPFPointParamSuiteVersion1
+);
+
+impl PointParamSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
+    pub fn new() -> Result<Self, Error> {
+        crate::Suite::new()
+    }
+    pub fn floating_point_value_from_point_def(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, point_def: *const ae_sys::PF_ParamDef) -> Result<ae_sys::A_FloatPoint, Error> {
+        call_suite_fn_single!(self, PF_GetFloatingPointValueFromPointDef -> ae_sys::A_FloatPoint, effect_ref.as_ptr(), point_def)
     }
 }
 

@@ -101,32 +101,32 @@ AfterEffectsSDK
 | ✅ Camera               | ✅ AE Adv Item                    | ✅ Image    | ✅ AE Plugin Helper 2 |
 | ✅ Canvas               | 🔳 AE Adv Time                    | ✅ Path     |                      |
 | 🔳 Collection           | ✅ AE App                         | ✅ Pen      |                      |
-| 🔳 Command              | 🔳 AngleParam                     | ✅ Supplier |                      |
+| 🔳 Command              | ✅ AngleParam                     | ✅ Supplier |                      |
 | ✅ Comp                 | 🔳 ANSI                           | ✅ Surface  |                      |
 | ✅ Composite            | ✅ Background Frame               |            |                      |
 | 🔳 Compute              | 🔳 Batch Sampling                 |            |                      |
 | ✅ Dynamic Stream       | ✅ Cache On Load                  |            |                      |
 | ✅ Effect               | ✅ Color Settings                 |            |                      |
-| 🔳 File Import Manager  | 🔳 Color                          |            |                      |
-| ✅ Footage              | 🔳 Color16                        |            |                      |
-| 🔳 Hash                 | 🔳 ColorFloat                     |            |                      |
-| ✅ IO In                | 🔳 ColorParam                     |            |                      |
+| 🔳 File Import Manager  | ✅ Color Callbacks                |            |                      |
+| ✅ Footage              | ✅ Color Callbacks 16             |            |                      |
+| 🔳 Hash                 | ✅ Color Callbacks Float          |            |                      |
+| ✅ IO In                | ✅ ColorParam                     |            |                      |
 | 🔳 IO Out               | ✅ Effect Custom UI               |            |                      |
 | ✅ Item                 | ✅ Effect Custom UI Overlay Theme |            |                      |
 | 🔳 Item View            | ✅ Effect Sequence Data           |            |                      |
 | 🔳 Iterate              | ✅ Effect UI                      |            |                      |
 | ✅ Keyframe             | 🔳 Fill Matte                     |            |                      |
 | 🔳 Layer Mask           | ✅ GPU Device                     |            |                      |
-| ✅ Layer Render Options | 🔳 Handle                         |            |                      |
+| ✅ Layer Render Options | ✅ Handle                         |            |                      |
 | ✅ Layer                | ✅ Iterate8                       |            |                      |
 | ✅ Light                | ✅ iterate16                      |            |                      |
 | 🔳 Marker               | ✅ iterateFloat                   |            |                      |
 | ✅ Mask Outline         | ✅ Param Utils                    |            |                      |
 | ✅ Mask                 | 🔳 Path Data                      |            |                      |
 | 🔳 Math                 | 🔳 Path Query                     |            |                      |
-| ✅ Memory               | 🔳 Pixel Data                     |            |                      |
+| ✅ Memory               | ✅ Pixel Data                     |            |                      |
 | 🔳 Output Module        | ✅ Pixel Format                   |            |                      |
-| 🔳 Persistent Data      | 🔳 PointParam                     |            |                      |
+| 🔳 Persistent Data      | ✅ PointParam                     |            |                      |
 | ✅ PF Interface         | 🔳 Sampling8                      |            |                      |
 | 🔳 Proj                 | 🔳 Sampling16                     |            |                      |
 | 🔳 QueryXform           | 🔳 SamplingFloat                  |            |                      |
