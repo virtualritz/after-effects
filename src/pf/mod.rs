@@ -25,8 +25,8 @@ pub mod suites {
     pub(crate) mod background_frame;      pub use background_frame    ::BackgroundFrameSuite       as BackgroundFrame;
     pub(crate) mod cache_on_load;         pub use cache_on_load       ::CacheOnLoadSuite           as CacheOnLoad;
     pub(crate) mod color_callbacks;       pub use color_callbacks     ::{ ColorCallbacksSuite      as ColorCallbacks,
-                                                                          ColorCallbacksSuite16    as ColorCallbacks16,
-                                                                          ColorCallbacksSuiteFloat as ColorCallbacksFloat };
+                                                                          ColorCallbacks16Suite    as ColorCallbacks16,
+                                                                          ColorCallbacksFloatSuite as ColorCallbacksFloat };
     pub(crate) mod effect_sequence_data;  pub use effect_sequence_data::EffectSequenceDataSuite    as EffectSequenceData;
     pub(crate) mod effect_ui;             pub use effect_ui           ::EffectUISuite              as EffectUI;
     pub(crate) mod app;                   pub use app                 ::{ AppSuite                 as App,
@@ -335,6 +335,9 @@ impl Fixed {
     }
     pub fn from_int(value: i32) -> Self {
         Self(value << 16)
+    }
+    pub fn as_f32(&self) -> f32 {
+        self.0 as f32 / 65536.0
     }
 }
 impl From<Fixed> for ae_sys::PF_Fixed {

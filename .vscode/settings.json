@@ -1,7 +1,8 @@
 {
     "files.associations": {
         "chrono": "cpp",
-        "xlocale": "cpp"
+        "xlocale": "cpp",
+        "system_error": "cpp"
     },
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",
@@ -12,5 +13,6 @@
         "./examples/custom_ecw_ui/Cargo.toml",
         "./examples/paramarama/Cargo.toml",
         "./examples/histo_grid/Cargo.toml",
+        "./examples/custom_comp_ui/Cargo.toml"
     ]
 }

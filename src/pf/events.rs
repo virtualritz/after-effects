@@ -2,6 +2,13 @@ use crate::*;
 use bitflags::bitflags;
 
 bitflags! {
+    pub struct EventInFlags: ae_sys::A_long {
+        const NONE       = ae_sys::PF_EI_NONE      as ae_sys::A_long;
+        const DONT_DRAW  = ae_sys::PF_EI_DONT_DRAW as ae_sys::A_long;
+    }
+}
+
+bitflags! {
     pub struct EventOutFlags: ae_sys::A_long {
         const NONE          = ae_sys::PF_EO_NONE          as ae_sys::A_long;
         const HANDLED_EVENT = ae_sys::PF_EO_HANDLED_EVENT as ae_sys::A_long;
@@ -152,7 +159,7 @@ impl EventExtra {
         unsafe { **self.as_ref().contextH }.w_type.into()
     }
 
-    pub fn event_out_flags(&mut self, flags: EventOutFlags) {
+    pub fn set_event_out_flags(&mut self, flags: EventOutFlags) {
         self.as_mut().evt_out_flags = flags.bits() as _;
     }
 
@@ -208,7 +215,15 @@ impl EventExtra {
         unsafe { self.as_ref().u.do_click.continue_refcon[index] }
     }
 
-    pub fn send_drag(&mut self, send: bool) {
+    pub fn send_drag(&mut self) -> bool {
+        debug_assert!(
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
+            "The send_drag() method is only valid if event() is Click or Drag."
+        );
+        unsafe { self.as_mut().u.do_click.send_drag != 0 }
+    }
+
+    pub fn set_send_drag(&mut self, send: bool) {
         debug_assert!(
             [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
             "The send_drag() method is only valid if event() is Click or Drag."
@@ -223,4 +238,88 @@ impl EventExtra {
         );
         unsafe { self.as_ref().u.do_click.last_time != 0 }
     }
+
+    pub fn screen_point(&self) -> Point {
+        debug_assert!(
+            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
+            "The screen_point() method is only valid if event() is Click or Drag."
+        );
+        unsafe { self.as_ref().u.do_click.screen_point.into() }
+    }
+
+    pub fn in_flags(&self) -> EventInFlags {
+        EventInFlags::from_bits_truncate(self.as_ref().evt_in_flags as _)
+    }
+
+    pub fn callbacks(&self) -> EventCallbacks {
+        EventCallbacks {
+            ptr: &self.as_ref().cbs,
+            ctx: self.as_ref().contextH
+        }
+    }
 }
+
+pub struct EventCallbacks {
+    ptr: *const ae_sys::PF_EventCallbacks,
+    ctx: ae_sys::PF_ContextH
+}
+
+impl EventCallbacks {
+    pub fn layer_to_comp(&self, curr_time: i32, time_scale: u32, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
+        let ret = unsafe {
+            ((*self.ptr).layer_to_comp.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, pt)
+        };
+        match ret {
+            0 => Ok(()),
+            e => Err(Error::from(e))
+        }
+    }
+
+    pub fn comp_to_layer(&self, curr_time: i32, time_scale: u32, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
+        let ret = unsafe {
+            ((*self.ptr).comp_to_layer.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, pt)
+        };
+        match ret {
+            0 => Ok(()),
+            e => Err(Error::from(e))
+        }
+    }
+
+    pub fn source_to_frame(&self, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
+        let ret = unsafe {
+            ((*self.ptr).source_to_frame.unwrap())((*self.ptr).refcon, self.ctx, pt)
+        };
+        match ret {
+            0 => Ok(()),
+            e => Err(Error::from(e))
+        }
+    }
+
+    pub fn frame_to_source(&self, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
+        let ret = unsafe {
+            ((*self.ptr).frame_to_source.unwrap())((*self.ptr).refcon, self.ctx, pt)
+        };
+        match ret {
+            0 => Ok(()),
+            e => Err(Error::from(e))
+        }
+    }
+}
+
+/*
+    pub get_comp2layer_xform(
+            refcon: *mut ::std::os::raw::c_void,
+            context: PF_ContextH,
+            curr_time: A_long,
+            time_scale: A_long,
+            exists: *mut A_long,
+            c2l: *mut PF_FloatMatrix) -> PF_Err,
+    pub get_layer2comp_xform(
+            refcon: *mut ::std::os::raw::c_void,
+            context: PF_ContextH,
+            curr_time: A_long,
+            time_scale: A_long,
+            l2c: *mut PF_FloatMatrix) -> PF_Err,
+    pub info_draw_color(refcon: *mut ::std::os::raw::c_void, color: PF_Pixel) -> PF_Err,
+    pub info_draw_text(refcon: *mut ::std::os::raw::c_void, text1Z0: *const A_char, text2Z0: *const A_char) -> PF_Err,
+*/

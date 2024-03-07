@@ -69,13 +69,13 @@ impl ColorCallbacksSuite {
 
 define_suite!(
     /// Plug-ins can draw on image processing algorithms written for nearly any color space by using the following callback functions.
-    ColorCallbacksSuite16,
+    ColorCallbacks16Suite,
     PF_ColorCallbacks16Suite1,
     kPFColorCallbacks16Suite,
     kPFColorCallbacks16SuiteVersion1
 );
 
-impl ColorCallbacksSuite16 {
+impl ColorCallbacks16Suite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {
@@ -134,13 +134,13 @@ impl ColorCallbacksSuite16 {
 
 define_suite!(
     /// Plug-ins can draw on image processing algorithms written for nearly any color space by using the following callback functions.
-    ColorCallbacksSuiteFloat,
+    ColorCallbacksFloatSuite,
     PF_ColorCallbacksFloatSuite1,
     kPFColorCallbacksFloatSuite,
     kPFColorCallbacksFloatSuiteVersion1
 );
 
-impl ColorCallbacksSuiteFloat {
+impl ColorCallbacksFloatSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
     pub fn new() -> Result<Self, Error> {

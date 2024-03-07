@@ -64,7 +64,7 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
         surface.draw_string(&string_brush, &font, CUSTOM_UI_STRING, &origin, ae::drawbot::TextAlignment::Left, ae::drawbot::TextTruncation::None, 0.0)?;
     }
 
-	event.event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
+	event.set_event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
 
     Ok(())
 }
@@ -100,8 +100,8 @@ pub fn click(in_data: &ae::InData, event: &mut ae::EventExtra) -> Result<(), ae:
 	} else {
 		event.set_cursor(ae::CursorType::Magnify);
 	}
-    event.send_drag(true);
-	event.event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
+    event.set_send_drag(true);
+	event.set_event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
 
     Ok(())
 }

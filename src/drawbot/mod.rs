@@ -73,9 +73,14 @@ impl Drawbot {
         suite.fill_vertex(self.handle, center_point, draw_shadow)
     }
 }
-impl AsRef<ae_sys::DRAWBOT_DrawRef> for Drawbot {
-    fn as_ref(&self) -> &ae_sys::DRAWBOT_DrawRef {
-        &self.handle
+impl AsPtr<ae_sys::DRAWBOT_DrawRef> for Drawbot {
+    fn as_ptr(&self) -> ae_sys::DRAWBOT_DrawRef {
+        self.handle
+    }
+}
+impl AsPtr<ae_sys::DRAWBOT_DrawRef> for &Drawbot {
+    fn as_ptr(&self) -> ae_sys::DRAWBOT_DrawRef {
+        self.handle
     }
 }
 
@@ -198,9 +203,14 @@ impl Path {
         call_suite_fn!(self.suite, Close, self.handle)
     }
 }
-impl AsRef<ae_sys::DRAWBOT_PathRef> for Path {
-    fn as_ref(&self) -> &ae_sys::DRAWBOT_PathRef {
-        &self.handle
+impl AsPtr<ae_sys::DRAWBOT_PathRef> for Path {
+    fn as_ptr(&self) -> ae_sys::DRAWBOT_PathRef {
+        self.handle
+    }
+}
+impl AsPtr<ae_sys::DRAWBOT_PathRef> for &Path {
+    fn as_ptr(&self) -> ae_sys::DRAWBOT_PathRef {
+        self.handle
     }
 }
 impl Drop for Path {
