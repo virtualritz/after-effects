@@ -89,14 +89,7 @@ pub fn click(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &
         if colorgrid_point_in_rect(&mouse_pt, &grid_rect) {
             let mut arb_param = params.get_mut(Params::GridUI)?;
             let mut arb_param = arb_param.as_arbitrary_mut()?;
-            let mut arb_data = {
-                if let Ok(arb) = arb_param.value() {
-                    let _lock = arb.lock()?;
-                    ArbData::from_bytes(arb.as_slice().unwrap())
-                } else {
-                    ArbData::default()
-                }
-            };
+            let mut arb_data = arb_param.value::<ArbData>()?;
 
             let mut box_across = 0;
             let mut box_down = 0;
@@ -116,7 +109,7 @@ pub fn click(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &
             }
 
             colorgrid_get_new_color(in_data, box_across, box_down, &mut arb_data)?;
-            arb_param.set_value(FlatHandle::new(arb_data.to_bytes())?);
+            arb_param.set_value_changed();
 
             // Specify the area to redraw
             let inval = event.current_frame();
@@ -203,17 +196,9 @@ pub fn draw(_in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &
     }
 
     // Get the arb data to fill out the grid colors
-    let arb_data = {
-        let arb_param = params.get(Params::GridUI)?;
-        let arb_param = arb_param.as_arbitrary()?;
-        let x = if let Ok(arb) = arb_param.value() {
-            let _lock = arb.lock()?;
-            ArbData::from_bytes(arb.as_slice().unwrap())
-        } else {
-            ArbData::default()
-        };
-        x
-    };
+    let arb_param = params.get(Params::GridUI)?;
+    let arb_param = arb_param.as_arbitrary()?;
+    let arb_data = arb_param.value::<ArbData>()?;
 
     if true {
         let mut pixel_colr: [ae::drawbot::ColorRgba; CG_ARBDATA_ELEMENTS] = unsafe { std::mem::zeroed() };

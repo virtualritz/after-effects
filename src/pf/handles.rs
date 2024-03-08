@@ -4,6 +4,7 @@ use super::*;
 pub struct Handle<'a, T: 'a> {
     suite: pf::suites::Handle,
     handle: ae_sys::PF_Handle,
+    owned: bool,
     _marker: PhantomData<&'a T>,
 }
 
@@ -36,6 +37,44 @@ impl<'a, T> Drop for HandleLock<'a, T> {
     }
 }
 
+pub struct BorrowedHandleLock<T> {
+    suite: pf::suites::Handle,
+    handle: ae_sys::PF_Handle,
+    ptr: *mut T,
+}
+
+impl<T> BorrowedHandleLock<T> {
+    pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<Self, Error> {
+        match pf::suites::Handle::new() {
+            Ok(suite) => {
+                let ptr = suite.lock_handle(handle) as *mut _;
+                Ok(BorrowedHandleLock {
+                    suite,
+                    handle,
+                    ptr
+                })
+            }
+            Err(_) => Err(Error::InvalidCallback),
+        }
+    }
+}
+impl<T> std::ops::Deref for BorrowedHandleLock<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        unsafe { &*self.ptr }
+    }
+}
+impl<T> std::ops::DerefMut for BorrowedHandleLock<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        unsafe { &mut *self.ptr }
+    }
+}
+impl<T> Drop for BorrowedHandleLock<T> {
+    fn drop(&mut self) {
+        self.suite.unlock_handle(self.handle);
+    }
+}
+
 impl<'a, T: 'a> Handle<'a, T> {
     pub fn new(value: T) -> Result<Handle<'a, T>, Error> {
         assert!(std::mem::size_of::<T>() > 0);
@@ -59,6 +98,7 @@ impl<'a, T: 'a> Handle<'a, T> {
                 Ok(Handle {
                     suite,
                     handle,
+                    owned: true,
                     _marker: PhantomData,
                 })
             }
@@ -117,12 +157,13 @@ impl<'a, T: 'a> Handle<'a, T> {
         call_suite_fn!(self, host_resize_handle, size as u64, &mut self.handle)
     }*/
 
-    pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<Handle<'a, T>, Error> {
+    pub fn from_raw(handle: ae_sys::PF_Handle, owned: bool) -> Result<Handle<'a, T>, Error> {
         match pf::suites::Handle::new() {
             Ok(suite) => {
                 Ok(Handle {
                     suite,
                     handle,
+                    owned,
                     _marker: PhantomData,
                 })
             }
@@ -155,12 +196,14 @@ impl<'a, T: 'a> Handle<'a, T> {
 
 impl<'a, T: 'a> Drop for Handle<'a, T> {
     fn drop(&mut self) {
-        let ptr = unsafe { *(self.handle as *const *const T) };
-        if !ptr.is_null() {
-            unsafe { ptr.read() };
-        }
+        if self.owned {
+            let ptr = unsafe { *(self.handle as *const *const T) };
+            if !ptr.is_null() {
+                unsafe { ptr.read() };
+            }
 
-        self.suite.dispose_handle(self.handle);
+            self.suite.dispose_handle(self.handle);
+        }
     }
 }
 

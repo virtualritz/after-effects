@@ -1,5 +1,4 @@
 use super::*;
-use c_vec::CVec;
 use std::ffi::{ CStr, CString };
 use ae_sys::PF_PathID;
 use serde::{de::DeserializeOwned, Serialize};
@@ -414,26 +413,23 @@ define_param_wrapper! {
     impl pad: i16,
 }
 impl ArbitraryDef<'_> {
-    pub fn set_default(&mut self, value_handle: FlatHandle) -> &mut Self {
-        self.def.dephault = FlatHandle::into_raw(value_handle);
-        self
+    pub fn set_default<T>(&mut self, value: T) -> Result<&mut Self, Error> {
+        self.def.dephault = Handle::into_raw(Handle::new(value)?);
+        Ok(self)
+    }
+
+    pub fn set_value<T>(&mut self, value: T) -> Result<&mut Self, Error> {
+        self.def.value = Handle::into_raw(Handle::new(value)?);
+        self.set_value_changed();
+        Ok(self)
+    }
+    pub fn value<T>(&self) -> Result<BorrowedHandleLock<T>, Error> {
+        BorrowedHandleLock::<T>::from_raw(self.def.value)
     }
 
     pub fn set_refcon(&mut self, refcon: *mut std::ffi::c_void) -> &mut Self {
         self.def.refconPV = refcon as _;
         self
-    }
-
-    pub fn set_value(&mut self, value_handle: FlatHandle) -> &mut Self {
-        self.def.value = FlatHandle::into_raw(value_handle);
-        self.set_value_changed();
-        self
-    }
-    pub fn value(&self) -> Result<FlatHandle, Error> {
-        FlatHandle::from_raw(self.def.value)
-    }
-    pub fn value_owned(&self) -> Result<FlatHandle, Error> {
-        FlatHandle::from_raw_owned(self.def.value)
     }
 }
 // ―――――――――――――――――――――――――――――――――― Arbitrary ―――――――――――――――――――――――――――――――――――
@@ -456,24 +452,30 @@ impl std::fmt::Debug for ArbParamsExtra {
 }
 
 impl ArbParamsExtra {
-    pub fn id(&self) -> isize {
+    pub fn id(&self) -> i16 {
         self.as_ref().id as _
     }
 
-    pub fn refcon(&self) -> usize {
-        unsafe { std::mem::transmute(self.as_ref().u.new_func_params.refconPV) }
+    pub fn refcon(&self) -> *mut std::ffi::c_void {
+        unsafe { self.as_ref().u.new_func_params.refconPV }
     }
 
     pub fn which_function(&self) -> u32 {
         self.as_ref().which_function as _
     }
 
-    pub fn dispatch<T: ArbitraryData<T> + DeserializeOwned + Serialize + PartialEq + PartialOrd>(
-        &mut self,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn dispatch<T, P>(&mut self, param: P) -> Result<(), Error>
+    where T: ArbitraryData<T> + DeserializeOwned + Serialize + PartialEq + PartialOrd,
+          P: Eq + PartialEq + Hash + Copy + Debug
+    {
+        let param_id = Parameters::param_id(param) as i16;
+        if self.id() != param_id {
+            // Not our param, nothing to do
+            return Ok(());
+        }
         match self.as_ref().which_function as _ {
             ae_sys::PF_Arbitrary_NEW_FUNC => unsafe {
-                //println!("NEW_FUNC");
+                // log::info!("NEW FUNC");
                 // Create a new instance, serialize it to a Vec<u8>
                 // pass it to a FlatHandle and turn that into a raw
                 // Ae handle that we stash in the PF_ArbParamsExtra
@@ -482,24 +484,22 @@ impl ArbParamsExtra {
                     .u
                     .new_func_params
                     .arbPH
-                    .write(FlatHandle::into_raw(FlatHandle::new(bincode::serialize(
-                        &T::default(),
-                    )?)?));
+                    .write(Handle::into_raw(Handle::<T>::new(T::default())?));
             },
 
             ae_sys::PF_Arbitrary_DISPOSE_FUNC => {
-                //println!("DISPOSE_FUNC");
+                // log::info!("DISPOSE_FUNC");
 
                 // Create a new handle from the raw Ae handle. This
                 // disposes then handle when it goes out of scope
                 // and is dropped just after.
                 assert!(unsafe { !self.as_ref().u.dispose_func_params.arbH.is_null() });
 
-                FlatHandle::from_raw_owned(unsafe { self.as_ref().u.dispose_func_params.arbH })?;
+                Handle::<T>::from_raw(unsafe { self.as_ref().u.dispose_func_params.arbH }, true)?;
             }
 
             ae_sys::PF_Arbitrary_COPY_FUNC => unsafe {
-                //println!("COPY_FUNC");
+                // log::info!("COPY_FUNC");
                 // Create a new handle wraper from the sources,
                 // get a referece to that as a slice create a new
                 // handle from that and write that to the
@@ -507,103 +507,101 @@ impl ArbParamsExtra {
 
                 assert!(!self.as_ref().u.copy_func_params.src_arbH.is_null());
 
-                let src_handle = FlatHandle::from_raw(self.as_ref().u.copy_func_params.src_arbH)?;
+                let mut src_handle = Handle::<T>::from_raw(self.as_ref().u.copy_func_params.src_arbH, false)?;
+                let lock = src_handle.lock()?;
 
-                let _src_handle_lock = src_handle.lock()?;
+                let serialized = bincode::serialize::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
+                let deserialized = bincode::deserialize::<T>(&serialized).map_err(|_| Error::InternalStructDamaged)?;
+                let new_handle = Handle::<T>::new(deserialized)?;
 
                 self.as_ref()
                     .u
                     .copy_func_params
                     .dst_arbPH
-                    .write(FlatHandle::into_raw(FlatHandle::new(
-                        src_handle.as_slice().unwrap(),
-                    )?));
+                    .write(Handle::into_raw(new_handle));
             },
 
             ae_sys::PF_Arbitrary_FLAT_SIZE_FUNC => unsafe {
-                //println!("FLAT_SIZE_FUNC");
+                // log::info!("FLAT_SIZE_FUNC");
 
-                let handle = FlatHandle::from_raw(self.as_ref().u.flat_size_func_params.arbH)?;
+                let mut handle = Handle::<T>::from_raw(self.as_ref().u.flat_size_func_params.arbH, false)?;
+                let lock = handle.lock()?;
+
+                let serialized = bincode::serialize::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
 
                 self.as_ref()
                     .u
                     .flat_size_func_params
                     .flat_data_sizePLu
-                    .write(handle.size() as _);
+                    .write(serialized.len() as _);
             },
 
-            ae_sys::PF_Arbitrary_FLATTEN_FUNC => {
-                //println!("FLATTEN_FUNC");
+            ae_sys::PF_Arbitrary_FLATTEN_FUNC => unsafe {
+                // log::info!("FLATTEN_FUNC");
 
-                let handle = FlatHandle::from_raw(unsafe { self.as_ref().u.flatten_func_params.arbH })?;
+                let mut handle = Handle::<T>::from_raw(self.as_ref().u.flatten_func_params.arbH, false)?;
+                let lock = handle.lock()?;
 
-                let _handle_lock = handle.lock()?;
+                let serialized = bincode::serialize::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
 
-                debug_assert!(
-                    handle.size() <= unsafe { self.as_ref().u.flatten_func_params.buf_sizeLu } as _
+                assert!(
+                    serialized.len() <= self.as_ref().u.flatten_func_params.buf_sizeLu as _
                 );
 
-                unsafe {
-                    std::ptr::copy_nonoverlapping(
-                        handle.as_ptr(),
-                        self.as_ref().u.flatten_func_params.flat_dataPV as _,
-                        handle.size(),
-                    );
-                }
+                std::ptr::copy_nonoverlapping(
+                    serialized.as_ptr(),
+                    self.as_ref().u.flatten_func_params.flat_dataPV as _,
+                    serialized.len(),
+                );
             }
 
             ae_sys::PF_Arbitrary_UNFLATTEN_FUNC => unsafe {
-                //println!("UNFLATTEN_FUNC");
+                // log::info!("UNFLATTEN_FUNC");
+
+                let serialized = std::slice::from_raw_parts(
+                    self.as_ref().u.unflatten_func_params.flat_dataPV as *mut u8,
+                    self.as_ref().u.unflatten_func_params.buf_sizeLu as _
+                );
+                let t = bincode::deserialize::<T>(serialized).map_err(|_| Error::InternalStructDamaged)?;
+                let handle = Handle::<T>::new(t)?;
 
                 self.as_ref()
                     .u
                     .unflatten_func_params
                     .arbPH
-                    .write(FlatHandle::into_raw(FlatHandle::new(CVec::<u8>::new(
-                        self.as_ref().u.unflatten_func_params.flat_dataPV as *mut u8,
-                        self.as_ref().u.unflatten_func_params.buf_sizeLu as _,
-                    ))?));
+                    .write(Handle::into_raw(handle));
             },
 
             ae_sys::PF_Arbitrary_INTERP_FUNC => unsafe {
-                //println!("INTERP_FUNC");
+                // log::info!("INTERP_FUNC");
 
-                let left = FlatHandle::from_raw(self.as_ref().u.interp_func_params.left_arbH)?;
+                let mut left = Handle::<T>::from_raw(self.as_ref().u.interp_func_params.left_arbH, false)?;
+                let left_lock = left.lock()?;
 
-                let _left_lock = left.lock()?;
+                let mut right = Handle::<T>::from_raw(self.as_ref().u.interp_func_params.right_arbH, false)?;
+                let right_lock = right.lock()?;
 
-                let right = FlatHandle::from_raw(self.as_ref().u.interp_func_params.right_arbH)?;
-
-                let _right_lock = right.lock()?;
+                let interpolated = Handle::<T>::new(
+                    left_lock.as_ref()?.interpolate(right_lock.as_ref()?, self.as_ref().u.interp_func_params.tF)
+                )?;
 
                 self.as_ref()
                     .u
                     .interp_func_params
                     .interpPH
-                    .write(FlatHandle::into_raw(FlatHandle::new(bincode::serialize(
-                        &bincode::deserialize::<T>(left.as_slice().unwrap())?.interpolate(
-                            &bincode::deserialize::<T>(right.as_slice().unwrap())?,
-                            self.as_ref().u.interp_func_params.tF,
-                        ),
-                    )?)?));
+                    .write(Handle::into_raw(interpolated));
             },
 
             ae_sys::PF_Arbitrary_COMPARE_FUNC => {
-                //println!("COMPARE_FUNC");
+                // log::info!("COMPARE_FUNC");
 
-                let handle_a =
-                    FlatHandle::from_raw(unsafe { self.as_ref().u.compare_func_params.a_arbH })?;
+                let mut handle_a = Handle::<T>::from_raw(unsafe { self.as_ref().u.compare_func_params.a_arbH }, false)?;
+                let handle_a_lock = handle_a.lock()?;
+                let a = handle_a_lock.as_ref()?;
 
-                let _handle_a_lock = handle_a.lock()?;
-
-                let a = bincode::deserialize::<T>(handle_a.as_slice().unwrap())?;
-
-                let handle_b =
-                    FlatHandle::from_raw(unsafe { self.as_ref().u.compare_func_params.b_arbH })?;
-
-                let _handle_b_lock = handle_b.lock()?;
-
-                let b = bincode::deserialize::<T>(handle_b.as_slice().unwrap())?;
+                let mut handle_b = Handle::<T>::from_raw(unsafe { self.as_ref().u.compare_func_params.b_arbH }, false)?;
+                let handle_b_lock = handle_b.lock()?;
+                let b = handle_b_lock.as_ref()?;
 
                 if a < b {
                     unsafe {
@@ -641,68 +639,55 @@ impl ArbParamsExtra {
             }
 
             ae_sys::PF_Arbitrary_PRINT_SIZE_FUNC => unsafe {
-                //println!("PRINT_SIZE_FUNC");
+                // log::info!("PRINT_SIZE_FUNC");
 
-                let handle = FlatHandle::from_raw(self.as_ref().u.print_size_func_params.arbH)?;
+                let mut handle = Handle::<T>::from_raw(self.as_ref().u.print_size_func_params.arbH, false)?;
+                let lock = handle.lock()?;
 
-                let _handle_lock = handle.lock()?;
+                let serialized = serde_json::to_string::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
+                let cstr = std::ffi::CString::new(serialized).unwrap();
 
                 self.as_ref().u.print_size_func_params.print_sizePLu.write(
-                    (serde_json::to_string(&bincode::deserialize::<T>(
-                        handle.as_slice().unwrap(),
-                    )?)?
-                    // The len + terminating nul byte.
-                    .len()
-                        + 1) as _,
+                    cstr.as_bytes_with_nul().len() as _,
                 );
             },
 
             // Print arbitrary data into a string as JSON.
             // Note that we could use any text-based serializer here.
-            ae_sys::PF_Arbitrary_PRINT_FUNC => {
-                //println!("PRINT_FUNC");
+            ae_sys::PF_Arbitrary_PRINT_FUNC => unsafe {
+                // log::info!("PRINT_FUNC");
 
-                let handle = FlatHandle::from_raw(unsafe { self.as_ref().u.print_func_params.arbH })?;
+                let mut handle = Handle::<T>::from_raw(self.as_ref().u.print_func_params.arbH, false)?;
+                let lock = handle.lock()?;
 
-                let _handle_lock = handle.lock()?;
+                let serialized = serde_json::to_string::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
+                let cstr = std::ffi::CString::new(serialized).unwrap();
+                let cstr = cstr.as_bytes_with_nul();
 
-                let string =
-                    serde_json::to_string(&bincode::deserialize::<T>(handle.as_slice().unwrap())?)?;
-
-                if string.len() < unsafe { self.as_ref().u.print_func_params.print_sizeLu } as _
-                    && unsafe { self.as_ref().u.print_func_params.print_flags } == 0
-                {
-                    unsafe {
-                        std::ptr::copy_nonoverlapping(
-                            string.as_ptr(),
-                            self.as_ref().u.print_func_params.print_bufferPC as _,
-                            string.len(),
-                        );
-                        // Nul-terminate the C string.
-                        self.as_ref()
-                            .u
-                            .print_func_params
-                            .print_bufferPC
-                            .add(string.len())
-                            .write(0);
-                    }
+                if cstr.len() <= self.as_ref().u.print_func_params.print_sizeLu as _ && self.as_ref().u.print_func_params.print_flags == 0 {
+                    std::ptr::copy_nonoverlapping(
+                        cstr.as_ptr(),
+                        self.as_ref().u.print_func_params.print_bufferPC as _,
+                        cstr.len(),
+                    );
                 }
             }
             ae_sys::PF_Arbitrary_SCAN_FUNC => unsafe {
-                //println!("SCAN_FUNC");
+                // log::info!("SCAN_FUNC");
+
+                let cstr = CStr::from_ptr(self.as_ref().u.scan_func_params.bufPC).to_str().map_err(|_| Error::InternalStructDamaged)?;
+
+                let t = serde_json::from_str::<T>(cstr).map_err(|_| Error::InternalStructDamaged)?;
+                let handle = Handle::<T>::new(t)?;
 
                 self.as_ref()
                     .u
                     .scan_func_params
                     .arbPH
-                    .write(FlatHandle::into_raw(FlatHandle::new(
-                        bincode::serialize::<T>(&serde_json::from_str(
-                            CStr::from_ptr(self.as_ref().u.scan_func_params.bufPC).to_str()?,
-                        )?)?,
-                    )?));
+                    .write(Handle::into_raw(handle));
             },
             _ => {
-                return Err(Box::new(Error::Generic));
+                return Err(Error::Generic);
             }
         }
         Ok(())

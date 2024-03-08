@@ -25,12 +25,6 @@ struct ArbData {
     colors: [FloatPixel; CG_ARBDATA_ELEMENTS]
 }
 impl ArbData {
-    pub fn to_bytes(&self) -> Vec<u8> {
-        bincode::serialize(self).unwrap()
-    }
-    pub fn from_bytes(bytes: &[u8]) -> Self {
-        bincode::deserialize(bytes).unwrap()
-    }
     fn interp_pixel(intrp_amt: f32, lpix: &FloatPixel, rpix: &FloatPixel) -> FloatPixel {
         let mut head = FloatPixel::default();
         head.alpha = 1.0;
@@ -110,7 +104,7 @@ impl AdobePluginGlobal for Plugin {
 
     fn params_setup(&self, params: &mut ae::Parameters<Params>, in_data: InData, _: OutData) -> Result<(), Error> {
         params.add_customized(Params::GridUI, "Color Grid", ae::ArbitraryDef::setup(|f| {
-            f.set_default(ae::FlatHandle::new(ArbData::default().to_bytes()).unwrap());
+            f.set_default(ArbData::default()).unwrap();
             f.set_refcon(ARB_REFCON as _);
         }), |param| {
             param.set_ui_flags(ae::ParamUIFlags::CONTROL | ae::ParamUIFlags::DO_NOT_ERASE_CONTROL);
@@ -137,17 +131,9 @@ impl AdobePluginGlobal for Plugin {
                 out_data.set_return_msg("ColorGrid v3.3\rCopyright 2007-2023 Adobe Inc.\rArbitrary data and Custom UI sample.");
             }
             ae::Command::Render { in_layer, mut out_layer } => {
-                let colors = {
-                    let param = params.get(Params::GridUI)?;
-                    let param = param.as_arbitrary()?;
-                    let x = if let Ok(arb) = param.value() {
-                        let _lock = arb.lock()?;
-                        ArbData::from_bytes(arb.as_slice().unwrap())
-                    } else {
-                        ArbData::default()
-                    };
-                    x
-                };
+                let param = params.get(Params::GridUI)?;
+                let param = param.as_arbitrary()?;
+                let colors = param.value::<ArbData>()?;
 
                 let mut current_color = 0;
                 let origin = in_data.pre_effect_source_origin();
@@ -215,17 +201,9 @@ impl AdobePluginGlobal for Plugin {
                 let cb = extra.callbacks();
                 let input_world = cb.checkout_layer_pixels(0)?;
 
-                let colors = {
-                    let param = params.get(Params::GridUI)?;
-                    let param = param.as_arbitrary()?;
-                    let x = if let Ok(arb) = param.value() {
-                        let _lock = arb.lock()?;
-                        ArbData::from_bytes(arb.as_slice().unwrap())
-                    } else {
-                        ArbData::default()
-                    };
-                    x
-                };
+                let param = params.get(Params::GridUI)?;
+                let param = param.as_arbitrary()?;
+                let colors = param.value::<ArbData>()?;
 
                 for _ in 0..BOXES_PER_GRID {
                     if box_across == BOXES_ACROSS {
@@ -287,7 +265,7 @@ impl AdobePluginGlobal for Plugin {
                 cb.checkin_layer_pixels(0)?;
             }
             ae::Command::ArbitraryCallback { mut extra } => {
-                let _ = extra.dispatch::<ArbData>(); // TODO: unwrap
+                extra.dispatch::<ArbData, Params>(Params::GridUI)?;
             }
             ae::Command::Event { mut extra } => {
                 match extra.event() {

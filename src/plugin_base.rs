@@ -82,7 +82,7 @@ macro_rules! define_plugin {
                 // Read-only sequence data available through a suite only
                 let seq_ptr = in_data.effect().const_sequence_data().unwrap_or((*in_data.as_ptr()).sequence_data as *const _);
                 if !seq_ptr.is_null() {
-                    let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _)?;
+                    let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _, true)?;
                     Some((instance_handle, false))
                 } else {
                     log::error!("Sequence data pointer got through EffectSequenceDataSuite is null in cmd: {:?}!", cmd);
@@ -93,7 +93,7 @@ macro_rules! define_plugin {
                     log::error!("Sequence data pointer is null in cmd: {:?}!", cmd);
                     None
                 } else {
-                    let instance_handle = pf::Handle::<S>::from_raw((*in_data.as_ptr()).sequence_data)?;
+                    let instance_handle = pf::Handle::<S>::from_raw((*in_data.as_ptr()).sequence_data, true)?;
                     Some((instance_handle, false))
                 }
             })
@@ -127,7 +127,7 @@ macro_rules! define_plugin {
                     log::error!("Global data pointer is null in cmd: {:?}!", cmd);
                     return Err(Error::BadCallbackParameter);
                 }
-                pf::Handle::<GlobalData>::from_raw((*in_data_ptr).global_data)?
+                pf::Handle::<GlobalData>::from_raw((*in_data_ptr).global_data, true)?
             };
 
             // Allocate or restore sequence data pointer
