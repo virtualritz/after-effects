@@ -1006,7 +1006,7 @@ impl<'p> ParamDef<'p> {
         }
     }
 
-    pub fn set_value_has_changed(&mut self) {
+    pub fn set_value_changed(&mut self) {
         self.param_def.uu.change_flags = ChangeFlag::CHANGED_VALUE.bits();
     }
 }

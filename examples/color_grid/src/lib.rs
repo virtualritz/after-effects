@@ -22,7 +22,8 @@ struct FloatPixel {
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, PartialOrd)]
 struct ArbData {
-    colors: [FloatPixel; CG_ARBDATA_ELEMENTS]
+    colors: [FloatPixel; CG_ARBDATA_ELEMENTS],
+    string: String
 }
 impl ArbData {
     fn interp_pixel(intrp_amt: f32, lpix: &FloatPixel, rpix: &FloatPixel) -> FloatPixel {
@@ -75,7 +76,8 @@ impl ae::ArbitraryData<ArbData> for ArbData {
                 FloatPixel { alpha: 1.0, blue: 0.737,  green: 0.81,   red: 0.89 },
                 FloatPixel { alpha: 1.0, blue: 0.5,    green: 1.0,    red: 0.5 },
                 FloatPixel { alpha: 1.0, blue: 0.5,    green: 0.5,    red: 0.9 },
-            ]
+            ],
+            string: "Hello world".to_owned()
         }
     }
     fn interpolate(&self, other: &Self, value: f64) -> Self {
@@ -132,8 +134,7 @@ impl AdobePluginGlobal for Plugin {
             }
             ae::Command::Render { in_layer, mut out_layer } => {
                 let param = params.get(Params::GridUI)?;
-                let param = param.as_arbitrary()?;
-                let colors = param.value::<ArbData>()?;
+                let colors = param.as_arbitrary()?.value::<ArbData>()?;
 
                 let mut current_color = 0;
                 let origin = in_data.pre_effect_source_origin();
@@ -153,8 +154,8 @@ impl AdobePluginGlobal for Plugin {
                         box_across = 0;
                     }
                     let current_rect = ui::colorgrid_get_box_in_grid(&origin,
-                        (in_data.width()  as f32 * f32::from(in_data.downsample_x())).round() as usize,
-                        (in_data.height() as f32 * f32::from(in_data.downsample_y())).round() as usize,
+                        (in_data.width()  as f32 * f32::from(in_data.downsample_x())).round() as _,
+                        (in_data.height() as f32 * f32::from(in_data.downsample_y())).round() as _,
                         box_across,
                         box_down
                     );
@@ -193,7 +194,7 @@ impl AdobePluginGlobal for Plugin {
                 }
             }
             ae::Command::SmartRender { extra } => {
-                let mut origin = ae::Point { h: 0, v: 0 };
+                let mut origin = ae::Point::empty();
                 let mut box_across    = 0;
                 let mut box_down      = 0;
                 let mut current_color = 0;
@@ -202,8 +203,7 @@ impl AdobePluginGlobal for Plugin {
                 let input_world = cb.checkout_layer_pixels(0)?;
 
                 let param = params.get(Params::GridUI)?;
-                let param = param.as_arbitrary()?;
-                let colors = param.value::<ArbData>()?;
+                let colors = param.as_arbitrary()?.value::<ArbData>()?;
 
                 for _ in 0..BOXES_PER_GRID {
                     if box_across == BOXES_ACROSS {
@@ -212,8 +212,8 @@ impl AdobePluginGlobal for Plugin {
                     }
 
                     let current_rect = ui::colorgrid_get_box_in_grid(&origin,
-                        (in_data.width()  as f32 * f32::from(in_data.downsample_x())).round() as usize,
-                        (in_data.height() as f32 * f32::from(in_data.downsample_y())).round() as usize,
+                        (in_data.width()  as f32 * f32::from(in_data.downsample_x())).round() as _,
+                        (in_data.height() as f32 * f32::from(in_data.downsample_y())).round() as _,
                         box_across,
                         box_down
                     );

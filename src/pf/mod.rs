@@ -167,26 +167,17 @@ impl From<CompositeMode> for ae_sys::PF_CompositeMode {
     }
 }
 
-#[derive(Debug, Copy, Clone, Hash)]
-#[repr(C)]
-pub struct Point {
-    pub h: i32,
-    pub v: i32,
-}
-impl From<Point> for ae_sys::PF_Point {
-    fn from(val: Point) -> Self {
-        ae_sys::PF_Point {
-            h: val.h,
-            v: val.v,
-        }
+define_struct! {
+    ae_sys::PF_Point,
+    #[derive(Eq)]
+    Point {
+        h: i32,
+        v: i32,
     }
 }
-impl From<ae_sys::PF_Point> for Point {
-    fn from(point: ae_sys::PF_Point) -> Self {
-        Self {
-            h: point.h,
-            v: point.v,
-        }
+impl Point {
+    pub fn empty() -> Self {
+        Self { h: 0, v: 0 }
     }
 }
 
