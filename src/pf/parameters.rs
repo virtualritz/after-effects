@@ -2,6 +2,7 @@ use super::*;
 use c_vec::CVec;
 use std::ffi::{ CStr, CString };
 use ae_sys::PF_PathID;
+use serde::{de::DeserializeOwned, Serialize};
 
 define_enum! {
     ae_sys::PF_ParamType,
@@ -410,6 +411,7 @@ define_param_wrapper! {
     PF_Param_ARBITRARY_DATA, PF_ArbitraryDef, arb_d,
     Param::Arbitrary,
     ArbitraryDef { },
+    impl pad: i16,
 }
 impl ArbitraryDef<'_> {
     pub fn set_default(&mut self, value_handle: FlatHandle) -> &mut Self {
@@ -706,6 +708,7 @@ impl ArbParamsExtra {
         Ok(())
     }
 }
+
 macro_rules! define_param_cast {
     ($name:tt, $enm:ident, $type:ty) => {
         paste::item! {
@@ -1013,6 +1016,9 @@ impl<'p> ParamDef<'p> {
 
     pub fn set_id(&mut self, id: i32) {
         self.param_def.uu.id = id;
+        if self.param_def.param_type == ae_sys::PF_Param_ARBITRARY_DATA {
+            self.param_def.u.arb_d.id = id as i16; // this truncates the int, but it should be fine
+        }
     }
 
     pub fn set_value_has_changed(&mut self) {
@@ -1221,7 +1227,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         if !param.is_valid() {
             return Err(Error::InvalidParms);
         }
-        return Ok(Ownership::Rust(param));
+        Ok(Ownership::Rust(param))
     }
 
     pub fn num_params(&self) -> usize {

@@ -27,14 +27,14 @@ impl AppSuite {
 
     /// Retrieves the current background color.
     pub fn bg_color(&self) -> Result<ae_sys::PF_App_Color, Error> {
-        call_suite_fn_single!(self, PF_AppGetBgColor -> ae_sys:: PF_App_Color)
+        call_suite_fn_single!(self, PF_AppGetBgColor -> ae_sys::PF_App_Color)
     }
 
     /// Retrieves the color for the specified UI element. See [`AppColorType`] for a complete enumeration of available values.
     ///
     /// Basically any color in After Effects' UI can be retrieved.
     pub fn color(&self, color_type: AppColorType) -> Result<ae_sys::PF_App_Color, Error> {
-        call_suite_fn_single!(self, PF_AppGetColor -> ae_sys:: PF_App_Color, color_type.into())
+        call_suite_fn_single!(self, PF_AppGetColor -> ae_sys::PF_App_Color, color_type.into())
     }
 
     /// New in CC. Retrieves the active displayed language of AE UI so plug-in can match. Here are the possible language codes as of CC:

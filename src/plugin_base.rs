@@ -78,7 +78,6 @@ macro_rules! define_plugin {
                    || cmd == RawCommand::SmartRenderGpu
                    || cmd == RawCommand::SmartPreRender
                    || cmd == RawCommand::FrameSetup
-                   || cmd == RawCommand::ArbitraryCallback
                    || cmd == RawCommand::FrameSetdown {
                 // Read-only sequence data available through a suite only
                 let seq_ptr = in_data.effect().const_sequence_data().unwrap_or((*in_data.as_ptr()).sequence_data as *const _);

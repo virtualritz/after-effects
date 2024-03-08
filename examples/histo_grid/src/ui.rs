@@ -103,7 +103,7 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
         } else if grid_width as f32 > UI_GRID_WIDTH as f32 * 1.5 {
             grid_width = (UI_GRID_WIDTH as f32 * 1.5) as _;
         }
-        surface.paint_rect(&background_color, &onscreen_rect)?
+        surface.paint_rect(&background_color, &onscreen_rect)?;
     }
 
     // EXAMPLE: If this is the effect pane, then request the upstream frame for preview purposes and do any lightweight preview computation on it.

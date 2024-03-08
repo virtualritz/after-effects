@@ -1,6 +1,5 @@
 use crate::*;
 use bitflags::bitflags;
-use serde::{de::DeserializeOwned, Serialize};
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -229,7 +228,7 @@ impl From<RationalScale> for f32 {
 define_enum! {
     ae_sys::PF_MaskFlags,
     MaskFlags {
-        None     = ae_sys::PF_MaskFlag_NONE,
+        None      = ae_sys::PF_MaskFlag_NONE,
         Inverted  = ae_sys::PF_MaskFlag_INVERTED,
         Luminance = ae_sys::PF_MaskFlag_LUMINANCE,
     }
