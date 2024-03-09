@@ -24,6 +24,7 @@ pub mod suites {
     pub(crate) mod adv_item;              pub use adv_item            ::AdvItemSuite               as AdvItem;
     pub(crate) mod background_frame;      pub use background_frame    ::BackgroundFrameSuite       as BackgroundFrame;
     pub(crate) mod cache_on_load;         pub use cache_on_load       ::CacheOnLoadSuite           as CacheOnLoad;
+    pub(crate) mod channel;               pub use channel             ::ChannelSuite               as Channel;
     pub(crate) mod color_callbacks;       pub use color_callbacks     ::{ ColorCallbacksSuite      as ColorCallbacks,
                                                                           ColorCallbacks16Suite    as ColorCallbacks16,
                                                                           ColorCallbacksFloatSuite as ColorCallbacksFloat };
@@ -66,6 +67,10 @@ pub use suites::app::{
 pub use suites::custom_ui::{
     ContextHandle,
     CustomUIInfo,
+};
+pub use suites::channel::{
+    DataType,
+    ChannelType,
 };
 pub use suites::helper::{
     SuiteTool,

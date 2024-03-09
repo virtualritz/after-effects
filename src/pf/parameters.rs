@@ -388,6 +388,18 @@ define_param_wrapper! {
     Param::Layer,
     LayerDef { },
 }
+impl<'a> LayerDef<'a> {
+    pub fn set_default_to_this_layer(&mut self) {
+        self.def.dephault = ae_sys::PF_LayerDefault_MYSELF;
+    }
+    pub fn layer(&self, in_data: impl AsPtr<*const ae_sys::PF_InData>) -> Option<Layer> {
+        if self.def.data.is_null() {
+            None
+        } else {
+            Some(Layer::from_raw(&*self.def as *const _ as _, in_data, None))
+        }
+    }
+}
 // ―――――――――――――――――――――――――――――――――――― Layer ―――――――――――――――――――――――――――――――――――――
 
 // ―――――――――――――――――――――――――――――――――――― Null ―――――――――――――――――――――――――――――――――――――
@@ -1095,7 +1107,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
 
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
         param_def.set_name(name);
-        param_def.as_mut().param_type = ParamType::GroupStart as _;
+        param_def.as_mut().param_type = ParamType::GroupStart.into();
         param_def.set_id(Self::param_id(type_start));
         param_def.add(-1)?;
         self.map.borrow_mut().insert(type_start, self.num_params);
@@ -1104,7 +1116,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         inner_cb(self);
 
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
-        param_def.as_mut().param_type = ParamType::GroupEnd as _;
+        param_def.as_mut().param_type = ParamType::GroupEnd.into();
         param_def.set_id(Self::param_id(type_end));
         param_def.add(-1)?;
         self.map.borrow_mut().insert(type_end, self.num_params);

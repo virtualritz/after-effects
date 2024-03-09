@@ -106,36 +106,36 @@ AfterEffectsSDK
 | ✅ Composite            | ✅ Background Frame               |            |                      |
 | 🔳 Compute              | 🔳 Batch Sampling                 |            |                      |
 | ✅ Dynamic Stream       | ✅ Cache On Load                  |            |                      |
-| ✅ Effect               | ✅ Color Settings                 |            |                      |
-| 🔳 File Import Manager  | ✅ Color Callbacks                |            |                      |
-| ✅ Footage              | ✅ Color Callbacks 16             |            |                      |
-| 🔳 Hash                 | ✅ Color Callbacks Float          |            |                      |
-| ✅ IO In                | ✅ ColorParam                     |            |                      |
-| 🔳 IO Out               | ✅ Effect Custom UI               |            |                      |
-| ✅ Item                 | ✅ Effect Custom UI Overlay Theme |            |                      |
-| 🔳 Item View            | ✅ Effect Sequence Data           |            |                      |
-| 🔳 Iterate              | ✅ Effect UI                      |            |                      |
-| ✅ Keyframe             | ✅ Fill Matte                     |            |                      |
-| 🔳 Layer Mask           | ✅ GPU Device                     |            |                      |
-| ✅ Layer Render Options | ✅ Handle                         |            |                      |
-| ✅ Layer                | ✅ Iterate8                       |            |                      |
-| ✅ Light                | ✅ iterate16                      |            |                      |
-| 🔳 Marker               | ✅ iterateFloat                   |            |                      |
-| ✅ Mask Outline         | ✅ Param Utils                    |            |                      |
-| ✅ Mask                 | 🔳 Path Data                      |            |                      |
-| 🔳 Math                 | 🔳 Path Query                     |            |                      |
-| ✅ Memory               | ✅ Pixel Data                     |            |                      |
-| 🔳 Output Module        | ✅ Pixel Format                   |            |                      |
-| 🔳 Persistent Data      | ✅ PointParam                     |            |                      |
-| ✅ PF Interface         | 🔳 Sampling8                      |            |                      |
-| 🔳 Proj                 | 🔳 Sampling16                     |            |                      |
-| 🔳 QueryXform           | 🔳 SamplingFloat                  |            |                      |
-| 🔳 Register             | ✅ Source Settings                |            |                      |
-| ✅ Render Asyc Manager  | ✅ Transition                     |            |                      |
-| ✅ Render Options       | ✅ Utility                        |            |                      |
-| 🔳 Render Queue Item    | ✅ World                          |            |                      |
-| 🔳 Render Queue         | ✅ World Transform                |            |                      |
-| ✅ Render               |                                  |            |                      |
+| ✅ Effect               | 🔳 Channel                        |            |                      |
+| 🔳 File Import Manager  | ✅ Color Settings                 |            |                      |
+| ✅ Footage              | ✅ Color Callbacks                |            |                      |
+| 🔳 Hash                 | ✅ Color Callbacks 16             |            |                      |
+| ✅ IO In                | ✅ Color Callbacks Float          |            |                      |
+| 🔳 IO Out               | ✅ ColorParam                     |            |                      |
+| ✅ Item                 | ✅ Effect Custom UI               |            |                      |
+| 🔳 Item View            | ✅ Effect Custom UI Overlay Theme |            |                      |
+| 🔳 Iterate              | ✅ Effect Sequence Data           |            |                      |
+| ✅ Keyframe             | ✅ Effect UI                      |            |                      |
+| 🔳 Layer Mask           | ✅ Fill Matte                     |            |                      |
+| ✅ Layer Render Options | ✅ GPU Device                     |            |                      |
+| ✅ Layer                | ✅ Handle                         |            |                      |
+| ✅ Light                | ✅ Iterate8                       |            |                      |
+| 🔳 Marker               | ✅ iterate16                      |            |                      |
+| ✅ Mask Outline         | ✅ iterateFloat                   |            |                      |
+| ✅ Mask                 | ✅ Param Utils                    |            |                      |
+| 🔳 Math                 | 🔳 Path Data                      |            |                      |
+| ✅ Memory               | 🔳 Path Query                     |            |                      |
+| 🔳 Output Module        | ✅ Pixel Data                     |            |                      |
+| 🔳 Persistent Data      | ✅ Pixel Format                   |            |                      |
+| ✅ PF Interface         | ✅ PointParam                     |            |                      |
+| 🔳 Proj                 | 🔳 Sampling8                      |            |                      |
+| 🔳 QueryXform           | 🔳 Sampling16                     |            |                      |
+| 🔳 Register             | 🔳 SamplingFloat                  |            |                      |
+| ✅ Render Asyc Manager  | ✅ Source Settings                |            |                      |
+| ✅ Render Options       | ✅ Transition                     |            |                      |
+| 🔳 Render Queue Item    | ✅ Utility                        |            |                      |
+| 🔳 Render Queue         | ✅ World                          |            |                      |
+| ✅ Render               | ✅ World Transform                |            |                      |
 | 🔳 RenderQueue Monitor  |                                  |            |                      |
 | ✅ Sound Data           |                                  |            |                      |
 | ✅ Stream               |                                  |            |                      |

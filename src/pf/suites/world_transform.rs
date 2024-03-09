@@ -23,15 +23,16 @@ impl WorldTransformSuite {
     /// * `dest_x`, `dest_y` - upper left-hand corner of src rect in composite image
     /// * `field` - which scanlines to render ([`Field::Frame`], [`Field::Upper`] or [`Field::Lower`])
     /// * `transfer_mode` - can be [`TransferMode::Copy`], [`TransferMode::Behind`] or [`TransferMode::InFront`]
-    pub fn composite_rect(&self, effect_ref: impl AsPtr<PF_ProgPtr>, src_rect: Option<Rect>, src_opacity: i32, src: impl AsPtr<*mut PF_EffectWorld>, dest_x: i32, dest_y: i32, field: Field, transfer_mode: TransferMode, dst: impl AsPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src.as_ptr().is_null() || dst.as_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_suite_fn!(self, composite_rect, effect_ref.as_ptr(), src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x), src_opacity, src.as_ptr(), dest_x, dest_y, field.into(), transfer_mode.into(), dst.as_ptr())
+    pub fn composite_rect(&self, effect_ref: impl AsPtr<PF_ProgPtr>, src_rect: Option<Rect>, src_opacity: i32, src: impl AsPtr<*mut PF_EffectWorld>, dest_x: i32, dest_y: i32, field: Field, transfer_mode: TransferMode, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
+        call_suite_fn!(self, composite_rect, effect_ref.as_ptr(), src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x), src_opacity, src.as_ptr(), dest_x, dest_y, field.into(), transfer_mode.into(), dst.as_mut_ptr())
     }
 
     /// Blends two images, alpha-weighted. Does not deal with different-sized sources, though the destination may be either `PF_EffectWorld`.
-    pub fn blend(&self, effect_ref: impl AsPtr<PF_ProgPtr>, src1: impl AsPtr<*const PF_EffectWorld>, src2: impl AsPtr<*const PF_EffectWorld>, ratio: i32, dst: impl AsPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src1.as_ptr().is_null() || src2.as_ptr().is_null() || dst.as_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_suite_fn!(self, blend, effect_ref.as_ptr(), src1.as_ptr(), src2.as_ptr(), ratio as _, dst.as_ptr())
+    /// - `ratio` should be between 0.0 and 1.0
+    pub fn blend(&self, effect_ref: impl AsPtr<PF_ProgPtr>, src1: impl AsPtr<*const PF_EffectWorld>, src2: impl AsPtr<*const PF_EffectWorld>, ratio: f32, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+        if src1.as_ptr().is_null() || src2.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
+        call_suite_fn!(self, blend, effect_ref.as_ptr(), src1.as_ptr(), src2.as_ptr(), Fixed::from(ratio).as_fixed() as _, dst.as_mut_ptr())
     }
 
     /// Convolve an image with an arbitrary size kernel on each of the a, r, g, and b channels separately.

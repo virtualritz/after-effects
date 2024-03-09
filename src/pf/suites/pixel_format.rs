@@ -24,10 +24,10 @@ impl PixelFormatSuite {
         call_suite_fn!(self, ClearSupportedPixelFormats, effect_ref.as_ptr())
     }
 
-    pub fn new_world_of_pixel_format(&self, in_data: impl AsPtr<*mut PF_InData>, width: u32, height: u32, flags: pf::NewWorldFlags, pixel_format: pr::PixelFormat) -> Result<Layer, Error> {
+    pub fn new_world_of_pixel_format(&self, in_data: impl AsPtr<*const PF_InData>, width: u32, height: u32, flags: pf::NewWorldFlags, pixel_format: pr::PixelFormat) -> Result<Layer, Error> {
         let layer = call_suite_fn_single!(self, NewWorldOfPixelFormat -> ae_sys::PF_EffectWorld, (*in_data.as_ptr()).effect_ref, width, height, flags.bits(), pixel_format.into())?;
-        Ok(Layer::from_owned(layer, InData::from_raw(in_data.as_ptr()), |self_layer| {
-            PixelFormatSuite::new().unwrap().dispose_world(self_layer.in_data.effect_ref(), self_layer.as_mut_ptr()).unwrap();
+        Ok(Layer::from_owned(layer, in_data, |self_layer| {
+            PixelFormatSuite::new().unwrap().dispose_world(unsafe { (*self_layer.in_data_ptr).effect_ref }, self_layer.as_mut_ptr()).unwrap();
         }))
     }
 

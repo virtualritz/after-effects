@@ -53,12 +53,12 @@ impl Command {
             RawCommand::SequenceSetdown => Command::SequenceSetdown,
             RawCommand::DoDialog => Command::DoDialog,
             RawCommand::FrameSetup => Command::FrameSetup {
-                in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, InData::from_raw(in_data_ptr), None) },
-                out_layer: Layer::from_raw(output, InData::from_raw(in_data_ptr), None),
+                in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, in_data_ptr, None) },
+                out_layer: Layer::from_raw(output, in_data_ptr, None),
             },
             RawCommand::Render => Command::Render {
-                in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, InData::from_raw(in_data_ptr), None) },
-                out_layer: Layer::from_raw(output, InData::from_raw(in_data_ptr), None),
+                in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, in_data_ptr, None) },
+                out_layer: Layer::from_raw(output, in_data_ptr, None),
             },
             RawCommand::FrameSetdown => Command::FrameSetdown,
             RawCommand::UserChangedParam => Command::UserChangedParam {

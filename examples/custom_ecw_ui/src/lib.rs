@@ -1,5 +1,4 @@
 use after_effects as ae;
-use after_effects_sys as ae_sys;
 
 mod events;
 

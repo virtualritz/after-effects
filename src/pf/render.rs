@@ -284,7 +284,7 @@ impl SmartRenderCallbacks {
                     effect_world_ptr.as_mut_ptr(),
                 )
             } {
-                0 => Ok(Layer::from_raw(unsafe { effect_world_ptr.assume_init() }, InData::from_raw(self.in_data_ptr), None)),
+                0 => Ok(Layer::from_raw(unsafe { effect_world_ptr.assume_init() }, self.in_data_ptr, None)),
                 e => Err(Error::from(e)),
             }
         } else {
@@ -308,7 +308,7 @@ impl SmartRenderCallbacks {
             let mut effect_world_ptr = std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
 
             match unsafe { checkout_output((*self.in_data_ptr).effect_ref, effect_world_ptr.as_mut_ptr()) } {
-                0 => Ok(Layer::from_raw(unsafe { effect_world_ptr.assume_init() }, InData::from_raw(self.in_data_ptr), None)),
+                0 => Ok(Layer::from_raw(unsafe { effect_world_ptr.assume_init() }, self.in_data_ptr, None)),
                 e => Err(Error::from(e)),
             }
         } else {

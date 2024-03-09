@@ -190,6 +190,11 @@ impl InData {
     }
 }
 
+impl AsPtr<*const ae_sys::PF_InData> for *const ae_sys::PF_InData {
+    fn as_ptr(&self) -> *const ae_sys::PF_InData {
+        *self
+    }
+}
 impl AsPtr<*const ae_sys::PF_InData> for InData {
     fn as_ptr(&self) -> *const ae_sys::PF_InData {
         self.ptr

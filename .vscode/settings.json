@@ -1,9 +1,4 @@
 {
-    "files.associations": {
-        "chrono": "cpp",
-        "xlocale": "cpp",
-        "system_error": "cpp"
-    },
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml",
         "./after-effects-sys/Cargo.toml",
@@ -15,6 +10,8 @@
         "./examples/histo_grid/Cargo.toml",
         "./examples/custom_comp_ui/Cargo.toml",
         "./examples/resizer/Cargo.toml",
-        "./examples/color_grid/Cargo.toml"
+        "./examples/color_grid/Cargo.toml",
+        "./examples/checkout/Cargo.toml",
+        "./examples/convolutrix/Cargo.toml"
     ]
 }

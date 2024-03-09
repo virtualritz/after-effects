@@ -435,12 +435,14 @@ macro_rules! define_struct_conv {
 }
 
 macro_rules! define_enum {
-    ($raw_type:ty, $name:ident { $( $(#[$attr:meta])* $variant:ident = $value:path ),*, }) => {
+    ($raw_type:ty, $(#[$topattr:meta])* $name:ident { $( $(#[$attr:meta])* $variant:ident = $value:path ),*, }) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        #[repr(i32)]
+        $(#[$topattr])*
         pub enum $name {
             $(
                 $(#[$attr])*
-                $variant,
+                $variant = $value,
             )*
         }
 

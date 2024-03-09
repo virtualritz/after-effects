@@ -2,7 +2,7 @@ use super::*;
 use ae_sys::PF_LayerDef;
 
 pub struct Layer {
-    pub(crate) in_data: InData,
+    pub(crate) in_data_ptr: *const ae_sys::PF_InData,
     pub(crate) layer: PointerOwnership<PF_LayerDef>,
     drop_fn: Option<fn(&mut Self)>
 }
@@ -33,22 +33,22 @@ impl Debug for Layer {
 //pub dephault: A_long,
 
 impl Layer {
-    pub fn from_aegp_world(in_data: &InData, world_handle: impl AsPtr<ae_sys::AEGP_WorldH>) -> Result<Self, crate::Error> {
+    pub fn from_aegp_world(in_data: impl AsPtr<*const ae_sys::PF_InData>, world_handle: impl AsPtr<ae_sys::AEGP_WorldH>) -> Result<Self, crate::Error> {
         let mut layer: PF_LayerDef = unsafe { std::mem::zeroed() };
 
         aegp::suites::World::new()?
             .fill_out_pf_effect_world(world_handle.as_ptr(), &mut layer)?;
 
-        Ok(Self { in_data: in_data.clone(), layer: PointerOwnership::Rust(layer), drop_fn: None })
+        Ok(Self { in_data_ptr: in_data.as_ptr(), layer: PointerOwnership::Rust(layer), drop_fn: None })
     }
 
-    pub fn from_owned(layer: PF_LayerDef, in_data: InData, drop_fn: fn(&mut Self)) -> Self {
-        Self { in_data, layer: PointerOwnership::Rust(layer), drop_fn: Some(drop_fn) }
+    pub fn from_owned(layer: PF_LayerDef, in_data: impl AsPtr<*const ae_sys::PF_InData>, drop_fn: fn(&mut Self)) -> Self {
+        Self { in_data_ptr: in_data.as_ptr(), layer: PointerOwnership::Rust(layer), drop_fn: Some(drop_fn) }
     }
 
-    pub fn from_raw(layer_ptr: *mut PF_LayerDef, in_data: InData, drop_fn: Option<fn(&mut Self)>) -> Self {
+    pub fn from_raw(layer_ptr: *mut PF_LayerDef, in_data: impl AsPtr<*const ae_sys::PF_InData>, drop_fn: Option<fn(&mut Self)>) -> Self {
         assert!(!layer_ptr.is_null());
-        Self { in_data, layer: PointerOwnership::AfterEffects(layer_ptr), drop_fn }
+        Self { in_data_ptr: in_data.as_ptr(), layer: PointerOwnership::AfterEffects(layer_ptr), drop_fn }
     }
 
     pub fn width(&self) -> usize {
@@ -101,24 +101,31 @@ impl Layer {
     }
 
     pub fn copy_from(&mut self, src: &Self, src_rect: Option<Rect>, dst_rect: Option<Rect>) -> Result<(), Error> {
-        self.in_data.utils().copy(src, self, src_rect, dst_rect)
+        self.utils().copy(src, self, src_rect, dst_rect)
+    }
+
+    pub fn utils(&self) -> UtilCallbacks {
+        UtilCallbacks::new(self.in_data_ptr)
     }
 
     pub fn fill(&mut self, color: Option<Pixel8>, rect: Option<Rect>) -> Result<(), Error> {
-        if self.in_data.application_id() != *b"PrMr" {
+        if self.bit_depth() == 16 {
+            return self.fill16(color.map(pixel8_to_16), rect);
+        }
+        if unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
-                return fill_suite.fill(self.in_data.effect_ref(), self, color, rect);
+                return fill_suite.fill(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
             }
         }
-        self.in_data.utils().fill(self, color, rect)
+        self.utils().fill(self, color, rect)
     }
     pub fn fill16(&mut self, color: Option<Pixel16>, rect: Option<Rect>) -> Result<(), Error> {
-        if self.in_data.application_id() != *b"PrMr" {
+        if unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
-                return fill_suite.fill16(self.in_data.effect_ref(), self, color, rect);
+                return fill_suite.fill16(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
             }
         }
-        self.in_data.utils().fill16(self, color, rect)
+        self.utils().fill16(self, color, rect)
     }
 
     pub fn iterate_with<F>(&self, output: &mut Self, progress_base: i32, progress_final: i32, area: Option<Rect>, cb: F) -> Result<(), Error>
@@ -129,15 +136,15 @@ impl Layer {
 
         let self_ptr = Some(self.as_ptr());
         match self.bit_depth() {
-            8 => self.in_data.utils().iterate(self_ptr, output.as_mut_ptr(), progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
+            8 => self.utils().iterate(self_ptr, output.as_mut_ptr(), progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
                 cb(x, y, GenericPixel::Pixel8(in_pixel), GenericPixelMut::Pixel8(out_pixel))
             }),
-            16 => self.in_data.utils().iterate16(self_ptr, output.as_mut_ptr(), progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
+            16 => self.utils().iterate16(self_ptr, output.as_mut_ptr(), progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
                 cb(x, y, GenericPixel::Pixel16(in_pixel), GenericPixelMut::Pixel16(out_pixel))
             }),
             32 => {
                 let suite = pf::suites::IterateFloat::new()?;
-                suite.iterate(&self.in_data, self_ptr, output.as_mut_ptr(), progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
+                suite.iterate(self.in_data_ptr, self_ptr, output.as_mut_ptr(), progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
                     cb(x, y, GenericPixel::PixelF32(in_pixel), GenericPixelMut::PixelF32(out_pixel))
                 })
             },
@@ -151,15 +158,15 @@ impl Layer {
     {
         let self_ptr = self.as_mut_ptr();
         match self.bit_depth() {
-            8 => self.in_data.utils().iterate(None, self_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
+            8 => self.utils().iterate(None, self_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
                 cb(x, y, GenericPixelMut::Pixel8(out_pixel))
             }),
-            16 => self.in_data.utils().iterate16(None, self_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
+            16 => self.utils().iterate16(None, self_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
                 cb(x, y, GenericPixelMut::Pixel16(out_pixel))
             }),
             32 => {
                 let suite = pf::suites::IterateFloat::new()?;
-                suite.iterate(&self.in_data, None, self_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
+                suite.iterate(self.in_data_ptr, None, self_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
                     cb(x, y, GenericPixelMut::PixelF32(out_pixel))
                 })
             },
@@ -258,6 +265,11 @@ impl AsPtr<*const ae_sys::PF_EffectWorld> for Layer {
 impl AsPtr<*const ae_sys::PF_EffectWorld> for &Layer {
     fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
         &*self.layer
+    }
+}
+impl AsPtr<*const ae_sys::PF_EffectWorld> for *const ae_sys::PF_EffectWorld {
+    fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
+        *self
     }
 }
 

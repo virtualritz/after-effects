@@ -178,12 +178,12 @@ macro_rules! define_iterate_lut_and_generic {
 
 pub const ONCE_PER_PROCESSOR: i32 = ae_sys::PF_Iterations_ONCE_PER_PROCESSOR as i32;
 
-pub struct UtilCallbacks(InData);
+pub struct UtilCallbacks(*const ae_sys::PF_InData);
 
 impl UtilCallbacks {
-    pub fn new(in_data: InData) -> Self {
+    pub fn new(in_data: impl AsPtr<*const ae_sys::PF_InData>) -> Self {
         assert!(!in_data.as_ptr().is_null());
-        Self(in_data)
+        Self(in_data.as_ptr())
     }
 
     /// Composite a rectangle from one `PF_EffectWorld` into another, using one of After Effects' transfer modes.
@@ -193,15 +193,16 @@ impl UtilCallbacks {
     /// * `dest_x`, `dest_y` - upper left-hand corner of src rect in composite image
     /// * `field` - which scanlines to render ([`Field::Frame`], [`Field::Upper`] or [`Field::Lower`])
     /// * `transfer_mode` - can be [`TransferMode::Copy`], [`TransferMode::Behind`] or [`TransferMode::InFront`]
-    pub fn composite_rect(&self, src_rect: Option<Rect>, src_opacity: i32, src: impl AsPtr<*mut PF_EffectWorld>, dest_x: i32, dest_y: i32, field: Field, transfer_mode: TransferMode, dst: impl AsPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src.as_ptr().is_null() || dst.as_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, composite_rect, src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x), src_opacity, src.as_ptr(), dest_x, dest_y, field.into(), transfer_mode.into(), dst.as_ptr())
+    pub fn composite_rect(&self, src_rect: Option<Rect>, src_opacity: i32, src: impl AsPtr<*mut PF_EffectWorld>, dest_x: i32, dest_y: i32, field: Field, transfer_mode: TransferMode, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
+        call_fn!(self, composite_rect, src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x), src_opacity, src.as_ptr(), dest_x, dest_y, field.into(), transfer_mode.into(), dst.as_mut_ptr())
     }
 
     /// Blends two images, alpha-weighted. Does not deal with different-sized sources, though the destination may be either `PF_EffectWorld`.
-    pub fn blend(&self, src1: impl AsPtr<*const PF_EffectWorld>, src2: impl AsPtr<*const PF_EffectWorld>, ratio: i32, dst: impl AsPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src1.as_ptr().is_null() || src2.as_ptr().is_null() || dst.as_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, blend, src1.as_ptr(), src2.as_ptr(), ratio as _, dst.as_ptr())
+    /// - `ratio` should be between 0.0 and 1.0
+    pub fn blend(&self, src1: impl AsPtr<*const PF_EffectWorld>, src2: impl AsPtr<*const PF_EffectWorld>, ratio: f32, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+        if src1.as_ptr().is_null() || src2.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
+        call_fn!(self, blend, src1.as_ptr(), src2.as_ptr(), Fixed::from(ratio).as_fixed(), dst.as_mut_ptr())
     }
 
     /// Convolve an image with an arbitrary size kernel on each of the a, r, g, and b channels separately.
@@ -244,9 +245,9 @@ impl UtilCallbacks {
     /// * `forward` - `true` means convert non-premultiplied to pre-multiplied; `false` means un-pre-multiply.
     ///
     /// Quality independent.
-    pub fn premultiply(&self, forward: bool, dst: impl AsPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if dst.as_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, premultiply, forward as _, dst.as_ptr())
+    pub fn premultiply(&self, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+        if dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
+        call_fn!(self, premultiply, forward as _, dst.as_mut_ptr())
     }
 
     /// Converts to (and from) having r, g, and b color values premultiplied with any color to represent the alpha channel.
@@ -254,9 +255,9 @@ impl UtilCallbacks {
     /// * `forward` - `true` means convert non-premultiplied to pre-multiplied; `false` means un-pre-multiply.
     ///
     /// To convert between premul and straight pixel buffers where the color channels were matted with a color other than black.
-    pub fn premultiply_color(&self, src: impl AsPtr<*mut PF_EffectWorld>, color: &Pixel8, forward: bool, dst: impl AsPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src.as_ptr().is_null() || dst.as_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, premultiply_color, src.as_ptr(), color, forward as _, dst.as_ptr())
+    pub fn premultiply_color(&self, src: impl AsPtr<*mut PF_EffectWorld>, color: &Pixel8, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
+        call_fn!(self, premultiply_color, src.as_ptr(), color, forward as _, dst.as_mut_ptr())
     }
 
     /// Converts to (and from) having r, g, and b color values premultiplied with any color to represent the alpha channel.
@@ -264,9 +265,9 @@ impl UtilCallbacks {
     /// * `forward` - `true` means convert non-premultiplied to pre-multiplied; `false` means un-pre-multiply.
     ///
     /// To convert between premul and straight pixel buffers where the color channels were matted with a color other than black.
-    pub fn premultiply_color16(&self, src: impl AsPtr<*mut PF_EffectWorld>, color: &Pixel16, forward: bool, dst: impl AsPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src.as_ptr().is_null() || dst.as_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, premultiply_color16, src.as_ptr(), color, forward as _, dst.as_ptr())
+    pub fn premultiply_color16(&self, src: impl AsPtr<*mut PF_EffectWorld>, color: &Pixel16, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
+        call_fn!(self, premultiply_color16, src.as_ptr(), color, forward as _, dst.as_mut_ptr())
     }
 
     /// Call this routine before you plan to perform a large number of image resamplings.
@@ -323,7 +324,7 @@ impl UtilCallbacks {
 
     pub fn host_new_handle(&self, size: usize) -> Result<RawHandle, Error> {
         unsafe {
-            let in_data = &(*self.0.as_ptr());
+            let in_data = &(*self.0);
             if size == 0 || in_data.utils.is_null() {
                 return Err(Error::BadCallbackParameter);
             }
@@ -347,11 +348,11 @@ impl UtilCallbacks {
     }
 
     /// This creates a new [`EffectWorld`] for scratch for you. You must dispose of it. This is quality independent.
-    pub fn new_world(&self, width: i32, height: i32, flags: NewWorldFlags) -> Result<Layer, Error> {
+    pub fn new_world(&self, width: usize, height: usize, flags: NewWorldFlags) -> Result<Layer, Error> {
         let mut world = unsafe { std::mem::zeroed() };
         call_fn!(self, new_world, width as _, height as _, flags.bits() as _, &mut world)?;
         Ok(Layer::from_owned(world, self.0.clone(), |self_layer| {
-            UtilCallbacks::new(self_layer.in_data.clone()).dispose_world(self_layer.as_mut_ptr()).unwrap();
+            UtilCallbacks::new(self_layer.in_data_ptr).dispose_world(self_layer.as_mut_ptr()).unwrap();
         }))
     }
 

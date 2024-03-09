@@ -497,6 +497,12 @@ impl Rect {
     pub fn height(&self) -> i32 {
         self.bottom - self.top
     }
+    pub fn origin(&self) -> Point {
+        Point {
+            h: self.left,
+            v: self.top,
+        }
+    }
 
     pub fn union<'a>(&'a mut self, other: &Rect) -> &'a mut Rect {
         if other.is_empty() {

@@ -1,6 +1,6 @@
 use crate::*;
 use std::ffi::c_void;
-use ae_sys:: { A_u_long, PF_EffectWorld, PF_ProgPtr };
+use ae_sys:: { A_u_long, PF_EffectWorld, PF_InData, PF_ProgPtr };
 
 define_suite!(
     GPUDeviceSuite,
@@ -115,11 +115,11 @@ impl GPUDeviceSuite {
     /// * `pixel_format` - The pixel format of the effect world, only gpu formats are accepted.
     /// * `clear_pix` - Pass in 'true' for a transparent black frame.
     /// Returns the handle to the effect world to be created.
-    pub fn create_gpu_world(&self, in_data: &InData, device_index: usize, width: i32, height: i32, pixel_aspect_ratio: RationalScale, field_type: Field, pixel_format: pf::PixelFormat, clear_pix: bool) -> Result<Layer, Error> {
-        let layer = call_suite_fn_single!(self, CreateGPUWorld -> *mut PF_EffectWorld, in_data.effect_ref().as_ptr(), device_index as _, width, height, pixel_aspect_ratio.into(), field_type.into(), pixel_format.into(), clear_pix as _)?;
+    pub fn create_gpu_world(&self, in_data: impl AsPtr<*const PF_InData>, device_index: usize, width: i32, height: i32, pixel_aspect_ratio: RationalScale, field_type: Field, pixel_format: pf::PixelFormat, clear_pix: bool) -> Result<Layer, Error> {
+        let layer = call_suite_fn_single!(self, CreateGPUWorld -> *mut PF_EffectWorld, (*in_data.as_ptr()).effect_ref, device_index as _, width, height, pixel_aspect_ratio.into(), field_type.into(), pixel_format.into(), clear_pix as _)?;
 
-        Ok(Layer::from_raw(layer, in_data.clone(), Some(|self_layer| {
-            GPUDeviceSuite::new().unwrap().dispose_gpu_world(self_layer.in_data.effect_ref().as_ptr(), self_layer.as_mut_ptr()).unwrap();
+        Ok(Layer::from_raw(layer, in_data, Some(|self_layer| {
+            GPUDeviceSuite::new().unwrap().dispose_gpu_world(unsafe { (*self_layer.in_data_ptr).effect_ref }, self_layer.as_mut_ptr()).unwrap();
         })))
     }
 

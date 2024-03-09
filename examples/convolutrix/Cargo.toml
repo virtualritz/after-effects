@@ -1,0 +1,18 @@
+[package]
+name = "convolutrix"
+version = "0.0.1"
+authors = ["Adrian <adrian.eddy@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+after-effects = { path = "../../" }
+after-effects-sys = { path = "../../after-effects-sys" }
+log = "0.4"
+fastrand = "2.0"
+
+[build-dependencies]
+pipl = { path = "../../pipl" }

@@ -101,7 +101,7 @@ impl IterateFloatSuite {
     #[inline(always)] fn get_in_data(&self) -> *const ae_sys::PF_InData { std::ptr::null() }
     #[inline(always)] fn get_funcs_ptr(&self) -> *const ae_sys::PF_iterateFloatSuite2 { self.suite_ptr }
 
-    define_iterate!(+ in_data: &InData, iterate,                       PixelF32,  PF_PixelFloat);
-    define_iterate!(+ in_data: &InData, iterate_origin,                PixelF32,  PF_PixelFloat,   origin: Option<Point>);
-    define_iterate!(+ in_data: &InData, iterate_origin_non_clip_src,   PixelF32,  PF_PixelFloat,   origin: Option<Point>);
+    define_iterate!(+ in_data: impl AsPtr<*const ae_sys::PF_InData>, iterate,                       PixelF32,  PF_PixelFloat);
+    define_iterate!(+ in_data: impl AsPtr<*const ae_sys::PF_InData>, iterate_origin,                PixelF32,  PF_PixelFloat,   origin: Option<Point>);
+    define_iterate!(+ in_data: impl AsPtr<*const ae_sys::PF_InData>, iterate_origin_non_clip_src,   PixelF32,  PF_PixelFloat,   origin: Option<Point>);
 }
