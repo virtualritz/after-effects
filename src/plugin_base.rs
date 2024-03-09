@@ -244,6 +244,9 @@ macro_rules! define_plugin {
             Ok(())
         }
 
+        #[cfg(debug_assertions)]
+        static BACKTRACE_STR: std::sync::RwLock<String> = std::sync::RwLock::new(String::new());
+
         #[no_mangle]
         pub unsafe extern "C" fn PluginDataEntryFunction2(
             in_ptr: after_effects_sys::PF_PluginDataPtr,
@@ -296,6 +299,23 @@ macro_rules! define_plugin {
                 (*out_data_ptr).my_version = env!("PIPL_VERSION")  .parse::<u32>().unwrap();
                 (*out_data_ptr).out_flags  = env!("PIPL_OUTFLAGS") .parse::<i32>().unwrap();
                 (*out_data_ptr).out_flags2 = env!("PIPL_OUTFLAGS2").parse::<i32>().unwrap();
+
+                #[cfg(debug_assertions)]
+                {
+                    #[cfg(windows)]
+                    {
+                        let _ = log::set_logger(&$crate::win_dbg_logger::DEBUGGER_LOGGER);
+                    }
+                    #[cfg(macos)]
+                    {
+                        let _ = $crate::oslog::OsLogger::new("after-effects-plugin").init();
+                    }
+                    log::set_max_level(log::LevelFilter::Debug);
+
+                    std::panic::set_hook(Box::new(|_| {
+                        *BACKTRACE_STR.write().unwrap() = std::backtrace::Backtrace::force_capture().to_string();
+                    }));
+                }
             }
 
             #[cfg(threaded_rendering)]
@@ -311,6 +331,44 @@ macro_rules! define_plugin {
             // struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", RawCommand::from(self.cmd), std::thread::current().id()); } }
             // let _x = X { cmd: cmd as i32 };
 
+            #[cfg(debug_assertions)]
+            {
+                let result = std::panic::catch_unwind(|| {
+                    handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra)
+                });
+                match result {
+                    Ok(Ok(_)) => after_effects_sys::PF_Err_NONE as after_effects_sys::PF_Err,
+                    Ok(Err(e)) => {
+                        log::error!("EffectMain returned error: {e:?}");
+
+                        if e != Error::InterruptCancel && !out_data_ptr.is_null() {
+                            $crate::OutData::from_raw(out_data_ptr).set_error_msg(&format!("EffectMain returned error: {e:?}"));
+                        }
+
+                        e as after_effects_sys::PF_Err
+                    }
+                    Err(e) => {
+                        let s = if let Some(s) = e.downcast_ref::<&str>() { s.to_string() }
+                           else if let Some(s) = e.downcast_ref::<String>() { s.clone() }
+                           else { format!("{e:?}") };
+
+                        let mut msg = format!("EffectMain panicked! {s}");
+
+                        log::error!("{msg}, backtrace: {}", BACKTRACE_STR.read().unwrap());
+
+                        if msg.len() > 255 {
+                            msg.truncate(255);
+                        }
+                        if !out_data_ptr.is_null() {
+                            $crate::OutData::from_raw(out_data_ptr).set_error_msg(&msg);
+                        }
+
+                        after_effects_sys::PF_Err_NONE as after_effects_sys::PF_Err
+                    }
+                }
+            }
+
+            #[cfg(not(debug_assertions))]
             match handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra) {
                 Ok(_) => after_effects_sys::PF_Err_NONE as after_effects_sys::PF_Err,
                 Err(e) => {

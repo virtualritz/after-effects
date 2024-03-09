@@ -18,34 +18,41 @@ release:
 [macos]
 build:
     cargo build
-    just -f {{justfile()}} create_bundle {{TargetDir}}/debug
+    just -f {{justfile()}} create_bundle debug {{TargetDir}}/debug
 
 [macos]
 release:
     cargo build --release
-    just -f {{justfile()}} create_bundle {{TargetDir}}/release
+    just -f {{justfile()}} create_bundle release {{TargetDir}}/release
 
 [macos]
-create_bundle TargetDir:
+create_bundle profile TargetDir:
+    #!/bin/bash
+    set -e
     echo "Creating universal plugin bundle"
     rm -Rf {{TargetDir}}/{{PluginName}}.plugin
     mkdir -p {{TargetDir}}/{{PluginName}}.plugin/Contents/Resources
     mkdir -p {{TargetDir}}/{{PluginName}}.plugin/Contents/MacOS
-
-    rustup target add aarch64-apple-darwin
-    rustup target add x86_64-apple-darwin
-
-    cargo build --release --target x86_64-apple-darwin
-    cargo build --release --target aarch64-apple-darwin
 
     echo "eFKTFXTC" >> {{TargetDir}}/{{PluginName}}.plugin/Contents/PkgInfo
     /usr/libexec/PlistBuddy -c 'add CFBundlePackageType string eFKT' {{TargetDir}}/{{PluginName}}.plugin/Contents/Info.plist
     /usr/libexec/PlistBuddy -c 'add CFBundleSignature string FXTC' {{TargetDir}}/{{PluginName}}.plugin/Contents/Info.plist
     /usr/libexec/PlistBuddy -c 'add CFBundleIdentifier string {{BundleIdentifier}}' {{TargetDir}}/{{PluginName}}.plugin/Contents/Info.plist
 
-    cp {{TargetDir}}/x86_64-apple-darwin/release/{{BinaryName}}.rsrc {{TargetDir}}/{{PluginName}}.plugin/Contents/Resources/{{PluginName}}.rsrc
+    if [ "{{profile}}" == "release" ]; then
+        # Build universal binary
+        rustup target add aarch64-apple-darwin
+        rustup target add x86_64-apple-darwin
 
-    lipo {{TargetDir}}/{x86_64,aarch64}-apple-darwin/release/{{BinaryName}}.dylib -create -output {{TargetDir}}/{{PluginName}}.plugin/Contents/MacOS/{{BinaryName}}.dylib
+        cargo build --release --target x86_64-apple-darwin
+        cargo build --release --target aarch64-apple-darwin
+
+        cp {{TargetDir}}/x86_64-apple-darwin/release/{{BinaryName}}.rsrc {{TargetDir}}/{{PluginName}}.plugin/Contents/Resources/{{PluginName}}.rsrc
+        lipo {{TargetDir}}/{x86_64,aarch64}-apple-darwin/release/{{BinaryName}}.dylib -create -output {{TargetDir}}/{{PluginName}}.plugin/Contents/MacOS/{{BinaryName}}.dylib
+    else
+        cp {{TargetDir}}/{{BinaryName}}.rsrc {{TargetDir}}/{{PluginName}}.plugin/Contents/Resources/{{PluginName}}.rsrc
+    fi
+
     mv {{TargetDir}}/{{PluginName}}.plugin/Contents/MacOS/{{BinaryName}}.dylib {{TargetDir}}/{{PluginName}}.plugin/Contents/MacOS/{{PluginName}}
 
     # codesign with the first development cert we can find using its hash

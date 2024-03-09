@@ -99,6 +99,10 @@ pub use cstr_literal;
 pub use fastrand;
 pub use parking_lot;
 pub use paste;
+#[cfg(windows)]
+pub use win_dbg_logger;
+#[cfg(macos)]
+pub use oslog;
 
 thread_local!(
     pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> = RefCell::new(ptr::null_mut())

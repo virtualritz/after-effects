@@ -90,8 +90,6 @@ impl AdobePluginInstance for GammaTable {
     fn render(&self, _: &mut PluginState, _: &Layer, _: &mut Layer) -> Result<(), ae::Error> { Ok(()) }
 
     fn handle_command(&mut self, plugin: &mut PluginState, cmd: ae::Command) -> Result<(), ae::Error> {
-        log::info!("sequence command: {:?}, thread: {:?}, ptr: {:?}", cmd, std::thread::current().id(), self as *const _);
-
         let in_data = &plugin.in_data;
 
         match cmd {

@@ -33,3 +33,9 @@ parking_lot = "0.12"
 fastrand = "2.0"
 hash32 = "0.3"
 once_cell = "1.19"
+
+[target.'cfg(windows)'.dependencies]
+win_dbg_logger = "0.1"
+
+[target.'cfg(macos)'.dependencies]
+oslog = "0.2"
