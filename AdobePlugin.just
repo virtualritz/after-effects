@@ -56,7 +56,7 @@ create_bundle profile TargetDir:
     fi
 
     # codesign with the first development cert we can find using its hash
-    codesign --options runtime --timestamp -strict  --sign $( security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}' ) {{TargetDir}}/{{PluginName}}.plugin
+    codesign --options runtime --timestamp -strict  --sign $( security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}' ) {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
 
     # Install
     sudo cp -rf "{{TargetDir}}/{{profile}}/{{PluginName}}.plugin" "/Applications/Adobe After Effects 2024/Plug-ins/"
