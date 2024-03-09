@@ -86,15 +86,15 @@ enum {
     suiteError_StringNotFound       = 0x800A0000,
     suiteError_StringBufferTooSmall = 0x800A0001
 };
-#define kPrSDKStringSuite			"MediaCore StringSuite"
-#define kPrSDKStringSuiteVersion	1
+#define kPrSDKStringSuite           "MediaCore StringSuite"
+#define kPrSDKStringSuiteVersion    1
 
 #pragma pack(push, 1)
 typedef struct {
-	prSuiteError (*DisposeString)(const PrSDKString *inSDKString);
-	prSuiteError (*AllocateFromUTF8)(const uint8_t *inUTF8String, PrSDKString *outSDKString);
-	prSuiteError (*CopyToUTF8String)(const PrSDKString *inSDKString, uint8_t *outUTF8StringBuffer, csSDK_uint32 *ioUTF8StringBufferSizeInElements);
-	prSuiteError (*AllocateFromUTF16)(const uint16_t *inUTF16String, PrSDKString *outSDKString);
-	prSuiteError (*CopyToUTF16String)(const PrSDKString *inSDKString, uint16_t *outUTF16StringBuffer, csSDK_uint32 *ioUTF16StringBufferSizeInElements);
+    prSuiteError (*DisposeString)(const PrSDKString *inSDKString);
+    prSuiteError (*AllocateFromUTF8)(const uint8_t *inUTF8String, PrSDKString *outSDKString);
+    prSuiteError (*CopyToUTF8String)(const PrSDKString *inSDKString, uint8_t *outUTF8StringBuffer, csSDK_uint32 *ioUTF8StringBufferSizeInElements);
+    prSuiteError (*AllocateFromUTF16)(const uint16_t *inUTF16String, PrSDKString *outSDKString);
+    prSuiteError (*CopyToUTF16String)(const PrSDKString *inSDKString, uint16_t *outUTF16StringBuffer, csSDK_uint32 *ioUTF16StringBufferSizeInElements);
 } PrSDKStringSuite;
 #pragma pack(pop)

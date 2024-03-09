@@ -106,7 +106,7 @@ AfterEffectsSDK
 | ✅ Composite            | ✅ Background Frame               |            |                      |
 | 🔳 Compute              | 🔳 Batch Sampling                 |            |                      |
 | ✅ Dynamic Stream       | ✅ Cache On Load                  |            |                      |
-| ✅ Effect               | 🔳 Channel                        |            |                      |
+| ✅ Effect               | ✅ Channel                        |            |                      |
 | 🔳 File Import Manager  | ✅ Color Settings                 |            |                      |
 | ✅ Footage              | ✅ Color Callbacks                |            |                      |
 | 🔳 Hash                 | ✅ Color Callbacks 16             |            |                      |

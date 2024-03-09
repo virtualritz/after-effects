@@ -132,7 +132,7 @@ impl AdobePluginGlobal for Plugin {
                     let mut kernel_sum = 256.0 * 9.0;
                     let mut conv_kernel = [0i32; 9];
                     conv_kernel[4] = (sharpen * kernel_sum).trunc() as _;
-                    kernel_sum	= (256.0 * 9.0 - conv_kernel[4] as f32) / 4.0;
+                    kernel_sum = (256.0 * 9.0 - conv_kernel[4] as f32) / 4.0;
                     let sum_long = kernel_sum.trunc() as _;
                     conv_kernel[1] = sum_long;
                     conv_kernel[3] = sum_long;
@@ -141,7 +141,7 @@ impl AdobePluginGlobal for Plugin {
                     let kernel_ptr = conv_kernel.as_mut_ptr() as *mut _;
 
                     // Premiere Pro/Elements doesn't support WorldTransformSuite1, but it does support many of the callbacks in utils
-                    if in_data.application_id() != *b"PrMr"	{
+                    if in_data.application_id() != *b"PrMr" {
                         ae::pf::suites::WorldTransform::new()?.convolve(
                             in_data.effect_ref(),
                             &in_layer,

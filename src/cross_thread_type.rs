@@ -31,7 +31,7 @@
 /// You can do it in `GlobalSetdown`.
 #[macro_export]
 macro_rules! define_cross_thread_type {
-	($type_name:ty) => {
+    ($type_name:ty) => {
         $crate::paste::item! {
             pub struct [<CrossThread $type_name>] {
                 id: u64

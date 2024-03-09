@@ -1,0 +1,5 @@
+PluginName       := "GammaTable"
+BundleIdentifier := "com.adobe.AfterEffects.{{PluginName}}"
+BinaryName       := lowercase(PluginName)
+
+import '../../Justfile'

@@ -43,9 +43,9 @@
 #ifdef HAS_AE_SDK
 #   include "AE_EffectCB.h"
 #   include "AE_CacheOnLoadSuite.h"
-#	include "PrSDKAESupport.h"
-#	include "PrSDKOpaqueEffectDataSuite.h"
-#	include "Smart_Utils.h"
+#   include "PrSDKAESupport.h"
+#   include "PrSDKOpaqueEffectDataSuite.h"
+#   include "Smart_Utils.h"
 #endif
 
 #include "SPBasic.h"
@@ -53,6 +53,6 @@
 // GPU format is defined elsewhere in the SDK, so copy it here
 #define MAKE_PIXEL_FORMAT_FOURCC(ch0, ch1, ch2, ch3) ((uint32_t)(uint8_t)(ch0) | ((uint32_t)(uint8_t)(ch1) << 8) | ((uint32_t)(uint8_t)(ch2) << 16) | ((uint32_t)(uint8_t)(ch3) << 24 ))
 enum PrPixelFormatGpu {
-	GPU_BGRA_4444_32f = MAKE_PIXEL_FORMAT_FOURCC('@', 'C', 'D', 'A'), // GPU, BGRA, 32 bits floating point per channel.
-	GPU_BGRA_4444_16f = MAKE_PIXEL_FORMAT_FOURCC('@', 'C', 'D', 'a'), // GPU, BGRA, 16 bits floating point per channel.
+    GPU_BGRA_4444_32f = MAKE_PIXEL_FORMAT_FOURCC('@', 'C', 'D', 'A'), // GPU, BGRA, 32 bits floating point per channel.
+    GPU_BGRA_4444_16f = MAKE_PIXEL_FORMAT_FOURCC('@', 'C', 'D', 'a'), // GPU, BGRA, 16 bits floating point per channel.
 };

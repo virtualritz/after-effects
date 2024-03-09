@@ -21,6 +21,20 @@ pub fn pixel8_to_16(p: Pixel8) -> Pixel16 {
     }
 }
 
+pub fn pixel16_to_8(p: Pixel16) -> Pixel8 {
+    fn convert_16_to_8(x: u16) -> u8 {
+        (((x as u32 * ae_sys::PF_MAX_CHAN8) + ae_sys::PF_HALF_CHAN16) / ae_sys::PF_MAX_CHAN16) as u8
+    }
+
+    Pixel8 {
+        alpha: convert_16_to_8(p.alpha),
+        red:   convert_16_to_8(p.red),
+        green: convert_16_to_8(p.green),
+        blue:  convert_16_to_8(p.blue),
+    }
+}
+
+
 pub enum GenericPixel<'a> {
     Pixel8(&'a Pixel8),
     Pixel16(&'a Pixel16),

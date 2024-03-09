@@ -98,9 +98,9 @@ fn sdk_invert_proc_amp() {
         },
         Property::AE_Effect_Info_Flags(0),
         Property::AE_Effect_Global_OutFlags(
-			OutFlags::PixIndependent |
-			OutFlags::DeepColorAware
-		),
+            OutFlags::PixIndependent |
+            OutFlags::DeepColorAware
+        ),
         Property::AE_Effect_Global_OutFlags_2(
             OutFlags2::FloatColorAware |
             OutFlags2::SupportsSmartRender |

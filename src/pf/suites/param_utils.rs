@@ -12,7 +12,7 @@ define_suite!(
     /// At least some of these functions are provided by several third-party hosts. These functions are especially handy for effects with supervised parameters.
     ///
     ///
-	/// ### [`current_state()`](Self::current_state) / [`are_states_identical()`](Self::are_states_identical)
+    /// ### [`current_state()`](Self::current_state) / [`are_states_identical()`](Self::are_states_identical)
     /// This API lets you determine if a set of your inputs (either layers, other properties, or both) are different between when you first called [`current_state()`](Self::current_state) and a current call, so it can/ be used for caching.
     /// You can specify a range of time to consider or all of time.
     ///
@@ -57,17 +57,17 @@ impl ParamUtilsSuite {
     ///
     /// You can call this function for each param whose UI settings you want to change when handling a `Command::UserChangedParam` or `Command::UpdateParamsUi`.
     /// These changes are cosmetic only, and don't go into the undo buffer.
-	///
-	/// The ONLY fields that can be changed in this way are:
-	///     PF_ParamDef
-	///         ui_flags: `PF_PUI_ECW_SEPARATOR`, `PF_PUI_DISABLED` only (and `PF_PUI_INVISIBLE` in Premiere).
-	///         ui_width
-	///         ui_height
-	///         name
-	///         flags: `PF_ParamFlag_COLLAPSE_TWIRLY` only
-	///     PF_ParamDefUnion:
-	///         slider_min, slider_max, precision, display_flags of any slider type
-	/// For `PF_PUI_STD_CONTROL_ONLY` params, you can also change the value field by setting `PF_ChangeFlag_CHANGED_VALUE` before returning.
+    ///
+    /// The ONLY fields that can be changed in this way are:
+    ///     PF_ParamDef
+    ///         ui_flags: `PF_PUI_ECW_SEPARATOR`, `PF_PUI_DISABLED` only (and `PF_PUI_INVISIBLE` in Premiere).
+    ///         ui_width
+    ///         ui_height
+    ///         name
+    ///         flags: `PF_ParamFlag_COLLAPSE_TWIRLY` only
+    ///     PF_ParamDefUnion:
+    ///         slider_min, slider_max, precision, display_flags of any slider type
+    /// For `PF_PUI_STD_CONTROL_ONLY` params, you can also change the value field by setting `PF_ChangeFlag_CHANGED_VALUE` before returning.
     /// But you are not allowed to change the value during `PF_Cmd_UPDATE_PARAMS_UI`.
     pub fn update_param_ui(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, param_def: &ParamDef) -> Result<(), Error> {
         call_suite_fn!(self, PF_UpdateParamUI, effect_ref.as_ptr(), param_index, param_def.as_ref())

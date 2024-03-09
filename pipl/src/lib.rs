@@ -111,14 +111,14 @@ impl PIPLType {
 
 bitflags::bitflags! {
     #[derive(Debug)]
-	/// The out_flags field of the OutData can be set to an OR-ed combination of these flags to communicate various things to the driver program.
+    /// The out_flags field of the OutData can be set to an OR-ed combination of these flags to communicate various things to the driver program.
     pub struct OutFlags: u32 {
         /// This is the "empty" setting -- no outflags.
         const None = 0;
         /// Obsoleted in AE 2015 (does nothing when set).
         ///
-		/// Set this flag if your effect expects its Macintosh resource fork to be open at any time other than global setup.  Note that this does not mean that
-		/// the resource fork will be kept open at all times, just whenever the effect is being executed.
+        /// Set this flag if your effect expects its Macintosh resource fork to be open at any time other than global setup.  Note that this does not mean that
+        /// the resource fork will be kept open at all times, just whenever the effect is being executed.
         const KeepResourceOpen             = 1 << 0;  // PF_Cmd_GLOBAL_SETUP
         /// Set this flag if the effect calls get_param to inquire a parameter at a time besides the current one (e.g. to get the previous video frame).
         /// This should be sent, if it is going to be sent, at PF_Cmd_GLOBAL_SETUP. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.

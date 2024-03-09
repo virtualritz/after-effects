@@ -52,8 +52,7 @@ bitflags! {
         const RADIO_BUTTON = ae_sys::PF_PUI_RADIO_BUTTON as ae_sys::A_long;
         /// In Ae as of CS6, this hides the parameter UI in both the Effect Controls and Timeline.
         /// in Premiere since earlier than that, this hides the parameter UI in the Effect Controls,
-        ///	which includes the keyframe track; for PPro only, the flag is dynamic and can be cleared
-        ///	to make the parameter visible again.
+        /// which includes the keyframe track; for PPro only, the flag is dynamic and can be cleared to make the parameter visible again.
         const INVISIBLE = ae_sys::PF_PUI_INVISIBLE as ae_sys::A_long;
     }
 }
@@ -98,7 +97,7 @@ bitflags! {
         /// Set this flag for each param whose value you change when handling a `PF_Cmd_USER_CHANGED_PARAM` or specific `PF_Cmd_EVENT` events (`PF_Event_DO_CLICK`, `PF_Event_DRAG`, & `PF_Event_KEYDOWN`).
         /// If set during `PF_Cmd_EVENT`, but sure to also set `PF_EO_HANDLED_EVENT` before returning.
         ///
-		/// You can change as many params as you want at once. These changes are undoable and re-doable by the user.
+        /// You can change as many params as you want at once. These changes are undoable and re-doable by the user.
         ///
         /// Exception: do not set PF_PUI_STD_CONTROL_ONLY param values with this flag, use PF_UpdateParamUI() instead.
         const CHANGED_VALUE = ae_sys::PF_ChangeFlag_CHANGED_VALUE as ae_sys::A_long;

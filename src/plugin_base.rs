@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! define_plugin {
-	($global_type:ty, $sequence_type:tt, $params_type:ty) => {
+    ($global_type:ty, $sequence_type:tt, $params_type:ty) => {
         use $crate::*;
         use std::collections::HashMap;
         use std::rc::Rc;
@@ -82,7 +82,7 @@ macro_rules! define_plugin {
                 // Read-only sequence data available through a suite only
                 let seq_ptr = in_data.effect().const_sequence_data().unwrap_or((*in_data.as_ptr()).sequence_data as *const _);
                 if !seq_ptr.is_null() {
-                    let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _, true)?;
+                    let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _, false)?;
                     Some((instance_handle, false))
                 } else {
                     log::error!("Sequence data pointer got through EffectSequenceDataSuite is null in cmd: {:?}!", cmd);
@@ -93,7 +93,8 @@ macro_rules! define_plugin {
                     log::error!("Sequence data pointer is null in cmd: {:?}!", cmd);
                     None
                 } else {
-                    let instance_handle = pf::Handle::<S>::from_raw((*in_data.as_ptr()).sequence_data, true)?;
+                    let should_dispose_sequence = cmd == RawCommand::SequenceSetdown || cmd == RawCommand::SequenceFlatten;
+                    let instance_handle = pf::Handle::<S>::from_raw((*in_data.as_ptr()).sequence_data, should_dispose_sequence)?;
                     Some((instance_handle, false))
                 }
             })
@@ -127,7 +128,7 @@ macro_rules! define_plugin {
                     log::error!("Global data pointer is null in cmd: {:?}!", cmd);
                     return Err(Error::BadCallbackParameter);
                 }
-                pf::Handle::<GlobalData>::from_raw((*in_data_ptr).global_data, true)?
+                pf::Handle::<GlobalData>::from_raw((*in_data_ptr).global_data, cmd == RawCommand::GlobalSetdown)?
             };
 
             // Allocate or restore sequence data pointer
@@ -144,7 +145,11 @@ macro_rules! define_plugin {
                 (*out_data_ptr).num_params = params.num_params() as i32;
             }
 
-            let params_slice = if params.is_null() || global_inst.params_num == 0 { &[] } else { unsafe { std::slice::from_raw_parts(params, global_inst.params_num) } };
+            let params_slice = if params.is_null() || global_inst.params_num == 0 {
+                &[]
+            } else {
+                unsafe { std::slice::from_raw_parts(params, global_inst.params_num) }
+            };
 
             let mut params_state = Parameters::<$params_type>::with_params(in_data_ptr, params_slice, global_inst.params_map.clone(), global_inst.params_num);
             let mut plugin_state = PluginState {
@@ -200,11 +205,7 @@ macro_rules! define_plugin {
                     RawCommand::SequenceFlatten | RawCommand::GetFlattenedSequenceData => {
                         let serialized = inst.flatten().map_err(|_| Error::InternalStructDamaged)?;
                         drop(lock);
-                        if cmd == RawCommand::GetFlattenedSequenceData {
-                            let _ = pf::Handle::into_raw(sequence_handle); // don't deallocate
-                        } else {
-                            drop(sequence_handle);
-                        }
+                        drop(sequence_handle);
                         let mut final_bytes = serialized.0.to_le_bytes().to_vec(); // version
                         final_bytes.extend(&serialized.1);
                         (*out_data_ptr).sequence_data = pf::FlatHandle::into_raw(FlatHandle::new(final_bytes)?) as *mut _;
@@ -215,7 +216,6 @@ macro_rules! define_plugin {
                     }
                     _ => {
                         drop(lock);
-                        let _ = pf::Handle::into_raw(sequence_handle); // don't deallocate
                     }
                 }
             }
@@ -231,7 +231,6 @@ macro_rules! define_plugin {
                 }
                 _ => {
                     drop(global_lock);
-                    let _ = pf::Handle::into_raw(global_handle); // don't deallocate
                 }
             }
 
@@ -320,7 +319,7 @@ macro_rules! define_plugin {
                 }
             }
         }
-	};
+    };
     (check_size: ()) => { };
     (check_size: $t:tt) => {
         const _: () = assert!(std::mem::size_of::<$t>() > 0, concat!("Type `", stringify!($t), "` cannot be zero-sized"));

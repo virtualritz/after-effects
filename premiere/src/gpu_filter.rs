@@ -50,8 +50,8 @@ impl RenderParams {
         unsafe { (*self.ptr).inRenderTicksPerFrame }
     }
 
-	/// GPU rendering is always on full height progressive frames unless outNeedsFieldSeparation is false.
-	///	`render_field()` indicates which field is being rendered
+    /// GPU rendering is always on full height progressive frames unless outNeedsFieldSeparation is false.
+    /// `render_field()` indicates which field is being rendered
     pub fn render_field(&self) -> FieldDisplay {
         assert!(!self.ptr.is_null());
         unsafe { (*self.ptr).inRenderField.into() }
@@ -92,7 +92,7 @@ impl GpuFilterData {
 }
 
 pub trait GpuFilter : Default {
-	/// Called once at startup to initialize any global state.
+    /// Called once at startup to initialize any global state.
     /// * Note that the instances are created and destroyed many times during the same render,
     /// so don't rely on `Default` or `Drop` for any global state
     fn global_init();
@@ -102,14 +102,14 @@ pub trait GpuFilter : Default {
     /// so don't rely on `Default` or `Drop` for any global state
     fn global_destroy();
 
-	/// Return dependency information about a render, or nothing if only the current frame is required.
+    /// Return dependency information about a render, or nothing if only the current frame is required.
     fn get_frame_dependencies(&self, filter: &GpuFilterData, render_params: RenderParams, query_index: &mut i32) -> Result<pr_sys::PrGPUFilterFrameDependency, Error>;
 
-	/// Precompute a result into preallocated uninitialized host (pinned) memory.
-	/// Will only be called if PrGPUDependency_Precompute was returned from GetFrameDependencies.
-	/// Precomputation may be called ahead of render time. Results will be
-	/// uploaded to the GPU by the host. If outPrecomputePixelFormat is not custom,
-	/// frames will be converted to the GPU pixel format.
+    /// Precompute a result into preallocated uninitialized host (pinned) memory.
+    /// Will only be called if PrGPUDependency_Precompute was returned from GetFrameDependencies.
+    /// Precomputation may be called ahead of render time. Results will be
+    /// uploaded to the GPU by the host. If outPrecomputePixelFormat is not custom,
+    /// frames will be converted to the GPU pixel format.
     fn precompute(&self, filter: &GpuFilterData, render_params: RenderParams, index: i32, frame: pr_sys::PPixHand) -> Result<(), Error>;
 
     /// Render into an allocated outFrame allocated with PrSDKGPUDeviceSuite or operate
