@@ -442,7 +442,7 @@ macro_rules! define_enum {
         pub enum $name {
             $(
                 $(#[$attr])*
-                $variant = $value,
+                $variant = $value as _,
             )*
         }
 

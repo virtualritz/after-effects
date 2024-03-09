@@ -58,13 +58,13 @@ fn draw_oval(in_data: &ae::InData, oval_frame: &ae::Rect, drawbot: &drawbot::Dra
 }
 
 // Calculates the frame in fixed coordinates based on the params passed in
-fn fixed_frame_from_params(in_data: &ae::InData, params: &ae::Parameters<Params>) -> Result<ae_sys::PF_FixedRect, Error> {
+fn fixed_frame_from_params(in_data: &ae::InData, params: &ae::Parameters<Params>) -> Result<ae::sys::PF_FixedRect, Error> {
     let x_rad   = params.get(Params::XRadius)?.as_float_slider()?.value() as f32;
     let y_rad   = params.get(Params::YRadius)?.as_float_slider()?.value() as f32;
     let center  = params.get(Params::Point)?.as_point()?.value();
     let par_inv = f32::from(in_data.pixel_aspect_ratio().inv());
 
-    Ok(ae_sys::PF_FixedRect {
+    Ok(ae::sys::PF_FixedRect {
         top   : ae::Fixed::from(center.1 - y_rad          ).as_fixed(),
         bottom: ae::Fixed::from(center.1 + y_rad          ).as_fixed(),
         left  : ae::Fixed::from(center.0 - x_rad * par_inv).as_fixed(),
@@ -86,12 +86,12 @@ fn frame_from_params(in_data: &ae::InData, params: &ae::Parameters<Params>) -> R
     })
 }
 
-fn source_to_frame_rect(in_data: &ae::InData, event: &mut ae::EventExtra, fx_frame: &mut ae_sys::PF_FixedRect) -> Result<[ae_sys::PF_FixedPoint; 4], Error> {
+fn source_to_frame_rect(in_data: &ae::InData, event: &mut ae::EventExtra, fx_frame: &mut ae::sys::PF_FixedRect) -> Result<[ae::sys::PF_FixedPoint; 4], Error> {
     let mut bounding_box = [
-        ae_sys::PF_FixedPoint { x: fx_frame.left,  y: fx_frame.top },
-        ae_sys::PF_FixedPoint { x: fx_frame.right, y: fx_frame.top },
-        ae_sys::PF_FixedPoint { x: fx_frame.right, y: fx_frame.bottom },
-        ae_sys::PF_FixedPoint { x: fx_frame.left,  y: fx_frame.bottom },
+        ae::sys::PF_FixedPoint { x: fx_frame.left,  y: fx_frame.top },
+        ae::sys::PF_FixedPoint { x: fx_frame.right, y: fx_frame.top },
+        ae::sys::PF_FixedPoint { x: fx_frame.right, y: fx_frame.bottom },
+        ae::sys::PF_FixedPoint { x: fx_frame.left,  y: fx_frame.bottom },
     ];
 
     if event.window_type() == ae::WindowType::Comp {
@@ -111,8 +111,8 @@ fn source_to_frame_rect(in_data: &ae::InData, event: &mut ae::EventExtra, fx_fra
     Ok(bounding_box)
 }
 
-fn comp_frame_to_layer(in_data: &ae::InData, event: &mut ae::EventExtra, frame_pt: ae::Point, lyr_pt: &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
-    let mut fix_lyr = ae_sys::PF_FixedPoint {
+fn comp_frame_to_layer(in_data: &ae::InData, event: &mut ae::EventExtra, frame_pt: ae::Point, lyr_pt: &mut ae::Point) -> Result<ae::sys::PF_FixedPoint, Error> {
+    let mut fix_lyr = ae::sys::PF_FixedPoint {
         x: ae::Fixed::from_int(frame_pt.h).as_fixed(),
         y: ae::Fixed::from_int(frame_pt.v).as_fixed()
     };
@@ -128,8 +128,8 @@ fn comp_frame_to_layer(in_data: &ae::InData, event: &mut ae::EventExtra, frame_p
     Ok(fix_lyr)
 }
 
-fn layer_to_comp_frame(in_data: &ae::InData, event: &mut ae::EventExtra, layer_pt: ae::Point, frame_pt: &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
-    let mut fix_frame = ae_sys::PF_FixedPoint {
+fn layer_to_comp_frame(in_data: &ae::InData, event: &mut ae::EventExtra, layer_pt: ae::Point, frame_pt: &mut ae::Point) -> Result<ae::sys::PF_FixedPoint, Error> {
+    let mut fix_frame = ae::sys::PF_FixedPoint {
         x: ae::Fixed::from_int(layer_pt.h).as_fixed(),
         y: ae::Fixed::from_int(layer_pt.v).as_fixed()
     };
@@ -143,8 +143,8 @@ fn layer_to_comp_frame(in_data: &ae::InData, event: &mut ae::EventExtra, layer_p
     Ok(fix_frame)
 }
 
-fn layer_frame_to_layer(_: &ae::InData, event: &mut ae::EventExtra, frame_pt: ae::Point, lyr_pt: &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
-    let mut fix_lyr = ae_sys::PF_FixedPoint {
+fn layer_frame_to_layer(_: &ae::InData, event: &mut ae::EventExtra, frame_pt: ae::Point, lyr_pt: &mut ae::Point) -> Result<ae::sys::PF_FixedPoint, Error> {
+    let mut fix_lyr = ae::sys::PF_FixedPoint {
         x: ae::Fixed::from_int(frame_pt.h).to_int(),
         y: ae::Fixed::from_int(frame_pt.v).to_int()
     };
@@ -157,8 +157,8 @@ fn layer_frame_to_layer(_: &ae::InData, event: &mut ae::EventExtra, frame_pt: ae
     Ok(fix_lyr)
 }
 
-fn layer_to_layer_frame(_: &ae::InData, event: &mut ae::EventExtra, layer_pt: ae::Point, frame_pt: &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
-    let mut fix_frame = ae_sys::PF_FixedPoint {
+fn layer_to_layer_frame(_: &ae::InData, event: &mut ae::EventExtra, layer_pt: ae::Point, frame_pt: &mut ae::Point) -> Result<ae::sys::PF_FixedPoint, Error> {
+    let mut fix_frame = ae::sys::PF_FixedPoint {
         x: ae::Fixed::from_int(layer_pt.h).as_fixed(),
         y: ae::Fixed::from_int(layer_pt.v).as_fixed()
     };
@@ -230,7 +230,7 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
 }
 
 fn do_click_handles<F>(in_data: &ae::InData, frame: &ae::Rect, frame_func: F, event: &mut ae::EventExtra) -> Result<bool, ae::Error>
-where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
+where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Result<ae::sys::PF_FixedPoint, Error> {
 
     let mut done = false;
     let mouse_down_pt = event.screen_point();
@@ -282,7 +282,7 @@ pub fn click(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &
 }
 
 fn do_drag_handles<F>(in_data: &ae::InData, params: &mut ae::Parameters<Params>, frame_func: F, event: &mut ae::EventExtra) -> Result<(), ae::Error>
-where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Result<ae_sys::PF_FixedPoint, Error> {
+where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Result<ae::sys::PF_FixedPoint, Error> {
     let mut mouse_down_pt = event.screen_point();
 
     // if event.in_flags().contains(ae::EventInFlags::DONT_DRAW) {
@@ -291,7 +291,7 @@ where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Resu
 
     let mouse_layer = frame_func(in_data, event, mouse_down_pt, &mut mouse_down_pt)?;
 
-    // let old_center = ae_sys::PF_FixedPoint {
+    // let old_center = ae::sys::PF_FixedPoint {
     //     x: event.continue_refcon(1) as _,
     //     y: event.continue_refcon(2) as _,
     // };

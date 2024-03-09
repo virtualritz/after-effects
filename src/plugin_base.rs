@@ -36,15 +36,12 @@ macro_rules! define_plugin {
             #[cfg(does_dialog)]
             fn do_dialog(&mut self, plugin: &mut PluginState) -> Result<(), ae::Error>;
 
-            fn user_changed_param(&mut self, plugin: &mut PluginState, param: $params_type) -> Result<(), ae::Error>;
-
             fn handle_command(&mut self, plugin: &mut PluginState, command: Command) -> Result<(), Error>;
         }
         impl AdobePluginInstance for () {
             fn flatten(&self) -> Result<(u16, Vec<u8>), Error> { Ok((0, Vec::new())) }
             fn unflatten(_: u16, _: &[u8]) -> Result<Self, Error> { Ok(Default::default()) }
             fn render(&self, _: &mut PluginState, _: &Layer, _: &mut Layer) -> Result<(), ae::Error> { Ok(()) }
-            fn user_changed_param(&mut self, _: &mut PluginState, _: $params_type) -> Result<(), ae::Error> { Ok(()) }
             fn handle_command(&mut self, _: &mut PluginState, _: Command) -> Result<(), Error> { Ok(()) }
 
             #[cfg(does_dialog)]
@@ -63,7 +60,7 @@ macro_rules! define_plugin {
                 if (*in_data.as_ptr()).sequence_data.is_null() {
                     Some((pf::Handle::new(S::default())?, true))
                 } else {
-                    let instance = FlatHandle::from_raw((*in_data.as_ptr()).sequence_data as after_effects_sys::PF_Handle)?;
+                    let instance = FlatHandle::from_raw((*in_data.as_ptr()).sequence_data as $crate::sys::PF_Handle)?;
                     let bytes = instance.as_slice().ok_or(Error::InvalidIndex)?;
                     if bytes.len() < 2 {
                         return Ok(None);
@@ -85,12 +82,12 @@ macro_rules! define_plugin {
                     let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _, false)?;
                     Some((instance_handle, false))
                 } else {
-                    log::error!("Sequence data pointer got through EffectSequenceDataSuite is null in cmd: {:?}!", cmd);
+                    $crate::log::error!("Sequence data pointer got through EffectSequenceDataSuite is null in cmd: {:?}!", cmd);
                     None
                 }
             } else {
                 if (*in_data.as_ptr()).sequence_data.is_null() {
-                    log::error!("Sequence data pointer is null in cmd: {:?}!", cmd);
+                    $crate::log::error!("Sequence data pointer is null in cmd: {:?}!", cmd);
                     None
                 } else {
                     let should_dispose_sequence = cmd == RawCommand::SequenceSetdown || cmd == RawCommand::SequenceFlatten;
@@ -101,11 +98,11 @@ macro_rules! define_plugin {
         }
 
         unsafe fn handle_effect_main<T: AdobePluginGlobal, S: AdobePluginInstance, P>(
-            cmd: after_effects_sys::PF_Cmd,
-            in_data_ptr: *mut after_effects_sys::PF_InData,
-            out_data_ptr: *mut after_effects_sys::PF_OutData,
-            params: *mut *mut after_effects_sys::PF_ParamDef,
-            output: *mut after_effects_sys::PF_LayerDef,
+            cmd: $crate::sys::PF_Cmd,
+            in_data_ptr: *mut $crate::sys::PF_InData,
+            out_data_ptr: *mut $crate::sys::PF_OutData,
+            params: *mut *mut $crate::sys::PF_ParamDef,
+            output: *mut $crate::sys::PF_LayerDef,
             extra: *mut std::ffi::c_void) -> Result<(), Error>
         {
             let _pica = $crate::PicaBasicSuite::from_pf_in_data_raw(in_data_ptr);
@@ -125,7 +122,7 @@ macro_rules! define_plugin {
                 })?
             } else {
                 if (*in_data_ptr).global_data.is_null() {
-                    log::error!("Global data pointer is null in cmd: {:?}!", cmd);
+                    $crate::log::error!("Global data pointer is null in cmd: {:?}!", cmd);
                     return Err(Error::BadCallbackParameter);
                 }
                 pf::Handle::<GlobalData>::from_raw((*in_data_ptr).global_data, cmd == RawCommand::GlobalSetdown)?
@@ -189,11 +186,11 @@ macro_rules! define_plugin {
                         let mut out_layer = $crate::Layer::from_raw(output, in_data, None);
                         sequence_err = Some(inst.render(&mut plugin_state, &in_layer, &mut out_layer));
                     }
-                    RawCommand::UserChangedParam => {
-                        let extra = extra as *mut after_effects_sys::PF_UserChangedParamExtra;
-                        let param = plugin_state.params.type_for_index((*extra).param_index as usize);
-                        sequence_err = Some(inst.user_changed_param(&mut plugin_state, param));
-                    }
+                    // RawCommand::UserChangedParam => {
+                    //     let extra = extra as *mut $crate::sys::PF_UserChangedParamExtra;
+                    //     let param = plugin_state.params.type_for_index((*extra).param_index as usize);
+                    //     sequence_err = Some(inst.user_changed_param(&mut plugin_state, param));
+                    // }
                     _ => { }
                 }
 
@@ -249,16 +246,16 @@ macro_rules! define_plugin {
 
         #[no_mangle]
         pub unsafe extern "C" fn PluginDataEntryFunction2(
-            in_ptr: after_effects_sys::PF_PluginDataPtr,
-            in_plugin_data_callback_ptr: after_effects_sys::PF_PluginDataCB2,
-            in_sp_basic_suite_ptr: *const after_effects_sys::SPBasicSuite,
+            in_ptr: $crate::sys::PF_PluginDataPtr,
+            in_plugin_data_callback_ptr: $crate::sys::PF_PluginDataCB2,
+            in_sp_basic_suite_ptr: *const $crate::sys::SPBasicSuite,
             in_host_name: *const std::ffi::c_char,
-            in_host_version: *const std::ffi::c_char) -> after_effects_sys::PF_Err
+            in_host_version: *const std::ffi::c_char) -> $crate::sys::PF_Err
         {
             // let _pica = ae::PicaBasicSuite::from_sp_basic_suite_raw(in_sp_basic_suite_ptr);
 
             if in_host_name.is_null() || in_host_version.is_null() {
-                return after_effects_sys::PF_Err_INVALID_CALLBACK as after_effects_sys::PF_Err;
+                return $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err;
             }
 
             let in_host_name = std::ffi::CStr::from_ptr(in_host_name);
@@ -266,7 +263,7 @@ macro_rules! define_plugin {
 
             if !<$global_type>::can_load(in_host_name.to_str().unwrap(), in_host_version.to_str().unwrap()) {
                 // Plugin said we don't want to load in this host, so exit here
-                return after_effects_sys::PF_Err_INVALID_CALLBACK as after_effects_sys::PF_Err;
+                return $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err;
             }
             if let Some(cb_ptr) = in_plugin_data_callback_ptr {
                 use $crate::cstr_literal::cstr;
@@ -282,20 +279,20 @@ macro_rules! define_plugin {
                     cstr!(env!("PIPL_SUPPORT_URL")).as_ptr() as *const u8, // Support url
                 )
             } else {
-                after_effects_sys::PF_Err_INVALID_CALLBACK as after_effects_sys::PF_Err
+                $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err
             }
         }
 
         #[no_mangle]
         pub unsafe extern "C" fn EffectMain(
-            cmd: after_effects_sys::PF_Cmd,
-            in_data_ptr: *mut after_effects_sys::PF_InData,
-            out_data_ptr: *mut after_effects_sys::PF_OutData,
-            params: *mut *mut after_effects_sys::PF_ParamDef,
-            output: *mut after_effects_sys::PF_LayerDef,
-            extra: *mut std::ffi::c_void) -> after_effects_sys::PF_Err
+            cmd: $crate::sys::PF_Cmd,
+            in_data_ptr: *mut $crate::sys::PF_InData,
+            out_data_ptr: *mut $crate::sys::PF_OutData,
+            params: *mut *mut $crate::sys::PF_ParamDef,
+            output: *mut $crate::sys::PF_LayerDef,
+            extra: *mut std::ffi::c_void) -> $crate::sys::PF_Err
         {
-            if cmd == after_effects_sys::PF_Cmd_GLOBAL_SETUP as after_effects_sys::PF_Cmd {
+            if cmd == $crate::sys::PF_Cmd_GLOBAL_SETUP as $crate::sys::PF_Cmd {
                 (*out_data_ptr).my_version = env!("PIPL_VERSION")  .parse::<u32>().unwrap();
                 (*out_data_ptr).out_flags  = env!("PIPL_OUTFLAGS") .parse::<i32>().unwrap();
                 (*out_data_ptr).out_flags2 = env!("PIPL_OUTFLAGS2").parse::<i32>().unwrap();
@@ -304,13 +301,13 @@ macro_rules! define_plugin {
                 {
                     #[cfg(windows)]
                     {
-                        let _ = log::set_logger(&$crate::win_dbg_logger::DEBUGGER_LOGGER);
+                        let _ = $crate::log::set_logger(&$crate::win_dbg_logger::DEBUGGER_LOGGER);
                     }
                     #[cfg(macos)]
                     {
-                        let _ = $crate::oslog::OsLogger::new("after-effects-plugin").init();
+                        let _ = $crate::oslog::OsLogger::new(env!("CARGO_PKG_NAME")).init();
                     }
-                    log::set_max_level(log::LevelFilter::Debug);
+                    $crate::log::set_max_level($crate::log::LevelFilter::Debug);
 
                     std::panic::set_hook(Box::new(|_| {
                         *BACKTRACE_STR.write().unwrap() = std::backtrace::Backtrace::force_capture().to_string();
@@ -337,15 +334,15 @@ macro_rules! define_plugin {
                     handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra)
                 });
                 match result {
-                    Ok(Ok(_)) => after_effects_sys::PF_Err_NONE as after_effects_sys::PF_Err,
+                    Ok(Ok(_)) => $crate::sys::PF_Err_NONE as $crate::sys::PF_Err,
                     Ok(Err(e)) => {
-                        log::error!("EffectMain returned error: {e:?}");
+                        $crate::log::error!("EffectMain returned error: {e:?}");
 
                         if e != Error::InterruptCancel && !out_data_ptr.is_null() {
                             $crate::OutData::from_raw(out_data_ptr).set_error_msg(&format!("EffectMain returned error: {e:?}"));
                         }
 
-                        e as after_effects_sys::PF_Err
+                        e as $crate::sys::PF_Err
                     }
                     Err(e) => {
                         let s = if let Some(s) = e.downcast_ref::<&str>() { s.to_string() }
@@ -354,7 +351,7 @@ macro_rules! define_plugin {
 
                         let mut msg = format!("EffectMain panicked! {s}");
 
-                        log::error!("{msg}, backtrace: {}", BACKTRACE_STR.read().unwrap());
+                        $crate::log::error!("{msg}, backtrace: {}", BACKTRACE_STR.read().unwrap());
 
                         if msg.len() > 255 {
                             msg.truncate(255);
@@ -363,17 +360,17 @@ macro_rules! define_plugin {
                             $crate::OutData::from_raw(out_data_ptr).set_error_msg(&msg);
                         }
 
-                        after_effects_sys::PF_Err_NONE as after_effects_sys::PF_Err
+                        $crate::sys::PF_Err_NONE as $crate::sys::PF_Err
                     }
                 }
             }
 
             #[cfg(not(debug_assertions))]
             match handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra) {
-                Ok(_) => after_effects_sys::PF_Err_NONE as after_effects_sys::PF_Err,
+                Ok(_) => $crate::sys::PF_Err_NONE as $crate::sys::PF_Err,
                 Err(e) => {
-                    log::error!("EffectMain returned error: {e:?}");
-                    e as after_effects_sys::PF_Err
+                    $crate::log::error!("EffectMain returned error: {e:?}");
+                    e as $crate::sys::PF_Err
                 }
             }
         }

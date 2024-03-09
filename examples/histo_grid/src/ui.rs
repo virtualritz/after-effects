@@ -26,7 +26,7 @@ pub fn pf_to_drawbot_rect(in_rect: &ae::Rect) -> ae::drawbot::RectF32 {
     }
 }
 
-pub fn qd_to_drawbot_color(c: &ae_sys::PF_App_Color) -> ae::drawbot::ColorRgba {
+pub fn qd_to_drawbot_color(c: &ae::sys::PF_App_Color) -> ae::drawbot::ColorRgba {
     const MAX_SHORT_COLOR: f32 = 65535.0;
     let inv_sixty_five_k = 1.0 / MAX_SHORT_COLOR;
 
@@ -47,7 +47,7 @@ pub fn acquire_background_color() -> Result<ae::drawbot::ColorRgba, ae::Error> {
 
 // EXAMPLE: This requests the upstream input frame for lightweight preview purposes, but highly downsampled for speed
 // The frame may not be immediately available. PF_Event_DRAW will get triggered again when async render completes
-pub fn request_async_frame_for_preview(in_data: &ae::InData, event: &ae::EventExtra) -> Result<ae_sys::AEGP_FrameReceiptH, ae::Error> {
+pub fn request_async_frame_for_preview(in_data: &ae::InData, event: &ae::EventExtra) -> Result<ae::sys::AEGP_FrameReceiptH, ae::Error> {
     let aegp_plugin_id = unsafe { super::AEGP_PLUGIN_ID };
 
     // get render options description of upstream input frame to effect

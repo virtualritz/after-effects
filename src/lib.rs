@@ -95,6 +95,8 @@ pub mod pr_string;
 use pr_string::*;
 
 // re-exports
+pub use after_effects_sys as sys;
+pub use log;
 pub use cstr_literal;
 pub use fastrand;
 pub use parking_lot;

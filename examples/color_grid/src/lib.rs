@@ -1,5 +1,4 @@
 use after_effects as ae;
-use after_effects_sys as ae_sys;
 
 mod ui;
 
@@ -124,10 +123,6 @@ impl AdobePluginGlobal for Plugin {
     }
 
     fn handle_command(&mut self, cmd: ae::Command, in_data: InData, mut out_data: OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
-        let _ = log::set_logger(&win_dbg_logger::DEBUGGER_LOGGER);
-        log_panics::init();
-        log::set_max_level(log::LevelFilter::Debug);
-
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("ColorGrid v3.3\rCopyright 2007-2023 Adobe Inc.\rArbitrary data and Custom UI sample.");
@@ -161,9 +156,9 @@ impl AdobePluginGlobal for Plugin {
                     );
 
                     let cur_color = &colors.colors[current_color];
-                    let color8_r  = (cur_color.red   * ae_sys::PF_MAX_CHAN8 as f32) as u16;
-                    let color8_g  = (cur_color.green * ae_sys::PF_MAX_CHAN8 as f32) as u16;
-                    let color8_b  = (cur_color.blue  * ae_sys::PF_MAX_CHAN8 as f32) as u16;
+                    let color8_r  = (cur_color.red   * ae::MAX_CHANNEL8 as f32) as u16;
+                    let color8_g  = (cur_color.green * ae::MAX_CHANNEL8 as f32) as u16;
+                    let color8_b  = (cur_color.blue  * ae::MAX_CHANNEL8 as f32) as u16;
 
                     progress_base += 1;
 
@@ -220,13 +215,13 @@ impl AdobePluginGlobal for Plugin {
 
                     let color32 = &colors.colors[current_color];
 
-                    let color8_r  = (color32.red   * ae_sys::PF_MAX_CHAN8  as f32) as u16;
-                    let color8_g  = (color32.green * ae_sys::PF_MAX_CHAN8  as f32) as u16;
-                    let color8_b  = (color32.blue  * ae_sys::PF_MAX_CHAN8  as f32) as u16;
+                    let color8_r  = (color32.red   * ae::MAX_CHANNEL8  as f32) as u16;
+                    let color8_g  = (color32.green * ae::MAX_CHANNEL8  as f32) as u16;
+                    let color8_b  = (color32.blue  * ae::MAX_CHANNEL8  as f32) as u16;
 
-                    let color16_r = (color32.red   * ae_sys::PF_MAX_CHAN16 as f32) as u32;
-                    let color16_g = (color32.green * ae_sys::PF_MAX_CHAN16 as f32) as u32;
-                    let color16_b = (color32.blue  * ae_sys::PF_MAX_CHAN16 as f32) as u32;
+                    let color16_r = (color32.red   * ae::MAX_CHANNEL16 as f32) as u32;
+                    let color16_g = (color32.green * ae::MAX_CHANNEL16 as f32) as u32;
+                    let color16_b = (color32.blue  * ae::MAX_CHANNEL16 as f32) as u32;
 
                     if let Ok(mut output_world) = cb.checkout_output() {
                         let progress_final = output_world.height() as _;

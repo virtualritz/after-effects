@@ -18,26 +18,26 @@ release:
 [macos]
 build:
     cargo build
-    just -f {{justfile()}} create_bundle debug {{TargetDir}}/debug
+    just -f {{justfile()}} create_bundle debug {{TargetDir}}
 
 [macos]
 release:
     cargo build --release
-    just -f {{justfile()}} create_bundle release {{TargetDir}}/release
+    just -f {{justfile()}} create_bundle release {{TargetDir}}
 
 [macos]
 create_bundle profile TargetDir:
     #!/bin/bash
     set -e
-    echo "Creating universal plugin bundle"
-    rm -Rf {{TargetDir}}/{{PluginName}}.plugin
-    mkdir -p {{TargetDir}}/{{PluginName}}.plugin/Contents/Resources
-    mkdir -p {{TargetDir}}/{{PluginName}}.plugin/Contents/MacOS
+    echo "Creating plugin bundle"
+    rm -Rf {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
+    mkdir -p {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Resources
+    mkdir -p {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS
 
-    echo "eFKTFXTC" >> {{TargetDir}}/{{PluginName}}.plugin/Contents/PkgInfo
-    /usr/libexec/PlistBuddy -c 'add CFBundlePackageType string eFKT' {{TargetDir}}/{{PluginName}}.plugin/Contents/Info.plist
-    /usr/libexec/PlistBuddy -c 'add CFBundleSignature string FXTC' {{TargetDir}}/{{PluginName}}.plugin/Contents/Info.plist
-    /usr/libexec/PlistBuddy -c 'add CFBundleIdentifier string {{BundleIdentifier}}' {{TargetDir}}/{{PluginName}}.plugin/Contents/Info.plist
+    echo "eFKTFXTC" >> {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/PkgInfo
+    /usr/libexec/PlistBuddy -c 'add CFBundlePackageType string eFKT' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
+    /usr/libexec/PlistBuddy -c 'add CFBundleSignature string FXTC' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
+    /usr/libexec/PlistBuddy -c 'add CFBundleIdentifier string {{BundleIdentifier}}' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
 
     if [ "{{profile}}" == "release" ]; then
         # Build universal binary
@@ -47,13 +47,16 @@ create_bundle profile TargetDir:
         cargo build --release --target x86_64-apple-darwin
         cargo build --release --target aarch64-apple-darwin
 
-        cp {{TargetDir}}/x86_64-apple-darwin/release/{{BinaryName}}.rsrc {{TargetDir}}/{{PluginName}}.plugin/Contents/Resources/{{PluginName}}.rsrc
-        lipo {{TargetDir}}/{x86_64,aarch64}-apple-darwin/release/{{BinaryName}}.dylib -create -output {{TargetDir}}/{{PluginName}}.plugin/Contents/MacOS/{{BinaryName}}.dylib
+        cp {{TargetDir}}/x86_64-apple-darwin/release/{{BinaryName}}.rsrc {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Resources/{{PluginName}}.rsrc
+        lipo {{TargetDir}}/{x86_64,aarch64}-apple-darwin/release/lib{{BinaryName}}.dylib -create -output {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS/{{PluginName}}.dylib
+        mv {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS/{{PluginName}}.dylib {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS/{{PluginName}}
     else
-        cp {{TargetDir}}/{{BinaryName}}.rsrc {{TargetDir}}/{{PluginName}}.plugin/Contents/Resources/{{PluginName}}.rsrc
+        cp {{TargetDir}}/{{profile}}/{{BinaryName}}.rsrc {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Resources/{{PluginName}}.rsrc
+        cp {{TargetDir}}/{{profile}}/lib{{BinaryName}}.dylib {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS/{{PluginName}}
     fi
-
-    mv {{TargetDir}}/{{PluginName}}.plugin/Contents/MacOS/{{BinaryName}}.dylib {{TargetDir}}/{{PluginName}}.plugin/Contents/MacOS/{{PluginName}}
 
     # codesign with the first development cert we can find using its hash
     codesign --options runtime --timestamp -strict  --sign $( security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}' ) {{TargetDir}}/{{PluginName}}.plugin
+
+    # Install
+    sudo cp -rf "{{TargetDir}}/{{profile}}/{{PluginName}}.plugin" "/Applications/Adobe After Effects 2024/Plug-ins/"

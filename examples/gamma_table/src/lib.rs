@@ -1,5 +1,4 @@
 use after_effects as ae;
-use after_effects_sys as ae_sys;
 
 // This demonstrates:
 //  - using sequence data
@@ -31,7 +30,7 @@ impl Default for GammaTable {
     fn default() -> Self {
         let mut lut = [0u8; 256];
         // generate base table
-        for i in 0..=ae_sys::PF_MAX_CHAN8 {
+        for i in 0..=ae::MAX_CHANNEL8 {
             lut[i as usize] = i as u8;
         }
         Self {
@@ -86,7 +85,6 @@ impl AdobePluginInstance for GammaTable {
         })
     }
 
-    fn user_changed_param(&mut self, _: &mut PluginState, _: Params) -> Result<(), ae::Error> { Ok(()) }
     fn render(&self, _: &mut PluginState, _: &Layer, _: &mut Layer) -> Result<(), ae::Error> { Ok(()) }
 
     fn handle_command(&mut self, plugin: &mut PluginState, cmd: ae::Command) -> Result<(), ae::Error> {
@@ -111,7 +109,7 @@ impl AdobePluginInstance for GammaTable {
                     if self.gamma_val != gamma {
                         self.gamma_val = gamma;
                         let gamma = 1.0 / gamma;
-                        for x in 0..=ae_sys::PF_MAX_CHAN8 {
+                        for x in 0..=ae::MAX_CHANNEL8 {
                             self.lut[x as usize] = ((x as f32 / 255.0).powf(gamma) * 255.0) as u8;
                         }
                     }

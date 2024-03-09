@@ -8,6 +8,11 @@ pub type Pixel16 = ae_sys::PF_Pixel16;
 pub type PixelF32 = ae_sys::PF_Pixel32;
 pub type PixelF64 = ae_sys::AEGP_ColorVal;
 
+pub use ae_sys::PF_MAX_CHAN8 as MAX_CHANNEL8;
+pub use ae_sys::PF_HALF_CHAN8 as HALF_CHANNEL8;
+pub use ae_sys::PF_MAX_CHAN16 as MAX_CHANNEL16;
+pub use ae_sys::PF_HALF_CHAN16 as HALF_CHANNEL16;
+
 pub fn pixel8_to_16(p: Pixel8) -> Pixel16 {
     fn convert_8_to_16(x: u8) -> u16 {
         (((x as u32 * ae_sys::PF_MAX_CHAN16) + ae_sys::PF_HALF_CHAN8) / ae_sys::PF_MAX_CHAN8) as u16

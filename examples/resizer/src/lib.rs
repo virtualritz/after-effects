@@ -1,5 +1,4 @@
 use after_effects as ae;
-use after_effects_sys as ae_sys;
 
 // This sample shows how to resize the output buffer to prevent clipping the edges of an effect (or just to scale the source).
 // The resizing occurs during the response to PF_Cmd_FRAME_SETUP.
@@ -65,10 +64,6 @@ impl AdobePluginGlobal for Plugin {
     }
 
     fn handle_command(&mut self, cmd: ae::Command, in_data: InData, mut out_data: OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
-        let _ = log::set_logger(&win_dbg_logger::DEBUGGER_LOGGER);
-        log_panics::init();
-        log::set_max_level(log::LevelFilter::Debug);
-
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("Resizer, v2.4,\rDemonstrate Output Buffer Resizing.\rCopyright 1994-2023 Adobe Inc.");
@@ -216,8 +211,8 @@ impl AdobePluginGlobal for Plugin {
                 // The parameter array passed with PF_Cmd_QUERY_DYNAMIC_FLAGS contains invalid values; use PF_CHECKOUT_PARAM() to obtain valid values.
                 let use_3d = params.checkout(Params::Use3D)?.as_checkbox()?.value();
 
-                out_data.set_out_flag2(ae_sys::PF_OutFlag2_I_USE_3D_LIGHTS, use_3d);
-                out_data.set_out_flag2(ae_sys::PF_OutFlag2_I_USE_3D_CAMERA, use_3d);
+                out_data.set_out_flag2(OutFlags2::IUse3DLights, use_3d);
+                out_data.set_out_flag2(OutFlags2::IUse3DCamera, use_3d);
             }
             _ => {}
         }

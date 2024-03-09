@@ -1,5 +1,4 @@
 use after_effects as ae;
-use after_effects_sys as ae_sys;
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
 enum Params {
@@ -12,7 +11,7 @@ struct Plugin {}
 ae::define_plugin!(Plugin, (), Params);
 
 fn detect_host(in_data: ae::InData) -> String {
-    use ae_sys::*;
+    use ae::sys::*;
     let v = (in_data.version().0 as u32, in_data.version().1 as u32);
 
     let app = match &in_data.application_id() {
@@ -137,15 +136,15 @@ impl AdobePluginGlobal for Plugin {
                         match out_pixel {
                             ae::GenericPixelMut::Pixel8(out_pixel) => {
                                 out_pixel.alpha = pixel.alpha as _;
-                                out_pixel.red   = r.min(ae_sys::PF_MAX_CHAN8 as f32) as _;
-                                out_pixel.green = g.min(ae_sys::PF_MAX_CHAN8 as f32) as _;
-                                out_pixel.blue  = b.min(ae_sys::PF_MAX_CHAN8 as f32) as _;
+                                out_pixel.red   = r.min(ae::MAX_CHANNEL8 as f32) as _;
+                                out_pixel.green = g.min(ae::MAX_CHANNEL8 as f32) as _;
+                                out_pixel.blue  = b.min(ae::MAX_CHANNEL8 as f32) as _;
                             }
                             ae::GenericPixelMut::Pixel16(out_pixel) => {
                                 out_pixel.alpha = pixel.alpha as _;
-                                out_pixel.red   = r.min(ae_sys::PF_MAX_CHAN16 as f32) as _;
-                                out_pixel.green = g.min(ae_sys::PF_MAX_CHAN16 as f32) as _;
-                                out_pixel.blue  = b.min(ae_sys::PF_MAX_CHAN16 as f32) as _;
+                                out_pixel.red   = r.min(ae::MAX_CHANNEL16 as f32) as _;
+                                out_pixel.green = g.min(ae::MAX_CHANNEL16 as f32) as _;
+                                out_pixel.blue  = b.min(ae::MAX_CHANNEL16 as f32) as _;
                             }
                             _ => return Err(Error::BadCallbackParameter)
                         }

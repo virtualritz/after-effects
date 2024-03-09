@@ -26,7 +26,7 @@ pub fn pf_to_drawbot_rect(in_rect: &ae::Rect) -> ae::drawbot::RectF32 {
     }
 }
 
-pub fn qd_to_drawbot_color(c: &ae_sys::PF_App_Color) -> ae::drawbot::ColorRgba {
+pub fn qd_to_drawbot_color(c: &ae::sys::PF_App_Color) -> ae::drawbot::ColorRgba {
     const MAX_SHORT_COLOR: f32 = 65535.0;
     let inv_sixty_five_k = 1.0 / MAX_SHORT_COLOR;
 

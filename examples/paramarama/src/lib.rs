@@ -1,5 +1,4 @@
 use after_effects as ae;
-use after_effects_sys as ae_sys;
 
 // This sample exercises some of After Effects' image processing callback functions.
 
@@ -89,7 +88,7 @@ impl AdobePluginGlobal for Plugin {
         }))?;
 
         // Only add 3D point and button where supported, starting in AE CS5.5
-        if in_data.version().0 >= ae_sys::PF_AE105_PLUG_IN_VERSION as _ && in_data.version().1 >= ae_sys::PF_AE105_PLUG_IN_SUBVERS as _ {
+        if in_data.version().0 >= ae::sys::PF_AE105_PLUG_IN_VERSION as _ && in_data.version().1 >= ae::sys::PF_AE105_PLUG_IN_SUBVERS as _ {
             if in_data.application_id() == *b"FXTC" {
                 params.add(Params::Point3D, "3D Point", ae::Point3DDef::setup(|f| {
                     f.set_default((DEFAULT_POINT_VALS, DEFAULT_POINT_VALS, DEFAULT_POINT_VALS));
@@ -174,7 +173,7 @@ impl AdobePluginGlobal for Plugin {
                     out_data.set_return_msg("Paramarama button hit!");
 
                     if in_data.application_id() != *b"PrMr" {
-                        out_data.set_out_flag(ae_sys::PF_OutFlag_DISPLAY_ERROR_MESSAGE, true);
+                        out_data.set_out_flag(ae::OutFlags::DisplayErrorMessage, true);
                     }
                 }
             }

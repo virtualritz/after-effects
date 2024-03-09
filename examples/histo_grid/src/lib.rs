@@ -1,5 +1,4 @@
 use after_effects as ae;
-use after_effects_sys as ae_sys;
 
 mod ui;
 
@@ -50,18 +49,18 @@ impl ColorCache {
     }
     pub fn assign_grid_cell_color8(px: &ae::Pixel8) -> ae::PixelF32 {
         ae::PixelF32 {
-            alpha: px.alpha as f32 / ae_sys::PF_MAX_CHAN8 as f32,
-            red:   px.red   as f32 / ae_sys::PF_MAX_CHAN8 as f32,
-            green: px.green as f32 / ae_sys::PF_MAX_CHAN8 as f32,
-            blue:  px.blue  as f32 / ae_sys::PF_MAX_CHAN8 as f32,
+            alpha: px.alpha as f32 / ae::MAX_CHANNEL8 as f32,
+            red:   px.red   as f32 / ae::MAX_CHANNEL8 as f32,
+            green: px.green as f32 / ae::MAX_CHANNEL8 as f32,
+            blue:  px.blue  as f32 / ae::MAX_CHANNEL8 as f32,
         }
     }
     pub fn assign_grid_cell_color16(px: &ae::Pixel16) -> ae::PixelF32 {
         ae::PixelF32 {
-            alpha: px.alpha as f32 / ae_sys::PF_MAX_CHAN16 as f32,
-            red:   px.red   as f32 / ae_sys::PF_MAX_CHAN16 as f32,
-            green: px.green as f32 / ae_sys::PF_MAX_CHAN16 as f32,
-            blue:  px.blue  as f32 / ae_sys::PF_MAX_CHAN16 as f32,
+            alpha: px.alpha as f32 / ae::MAX_CHANNEL16 as f32,
+            red:   px.red   as f32 / ae::MAX_CHANNEL16 as f32,
+            green: px.green as f32 / ae::MAX_CHANNEL16 as f32,
+            blue:  px.blue  as f32 / ae::MAX_CHANNEL16 as f32,
         }
     }
 
@@ -189,8 +188,6 @@ impl AdobePluginInstance for Instance {
         Ok(Self::default())
     }
 
-    fn user_changed_param(&mut self, _: &mut PluginState, _: Params) -> Result<(), ae::Error> { Ok(()) }
-
     fn render(&self, plugin: &mut PluginState, in_layer: &Layer, out_layer: &mut Layer) -> Result<(), ae::Error> {
         let mut box_across     = 0;
         let mut box_down       = 0;
@@ -224,9 +221,9 @@ impl AdobePluginInstance for Instance {
             );
 
             let cur_color = &color_cache.color[current_color];
-            let color8_r  = (cur_color.red   * ae_sys::PF_MAX_CHAN8 as f32) as u16;
-            let color8_g  = (cur_color.green * ae_sys::PF_MAX_CHAN8 as f32) as u16;
-            let color8_b  = (cur_color.blue  * ae_sys::PF_MAX_CHAN8 as f32) as u16;
+            let color8_r  = (cur_color.red   * ae::MAX_CHANNEL8 as f32) as u16;
+            let color8_g  = (cur_color.green * ae::MAX_CHANNEL8 as f32) as u16;
+            let color8_b  = (cur_color.blue  * ae::MAX_CHANNEL8 as f32) as u16;
 
             progress_base += 1;
 
@@ -251,8 +248,6 @@ impl AdobePluginInstance for Instance {
     }
 
     fn handle_command(&mut self, plugin: &mut PluginState, cmd: ae::Command) -> Result<(), ae::Error> {
-        log::info!("sequence command: {:?}, thread: {:?}, ptr: {:?}", cmd, std::thread::current().id(), self as *const _);
-
         let in_data = &plugin.in_data;
 
         match cmd {
@@ -291,13 +286,13 @@ impl AdobePluginInstance for Instance {
 
                     let color32 = &color_cache.color[current_color];
 
-                    let color8_r  = (color32.red   * ae_sys::PF_MAX_CHAN8  as f32) as u16;
-                    let color8_g  = (color32.green * ae_sys::PF_MAX_CHAN8  as f32) as u16;
-                    let color8_b  = (color32.blue  * ae_sys::PF_MAX_CHAN8  as f32) as u16;
+                    let color8_r  = (color32.red   * ae::MAX_CHANNEL8  as f32) as u16;
+                    let color8_g  = (color32.green * ae::MAX_CHANNEL8  as f32) as u16;
+                    let color8_b  = (color32.blue  * ae::MAX_CHANNEL8  as f32) as u16;
 
-                    let color16_r = (color32.red   * ae_sys::PF_MAX_CHAN16 as f32) as u32;
-                    let color16_g = (color32.green * ae_sys::PF_MAX_CHAN16 as f32) as u32;
-                    let color16_b = (color32.blue  * ae_sys::PF_MAX_CHAN16 as f32) as u32;
+                    let color16_r = (color32.red   * ae::MAX_CHANNEL16 as f32) as u32;
+                    let color16_g = (color32.green * ae::MAX_CHANNEL16 as f32) as u32;
+                    let color16_b = (color32.blue  * ae::MAX_CHANNEL16 as f32) as u32;
 
                     if let Ok(mut output_world) = cb.checkout_output() {
                         let progress_final = output_world.height() as _;

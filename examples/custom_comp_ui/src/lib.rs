@@ -1,5 +1,4 @@
 use after_effects as ae;
-use after_effects_sys as ae_sys;
 
 mod ui;
 
@@ -139,14 +138,14 @@ impl AdobePluginGlobal for Plugin {
                         match (pixel, out_pixel) {
                             (ae::GenericPixel::Pixel8(pixel), ae::GenericPixelMut::Pixel8(out_pixel)) => {
                                 if in_ellipse {
-                                    *out_pixel = ae::Pixel8 { alpha: pixel.alpha, red: 0, green: ae_sys::PF_MAX_CHAN8 as u8, blue: 0 };
+                                    *out_pixel = ae::Pixel8 { alpha: pixel.alpha, red: 0, green: ae::MAX_CHANNEL8 as u8, blue: 0 };
                                 } else {
                                     *out_pixel = *pixel;
                                 }
                             }
                             (ae::GenericPixel::Pixel16(pixel), ae::GenericPixelMut::Pixel16(out_pixel)) => {
                                 if in_ellipse {
-                                    *out_pixel = ae::Pixel16 { alpha: pixel.alpha, red: 0, green: ae_sys::PF_MAX_CHAN16 as u16, blue: 0 };
+                                    *out_pixel = ae::Pixel16 { alpha: pixel.alpha, red: 0, green: ae::MAX_CHANNEL16 as u16, blue: 0 };
                                 } else {
                                     *out_pixel = *pixel;
                                 }
@@ -199,7 +198,7 @@ impl AdobePluginGlobal for Plugin {
                                             bop_out = bop_out.add(1);
                                         } else {
                                             (*bop_out).alpha = (*bop_in).alpha;
-                                            (*bop_out).green = ae_sys::PF_MAX_CHAN8 as u8;
+                                            (*bop_out).green = ae::MAX_CHANNEL8 as u8;
                                             (*bop_out).blue  = 0;
                                             (*bop_out).red   = 0;
                                             bop_in  = bop_in.add(1);
