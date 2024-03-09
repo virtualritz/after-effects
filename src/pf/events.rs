@@ -240,11 +240,20 @@ impl EventExtra {
     }
 
     pub fn screen_point(&self) -> Point {
-        debug_assert!(
-            [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
-            "The screen_point() method is only valid if event() is Click or Drag."
-        );
-        unsafe { self.as_ref().u.do_click.screen_point.into() }
+        match self.as_ref().e_type {
+            ae_sys::PF_Event_DO_CLICK | ae_sys::PF_Event_DRAG => {
+                unsafe { self.as_ref().u.do_click.screen_point.into() }
+            }
+            ae_sys::PF_Event_ADJUST_CURSOR => {
+                unsafe { self.as_ref().u.adjust_cursor.screen_point.into() }
+            }
+            ae_sys::PF_Event_KEYDOWN => {
+                unsafe { self.as_ref().u.key_down.screen_point.into() }
+            }
+            _ => {
+                panic!("The screen_point() method is only valid if event() is Click, Drag, AdjustCursor or Keydown.")
+            }
+        }
     }
 
     pub fn in_flags(&self) -> EventInFlags {

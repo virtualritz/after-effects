@@ -2,6 +2,8 @@ use after_effects as ae;
 
 mod events;
 
+// This example uses ArbitraryData in Premiere, because it doesn't support custom UI with a Color parameter
+
 const CUSTOM_UI_STRING: &str = "Whoopee! A Custom UI!!!\nClick and drag here to\nchange the background color.\nHold down shift or cmd/ctrl\nfor different cursors!";
 const STR_FRANK       : &str = "Frank";
 
@@ -47,7 +49,9 @@ impl AdobePluginGlobal for Plugin {
         if in_data.application_id() != *b"PrMr" {
             params.add_customized(Params::Color, "Fill Color", ae::ColorDef::new(), param_cb)?;
         } else {
-            params.add_customized(Params::Color, "Fill Color", ae::ArbitraryDef::new(), param_cb)?;
+            params.add_customized(Params::Color, "Fill Color", ae::ArbitraryDef::setup(|f| {
+                f.set_default::<ArbColor>(ArbColor::default()).unwrap();
+            }), param_cb)?;
         }
 
         in_data.interact().register_ui(
@@ -68,17 +72,20 @@ impl AdobePluginGlobal for Plugin {
             ae::Command::Event { mut extra } => {
                 match extra.event() {
                     ae::Event::Click(_) => { events::click(&in_data, &mut extra)?; }
-                    ae::Event::Drag(_)  => { events::drag(params, &mut extra)?; }
+                    ae::Event::Drag(_)  => { events::drag(&in_data, params, &mut extra)?; }
                     ae::Event::Draw(_)  => { events::draw(&in_data, params, &mut extra)?; }
                     ae::Event::AdjustCursor(_) => { events::change_cursor(&mut extra)?; }
                     _ => {}
                 }
             }
+            ae::Command::ArbitraryCallback { mut extra } => {
+                extra.dispatch::<ArbColor, Params>(Params::Color)?;
+            }
             ae::Command::Render { in_layer, mut out_layer } => {
                 let color: ae::Pixel8 = if in_data.application_id() != *b"PrMr" {
                     params.get(Params::Color)?.as_color()?.value()
                 } else {
-                    unsafe { std::mem::zeroed() }// plugin.params.get_arbitrary(Params::Color).unwrap().value()
+                    (*params.get(Params::Color)?.as_arbitrary()?.value::<ArbColor>()?).into()
                 };
                 let color16 = ae::pixel8_to_16(color);
 
@@ -107,5 +114,34 @@ impl AdobePluginGlobal for Plugin {
             _ => { }
         }
         Ok(())
+    }
+}
+
+// ―――――――――――― Arbitrary data holding a single RGBA color  ――――――――――――
+
+#[derive(serde::Serialize, serde::Deserialize, PartialEq, PartialOrd, Copy, Clone)]
+struct ArbColor { red: u8, green: u8, blue: u8, alpha: u8 }
+impl From<ae::Pixel8> for ArbColor {
+    fn from(p: ae::Pixel8) -> Self {
+        Self { red: p.red, green: p.green, blue: p.blue, alpha: p.alpha }
+    }
+}
+impl From<ArbColor> for ae::Pixel8 {
+    fn from(p: ArbColor) -> ae::Pixel8 {
+        Self { red: p.red, green: p.green, blue: p.blue, alpha: p.alpha }
+    }
+}
+impl ae::ArbitraryData<ArbColor> for ArbColor {
+    fn default() -> Self {
+        Self { red: 255, green: 0, blue: 0, alpha: 255 }
+    }
+    fn interpolate(&self, other: &Self, v: f64) -> Self {
+        let interp = |c1: u8, c2: u8| -> u8 { ((1.0 - v) * c1 as f64 + v * c2 as f64).round() as u8 };
+        Self {
+            red:   interp(self.red,   other.red),
+            green: interp(self.green, other.green),
+            blue:  interp(self.blue,  other.blue),
+            alpha: interp(self.alpha, other.alpha),
+        }
     }
 }

@@ -42,7 +42,6 @@ define_suite!(
 pub struct Drawbot {
     pub(crate) handle: ae_sys::DRAWBOT_DrawRef,
     pub(crate) suite: DrawbotSuite,
-    pub(crate) theme_suite: Result<pf::suites::EffectCustomUIOverlayTheme, Error>,
 }
 impl Drawbot {
     /// Get the supplier reference.
@@ -63,13 +62,13 @@ impl Drawbot {
     ///
     /// Optionally draw the shadow using the overlay theme shadow color.
     pub fn fill_theme_path(&self, path: impl AsPtr<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
-        let Ok(ref suite) = self.theme_suite else { return Err(Error::MissingSuite) };
+        let suite = pf::suites::EffectCustomUIOverlayTheme::new()?;
         suite.fill_path(self.handle, path, draw_shadow)
     }
 
     /// Fills a square vertex around the center point using the overlay theme foreground color and vertex size.
     pub fn fill_theme_vertex(&self, center_point: FloatPoint, draw_shadow: bool) -> Result<(), Error> {
-        let Ok(ref suite) = self.theme_suite else { return Err(Error::MissingSuite) };
+        let suite = pf::suites::EffectCustomUIOverlayTheme::new()?;
         suite.fill_vertex(self.handle, center_point, draw_shadow)
     }
 }

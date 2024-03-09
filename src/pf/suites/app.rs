@@ -8,6 +8,13 @@ define_suite!(
     ///
     /// What better way to shame someone into purchasing a copy of your plug-in than by putting their personal information into a watermark, eh? Or set the cursor to add mask vertices, just to confuse people? Heh heh heh. But that would be wrong.
     AppSuite,
+    PFAppSuite4,
+    kPFAppSuite,
+    kPFAppSuiteVersion4
+);
+
+define_suite!(
+    AppSuite6,
     PFAppSuite6,
     kPFAppSuite,
     kPFAppSuiteVersion6
@@ -48,8 +55,9 @@ impl AppSuite {
     /// - Korean - `ko_KR`
     /// - Spanish - `es_ES`
     pub fn language(&self) -> Result<String, Error> {
+        let v6 = AppSuite6::new()?;
         let mut lang = [0i8; 16];
-        call_suite_fn!(self, PF_AppGetLanguage, lang.as_mut_ptr())?;
+        call_suite_fn!(v6, PF_AppGetLanguage, lang.as_mut_ptr())?;
         Ok(str_from_c(&lang)?)
     }
 
@@ -135,12 +143,13 @@ impl AppSuite {
     ///
     /// It won't open the dialog unless it detects a slow render. (2 seconds timeout).
     pub fn create_progress_dialog(&self, title: &str, cancel_str: Option<&str>, indeterminate: bool) -> Result<AppProgressDialog, Error> {
+        let v6 = AppSuite6::new()?;
         let title = widestring::U16CString::from_str(title).unwrap();
         let cancel_str = cancel_str.map(|s| widestring::U16CString::from_str(s).unwrap());
         let mut ptr = std::ptr::null_mut();
-        call_suite_fn!(self, PF_CreateNewAppProgressDialog, title.as_ptr(), cancel_str.map_or(std::ptr::null(), |x| x.as_ptr()), indeterminate as _, &mut ptr)?;
+        call_suite_fn!(v6, PF_CreateNewAppProgressDialog, title.as_ptr(), cancel_str.map_or(std::ptr::null(), |x| x.as_ptr()), indeterminate as _, &mut ptr)?;
         Ok(AppProgressDialog {
-            suite_ptr: self.suite_ptr,
+            suite_ptr: v6.suite_ptr,
             ptr
         })
     }

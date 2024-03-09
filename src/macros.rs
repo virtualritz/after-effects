@@ -11,7 +11,10 @@ macro_rules! ae_acquire_suite_ptr {
             ) as u32
             {
                 after_effects_sys::kSPNoError => Ok(suite_ptr.assume_init()),
-                _ => Err($crate::Error::MissingSuite),
+                _ => {
+                    log::error!("Suite not found: {} {} {}", stringify!($type), stringify!($name), stringify!($version));
+                    Err($crate::Error::MissingSuite)
+                },
             }
         }
     }};

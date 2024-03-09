@@ -2,6 +2,16 @@ use crate::*;
 
 define_suite!(
     EffectCustomUISuite,
+    PF_EffectCustomUISuite1,
+    kPFEffectCustomUISuite,
+    kPFEffectCustomUISuiteVersion1
+);
+
+// Premiere doesn't support the V2 version, and this suite is commonly used, so we don't want it failing even if we just want to use the `drawing_reference` function.
+// Define EffectCustomUISuite as version 1, but make it have the `context_async_manager` function, which is only available in V2
+// That function will then load V2 version of this suite instead
+define_suite!(
+    EffectCustomUISuite2,
     PF_EffectCustomUISuite2,
     kPFEffectCustomUISuite,
     kPFEffectCustomUISuiteVersion2
@@ -18,15 +28,15 @@ impl EffectCustomUISuite {
     pub fn drawing_reference(&self, context_handle: impl AsPtr<ae_sys::PF_ContextH>) -> Result<drawbot::Drawbot, Error> {
         Ok(drawbot::Drawbot {
             suite: crate::Suite::new()?,
-            theme_suite: crate::Suite::new(),
             handle: call_suite_fn_single!(self, PF_GetDrawingReference -> ae_sys::DRAWBOT_DrawRef, context_handle.as_ptr())?
         })
     }
 
     /// Obtain the [`aegp::AsyncManager`].
     pub fn context_async_manager(&self, in_data: impl AsPtr<*const ae_sys::PF_InData>, extra: impl AsPtr<*mut ae_sys::PF_EventExtra>) -> Result<aegp::AsyncManager, Error> {
+        let v2suite = EffectCustomUISuite2::new()?;
         Ok(aegp::AsyncManager::from_raw(
-            call_suite_fn_single!(self, PF_GetContextAsyncManager -> ae_sys::PF_AsyncManagerP, in_data.as_ptr() as *mut _, extra.as_ptr())?
+            call_suite_fn_single!(v2suite, PF_GetContextAsyncManager -> ae_sys::PF_AsyncManagerP, in_data.as_ptr() as *mut _, extra.as_ptr())?
         ))
     }
 }

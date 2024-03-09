@@ -1,29 +1,18 @@
 use super::*;
 
-static mut PPRO_GRAY: f32 = 0.0;
-
 pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> Result<(), ae::Error> {
     // Premiere Pro/Elements does not support a standard parameter type with custom UI (bug #1235407), so we can't use the color values.
     // Use an static gray value instead.
-    let drawbot_color = if in_data.application_id() != *b"PrMr" {
-        let param_color = params.get(Params::Color)?.as_color()?.value();
-
-        ae::drawbot::ColorRgba {
-            red:   param_color.red   as f32 / 255.0,
-            green: param_color.green as f32 / 255.0,
-            blue:  param_color.blue  as f32 / 255.0,
-            alpha: 1.0,
-        }
+    let param_color: ae::Pixel8 = if in_data.application_id() != *b"PrMr" {
+        params.get(Params::Color)?.as_color()?.value()
     } else {
-        // PPro only code. Won't affect Thread-Safety in the AE world
-        let gray = unsafe { PPRO_GRAY };
-        unsafe { PPRO_GRAY += 0.01 };
-        ae::drawbot::ColorRgba {
-            red:   gray % 1.0,
-            green: gray % 1.0,
-            blue:  gray % 1.0,
-            alpha: 1.0,
-        }
+        (*params.get(Params::Color)?.as_arbitrary()?.value::<ArbColor>()?).into()
+    };
+    let drawbot_color = ae::drawbot::ColorRgba {
+        red:   param_color.red   as f32 / 255.0,
+        green: param_color.green as f32 / 255.0,
+        blue:  param_color.blue  as f32 / 255.0,
+        alpha: 1.0,
     };
 
     if event.effect_area() == ae::EffectArea::Control {
@@ -69,7 +58,7 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
     Ok(())
 }
 
-pub fn drag(params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> Result<(), ae::Error> {
+pub fn drag(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> Result<(), ae::Error> {
     let ae::Event::Drag(drag) = event.event() else { return Err(ae::Error::InvalidParms) };
     let context = event.context_handle();
 
@@ -78,15 +67,22 @@ pub fn drag(params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> 
             let mouse_down = drag.screen_point();
             event.set_continue_refcon(1, mouse_down.h as _);
             let mut param = params.get_mut(Params::Color)?;
-            let mut color = param.as_color_mut()?;
-
-            let current_color = color.value();
-            color.set_value(ae::Pixel8 {
+            let current_color = if in_data.application_id() != *b"PrMr" {
+                param.as_color()?.value()
+            } else {
+                (*param.as_arbitrary()?.value::<ArbColor>()?).into()
+            };
+            let new_color = ae::Pixel8 {
                 red:   (((mouse_down.h as u16) << 8) / UI_BOX_WIDTH) as u8,
                 blue:  (((mouse_down.v as u16) << 8) / UI_BOX_HEIGHT) as u8,
-                green: current_color.red + current_color.blue,
+                green: current_color.red.saturating_add(current_color.blue),
                 alpha: 0xFF,
-            });
+            };
+            if in_data.application_id() != *b"PrMr" {
+                param.as_color_mut()?.set_value(new_color);
+            } else {
+                param.as_arbitrary_mut()?.set_value::<ArbColor>(new_color.into())?;
+            }
         }
     }
 
