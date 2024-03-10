@@ -35,8 +35,8 @@ impl PixelFormatSuite {
         call_suite_fn!(self, DisposeWorld, effect_ref.as_ptr(), world)
     }
 
-    pub fn pixel_format(&self, world: impl AsPtr<ae_sys::PF_EffectWorldPtr>) -> Result<pr::PixelFormat, Error> {
-        Ok(call_suite_fn_single!(self, GetPixelFormat -> ae_sys::PrPixelFormat, world.as_ptr())?.into())
+    pub fn pixel_format(&self, world: impl AsPtr<*const ae_sys::PF_EffectWorld>) -> Result<pr::PixelFormat, Error> {
+        Ok(call_suite_fn_single!(self, GetPixelFormat -> ae_sys::PrPixelFormat, world.as_ptr() as *mut _)?.into())
     }
 
     /// Retrieves the minimum i.e. "black" value for a give pixel type.

@@ -39,7 +39,7 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
         // Get the default font size.
         let default_font_size = supplier.default_font_size()?;
 
-        // Create default font with default size.  Note that you can provide a different font size.
+        // Create default font with default size. Note that you can provide a different font size.
         let font = supplier.new_default_font(default_font_size)?;
 
         // Draw string with white color

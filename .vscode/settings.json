@@ -15,6 +15,7 @@
         "./examples/color_grid/Cargo.toml",
         "./examples/checkout/Cargo.toml",
         "./examples/convolutrix/Cargo.toml",
-        "./examples/gamma_table/Cargo.toml"
+        "./examples/gamma_table/Cargo.toml",
+        "./examples/sdk_noise/Cargo.toml"
     ]
 }

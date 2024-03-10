@@ -247,6 +247,10 @@ impl Layer {
     pub fn pixel_format(&self) -> Result<PixelFormat, Error> {
         pf::suites::World::new()?.pixel_format(self)
     }
+
+    pub fn pr_pixel_format(&self) -> Result<pr::PixelFormat, Error> {
+        pf::suites::PixelFormat::new()?.pixel_format(self)
+    }
 }
 
 impl Drop for Layer {
