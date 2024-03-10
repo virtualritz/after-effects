@@ -31,7 +31,7 @@ impl AdobePluginGlobal for Plugin {
             f.set_default_to_this_layer();
         }))?;
 
-        if in_data.application_id() != *b"PrMr" {
+        if !in_data.is_premiere() {
             ae::pf::suites::EffectUI::new()?
                 .set_options_button_name(in_data.effect_ref(), "Whatever I want!")?;
         }
@@ -49,7 +49,7 @@ impl AdobePluginGlobal for Plugin {
             }
             ae::Command::Render { in_layer, mut out_layer } => {
                 // Premiere Pro/Elements does not support this suite
-                if in_data.application_id() != *b"PrMr" {
+                if !in_data.is_premiere() {
                     let cs = ae::pf::suites::Channel::new()?;
                     let num_channels = cs.layer_channel_count(in_data.effect_ref(), 0)?;
                     if num_channels > 0 {
@@ -75,7 +75,7 @@ impl AdobePluginGlobal for Plugin {
                 let checkout = params.checkout_at(Params::Layer, Some(in_data.current_time() + slider * in_data.time_step()), None, None)?;
                 let layer = checkout.as_layer()?;
 
-                if let Some(layer) = layer.layer(in_data) {
+                if let Some(layer) = layer.value() {
                     out_layer.copy_from(&layer, None, Some(halfsies))?;
                 }  else  {
                     // no layer? Zero-alpha black.

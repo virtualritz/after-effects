@@ -112,7 +112,7 @@ impl Layer {
         if self.bit_depth() == 16 {
             return self.fill16(color.map(pixel8_to_16), rect);
         }
-        if unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
+        if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
                 return fill_suite.fill(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
             }
@@ -120,7 +120,7 @@ impl Layer {
         self.utils().fill(self, color, rect)
     }
     pub fn fill16(&mut self, color: Option<Pixel16>, rect: Option<Rect>) -> Result<(), Error> {
-        if unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
+        if self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
                 return fill_suite.fill16(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
             }

@@ -110,17 +110,17 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
     // If the have a frame, update our sequence data color cache with the new computation
     // If the frame is not be immediately available, we draw our cached (or blank) state PF_Event_DRAW will get called again later when the frame render completes and then we'll try again
     if event.window_type() == ae::WindowType::Effect {
-        let frame_receipt = request_async_frame_for_preview(in_data, event)?;
+        if let Ok(frame_receipt) = request_async_frame_for_preview(in_data, event) {
+            if !frame_receipt.is_null() {
+                let r_suite = ae::aegp::suites::Render::new()?;
 
-        if !frame_receipt.is_null() {
-            let r_suite = ae::aegp::suites::Render::new()?;
-
-            let world = r_suite.receipt_world(frame_receipt)?;
-            if !world.is_null() { // receipt could be valid but empty
-                seq.color_cache.compute_color_grid_from_frame(&ae::Layer::from_aegp_world(in_data, world)?)?;
-                seq.valid = true;
+                let world = r_suite.receipt_world(frame_receipt)?;
+                if !world.is_null() { // receipt could be valid but empty
+                    seq.color_cache.compute_color_grid_from_frame(&ae::Layer::from_aegp_world(in_data, world)?)?;
+                    seq.valid = true;
+                }
+                r_suite.checkin_frame(frame_receipt)?;
             }
-            r_suite.checkin_frame(frame_receipt)?;
         }
     }
 
@@ -183,7 +183,7 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
 // }
 // pub fn deactivate(in_data: &ae::InData) -> Result<(), ae::Error> {
 //     // Premiere Pro/Elements does not support this suite
-//     if in_data.application_id() != *b"PrMr" {
+//     if !in_data.is_premiere() {
 //         ae::suites::AdvApp::new()?.info_draw_text("HistoGrid - Deactivate Event", "Adobe Inc")?;
 //     }
 //     Ok(())

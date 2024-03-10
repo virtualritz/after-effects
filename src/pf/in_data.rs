@@ -68,6 +68,14 @@ impl InData {
         [bytes[3], bytes[2], bytes[1], bytes[0]]
     }
 
+    pub fn is_premiere(&self) -> bool {
+        unsafe {  (*self.ptr).appl_id == i32::from_be_bytes(*b"PrMr") }
+    }
+
+    pub fn is_after_effects(&self) -> bool {
+        unsafe {  (*self.ptr).appl_id == i32::from_be_bytes(*b"FXTC") }
+    }
+
     pub fn quality(&self) -> Quality {
         unsafe { (*self.ptr).quality.into() }
     }

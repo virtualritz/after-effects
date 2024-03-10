@@ -109,9 +109,9 @@ impl AdobePluginGlobal for Plugin {
 
                 if rad_x == 0.0 || rad_y == 0.0 {
                     // Premiere Pro/Elements doesn't support WorldTransformSuite1, but it does support many of the callbacks in utils
-                    if in_data.quality() == ae::Quality::Hi && in_data.application_id() != *b"PrMr" {
+                    if in_data.quality() == ae::Quality::Hi && !in_data.is_premiere() {
                         ae::pf::suites::WorldTransform::new()?.copy_hq(in_data.effect_ref(), in_layer, out_layer, None, None)?;
-                    } else if in_data.application_id() != *b"PrMr" {
+                    } else if !in_data.is_premiere() {
                         ae::pf::suites::WorldTransform::new()?.copy(in_data.effect_ref(), in_layer, out_layer, None, None)?;
                     } else {
                         out_layer.copy_from(&in_layer, None, None)?;

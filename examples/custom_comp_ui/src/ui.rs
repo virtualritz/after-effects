@@ -41,7 +41,7 @@ fn draw_oval(in_data: &ae::InData, oval_frame: &ae::Rect, drawbot: &drawbot::Dra
     path.line_to(poly_oval[0].x, poly_oval[0].y)?;
 
     // Currently, EffectCustomUIOverlayThemeSuite is unsupported in Premiere Pro/Elements
-    if in_data.application_id() != *b"PrMr" {
+    if !in_data.is_premiere() {
         ae::pf::suites::EffectCustomUIOverlayTheme::new()?.stroke_path(drawbot, &path, false)?;
     } else {
         let foreground_color = ae::drawbot::ColorRgba {
@@ -187,7 +187,7 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
         };
 
         // Currently, EffectCustomUIOverlayThemeSuite is unsupported in Premiere Pro/Elements
-        let foreground_color = if in_data.application_id() != *b"PrMr" {
+        let foreground_color = if !in_data.is_premiere() {
             ae::pf::suites::EffectCustomUIOverlayTheme::new()?.preferred_foreground_color()?
         } else {
             drawbot::ColorRgba {

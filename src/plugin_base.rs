@@ -70,12 +70,7 @@ macro_rules! define_plugin {
                     let handle = pf::Handle::new(S::unflatten(version, &bytes[2..]).map_err(|_| Error::Struct)?)?;
                     Some((handle, true))
                 }
-            } else if cmd == RawCommand::Render
-                   || cmd == RawCommand::SmartRender
-                   || cmd == RawCommand::SmartRenderGpu
-                   || cmd == RawCommand::SmartPreRender
-                   || cmd == RawCommand::FrameSetup
-                   || cmd == RawCommand::FrameSetdown {
+            } else if (*in_data.as_ptr()).sequence_data.is_null() {
                 // Read-only sequence data available through a suite only
                 let seq_ptr = in_data.effect().const_sequence_data().unwrap_or((*in_data.as_ptr()).sequence_data as *const _);
                 if !seq_ptr.is_null() {
@@ -86,14 +81,9 @@ macro_rules! define_plugin {
                     None
                 }
             } else {
-                if (*in_data.as_ptr()).sequence_data.is_null() {
-                    $crate::log::error!("Sequence data pointer is null in cmd: {:?}!", cmd);
-                    None
-                } else {
-                    let should_dispose_sequence = cmd == RawCommand::SequenceSetdown || cmd == RawCommand::SequenceFlatten;
-                    let instance_handle = pf::Handle::<S>::from_raw((*in_data.as_ptr()).sequence_data, should_dispose_sequence)?;
-                    Some((instance_handle, false))
-                }
+                let should_dispose_sequence = cmd == RawCommand::SequenceSetdown || cmd == RawCommand::SequenceFlatten;
+                let instance_handle = pf::Handle::<S>::from_raw((*in_data.as_ptr()).sequence_data, should_dispose_sequence)?;
+                Some((instance_handle, false))
             })
         }
 

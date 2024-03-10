@@ -264,14 +264,16 @@ macro_rules! define_param_wrapper {
     $(impl $impl_name:tt: $impl_type:tt, )*) => {
         $(#[$attr])*
         pub struct $name<'parent> {
-            pub(crate) def: Ownership<'parent, after_effects_sys::$sys_type>,
+            pub(crate) def: Ownership<'parent, ae_sys::$sys_type>,
             pub(crate) change_flags: Option<&'parent mut ae_sys::PF_ChangeFlags>,
+            pub(crate) _in_data: *const ae_sys::PF_InData,
             $($field_name: $field_type, )*
         }
         impl<'parent> $name<'parent> {
             pub fn new() -> Self {
                 Self {
                     def: Ownership::Rust(unsafe { std::mem::zeroed() }),
+                    _in_data: std::ptr::null(),
                     change_flags: None,
                     $($field_name: Default::default(), )*
                 }
@@ -281,23 +283,26 @@ macro_rules! define_param_wrapper {
                 cb(&mut ret);
                 ret
             }
-            pub fn from_mut(def: &'parent mut after_effects_sys::$sys_type, change_flags: &'parent mut ae_sys::PF_ChangeFlags) -> Self {
+            pub fn from_mut(def: &'parent mut ae_sys::$sys_type, in_data: *const ae_sys::PF_InData, change_flags: &'parent mut ae_sys::PF_ChangeFlags) -> Self {
                 Self {
                     def: Ownership::AfterEffectsMut(def),
+                    _in_data: in_data,
                     change_flags: Some(change_flags),
                     $($field_name: Default::default(), )*
                 }
             }
-            pub fn from_ref(def: &'parent after_effects_sys::$sys_type) -> Self {
+            pub fn from_ref(def: &'parent ae_sys::$sys_type, in_data: *const ae_sys::PF_InData) -> Self {
                 Self {
                     def: Ownership::AfterEffects(def),
+                    _in_data: in_data,
                     change_flags: None,
                     $($field_name: Default::default(), )*
                 }
             }
-            pub fn from_owned(def: after_effects_sys::$sys_type) -> Self {
+            pub fn from_owned(def: ae_sys::$sys_type) -> Self {
                 Self {
                     def: Ownership::Rust(def),
+                    _in_data: std::ptr::null(),
                     change_flags: None,
                     $($field_name: Default::default(), )*
                 }

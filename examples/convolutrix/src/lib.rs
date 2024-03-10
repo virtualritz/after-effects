@@ -87,7 +87,7 @@ impl AdobePluginGlobal for Plugin {
                     let kernel_ptr = conv_kernel.as_mut_ptr() as *mut _;
 
                     // Premiere Pro/Elements doesn't support WorldTransformSuite1, but it does support many of the callbacks in utils
-                    if in_data.application_id() != *b"PrMr"    {
+                    if !in_data.is_premiere() {
                         ae::pf::suites::WorldTransform::new()?.convolve(
                             in_data.effect_ref(),
                             &in_layer,
@@ -123,9 +123,9 @@ impl AdobePluginGlobal for Plugin {
                         in_data.utils().blend(out_layer.as_ptr(), temp, color_amt, out_layer)?;
                     }
                 } else { // No matter what, we populate the output buffer.
-                    if in_data.quality() == ae::Quality::Hi && in_data.application_id() != *b"PrMr" {
+                    if in_data.quality() == ae::Quality::Hi && !in_data.is_premiere() {
                         ae::pf::suites::WorldTransform::new()?.copy_hq(in_data.effect_ref(), in_layer, out_layer, None, None)?;
-                    } else if in_data.application_id() != *b"PrMr" {
+                    } else if !in_data.is_premiere() {
                         ae::pf::suites::WorldTransform::new()?.copy(in_data.effect_ref(), in_layer, out_layer, None, None)?;
                     } else {
                         out_layer.copy_from(&in_layer, None, None)?;

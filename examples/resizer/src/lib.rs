@@ -52,7 +52,7 @@ impl AdobePluginGlobal for Plugin {
         }), ae::ParamFlag::USE_VALUE_FOR_OLD_PROJECTS, ae::ParamUIFlags::empty())?;
 
         // Don't expose 3D capabilities in PPro, since they are unsupported
-        if in_data.application_id() != *b"PrMr" {
+        if !in_data.is_premiere() {
             params.add(Params::Use3D, "Use lights and cameras", ae::CheckBoxDef::setup(|f| {
                 f.set_default(false);
                 f.set_label("(new in 5.0!)");
@@ -100,7 +100,7 @@ impl AdobePluginGlobal for Plugin {
 
                 let color = params.get(Params::Color)?.as_color()?.value();
 
-                if in_data.application_id() != *b"PrMr" && params.get(Params::Use3D)?.as_checkbox()?.value() {
+                if !in_data.is_premiere() && params.get(Params::Use3D)?.as_checkbox()?.value() {
                     // if we're paying attention to the camera
                     let effect = in_data.effect();
                     let comp_time = effect.comp_time(in_data.current_time(), in_data.time_scale())?;
@@ -146,7 +146,7 @@ impl AdobePluginGlobal for Plugin {
 
                 let pre_effect_origin = in_data.pre_effect_source_origin();
 
-                let rect = if in_data.application_id() == *b"PrMr" {
+                let rect = if in_data.is_premiere() {
                     Some(ae::Rect {
                         left:   pre_effect_origin.h,
                         top:    pre_effect_origin.v,
@@ -172,9 +172,9 @@ impl AdobePluginGlobal for Plugin {
                 };
 
                 // The suite functions do not automatically detect the requested output quality. Call different functions based on the current quality state.
-                if in_data.quality() == ae::Quality::Hi && in_data.application_id() != *b"PrMr" {
+                if in_data.quality() == ae::Quality::Hi && !in_data.is_premiere() {
                     ae::pf::suites::WorldTransform::new()?.copy_hq(in_data.effect_ref(), in_layer, out_layer, None, Some(dst_rect))?;
-                } else if in_data.application_id() != *b"PrMr" {
+                } else if !in_data.is_premiere() {
                     ae::pf::suites::WorldTransform::new()?.copy(in_data.effect_ref(), in_layer, out_layer, None, Some(dst_rect))?;
                 } else {
                     let src_rect = ae::Rect {

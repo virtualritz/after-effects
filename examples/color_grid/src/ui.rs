@@ -74,7 +74,7 @@ pub fn colorgrid_get_new_color(in_data: &ae::InData, hpos: usize, vpos: usize, a
         let box_color = &mut arb_data.colors[pos as usize];
 
         // Premiere Pro/Elements don't support the color picker dialog
-        if in_data.application_id() != *b"PrMr" {
+        if !in_data.is_premiere() {
             let color = pf::PixelF32 { alpha: box_color.alpha, red: box_color.red, green: box_color.green, blue: box_color.blue };
             let new_color = ae::pf::suites::App::new()?.color_picker_dialog(Some("ColorGrid!"), &color, true)?;
             box_color.red   = new_color.red;
@@ -130,7 +130,7 @@ pub fn click(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &
     }
 
     // Premiere Pro/Elements does not support this suite
-    if in_data.application_id() != *b"PrMr" {
+    if !in_data.is_premiere() {
         ae::suites::AdvApp::new()?.info_draw_text("ColorGrid - DoClick Event", "Adobe Inc")?;
     }
 
@@ -152,7 +152,7 @@ pub fn change_cursor(in_data: &ae::InData, event: &mut ae::EventExtra) -> Result
     }
 
     // Premiere Pro/Elements does not support this suite
-    if in_data.application_id() != *b"PrMr" {
+    if !in_data.is_premiere() {
         ae::suites::AdvApp::new()?.info_draw_text("ColorGrid - ChangeCursor Event", "Adobe Inc")?;
     }
 
