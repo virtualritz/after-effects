@@ -1,0 +1,22 @@
+workspace = { members = ["t"] }
+[package]
+name = "rustgpu"
+version = "0.0.1"
+authors = ["Adrian <adrian.eddy@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+after-effects = { path = "../../" }
+log = "0.4"
+wgpu = { version = "0.19", features = ["spirv"] }
+pollster = "0.3"
+futures-intrusive = "0.5"
+parking_lot = "0.12"
+#win_dbg_logger = "0.1"
+
+[build-dependencies]
+pipl = { path = "../../pipl" }

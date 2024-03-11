@@ -181,7 +181,7 @@ impl InData {
         }
     }
     // Only valid at Command::FrameSetdown
-    pub fn destroy_frame_data<T: Any>(&mut self) {
+    pub fn destroy_frame_data<T: Any>(&self) {
         unsafe {
             if !(*self.ptr).frame_data.is_null() {
                 let data = Box::<Box<dyn Any>>::from_raw((*self.ptr).frame_data as *mut _);

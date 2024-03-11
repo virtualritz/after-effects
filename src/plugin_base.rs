@@ -49,7 +49,7 @@ macro_rules! define_plugin {
         }
 
         unsafe fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: RawCommand, in_data: &InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
-            Ok(if std::any::type_name::<S>() == "()" {
+            Ok(if std::any::type_name::<S>() == "()" || cmd == RawCommand::GlobalSetup || cmd == RawCommand::GlobalSetdown {
                 // Don't allocate sequence data
                 None
             } else if cmd == RawCommand::SequenceSetup {
