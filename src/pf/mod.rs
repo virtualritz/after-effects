@@ -149,6 +149,18 @@ pub struct CompositeMode {
     pub opacity_su: u16,
 }
 
+impl Default for CompositeMode {
+    fn default() -> Self {
+        Self {
+            xfer: TransferMode::None,
+            rand_seed: 0,
+            opacity: 255,
+            rgb_only: false,
+            opacity_su: MAX_CHANNEL16 as _,
+        }
+    }
+}
+
 impl From<ae_sys::PF_CompositeMode> for CompositeMode {
     fn from(mode: ae_sys::PF_CompositeMode) -> Self {
         Self {

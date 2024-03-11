@@ -80,6 +80,10 @@ impl InData {
         unsafe { (*self.ptr).quality.into() }
     }
 
+    pub fn field(&self) -> Field {
+        unsafe { (*self.ptr).field.into() }
+    }
+
     pub fn extent_hint(&self) -> Rect {
         Rect::from(unsafe { (*self.ptr).extent_hint })
     }

@@ -72,8 +72,8 @@ impl WorldTransformSuite {
     }
 
     /// Blends using a transfer mode, with an optional mask.
-    pub fn transfer_rect(&self, effect_ref: impl AsPtr<PF_ProgPtr>, quality: Quality, flags: ModeFlags, field: Field, src_rect: Option<Rect>, src: *const PF_EffectWorld, comp_mode: CompositeMode, mask_world: Option<MaskWorld>, dest_x: i32, dest_y: i32, dst: *mut PF_EffectWorld) -> Result<(), Error> {
-        if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
+    pub fn transfer_rect(&self, effect_ref: impl AsPtr<PF_ProgPtr>, quality: Quality, flags: ModeFlags, field: Field, src_rect: Option<Rect>, src: impl AsPtr<*const PF_EffectWorld>, comp_mode: CompositeMode, mask_world: Option<MaskWorld>, dest_x: i32, dest_y: i32, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
 
         let comp_mode: ae_sys::PF_CompositeMode = comp_mode.into();
 
@@ -84,12 +84,12 @@ impl WorldTransformSuite {
             flags.into(),
             field.into(),
             src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x),
-            src,
+            src.as_ptr(),
             &comp_mode,
             mask_world.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
             dest_x,
             dest_y,
-            dst
+            dst.as_mut_ptr()
         )
     }
 

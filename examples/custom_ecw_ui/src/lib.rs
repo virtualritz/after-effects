@@ -85,7 +85,7 @@ impl AdobePluginGlobal for Plugin {
                 let color: ae::Pixel8 = if !in_data.is_premiere() {
                     params.get(Params::Color)?.as_color()?.value()
                 } else {
-                    (*params.get(Params::Color)?.as_arbitrary()?.value::<ArbColor>()?).into()
+                    *params.get(Params::Color)?.as_arbitrary()?.value::<ae::Pixel8>()?
                 };
                 let color16 = ae::pixel8_to_16(color);
 
@@ -120,17 +120,8 @@ impl AdobePluginGlobal for Plugin {
 // ―――――――――――― Arbitrary data holding a single RGBA color  ――――――――――――
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, PartialOrd, Copy, Clone)]
-struct ArbColor { red: u8, green: u8, blue: u8, alpha: u8 }
-impl From<ae::Pixel8> for ArbColor {
-    fn from(p: ae::Pixel8) -> Self {
-        Self { red: p.red, green: p.green, blue: p.blue, alpha: p.alpha }
-    }
-}
-impl From<ArbColor> for ae::Pixel8 {
-    fn from(p: ArbColor) -> ae::Pixel8 {
-        Self { red: p.red, green: p.green, blue: p.blue, alpha: p.alpha }
-    }
-}
+#[repr(C)]
+struct ArbColor { alpha: u8, red: u8, green: u8, blue: u8 }
 impl ae::ArbitraryData<ArbColor> for ArbColor {
     fn default() -> Self {
         Self { red: 255, green: 0, blue: 0, alpha: 255 }
@@ -145,3 +136,5 @@ impl ae::ArbitraryData<ArbColor> for ArbColor {
         }
     }
 }
+const _: () = assert!(std::mem::size_of::<ArbColor>()  == std::mem::size_of::<ae::Pixel8>());
+const _: () = assert!(std::mem::align_of::<ArbColor>() == std::mem::align_of::<ae::Pixel8>());

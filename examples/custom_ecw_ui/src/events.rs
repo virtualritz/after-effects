@@ -6,7 +6,7 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
     let param_color: ae::Pixel8 = if !in_data.is_premiere() {
         params.get(Params::Color)?.as_color()?.value()
     } else {
-        (*params.get(Params::Color)?.as_arbitrary()?.value::<ArbColor>()?).into()
+        *params.get(Params::Color)?.as_arbitrary()?.value::<ae::Pixel8>()?
     };
     let drawbot_color = ae::drawbot::ColorRgba {
         red:   param_color.red   as f32 / 255.0,
@@ -70,7 +70,7 @@ pub fn drag(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
             let current_color = if !in_data.is_premiere() {
                 param.as_color()?.value()
             } else {
-                (*param.as_arbitrary()?.value::<ArbColor>()?).into()
+                *param.as_arbitrary()?.value::<ae::Pixel8>()?
             };
             let new_color = ae::Pixel8 {
                 red:   (((mouse_down.h as u16) << 8) / UI_BOX_WIDTH) as u8,
@@ -81,7 +81,7 @@ pub fn drag(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
             if !in_data.is_premiere() {
                 param.as_color_mut()?.set_value(new_color);
             } else {
-                param.as_arbitrary_mut()?.set_value::<ArbColor>(new_color.into())?;
+                param.as_arbitrary_mut()?.set_value::<ae::Pixel8>(new_color)?;
             }
         }
     }
