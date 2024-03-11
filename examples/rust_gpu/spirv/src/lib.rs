@@ -6,7 +6,7 @@ use spirv_std::{ spirv, Image, image::{ ImageWithMethods, sample_with } };
 
 #[repr(C)]
 pub struct Params {
-    param_a: f32,
+    param_mirror: f32,
     param_r: f32,
     param_g: f32,
     param_b: f32,
@@ -23,9 +23,13 @@ pub fn main(
     let pixel = input.fetch_with(IVec2::new(global_id.x as i32, global_id.y as i32), sample_with::lod(0));
 
     let dims: UVec2 = input.query_size_lod(0);
-    let mirror_coord = IVec2::new(dims.x as i32 - coord.x as i32, coord.y as i32);
+    let mirror_coord = if params.param_mirror == 1.0 {
+        UVec2::new(dims.x - coord.x, coord.y)
+    } else {
+        coord
+    };
 
-    let add_pixel = UVec4::new((params.param_a * 255.0) as u32, (params.param_r * 255.0) as u32, (params.param_g * 255.0) as u32, (params.param_b * 255.0) as u32);
+    let add_pixel = UVec4::new(0, (params.param_r * 255.0) as u32, (params.param_g * 255.0) as u32, (params.param_b * 255.0) as u32);
 
     unsafe {
         output.write(mirror_coord, pixel + add_pixel);

@@ -1,4 +1,5 @@
 use wgpu::*;
+use thread_local::ThreadLocal;
 
 pub struct BufferState {
     pub in_size: (usize, usize, usize),
@@ -7,9 +8,8 @@ pub struct BufferState {
     pub out_texture: Texture,
     pub pipeline: ComputePipeline,
     pub bind_group: BindGroup,
-    // This staging buffer would have to be in a thread_local hashmap (with dimensions as a key)
-    // pub staging_buffer: Buffer,
-    // pub padded_out_stride: u32,
+    pub staging_buffer: Buffer,
+    pub padded_out_stride: u32,
 }
 
 pub struct WgpuProcessing<T: Sized> {
@@ -18,7 +18,7 @@ pub struct WgpuProcessing<T: Sized> {
     pub queue: Queue,
     pub shader: ShaderModule,
     pub params: Buffer,
-    pub state: Option<BufferState>,
+    pub state: ThreadLocal<BufferState>,
     _marker: std::marker::PhantomData<T>,
 }
 
@@ -66,28 +66,27 @@ impl<T: Sized> WgpuProcessing<T> {
             shader,
             params,
             _marker: std::marker::PhantomData,
-            state: None
+            state: ThreadLocal::new()
         }
     }
 
+    pub fn size(&self) -> Option<((usize, usize, usize), (usize, usize, usize))> {
+        self.state.get().map(|x| (x.in_size, x.out_size))
+    }
+
     pub fn setup_size(&mut self, in_size: (usize, usize, usize), out_size: (usize, usize, usize)) {
-        if let Some(ref state) = self.state {
-            if state.in_size != in_size || state.out_size != out_size {
-                self.state = Some(self.create_buffers(in_size, out_size));
-            }
-        } else {
-            self.state = Some(self.create_buffers(in_size, out_size));
-        }
+        self.state.clear();
+        self.state.get_or(|| self.create_buffers(in_size, out_size));
     }
 
     pub fn create_buffers(&self, in_size: (usize, usize, usize), out_size: (usize, usize, usize)) -> BufferState {
         let (iw, ih, _)  = (in_size.0  as u32, in_size.1  as u32, in_size.2  as u32);
-        let (ow, oh, _os) = (out_size.0 as u32, out_size.1 as u32, out_size.2 as u32);
+        let (ow, oh, os) = (out_size.0 as u32, out_size.1 as u32, out_size.2 as u32);
 
-        // let align = COPY_BYTES_PER_ROW_ALIGNMENT as u32;
-        // let padding = (align - _os % align) % align;
-        // let padded_out_stride = _os + padding;
-        // let staging_size = padded_out_stride * oh;
+        let align = COPY_BYTES_PER_ROW_ALIGNMENT as u32;
+        let padding = (align - os % align) % align;
+        let padded_out_stride = os + padding;
+        let staging_size = padded_out_stride * oh;
 
         let in_desc = TextureDescriptor {
             label: None,
@@ -112,7 +111,7 @@ impl<T: Sized> WgpuProcessing<T> {
 
         let in_texture = self.device.create_texture(&in_desc);
         let out_texture = self.device.create_texture(&out_desc);
-        // let staging_buffer = self.device.create_buffer(&BufferDescriptor { size: staging_size as u64, usage: BufferUsages::MAP_READ | BufferUsages::COPY_DST, label: None, mapped_at_creation: false });
+        let staging_buffer = self.device.create_buffer(&BufferDescriptor { size: staging_size as u64, usage: BufferUsages::MAP_READ | BufferUsages::COPY_DST, label: None, mapped_at_creation: false });
 
         let in_view = in_texture.create_view(&TextureViewDescriptor::default());
         let out_view = out_texture.create_view(&TextureViewDescriptor::default());
@@ -156,13 +155,13 @@ impl<T: Sized> WgpuProcessing<T> {
             out_texture,
             pipeline,
             bind_group,
-            // staging_buffer,
-            // padded_out_stride
+            staging_buffer,
+            padded_out_stride
         }
     }
 
     pub fn run_compute(&self, params: &T, in_size: (usize, usize, usize), out_size: (usize, usize, usize), in_buffer: &[u8], out_buffer: &mut [u8]) -> bool {
-        let state = self.state.as_ref().unwrap();
+        let state = self.state.get_or(|| self.create_buffers(in_size, out_size));
 
         let width = out_size.0 as u32;
         let height = out_size.1 as u32;
@@ -192,24 +191,17 @@ impl<T: Sized> WgpuProcessing<T> {
             cpass.dispatch_workgroups((width as f32 / 16.0).ceil() as u32, (height as f32 / 16.0).ceil() as u32, 1);
         }
 
-        // Create staging buffer
-        let align = COPY_BYTES_PER_ROW_ALIGNMENT as u32;
-        let padding = (align - out_size.2 as u32 % align) % align;
-        let padded_out_stride = out_size.2 as u32 + padding;
-        let staging_size = padded_out_stride * out_size.1 as u32;
-        let staging_buffer = self.device.create_buffer(&BufferDescriptor { size: staging_size as u64, usage: BufferUsages::MAP_READ | BufferUsages::COPY_DST, label: None, mapped_at_creation: false });
-
         // Copy output texture to buffer that we can read
         encoder.copy_texture_to_buffer(
             ImageCopyTexture { texture: &state.out_texture, mip_level: 0, origin: Origin3d::ZERO, aspect: TextureAspect::All },
-            ImageCopyBuffer { buffer: &staging_buffer, layout: ImageDataLayout { offset: 0, bytes_per_row: Some(padded_out_stride), rows_per_image: None } },
+            ImageCopyBuffer { buffer: &state.staging_buffer, layout: ImageDataLayout { offset: 0, bytes_per_row: Some(state.padded_out_stride), rows_per_image: None } },
             Extent3d { width: width as u32, height: height as u32, depth_or_array_layers: 1 }
         );
 
         self.queue.submit(Some(encoder.finish()));
 
         // Read the output buffer
-        let buffer_slice = staging_buffer.slice(..);
+        let buffer_slice = state.staging_buffer.slice(..);
         let (sender, receiver) = futures_intrusive::channel::shared::oneshot_channel();
         buffer_slice.map_async(MapMode::Read, move |v| sender.send(v).unwrap());
 
@@ -219,12 +211,12 @@ impl<T: Sized> WgpuProcessing<T> {
             let out_stride = out_size.2;
 
             let data = buffer_slice.get_mapped_range();
-            if padded_out_stride == out_stride as u32 {
+            if state.padded_out_stride == out_stride as u32 {
                 // Fast path
                 (&mut out_buffer[..height as usize * out_stride]).copy_from_slice(data.as_ref());
             } else {
                 data.as_ref()
-                    .chunks(padded_out_stride as usize)
+                    .chunks(state.padded_out_stride as usize)
                     .zip(out_buffer.chunks_mut(out_stride))
                     .for_each(|(src, dest)| {
                         dest.copy_from_slice(&src[0..out_stride]);
@@ -233,7 +225,7 @@ impl<T: Sized> WgpuProcessing<T> {
 
             // We have to make sure all mapped views are dropped before we unmap the buffer.
             drop(data);
-            staging_buffer.unmap();
+            state.staging_buffer.unmap();
         } else {
             log::error!("failed to run compute on wgpu!");
             return false;

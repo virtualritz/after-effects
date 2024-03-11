@@ -7,6 +7,8 @@ use parking_lot::RwLock;
 //
 // This example is *not* gpu zero-copy (yet)
 // To build the SPIR-V module from Rust code, cd to `spirv_builder` and run `cargo run --release`
+//
+// For some reason, this example doesn't work in Debug build, but it works if you run `just release`
 
 mod wgpu_proc;
 use wgpu_proc::*;
@@ -16,11 +18,12 @@ enum Params {
     Red,
     Green,
     Blue,
+    Mirror,
 }
 
 #[repr(C)]
 struct KernelParams {
-    param_a: f32,
+    param_mirror: f32,
     param_r: f32,
     param_g: f32,
     param_b: f32,
@@ -28,7 +31,7 @@ struct KernelParams {
 impl KernelParams {
     fn from_params(params: &mut ae::Parameters<Params>) -> Result<Self, ae::Error> {
         Ok(Self {
-            param_a: 0.0,
+            param_mirror: params.get(Params::Mirror)? .as_checkbox()?.value() as u8 as _,
             param_r: params.get(Params::Red)?  .as_float_slider()?.value() as f32 / 100.0,
             param_g: params.get(Params::Green)?.as_float_slider()?.value() as f32 / 100.0,
             param_b: params.get(Params::Blue)? .as_float_slider()?.value() as f32 / 100.0,
@@ -48,7 +51,7 @@ ae::define_plugin!(Plugin, Instance, Params);
 impl Default for Instance {
     fn default() -> Self {
         Self {
-            //wgpu: RwLock::new(WgpuProcessing::new(ProcShaderSource::Wgsl(include_str!("../shader.wgsl"))))
+            // wgpu: RwLock::new(WgpuProcessing::new(ProcShaderSource::Wgsl(include_str!("../shader.wgsl"))))
             wgpu: RwLock::new(WgpuProcessing::new(ProcShaderSource::SpirV(include_bytes!("../shader.spv"))))
         }
     }
@@ -65,10 +68,15 @@ impl AdobePluginGlobal for Plugin {
             f.set_valid_max(100.0);
             f.set_default(0.0);
             f.set_precision(1);
+            f.set_display_flags(ae::ValueDisplayFlag::PERCENT);
         }
         params.add(Params::Red,   "Red",   ae::FloatSliderDef::setup(setup))?;
         params.add(Params::Green, "Green", ae::FloatSliderDef::setup(setup))?;
         params.add(Params::Blue,  "Blue",  ae::FloatSliderDef::setup(setup))?;
+        params.add(Params::Mirror,  "",        ae::CheckBoxDef::setup(|f| {
+            f.set_label("Mirror");
+            f.set_default(true);
+        }))?;
         Ok(())
     }
 
@@ -77,7 +85,7 @@ impl AdobePluginGlobal for Plugin {
             ae::Command::About => {
                 out_data.set_return_msg("Rust GPU v0.1\rProcess pixels on the GPU using shader written in Rust and compiled to SPIR-V");
             }
-            _ => {}
+            _ => { }
         }
         Ok(())
     }
@@ -97,7 +105,7 @@ impl AdobePluginInstance for Instance {
 
         {
             let mut upgradable_read = self.wgpu.upgradable_read();
-            if upgradable_read.state.as_ref().map(|x| x.in_size) != Some(in_size) || upgradable_read.state.as_ref().map(|x| x.out_size) != Some(out_size) {
+            if upgradable_read.size() != Some((in_size, out_size)) {
                 upgradable_read.with_upgraded(|x| x.setup_size(in_size, out_size));
             }
         }
@@ -142,7 +150,7 @@ impl AdobePluginInstance for Instance {
 
                     {
                         let mut upgradable_read = self.wgpu.upgradable_read();
-                        if upgradable_read.state.as_ref().map(|x| x.in_size) != Some(in_size) || upgradable_read.state.as_ref().map(|x| x.out_size) != Some(out_size) {
+                        if upgradable_read.size() != Some((in_size, out_size)) {
                             upgradable_read.with_upgraded(|x| x.setup_size(in_size, out_size));
                         }
                     }
