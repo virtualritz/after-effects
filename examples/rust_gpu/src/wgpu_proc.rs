@@ -36,7 +36,11 @@ impl<T: Sized> WgpuProcessing<T> {
         let adapter = pollster::block_on(instance.request_adapter(&RequestAdapterOptions { power_preference, ..Default::default() })).unwrap();
 
         let (device, queue) = pollster::block_on(
-            adapter.request_device(&DeviceDescriptor { label: None, required_features: adapter.features(), required_limits: adapter.limits() }, None)
+            adapter.request_device(&DeviceDescriptor {
+                label: None,
+                required_features: adapter.features(),
+                required_limits: adapter.limits()
+            }, None)
         ).unwrap();
 
         let info = adapter.get_info();
@@ -57,7 +61,12 @@ impl<T: Sized> WgpuProcessing<T> {
             }
         });
 
-        let params = device.create_buffer(&BufferDescriptor { size: std::mem::size_of::<T>() as u64, usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST, label: None, mapped_at_creation: false });
+        let params = device.create_buffer(&BufferDescriptor {
+            size: std::mem::size_of::<T>() as u64,
+            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+            label: None,
+            mapped_at_creation: false
+        });
 
         Self {
             _adapter: adapter,
@@ -111,7 +120,12 @@ impl<T: Sized> WgpuProcessing<T> {
 
         let in_texture = self.device.create_texture(&in_desc);
         let out_texture = self.device.create_texture(&out_desc);
-        let staging_buffer = self.device.create_buffer(&BufferDescriptor { size: staging_size as u64, usage: BufferUsages::MAP_READ | BufferUsages::COPY_DST, label: None, mapped_at_creation: false });
+        let staging_buffer = self.device.create_buffer(&BufferDescriptor {
+            size: staging_size as u64,
+            usage: BufferUsages::MAP_READ | BufferUsages::COPY_DST,
+            label: None,
+            mapped_at_creation: false
+        });
 
         let in_view = in_texture.create_view(&TextureViewDescriptor::default());
         let out_view = out_texture.create_view(&TextureViewDescriptor::default());

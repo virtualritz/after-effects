@@ -73,10 +73,11 @@ impl AdobePluginGlobal for Plugin {
         params.add(Params::Red,   "Red",   ae::FloatSliderDef::setup(setup))?;
         params.add(Params::Green, "Green", ae::FloatSliderDef::setup(setup))?;
         params.add(Params::Blue,  "Blue",  ae::FloatSliderDef::setup(setup))?;
-        params.add(Params::Mirror,  "",        ae::CheckBoxDef::setup(|f| {
+        params.add(Params::Mirror, "",     ae::CheckBoxDef::setup(|f| {
             f.set_label("Mirror");
             f.set_default(true);
         }))?;
+
         Ok(())
     }
 
@@ -104,9 +105,9 @@ impl AdobePluginInstance for Instance {
         let out_size = (out_layer.width() as usize, out_layer.height() as usize, out_layer.buffer_stride());
 
         {
-            let mut upgradable_read = self.wgpu.upgradable_read();
-            if upgradable_read.size() != Some((in_size, out_size)) {
-                upgradable_read.with_upgraded(|x| x.setup_size(in_size, out_size));
+            let mut lock = self.wgpu.upgradable_read();
+            if lock.size() != Some((in_size, out_size)) {
+                lock.with_upgraded(|x| x.setup_size(in_size, out_size));
             }
         }
 
@@ -149,9 +150,9 @@ impl AdobePluginInstance for Instance {
                     let out_size = (out_layer.width() as usize, out_layer.height() as usize, out_layer.buffer_stride());
 
                     {
-                        let mut upgradable_read = self.wgpu.upgradable_read();
-                        if upgradable_read.size() != Some((in_size, out_size)) {
-                            upgradable_read.with_upgraded(|x| x.setup_size(in_size, out_size));
+                        let mut lock = self.wgpu.upgradable_read();
+                        if lock.size() != Some((in_size, out_size)) {
+                            lock.with_upgraded(|x| x.setup_size(in_size, out_size));
                         }
                     }
 
