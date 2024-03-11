@@ -73,9 +73,6 @@ impl AdobePluginGlobal for Plugin {
     }
 
     fn handle_command(&mut self, cmd: ae::Command, _in_data: InData, mut out_data: OutData, _params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
-        // let _ = log::set_logger(&win_dbg_logger::DEBUGGER_LOGGER);
-        log::set_max_level(log::LevelFilter::Warn);
-
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("Rust GPU v0.1\rProcess pixels on the GPU using shader written in Rust and compiled to SPIR-V");
@@ -117,9 +114,10 @@ impl AdobePluginInstance for Instance {
 
     fn handle_command(&mut self, plugin: &mut PluginState, cmd: ae::Command) -> Result<(), ae::Error> {
         let in_data = &plugin.in_data;
+        let out_data = &mut plugin.out_data;
         match cmd {
             ae::Command::FrameSetup { .. } => {
-                plugin.out_data.set_frame_data::<KernelParams>(KernelParams::from_params(plugin.params)?);
+                out_data.set_frame_data::<KernelParams>(KernelParams::from_params(plugin.params)?);
             },
             ae::Command::FrameSetdown { .. } => {
                 in_data.destroy_frame_data::<KernelParams>();

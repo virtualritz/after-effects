@@ -51,8 +51,8 @@ impl<T: Sized> WgpuProcessing<T> {
             },
             ProcShaderSource::Wgsl(wgsl) => {
                 ShaderModuleDescriptor {
-                        label: None,
-                        source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(wgsl)),
+                    label: None,
+                    source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(wgsl)),
                 }
             }
         });

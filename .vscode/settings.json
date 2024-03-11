@@ -17,6 +17,7 @@
         "./examples/convolutrix/Cargo.toml",
         "./examples/gamma_table/Cargo.toml",
         "./examples/sdk_noise/Cargo.toml",
-        "./examples/transformer/Cargo.toml"
+        "./examples/transformer/Cargo.toml",
+        "./examples/rust_gpu/Cargo.toml"
     ]
 }
