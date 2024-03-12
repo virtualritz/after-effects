@@ -1,2 +1,4 @@
 target/
 sdk/
+.vscode
+.DS_Store
