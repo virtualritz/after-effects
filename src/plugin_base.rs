@@ -1,5 +1,5 @@
 #[macro_export]
-macro_rules! define_plugin {
+macro_rules! define_effect {
     ($global_type:ty, $sequence_type:tt, $params_type:ty) => {
         use $crate::*;
         use std::collections::HashMap;
@@ -312,7 +312,7 @@ macro_rules! define_plugin {
                 assert_impl::<$sequence_type>();
             }
 
-            define_plugin!(check_size: $sequence_type);
+            define_effect!(check_size: $sequence_type);
 
             // log::info!("EffectMain start {:?} {:?}", RawCommand::from(cmd), std::thread::current().id());
             // struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", RawCommand::from(self.cmd), std::thread::current().id()); } }

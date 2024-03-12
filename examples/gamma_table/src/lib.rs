@@ -24,7 +24,7 @@ struct GammaTable {
     lut: [u8; 256],
 }
 
-ae::define_plugin!(Plugin, GammaTable, Params);
+ae::define_effect!(Plugin, GammaTable, Params);
 
 impl Default for GammaTable {
     fn default() -> Self {

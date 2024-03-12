@@ -3,10 +3,10 @@ use crate::*;
 #[derive(Clone)]
 /// Information about a frame render
 pub struct RenderParams {
-    ptr: *const pr_sys::PrGPUFilterRenderParams,
+    ptr: *const crate::sys::PrGPUFilterRenderParams,
 }
 impl RenderParams {
-    pub fn from_raw(ptr: *const pr_sys::PrGPUFilterRenderParams) -> Self {
+    pub fn from_raw(ptr: *const crate::sys::PrGPUFilterRenderParams) -> Self {
         Self {
             ptr
         }
@@ -41,7 +41,7 @@ impl RenderParams {
         assert!(!self.ptr.is_null());
         unsafe { ((*self.ptr).inRenderPARNum, (*self.ptr).inRenderPARDen) }
     }
-    pub fn render_field_type(&self) -> pr_sys::prFieldType {
+    pub fn render_field_type(&self) -> crate::sys::prFieldType {
         assert!(!self.ptr.is_null());
         unsafe { (*self.ptr).inRenderFieldType }
     }
@@ -59,17 +59,17 @@ impl RenderParams {
 }
 
 pub struct GpuFilterData {
-    pub instance_ptr: *mut pr_sys::PrGPUFilterInstance,
+    pub instance_ptr: *mut crate::sys::PrGPUFilterInstance,
     pub gpu_device_suite: GPUDeviceSuite,
     pub gpu_image_processing_suite: GPUImageProcessingSuite,
     pub memory_manager_suite: MemoryManagerSuite,
     pub ppix_suite: PPixSuite,
     pub ppix2_suite: PPix2Suite,
     pub video_segment_suite: VideoSegmentSuite,
-    pub gpu_info: pr_sys::PrGPUDeviceInfo,
+    pub gpu_info: crate::sys::PrGPUDeviceInfo,
 }
 impl GpuFilterData {
-    pub fn timeline_id(&self) -> pr_sys::PrTimelineID {
+    pub fn timeline_id(&self) -> crate::sys::PrTimelineID {
         assert!(!self.instance_ptr.is_null());
         unsafe { (*self.instance_ptr).inTimelineID }
     }
@@ -103,21 +103,21 @@ pub trait GpuFilter : Default {
     fn global_destroy();
 
     /// Return dependency information about a render, or nothing if only the current frame is required.
-    fn get_frame_dependencies(&self, filter: &GpuFilterData, render_params: RenderParams, query_index: &mut i32) -> Result<pr_sys::PrGPUFilterFrameDependency, Error>;
+    fn get_frame_dependencies(&self, filter: &GpuFilterData, render_params: RenderParams, query_index: &mut i32) -> Result<crate::sys::PrGPUFilterFrameDependency, Error>;
 
     /// Precompute a result into preallocated uninitialized host (pinned) memory.
     /// Will only be called if PrGPUDependency_Precompute was returned from GetFrameDependencies.
     /// Precomputation may be called ahead of render time. Results will be
     /// uploaded to the GPU by the host. If outPrecomputePixelFormat is not custom,
     /// frames will be converted to the GPU pixel format.
-    fn precompute(&self, filter: &GpuFilterData, render_params: RenderParams, index: i32, frame: pr_sys::PPixHand) -> Result<(), Error>;
+    fn precompute(&self, filter: &GpuFilterData, render_params: RenderParams, index: i32, frame: crate::sys::PPixHand) -> Result<(), Error>;
 
     /// Render into an allocated outFrame allocated with PrSDKGPUDeviceSuite or operate
     /// in place. Result must be in the same pixel format as the input. For effects, frame 0
     /// will always be the frame at the current time, other input frames will be in the same order as
     /// returned from GetFrameDependencies. For transitions frame 0 will be the incoming frame and
     /// frame 1 the outgoing frame. Transitions may not have other frame dependencies.
-    fn render(&self, filter: &GpuFilterData, render_params: RenderParams, frames: *const pr_sys::PPixHand, frame_count: usize, out_frame: *mut pr_sys::PPixHand) -> Result<(), Error>;
+    fn render(&self, filter: &GpuFilterData, render_params: RenderParams, frames: *const crate::sys::PPixHand, frame_count: usize, out_frame: *mut crate::sys::PPixHand) -> Result<(), Error>;
 }
 
 pub struct GpuFilterInstance<T: GpuFilter> {
@@ -138,7 +138,7 @@ macro_rules! define_gpu_filter {
     ($struct_name:ty) => {
         use $crate::GpuFilter;
 
-        unsafe extern "C" fn gpu_filter_create_instance(instance_data: *mut pr_sys::PrGPUFilterInstance) -> pr_sys::prSuiteError {
+        unsafe extern "C" fn gpu_filter_create_instance(instance_data: *mut $crate::sys::PrGPUFilterInstance) -> $crate::sys::prSuiteError {
             assert!(!instance_data.is_null());
 
             let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
@@ -167,15 +167,15 @@ macro_rules! define_gpu_filter {
             match result {
                 Ok(instance) => {
                     (*instance_data).ioPrivatePluginData = Box::into_raw(instance) as *mut _;
-                    pr_sys::suiteError_NoError
+                    $crate::sys::suiteError_NoError
                 }
                 Err(e) => {
-                    e as pr_sys::prSuiteError
+                    e as $crate::sys::prSuiteError
                 }
             }
         }
 
-        unsafe extern "C" fn gpu_filter_dispose_instance(instance_data: *mut pr_sys::PrGPUFilterInstance) -> pr_sys::prSuiteError {
+        unsafe extern "C" fn gpu_filter_dispose_instance(instance_data: *mut $crate::sys::PrGPUFilterInstance) -> $crate::sys::prSuiteError {
             let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
             let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
 
@@ -183,15 +183,15 @@ macro_rules! define_gpu_filter {
 
             (*instance_data).ioPrivatePluginData = std::ptr::null_mut();
 
-            pr_sys::suiteError_NoError
+            $crate::sys::suiteError_NoError
         }
 
         unsafe extern "C" fn gpu_filter_get_frame_dependencies(
-            instance_data: *mut pr_sys::PrGPUFilterInstance,
-            render_params: *const pr_sys::PrGPUFilterRenderParams,
-            io_query_index: *mut pr_sys::csSDK_int32,
-            out_frame_dependencies: *mut pr_sys::PrGPUFilterFrameDependency,
-        ) -> pr_sys::prSuiteError {
+            instance_data: *mut $crate::sys::PrGPUFilterInstance,
+            render_params: *const $crate::sys::PrGPUFilterRenderParams,
+            io_query_index: *mut $crate::sys::csSDK_int32,
+            out_frame_dependencies: *mut $crate::sys::PrGPUFilterFrameDependency,
+        ) -> $crate::sys::prSuiteError {
             let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
             let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
 
@@ -207,18 +207,18 @@ macro_rules! define_gpu_filter {
             match result {
                 Ok(dep) => {
                     *out_frame_dependencies = dep;
-                    pr_sys::suiteError_NoError
+                    $crate::sys::suiteError_NoError
                 },
-                Err(e) => e as pr_sys::prSuiteError,
+                Err(e) => e as $crate::sys::prSuiteError,
             }
         }
 
         unsafe extern "C" fn gpu_filter_precompute(
-            instance_data: *mut pr_sys::PrGPUFilterInstance,
-            render_params: *const pr_sys::PrGPUFilterRenderParams,
-            index: pr_sys::csSDK_int32,
-            frame: pr_sys::PPixHand,
-        ) -> pr_sys::prSuiteError {
+            instance_data: *mut $crate::sys::PrGPUFilterInstance,
+            render_params: *const $crate::sys::PrGPUFilterRenderParams,
+            index: $crate::sys::csSDK_int32,
+            frame: $crate::sys::PPixHand,
+        ) -> $crate::sys::prSuiteError {
             let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
             let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
 
@@ -232,18 +232,18 @@ macro_rules! define_gpu_filter {
             let _ = Box::into_raw(instance); // leak the box so it doesn't run the destructor
 
             match result {
-                Ok(_) => pr_sys::suiteError_NoError,
-                Err(e) => e as pr_sys::prSuiteError,
+                Ok(_) => $crate::sys::suiteError_NoError,
+                Err(e) => e as $crate::sys::prSuiteError,
             }
         }
 
         unsafe extern "C" fn gpu_filter_render(
-            instance_data: *mut pr_sys::PrGPUFilterInstance,
-            render_params: *const pr_sys::PrGPUFilterRenderParams,
-            frames: *const pr_sys::PPixHand,
-            frame_count: pr_sys::csSDK_size_t,
-            out_frame: *mut pr_sys::PPixHand,
-        ) -> pr_sys::prSuiteError {
+            instance_data: *mut $crate::sys::PrGPUFilterInstance,
+            render_params: *const $crate::sys::PrGPUFilterRenderParams,
+            frames: *const $crate::sys::PPixHand,
+            frame_count: $crate::sys::csSDK_size_t,
+            out_frame: *mut $crate::sys::PPixHand,
+        ) -> $crate::sys::prSuiteError {
             let util_funcs = (*(*(*instance_data).piSuites).utilFuncs);
             let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
 
@@ -257,20 +257,20 @@ macro_rules! define_gpu_filter {
             let _ = Box::into_raw(instance); // leak the box so it doesn't run the destructor
 
             match result {
-                Ok(_) => pr_sys::suiteError_NoError,
-                Err(e) => e as pr_sys::prSuiteError,
+                Ok(_) => $crate::sys::suiteError_NoError,
+                Err(e) => e as $crate::sys::prSuiteError,
             }
         }
 
         #[no_mangle]
         pub unsafe extern "C" fn xGPUFilterEntry(
-            host_interface_version: pr_sys::csSDK_uint32,
-            io_index: *mut pr_sys::csSDK_int32,
-            is_startup: pr_sys::prBool,
-            pi_suites: pr_sys::piSuitesPtr,
-            out_filter: *mut pr_sys::PrGPUFilter,
-            out_filter_info: *mut pr_sys::PrGPUFilterInfo,
-        ) -> pr_sys::prSuiteError {
+            host_interface_version: $crate::sys::csSDK_uint32,
+            io_index: *mut $crate::sys::csSDK_int32,
+            is_startup: $crate::sys::prBool,
+            pi_suites: $crate::sys::piSuitesPtr,
+            out_filter: *mut $crate::sys::PrGPUFilter,
+            out_filter_info: *mut $crate::sys::PrGPUFilterInfo,
+        ) -> $crate::sys::prSuiteError {
 
             let util_funcs = (*(*pi_suites).utilFuncs);
             let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw((util_funcs.getSPBasicSuite.unwrap())());
@@ -286,22 +286,22 @@ macro_rules! define_gpu_filter {
 
                 let index = *io_index;
                 if index + 1 > plugin_count {
-                    return pr_sys::suiteError_InvalidParms;
+                    return $crate::sys::suiteError_InvalidParms;
                 }
                 if index + 1 < plugin_count {
                     *io_index += 1;
                 }
 
-                // let match_name = pr_sys::PrSDKString::default();
+                // let match_name = $crate::sys::PrSDKString::default();
                 (*out_filter_info).outMatchName = unsafe { std::mem::zeroed() };
-                (*out_filter_info).outInterfaceVersion = pr_sys::PrSDKGPUFilterInterfaceVersion;
+                (*out_filter_info).outInterfaceVersion = $crate::sys::PrSDKGPUFilterInterfaceVersion;
 
                 <$struct_name>::global_init();
             } else {
                 <$struct_name>::global_destroy();
             }
 
-            pr_sys::suiteError_NoError
+            $crate::sys::suiteError_NoError
         }
     };
 }

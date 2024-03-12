@@ -126,7 +126,7 @@ struct Instance {
     valid: bool, // whether cached color data for DRAW is valid, otherwise draw blank
 }
 
-ae::define_plugin!(Plugin, Instance, Params);
+ae::define_effect!(Plugin, Instance, Params);
 
 impl Default for Instance {
     fn default() -> Self {

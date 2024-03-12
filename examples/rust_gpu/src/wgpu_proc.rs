@@ -49,18 +49,11 @@ impl<T: Sized> WgpuProcessing<T> {
         let info = adapter.get_info();
         log::info!("Using {} ({}) - {:#?}.", info.name, info.device, info.backend);
 
-        let shader = device.create_shader_module(match shader {
-            ProcShaderSource::SpirV(bytes) => {
-                ShaderModuleDescriptor {
-                    label: None,
-                    source: util::make_spirv(&bytes),
-                }
-            },
-            ProcShaderSource::Wgsl(wgsl) => {
-                ShaderModuleDescriptor {
-                    label: None,
-                    source: ShaderSource::Wgsl(std::borrow::Cow::Borrowed(wgsl)),
-                }
+        let shader = device.create_shader_module(ShaderModuleDescriptor {
+            label: None,
+            source: match shader {
+                ProcShaderSource::SpirV(bytes) => util::make_spirv(&bytes),
+                ProcShaderSource::Wgsl(wgsl)   => ShaderSource::Wgsl(std::borrow::Cow::Borrowed(wgsl)),
             }
         });
 

@@ -8,7 +8,7 @@ enum Params {
 #[derive(Default)]
 struct Plugin {}
 
-ae::define_plugin!(Plugin, (), Params);
+ae::define_effect!(Plugin, (), Params);
 
 fn detect_host(in_data: ae::InData) -> String {
     use ae::sys::*;

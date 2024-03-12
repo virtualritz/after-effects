@@ -20,7 +20,7 @@ struct Plugin {
     _name: String,
 }
 
-ae::define_plugin!(Plugin, (), Params);
+ae::define_effect!(Plugin, (), Params);
 
 impl Default for Plugin {
     fn default() -> Self {

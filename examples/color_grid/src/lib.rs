@@ -96,7 +96,7 @@ enum Params {
 #[derive(Default)]
 struct Plugin { }
 
-ae::define_plugin!(Plugin, (), Params);
+ae::define_effect!(Plugin, (), Params);
 
 impl AdobePluginGlobal for Plugin {
     fn can_load(_host_name: &str, _host_version: &str) -> bool {

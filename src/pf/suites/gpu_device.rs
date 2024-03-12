@@ -135,8 +135,8 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
     /// Returns the gpu buffer address.
-    pub fn gpu_world_data(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<*mut std::ffi::c_void, Error> {
-        call_suite_fn_single!(self, GetGPUWorldData -> *mut c_void, effect_ref.as_ptr(), world.as_ptr())
+    pub fn gpu_world_data(&self, effect_ref: impl AsPtr<PF_ProgPtr>, mut world: impl AsMutPtr<*mut ae_sys::PF_EffectWorld>) -> Result<*mut std::ffi::c_void, Error> {
+        call_suite_fn_single!(self, GetGPUWorldData -> *mut c_void, effect_ref.as_ptr(), world.as_mut_ptr())
     }
 
     /// This will return the size of the total data in the effect world.

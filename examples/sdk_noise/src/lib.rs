@@ -10,7 +10,7 @@ enum Params {
 #[derive(Default)]
 struct Plugin { }
 
-ae::define_plugin!(Plugin, (), Params);
+ae::define_effect!(Plugin, (), Params);
 
 #[repr(C)] struct PixelBGRA8u { blue: u8, green: u8, red: u8, alpha: u8 }
 #[repr(C)] struct PixelVUYA8u { pr: u8, pb: u8, luma: u8, alpha: u8 }

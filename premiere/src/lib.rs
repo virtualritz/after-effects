@@ -20,6 +20,8 @@ pub mod pf_suites {
 pub use pf_suites::background_frame::TransferMode;
 pub use pf_suites::pixel_format::NewWorldFlags;
 
+pub use premiere_sys as sys;
+
 mod gpu_filter;
 pub use gpu_filter::*;
 
