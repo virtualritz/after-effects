@@ -512,7 +512,7 @@ impl Rect {
     }
 
     pub fn union<'a>(&'a mut self, other: &Rect) -> &'a mut Rect {
-        if other.is_empty() {
+        if self.is_empty() {
             *self = *other;
         } else {
             // if !other.is_empty()
