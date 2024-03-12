@@ -22,10 +22,10 @@ impl GPUDeviceSuite {
     pub fn new() -> Result<Self, Error> {
         crate::Suite::new()
     }
-    pub fn get_device_count(&self) -> Result<usize, Error> {
+    pub fn device_count(&self) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, GetDeviceCount -> u32)? as usize)
     }
-    pub fn get_device_info(&self, device_index: u32) -> Result<pr_sys::PrGPUDeviceInfo, Error> {
+    pub fn device_info(&self, device_index: u32) -> Result<pr_sys::PrGPUDeviceInfo, Error> {
         call_suite_fn_single!(self, GetDeviceInfo -> pr_sys::PrGPUDeviceInfo, pr_sys::kPrSDKGPUDeviceSuiteVersion, device_index)
     }
     /// Acquire/release exclusive access to inDeviceIndex. All calls below this point generally require access be held.
@@ -74,13 +74,13 @@ impl GPUDeviceSuite {
     pub fn create_gpu_ppix(&self, device_index: u32, pixel_format: PixelFormat, width: i32, height: i32, par_numerator: i32, par_denominator: i32, field_type: pr_sys::prFieldType) -> Result<pr_sys::PPixHand, Error> {
         call_suite_fn_single!(self, CreateGPUPPix -> pr_sys::PPixHand, device_index, pixel_format.into(), width, height, par_numerator, par_denominator, field_type.into())
     }
-    pub fn get_gpu_ppix_data(&self, ppix_handle: pr_sys::PPixHand) -> Result<*mut std::ffi::c_void, Error> {
+    pub fn gpu_ppix_data(&self, ppix_handle: pr_sys::PPixHand) -> Result<*mut std::ffi::c_void, Error> {
         call_suite_fn_single!(self, GetGPUPPixData -> *mut std::ffi::c_void, ppix_handle)
     }
-    pub fn get_gpu_ppix_device_index(&self, ppix_handle: pr_sys::PPixHand) -> Result<u32, Error> {
+    pub fn gpu_ppix_device_index(&self, ppix_handle: pr_sys::PPixHand) -> Result<u32, Error> {
         call_suite_fn_single!(self, GetGPUPPixDeviceIndex -> u32, ppix_handle)
     }
-    pub fn get_gpu_ppix_size(&self, ppix_handle: pr_sys::PPixHand) -> Result<usize, Error> {
+    pub fn gpu_ppix_size(&self, ppix_handle: pr_sys::PPixHand) -> Result<usize, Error> {
         call_suite_fn_single!(self, GetGPUPPixSize -> usize, ppix_handle)
     }
 }

@@ -81,13 +81,13 @@ impl GpuFilterData {
         assert!(!self.instance_ptr.is_null());
         unsafe { (*self.instance_ptr).inDeviceIndex as u32 }
     }
-    pub fn get_param(&self, index: usize, time: i64) -> Result<crate::Param, Error> {
+    pub fn param(&self, index: usize, time: i64) -> Result<crate::Param, Error> {
         let index = index as i32 - 1; // GPU filters don't include the input frame as first paramter
 
-        self.video_segment_suite.get_param(self.node_id(), index, time)
+        self.video_segment_suite.param(self.node_id(), index, time)
     }
-    pub fn get_property(&self, property: Property) -> Result<PropertyData, Error> {
-        self.video_segment_suite.get_node_property(self.node_id(), property)
+    pub fn property(&self, property: Property) -> Result<PropertyData, Error> {
+        self.video_segment_suite.node_property(self.node_id(), property)
     }
 }
 
@@ -148,7 +148,7 @@ macro_rules! define_gpu_filter {
 
             let result = (|| -> Result<Box<$crate::GpuFilterInstance<$struct_name>>, $crate::Error> {
                 let gpu_suite = $crate::GPUDeviceSuite::new()?;
-                let gpu_info = gpu_suite.get_device_info((*instance_data).inDeviceIndex)?;
+                let gpu_info = gpu_suite.device_info((*instance_data).inDeviceIndex)?;
                 Ok(Box::new($crate::GpuFilterInstance {
                     data: $crate::GpuFilterData {
                         instance_ptr: instance_data,

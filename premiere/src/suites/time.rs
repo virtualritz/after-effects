@@ -22,7 +22,7 @@ impl TimeSuite {
     /// Get the current ticks per second. This is guaranteed to be constant for the duration of runtime.
     ///
     /// Returns the number of time ticks per second.
-    pub fn get_ticks_per_second(&self) -> Result<pr_sys::PrTime, Error> {
+    pub fn ticks_per_second(&self) -> Result<pr_sys::PrTime, Error> {
         let mut val = 0;
         call_suite_fn!(self, GetTicksPerSecond, &mut val)?;
         Ok(val)
@@ -32,7 +32,7 @@ impl TimeSuite {
     /// * `frame_rate` - an enum value for a video frame rate.
     ///
     /// Returns the number of time ticks per frame.
-    pub fn get_ticks_per_video_frame(&self, frame_rate: crate::VideoFrameRates) -> Result<pr_sys::PrTime, Error> {
+    pub fn ticks_per_video_frame(&self, frame_rate: crate::VideoFrameRates) -> Result<pr_sys::PrTime, Error> {
         call_suite_fn_single!(self, GetTicksPerVideoFrame -> pr_sys::PrTime, frame_rate.into())
     }
 
@@ -43,7 +43,7 @@ impl TimeSuite {
     ///
     /// Returns `kPrTimeSuite_RoundedAudioRate` if the requested audio sample rate is not an
     /// even divisor of the base tick count and therefore times in this rate will not be exact.
-    pub fn get_ticks_per_audio_sample(&self, sample_rate: f32) -> Result<pr_sys::PrTime, Error> {
+    pub fn ticks_per_audio_sample(&self, sample_rate: f32) -> Result<pr_sys::PrTime, Error> {
         call_suite_fn_single!(self, GetTicksPerAudioSample -> pr_sys::PrTime, sample_rate)
     }
 }

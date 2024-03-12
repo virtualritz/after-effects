@@ -42,14 +42,14 @@ impl PPixSuite {
     /// * `requested_access` - Requested pixel access. Most PPixs do not support write access modes.
     ///
     /// Returns the output pixel buffer address. May be NULL if the requested pixel access is not supported.
-    pub fn get_pixels(&self, ppix_handle: pr_sys::PPixHand, requested_access: PPixBufferAccess) -> Result<*mut std::ffi::c_char, Error> {
+    pub fn pixels(&self, ppix_handle: pr_sys::PPixHand, requested_access: PPixBufferAccess) -> Result<*mut std::ffi::c_char, Error> {
         call_suite_fn_single!(self, GetPixels -> *mut std::ffi::c_char, ppix_handle, requested_access.into())
     }
     /// This will return the bounding rect.
     /// * `ppix_handle` - The ppix handle you want to operate on.
     ///
     /// Returns the bounding rect.
-    pub fn get_bounds(&self, ppix_handle: pr_sys::PPixHand) -> Result<pr_sys::prRect, Error> {
+    pub fn bounds(&self, ppix_handle: pr_sys::PPixHand) -> Result<pr_sys::prRect, Error> {
         call_suite_fn_single!(self, GetBounds -> pr_sys::prRect, ppix_handle)
     }
     /// This will return the row bytes of the ppix.
@@ -57,14 +57,14 @@ impl PPixSuite {
     /// Returns how many bytes must be added to the pixel buffer address to get to the next line.
     ///
     /// May be negative.
-    pub fn get_row_bytes(&self, ppix_handle: pr_sys::PPixHand) -> Result<i32, Error> {
+    pub fn row_bytes(&self, ppix_handle: pr_sys::PPixHand) -> Result<i32, Error> {
         call_suite_fn_single!(self, GetRowBytes -> i32, ppix_handle)
     }
     /// This will return the pixel aspect ratio of this ppix.
     /// * `ppix_handle` - The ppix handle you want to operate on.
     ///
     /// Returns the numerator and denominator of the pixel aspect ratio.
-    pub fn get_pixel_aspect_ratio(&self, ppix_handle: pr_sys::PPixHand) -> Result<(u32, u32), Error> {
+    pub fn pixel_aspect_ratio(&self, ppix_handle: pr_sys::PPixHand) -> Result<(u32, u32), Error> {
         let mut num = 0;
         let mut den = 0;
         call_suite_fn!(self, GetPixelAspectRatio, ppix_handle, &mut num, &mut den)?;
@@ -74,7 +74,7 @@ impl PPixSuite {
     /// * `ppix_handle` - The ppix handle you want to operate on.
     ///
     /// Returns the pixel format of this ppix.
-    pub fn get_pixel_format(&self, ppix_handle: pr_sys::PPixHand) -> Result<PixelFormat, Error> {
+    pub fn pixel_format(&self, ppix_handle: pr_sys::PPixHand) -> Result<PixelFormat, Error> {
         Ok(call_suite_fn_single!(self, GetPixelFormat -> pr_sys::PrPixelFormat, ppix_handle)?.into())
     }
     /// This will return the unique key for this ppix.
@@ -83,7 +83,7 @@ impl PPixSuite {
     /// Returns the pixel format of this ppix.
     ///
     /// Returns error if the key is not available.
-    pub fn get_unique_key(&self, ppix_handle: pr_sys::PPixHand) -> Result<Vec<u8>, Error> {
+    pub fn unique_key(&self, ppix_handle: pr_sys::PPixHand) -> Result<Vec<u8>, Error> {
         let size = call_suite_fn_single!(self, GetUniqueKeySize -> usize)?;
         let mut buffer = vec![0; size];
         call_suite_fn!(self, GetUniqueKey, ppix_handle, buffer.as_mut_ptr(), size)?;
@@ -93,7 +93,7 @@ impl PPixSuite {
     /// * `ppix_handle` - The ppix handle you want to operate on.
     ///
     /// Returns the render time in milliseconds. If the frame was cached, this time will be 0.
-    pub fn get_render_time(&self, ppix_handle: pr_sys::PPixHand) -> Result<i32, Error> {
+    pub fn render_time(&self, ppix_handle: pr_sys::PPixHand) -> Result<i32, Error> {
         call_suite_fn_single!(self, GetRenderTime -> i32, ppix_handle)
     }
 }
@@ -108,7 +108,7 @@ impl PPix2Suite {
     /// * `ppix_handle` - The ppix handle you want to operate on.
     ///
     /// Returns the size of the ppix in bytes.
-    pub fn get_size(&self, ppix_handle: pr_sys::PPixHand) -> Result<usize, Error> {
+    pub fn size(&self, ppix_handle: pr_sys::PPixHand) -> Result<usize, Error> {
         call_suite_fn_single!(self, GetSize -> usize, ppix_handle)
     }
     /// [Added in CS4]
@@ -123,7 +123,7 @@ impl PPix2Suite {
     /// Returns [`YUV420PlanarBuffers`] which contains:
     /// * `xxx_data` - The output (Y, U, or V) pixel buffer address. May be NULL if the requested access is not supported.
     /// * `xxx_row_bytes` - How many bytes must be added to the pixel buffer address to get to the next line. May be negative.
-    pub fn get_yuv420_planar_buffers(&self, ppix_handle: pr_sys::PPixHand, requested_access: PPixBufferAccess) -> Result<YUV420PlanarBuffers, Error> {
+    pub fn yuv420_planar_buffers(&self, ppix_handle: pr_sys::PPixHand, requested_access: PPixBufferAccess) -> Result<YUV420PlanarBuffers, Error> {
         let mut ret: YUV420PlanarBuffers = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, GetYUV420PlanarBuffers, ppix_handle, requested_access.into(),
             &mut ret.y_data, &mut ret.y_row_bytes,
@@ -132,10 +132,10 @@ impl PPix2Suite {
         )?;
         Ok(ret)
     }
-    pub fn get_origin(&self, ppix_handle: pr_sys::PPixHand) -> Result<(i32, i32), Error> {
+    pub fn origin(&self, ppix_handle: pr_sys::PPixHand) -> Result<(i32, i32), Error> {
         call_suite_fn_double!(self, GetOrigin -> i32, i32, ppix_handle)
     }
-    pub fn get_field_order(&self, ppix_handle: pr_sys::PPixHand) -> Result<pr_sys::prFieldType, Error> {
+    pub fn field_order(&self, ppix_handle: pr_sys::PPixHand) -> Result<pr_sys::prFieldType, Error> {
         call_suite_fn_single!(self, GetFieldOrder -> pr_sys::prFieldType, ppix_handle)
     }
 }

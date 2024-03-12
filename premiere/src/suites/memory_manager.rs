@@ -23,7 +23,7 @@ impl MemoryManagerSuite {
 
     /// Get the current size of the media cache in this process.
     /// Returns the size of the memory manager in bytes.
-    pub fn get_memory_manager_size(&self) -> Result<u64, Error> {
+    pub fn memory_manager_size(&self) -> Result<u64, Error> {
         call_suite_fn_single!(self, GetMemoryManagerSize -> u64)
     }
 
@@ -65,7 +65,7 @@ impl MemoryManagerSuite {
         call_suite_fn_no_err!(self, NewPtr, byte_count)
     }
 
-    pub fn get_ptr_size(&self, p: pr_sys::PrMemoryPtr) -> u32 {
+    pub fn ptr_size(&self, p: pr_sys::PrMemoryPtr) -> u32 {
         call_suite_fn_no_err!(self, GetPtrSize, p)
     }
 
@@ -93,7 +93,7 @@ impl MemoryManagerSuite {
         call_suite_fn_no_err!(self, SetHandleSize, h, new_size)
     }
 
-    pub fn get_handle_size(&self, h: pr_sys::PrMemoryHandle) -> u32 {
+    pub fn handle_size(&self, h: pr_sys::PrMemoryHandle) -> u32 {
         call_suite_fn_no_err!(self, GetHandleSize, h)
     }
 
