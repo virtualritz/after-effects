@@ -101,6 +101,7 @@ pub use cstr_literal;
 pub use fastrand;
 pub use parking_lot;
 pub use paste;
+pub use serde;
 #[cfg(windows)]
 pub use win_dbg_logger;
 #[cfg(macos)]

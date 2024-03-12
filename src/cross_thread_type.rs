@@ -60,10 +60,10 @@ macro_rules! define_cross_thread_type {
                     Self::map().write().clear();
                 }
             }
-            impl serde::Serialize for [<CrossThread $type_name>] {
-                fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-                    use serde::ser::SerializeStruct;
-                    let rwlock = self.get().ok_or(serde::ser::Error::custom("Instance not found in static map"))?;
+            impl $crate::serde::Serialize for [<CrossThread $type_name>] {
+                fn serialize<S: $crate::serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                    use $crate::serde::ser::SerializeStruct;
+                    let rwlock = self.get().ok_or($crate::serde::ser::Error::custom("Instance not found in static map"))?;
 
                     let mut state = serializer.serialize_struct(stringify!($type_name), 2)?;
                     state.serialize_field("id", &self.id)?;
@@ -71,27 +71,27 @@ macro_rules! define_cross_thread_type {
                     state.end()
                 }
             }
-            impl<'de> serde::Deserialize<'de> for [<CrossThread $type_name>] {
-                fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: serde::Deserializer<'de> {
-                    #[derive(serde::Deserialize)]
+            impl<'de> $crate::serde::Deserialize<'de> for [<CrossThread $type_name>] {
+                fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: $crate::serde::Deserializer<'de> {
+                    #[derive($crate::serde::Deserialize)]
                     #[serde(field_identifier, rename_all = "lowercase")]
                     enum Field { Id, Data }
 
                     struct HelperVisitor;
-                    impl<'de> serde::de::Visitor<'de> for HelperVisitor {
+                    impl<'de> $crate::serde::de::Visitor<'de> for HelperVisitor {
                         type Value = [<CrossThread $type_name>];
 
                         fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                             formatter.write_str(stringify!($type_name))
                         }
 
-                        fn visit_seq<V>(self, mut seq: V) -> Result<[<CrossThread $type_name>], V::Error> where V: serde::de::SeqAccess<'de> {
+                        fn visit_seq<V>(self, mut seq: V) -> Result<[<CrossThread $type_name>], V::Error> where V: $crate::serde::de::SeqAccess<'de> {
                             let id: u64 = seq.next_element()?.ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
                             if let Some(inner) = [<CrossThread $type_name>]::map().read().get(&id) {
                                 return Ok([<CrossThread $type_name>] { id });
                             }
 
-                            let data: $type_name = seq.next_element()?.ok_or_else(|| serde::de::Error::invalid_length(1, &self))?;
+                            let data: $type_name = seq.next_element()?.ok_or_else(|| $crate::serde::de::Error::invalid_length(1, &self))?;
                             [<CrossThread $type_name>]::map().write().insert(id, std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
 
                             Ok([<CrossThread $type_name>] { id })
@@ -114,8 +114,8 @@ macro_rules! define_cross_thread_type {
                                     }
                                 }
                             }
-                            let id: u64 = id.ok_or_else(|| serde::de::Error::missing_field("id"))?;
-                            let data: $type_name = data.ok_or_else(|| serde::de::Error::missing_field("data"))?;
+                            let id: u64 = id.ok_or_else(|| $crate::serde::de::Error::missing_field("id"))?;
+                            let data: $type_name = data.ok_or_else(|| $crate::serde::de::Error::missing_field("data"))?;
                             [<CrossThread $type_name>]::map().write().insert(id, std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
                             Ok([<CrossThread $type_name>] { id })
                         }

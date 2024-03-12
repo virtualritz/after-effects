@@ -1,5 +1,4 @@
 use after_effects as ae;
-use parking_lot::RwLock;
 
 // This demonstrates:
 //  - Using Rust to write GPU shader code
@@ -21,6 +20,7 @@ enum Params {
     Mirror,
 }
 
+// This struct needs to be 16-byte aligned for proper usage on the GPU
 #[repr(C)]
 struct KernelParams {
     param_mirror: f32,
@@ -28,6 +28,7 @@ struct KernelParams {
     param_g: f32,
     param_b: f32,
 }
+
 impl KernelParams {
     fn from_params(params: &mut ae::Parameters<Params>) -> Result<Self, ae::Error> {
         Ok(Self {
@@ -39,23 +40,19 @@ impl KernelParams {
     }
 }
 
-#[derive(Default)]
-struct Plugin { }
-
-struct Instance {
-    wgpu: RwLock<wgpu_proc::WgpuProcessing<KernelParams>>
+struct Plugin {
+    wgpu: wgpu_proc::WgpuProcessing<KernelParams>
 }
-
-ae::define_plugin!(Plugin, Instance, Params);
-
-impl Default for Instance {
+impl Default for Plugin {
     fn default() -> Self {
         Self {
-            // wgpu: RwLock::new(WgpuProcessing::new(ProcShaderSource::Wgsl(include_str!("../shader.wgsl"))))
-            wgpu: RwLock::new(WgpuProcessing::new(ProcShaderSource::SpirV(include_bytes!("../shader.spv"))))
+            // wgpu: WgpuProcessing::new(ProcShaderSource::Wgsl(include_str!("../shader.wgsl")))
+            wgpu: WgpuProcessing::new(ProcShaderSource::SpirV(include_bytes!("../shader.spv")))
         }
     }
 }
+
+ae::define_plugin!(Plugin, (), Params);
 
 impl AdobePluginGlobal for Plugin {
     fn can_load(_host_name: &str, _host_version: &str) -> bool { true }
@@ -81,55 +78,28 @@ impl AdobePluginGlobal for Plugin {
         Ok(())
     }
 
-    fn handle_command(&mut self, cmd: ae::Command, _in_data: InData, mut out_data: OutData, _params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
+    fn handle_command(&mut self, cmd: ae::Command, in_data: InData, mut out_data: OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("Rust GPU v0.1\rProcess pixels on the GPU using shader written in Rust and compiled to SPIR-V");
             }
-            _ => { }
-        }
-        Ok(())
-    }
-}
-
-impl AdobePluginInstance for Instance {
-    fn flatten(&self) -> Result<(u16, Vec<u8>), Error> {
-        Ok((1, Vec::new()))
-    }
-    fn unflatten(_version: u16, _bytes: &[u8]) -> Result<Self, Error> {
-        Ok(Self::default())
-    }
-
-    fn render(&self, plugin: &mut PluginState, in_layer: &Layer, out_layer: &mut Layer) -> Result<(), ae::Error> {
-        let in_size  = (in_layer.width()  as usize, in_layer.height()  as usize, in_layer.buffer_stride());
-        let out_size = (out_layer.width() as usize, out_layer.height() as usize, out_layer.buffer_stride());
-
-        {
-            let mut lock = self.wgpu.upgradable_read();
-            if lock.size() != Some((in_size, out_size)) {
-                lock.with_upgraded(|x| x.setup_size(in_size, out_size));
-            }
-        }
-
-        let _time = std::time::Instant::now();
-
-        let params = plugin.in_data.frame_data::<KernelParams>().unwrap();
-        self.wgpu.read().run_compute(&params, in_size, out_size, in_layer.buffer(), out_layer.buffer_mut());
-
-        log::warn!("Render time: {:.3} ms", _time.elapsed().as_micros() as f64 / 1000.0);
-
-        Ok(())
-    }
-
-    fn handle_command(&mut self, plugin: &mut PluginState, cmd: ae::Command) -> Result<(), ae::Error> {
-        let in_data = &plugin.in_data;
-        let out_data = &mut plugin.out_data;
-        match cmd {
             ae::Command::FrameSetup { .. } => {
-                out_data.set_frame_data::<KernelParams>(KernelParams::from_params(plugin.params)?);
+                out_data.set_frame_data::<KernelParams>(KernelParams::from_params(params)?);
             },
             ae::Command::FrameSetdown { .. } => {
                 in_data.destroy_frame_data::<KernelParams>();
+            },
+            ae::Command::Render { in_layer, mut out_layer } => {
+                let in_size  = (in_layer.width()  as usize, in_layer.height()  as usize, in_layer.buffer_stride());
+                let out_size = (out_layer.width() as usize, out_layer.height() as usize, out_layer.buffer_stride());
+
+                let _time = std::time::Instant::now();
+
+                let params = in_data.frame_data::<KernelParams>().unwrap();
+                self.wgpu.run_compute(&params, in_size, out_size, in_layer.buffer(), out_layer.buffer_mut());
+
+                log::warn!("Render time: {:.3} ms", _time.elapsed().as_micros() as f64 / 1000.0);
+
             },
             ae::Command::SmartPreRender { mut extra } => {
                 let req = extra.output_request();
@@ -138,7 +108,7 @@ impl AdobePluginInstance for Instance {
                     let _ = extra.union_result_rect(in_result.result_rect.into());
                     let _ = extra.union_max_result_rect(in_result.max_result_rect.into());
 
-                    extra.set_pre_render_data::<KernelParams>(KernelParams::from_params(plugin.params)?);
+                    extra.set_pre_render_data::<KernelParams>(KernelParams::from_params(params)?);
                 }
             }
             ae::Command::SmartRender { extra } => {
@@ -149,17 +119,10 @@ impl AdobePluginInstance for Instance {
                     let in_size  = (in_layer.width() as usize, in_layer.height() as usize, in_layer.buffer_stride());
                     let out_size = (out_layer.width() as usize, out_layer.height() as usize, out_layer.buffer_stride());
 
-                    {
-                        let mut lock = self.wgpu.upgradable_read();
-                        if lock.size() != Some((in_size, out_size)) {
-                            lock.with_upgraded(|x| x.setup_size(in_size, out_size));
-                        }
-                    }
-
                     let _time = std::time::Instant::now();
 
                     let params = extra.pre_render_data::<KernelParams>().unwrap();
-                    self.wgpu.read().run_compute(&params, in_size, out_size, in_layer.buffer(), out_layer.buffer_mut());
+                    self.wgpu.run_compute(&params, in_size, out_size, in_layer.buffer(), out_layer.buffer_mut());
 
                     log::warn!("Smart render time: {:.3} ms", _time.elapsed().as_micros() as f64 / 1000.0);
                 }
