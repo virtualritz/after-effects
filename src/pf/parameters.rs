@@ -793,8 +793,10 @@ impl<'p> ParamDef<'p> {
 
     pub fn update_param_ui(&self) -> Result<(), Error> {
         if let Some(index) = self.index {
-            pf::suites::ParamUtils::new()?
-                .update_param_ui(self.in_data.effect_ref(), index, self)
+            if self.param_type() != ParamType::Layer {
+                self.in_data.effect().update_param_ui(index, self)?;
+            }
+            Ok(())
         } else {
             Err(Error::InvalidIndex)
         }
@@ -825,8 +827,17 @@ impl<'p> ParamDef<'p> {
         Ok(())
     }
 
-    pub fn checkout(in_data: InData, index: i32, what_time: i32, time_step: i32, time_scale: u32) -> Result<Self, Error> {
-        let param_def = in_data.interact().checkout_param(index, what_time, time_step, time_scale)?;
+    pub fn checkout(in_data: InData, index: i32, what_time: i32, time_step: i32, time_scale: u32, expected_type: Option<ParamType>) -> Result<Self, Error> {
+        let mut param_def = in_data.interact().checkout_param(index, what_time, time_step, time_scale)?;
+        if param_def.param_type == ae_sys::PF_Param_RESERVED {
+            return Err(Error::InvalidIndex);
+        }
+
+        // For some reason the checked out param_type is 0 so we need to override using the info we have from params map.
+        if index > 0 && expected_type.is_some() {
+            param_def.param_type = expected_type.unwrap().into();
+        }
+
         Ok(Self {
             param_def: Ownership::Rust(param_def),
             checkin_on_drop: true,
@@ -934,18 +945,18 @@ impl<'p> ParamDef<'p> {
         let param_def = &mut *self.param_def;
         unsafe {
             match param_def.param_type {
-                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_mut(&mut param_def.u.ad,        self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_mut(&mut param_def.u.arb_d,     self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_mut(&mut param_def.u.button_d,  self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_mut(&mut param_def.u.bd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_mut(&mut param_def.u.cd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_mut(&mut param_def.u.fs_d,      self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_mut(&mut param_def.u.pd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_mut(&mut param_def.u.sd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_mut(&mut param_def.u.td,        self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_mut(&mut param_def.u.point3d_d, self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_mut(&mut param_def.u.path_d,    self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
-                ae_sys::PF_Param_LAYER          => Ok(Param::Layer      (LayerDef      ::from_mut(&mut param_def.u.ld,        self.in_data.as_ptr(), &mut param_def.uu.change_flags))),
+                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_mut(&mut param_def.u.ad,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_mut(&mut param_def.u.arb_d,     self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_mut(&mut param_def.u.button_d,  self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_mut(&mut param_def.u.bd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_mut(&mut param_def.u.cd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_mut(&mut param_def.u.fs_d,      self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_mut(&mut param_def.u.pd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_mut(&mut param_def.u.sd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_mut(&mut param_def.u.td,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_mut(&mut param_def.u.point3d_d, self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_mut(&mut param_def.u.path_d,    self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_LAYER          => Ok(Param::Layer      (LayerDef      ::from_mut(&mut param_def.u.ld,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
                 ae_sys::PF_Param_NO_DATA        => Ok(Param::Null       (NullDef       ::new())),
                 _ => {
                     log::error!("Invalid parameter type: {}", param_def.param_type);
@@ -979,6 +990,9 @@ impl<'p> ParamDef<'p> {
     pub fn param_type(&self) -> ParamType {
         self.param_def.param_type.into()
     }
+    pub fn set_param_type(&mut self, type_: ParamType) {
+        self.param_def.param_type = type_.into()
+    }
 
     pub unsafe fn layer_def(&mut self) -> *mut ae_sys::PF_LayerDef {
         &mut self.param_def.u.ld
@@ -991,18 +1005,17 @@ impl<'p> ParamDef<'p> {
         self.param_def.name[0..name_slice.len()].copy_from_slice(unsafe { std::mem::transmute(name_slice) });
     }
 
-    pub fn set_flags(&mut self, flags: ParamFlag) {
-        self.param_def.flags = flags.bits() as _;
-    }
-    pub fn set_change_flags(&mut self, change_flags: ChangeFlag) {
-        self.param_def.uu.change_flags = change_flags.bits() as _;
-    }
-    pub fn set_ui_flags(&mut self, flags: ParamUIFlags) {
-        self.param_def.ui_flags = flags.bits() as _;
-    }
-    pub fn ui_flags(&self) -> ParamUIFlags {
-        ParamUIFlags::from_bits(self.param_def.ui_flags).unwrap()
-    }
+    pub fn set_flags       (&mut self, f: ParamFlag)    { self.param_def.flags           = f.bits() as _; }
+    pub fn set_change_flags(&mut self, f: ChangeFlag)   { self.param_def.uu.change_flags = f.bits() as _; }
+    pub fn set_ui_flags    (&mut self, f: ParamUIFlags) { self.param_def.ui_flags        = f.bits() as _; }
+
+    pub fn set_flag       (&mut self, f: ParamFlag,    set: bool) { let mut v = self.flags();        v.set(f, set); self.set_flags(v);        }
+    pub fn set_change_flag(&mut self, f: ChangeFlag,   set: bool) { let mut v = self.change_flags(); v.set(f, set); self.set_change_flags(v); }
+    pub fn set_ui_flag    (&mut self, f: ParamUIFlags, set: bool) { let mut v = self.ui_flags();     v.set(f, set); self.set_ui_flags(v);     }
+
+    pub fn flags       (&self) -> ParamFlag    {    ParamFlag::from_bits_truncate(self.param_def.flags) }
+    pub fn change_flags(&self) -> ChangeFlag   {   ChangeFlag::from_bits_truncate(unsafe { self.param_def.uu.change_flags }) }
+    pub fn ui_flags    (&self) -> ParamUIFlags { ParamUIFlags::from_bits_truncate(self.param_def.ui_flags) }
 
     pub fn set_ui_width(&mut self, width: u16) {
         self.param_def.ui_width = width as _;
@@ -1045,11 +1058,22 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::rc::Rc;
 
+#[derive(Clone, Debug)]
+pub struct ParamMapInfo {
+    pub index: usize,
+    pub type_: ParamType,
+}
+impl ParamMapInfo {
+    fn new(index: usize, type_: ParamType) -> Self {
+        Self { index, type_ }
+    }
+}
+
 #[derive(Clone)]
 pub struct Parameters<'p, P: Eq + PartialEq + Hash + Copy + Debug> {
     num_params: usize,
     in_data: *const ae_sys::PF_InData,
-    pub map: Rc<RefCell<HashMap<P, usize>>>,
+    pub map: Rc<RefCell<HashMap<P, ParamMapInfo>>>,
     params: Vec<ParamDef<'p>>,
 }
 impl<P: Eq + PartialEq + Hash + Copy + Debug> Default for Parameters<'_, P> {
@@ -1067,7 +1091,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     pub fn in_data(&self) -> InData {
         InData::from_raw(self.in_data)
     }
-    pub fn new(map: Rc<RefCell<HashMap<P, usize>>>) -> Self {
+    pub fn new(map: Rc<RefCell<HashMap<P, ParamMapInfo>>>) -> Self {
         Self {
             in_data: std::ptr::null(),
             num_params: 1,
@@ -1075,7 +1099,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
             params: Vec::new(),
         }
     }
-    pub fn with_params(in_data: *const ae_sys::PF_InData, params: &'p [*mut ae_sys::PF_ParamDef], map: Rc<RefCell<HashMap<P, usize>>>, num_params: usize) -> Self {
+    pub fn with_params(in_data: *const ae_sys::PF_InData, params: &'p [*mut ae_sys::PF_ParamDef], map: Rc<RefCell<HashMap<P, ParamMapInfo>>>, num_params: usize) -> Self {
         let in_data_obj = InData::from_raw(in_data);
         Self {
             in_data,
@@ -1109,7 +1133,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         param_def.as_mut().param_type = ParamType::GroupStart.into();
         param_def.set_id(Self::param_id(type_start));
         param_def.add(-1)?;
-        self.map.borrow_mut().insert(type_start, self.num_params);
+        self.map.borrow_mut().insert(type_start, ParamMapInfo::new(self.num_params, ParamType::GroupStart));
         self.num_params += 1;
 
         inner_cb(self);
@@ -1118,7 +1142,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         param_def.as_mut().param_type = ParamType::GroupEnd.into();
         param_def.set_id(Self::param_id(type_end));
         param_def.add(-1)?;
-        self.map.borrow_mut().insert(type_end, self.num_params);
+        self.map.borrow_mut().insert(type_end, ParamMapInfo::new(self.num_params, ParamType::GroupEnd));
         self.num_params += 1;
         Ok(())
     }
@@ -1131,12 +1155,13 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
         param_def.set_name(name);
         param_def.set_param(&param);
+        let param_type = param_def.param_type();
         param_def.set_id(Self::param_id(type_));
         if matches!(param, Param::Button(_)) {
             param_def.set_flags(ParamFlag::SUPERVISE);
         }
         param_def.add(-1)?;
-        self.map.borrow_mut().insert(type_, self.num_params);
+        self.map.borrow_mut().insert(type_, ParamMapInfo::new(self.num_params, param_type));
         self.num_params += 1;
         Ok(())
     }
@@ -1149,11 +1174,12 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
         param_def.set_name(name);
         param_def.set_param(&param);
+        let param_type = param_def.param_type();
         param_def.set_id(Self::param_id(type_));
         param_def.set_flags(flags);
         param_def.set_ui_flags(ui_flags);
         param_def.add(-1)?;
-        self.map.borrow_mut().insert(type_, self.num_params);
+        self.map.borrow_mut().insert(type_, ParamMapInfo::new(self.num_params, param_type));
         self.num_params += 1;
         Ok(())
     }
@@ -1166,13 +1192,14 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
         param_def.set_name(name);
         param_def.set_param(&param);
+        let param_type = param_def.param_type();
         param_def.set_id(Self::param_id(type_));
         let mut index = cb(&mut param_def);
         param_def.add(index)?;
         if index == -1 {
             index = self.num_params as i32;
         }
-        self.map.borrow_mut().insert(type_, index as usize);
+        self.map.borrow_mut().insert(type_, ParamMapInfo::new(index as usize, param_type));
         self.num_params += 1;
         Ok(())
     }
@@ -1196,7 +1223,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         if self.params.is_empty() || time.is_some() {
             self.checkout_at(type_, time, time_step, time_scale)
         } else {
-            let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
+            let index = self.index(type_).ok_or(Error::InvalidIndex)?;
             Ok(Ownership::AfterEffects(self.params.get(index).ok_or(Error::InvalidIndex)?))
         }
     }
@@ -1205,13 +1232,14 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         if self.params.is_empty() || time.is_some() {
             self.checkout_at(type_, time, time_step, time_scale)
         } else {
-            let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
+            let index = self.index(type_).ok_or(Error::InvalidIndex)?;
             Ok(Ownership::AfterEffectsMut(self.params.get_mut(index).ok_or(Error::InvalidIndex)?))
         }
     }
 
     pub fn checkout_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
-        let index = self.index_for_type(type_).ok_or(Error::InvalidIndex)?;
+        let index = self.index(type_).ok_or(Error::InvalidIndex)?;
+        let type_ = self.raw_param_type(type_).ok_or(Error::InvalidIndex)?;
         let in_data = self.in_data();
         let param = ParamDef::checkout(
             in_data,
@@ -1219,6 +1247,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
             time.unwrap_or(in_data.current_time()),
             time_step.unwrap_or(in_data.time_step()),
             time_scale.unwrap_or(in_data.time_scale()),
+            Some(type_)
         )?;
         if !param.is_valid() {
             return Err(Error::InvalidParms);
@@ -1230,14 +1259,26 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         self.num_params
     }
 
-    pub fn index_for_type(&self, type_: P) -> Option<usize> {
-        self.map.borrow().get(&type_).copied()
+    pub fn index(&self, type_: P) -> Option<usize> {
+        self.map.borrow().get(&type_).map(|x| x.index)
     }
-    pub fn type_for_index(&self, index: usize) -> P {
-        *self.map.borrow().iter().find(|(_, v)| **v == index).unwrap().0
+    pub fn type_at(&self, index: usize) -> P {
+        *self.map.borrow().iter().find(|(_, v)| v.index == index).unwrap().0
     }
 
     pub fn raw_params(&self) -> &[ParamDef<'p>] {
         &self.params
+    }
+    pub fn raw_param_type(&self, type_: P) -> Option<ParamType> {
+        self.map.borrow().get(&type_).map(|x| x.type_)
+    }
+
+    pub fn cloned(&self) -> Parameters<'p, P> {
+        Parameters::<'p, P> {
+            in_data: self.in_data.clone(),
+            num_params: self.num_params,
+            map: self.map.clone(),
+            params: self.params.iter().cloned().collect(),
+        }
     }
 }

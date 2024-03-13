@@ -178,8 +178,8 @@ define_suite!(
     /// Use this suite to get floating point values for color parameters.
     ColorParamSuite,
     PF_ColorParamSuite1,
-    kPFAngleParamSuite,
-    kPFAngleParamSuiteVersion1
+    kPFColorParamSuite,
+    kPFColorParamSuiteVersion1
 );
 impl ColorParamSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.

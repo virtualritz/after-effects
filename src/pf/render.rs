@@ -193,7 +193,7 @@ impl SmartRenderExtra {
             None => panic!("Invalid type for gpu_data"),
         }
     }
-    pub fn pre_render_data< T: Any>(&self) -> Option<&T> {
+    pub fn pre_render_data<T: Any>(&self) -> Option<&T> {
         assert!(!self.as_ref().input.is_null());
         if unsafe { (*(*self.ptr).input).pre_render_data.is_null() } {
             return None;
@@ -203,6 +203,20 @@ impl SmartRenderExtra {
         };
         let data = Box::<Box<dyn Any>>::leak(data);
         match data.downcast_ref::<T>() {
+            Some(data) => Some(data),
+            None => panic!("Invalid type for pre_render_data"),
+        }
+    }
+    pub fn pre_render_data_mut<T: Any>(&mut self) -> Option<&mut T> {
+        assert!(!self.as_ref().input.is_null());
+        if unsafe { (*(*self.ptr).input).pre_render_data.is_null() } {
+            return None;
+        }
+        let data = unsafe {
+            Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).pre_render_data as *mut _)
+        };
+        let data = Box::<Box<dyn Any>>::leak(data);
+        match data.downcast_mut::<T>() {
             Some(data) => Some(data),
             None => panic!("Invalid type for pre_render_data"),
         }

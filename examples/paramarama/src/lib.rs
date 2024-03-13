@@ -169,7 +169,7 @@ impl AdobePluginGlobal for Plugin {
                 }
             }
             ae::Command::UserChangedParam { param_index } => {
-                if params.type_for_index(param_index) == Params::Button {
+                if params.type_at(param_index) == Params::Button {
                     out_data.set_return_msg("Paramarama button hit!");
 
                     if !in_data.is_premiere() {

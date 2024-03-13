@@ -75,7 +75,7 @@ impl OutData {
     }
     pub fn set_error_msg(&mut self, msg: &str) {
         self.set_return_msg(msg);
-        self.as_mut().out_flags |= ae_sys::PF_OutFlag_DISPLAY_ERROR_MESSAGE as ae_sys::PF_OutFlags;
+        self.set_out_flag(OutFlags::DisplayErrorMessage, true);
     }
     pub fn set_version(&mut self, v: u32) {
         self.as_mut().my_version = v as ae_sys::A_u_long;
@@ -95,9 +95,9 @@ impl OutData {
     }
     pub fn set_out_flag2(&mut self, flag: OutFlags2, enabled: bool) {
         if enabled {
-            self.as_mut().out_flags2 |= Into::<ae_sys::PF_OutFlags>::into(flag);
+            self.as_mut().out_flags2 |= Into::<ae_sys::PF_OutFlags2>::into(flag);
         } else {
-            self.as_mut().out_flags2 &= !(Into::<ae_sys::PF_OutFlags>::into(flag));
+            self.as_mut().out_flags2 &= !(Into::<ae_sys::PF_OutFlags2>::into(flag));
         }
     }
     pub fn set_force_rerender(&mut self) {

@@ -30,7 +30,8 @@ impl InteractCallbacks {
     /// In other selectors the actual render will be triggered as it did before.
     pub fn checkout_param(&self, index: i32, what_time: i32, time_step: i32, time_scale: u32) -> Result<ae_sys::PF_ParamDef, Error> {
         let in_data = unsafe { &(*self.0.as_ptr()) };
-        let mut param = unsafe { std::mem::zeroed() };
+        let mut param: ae_sys::PF_ParamDef = unsafe { std::mem::zeroed() };
+        param.param_type = ae_sys::PF_Param_RESERVED;
         match unsafe { in_data.inter.checkout_param.unwrap()(in_data.effect_ref, index as _, what_time as _, time_step as _, time_scale as _, &mut param) } {
             0 => Ok(param),
             e => Err(Error::from(e)),

@@ -15,7 +15,7 @@ macro_rules! define_effect {
         }
 
         struct GlobalData {
-            params_map: Rc<RefCell<HashMap<$params_type, usize>>>,
+            params_map: Rc<RefCell<HashMap<$params_type, $crate::ParamMapInfo>>>,
             params_num: usize,
             plugin_instance: $global_type
         }
@@ -178,7 +178,7 @@ macro_rules! define_effect {
                     }
                     // RawCommand::UserChangedParam => {
                     //     let extra = extra as *mut $crate::sys::PF_UserChangedParamExtra;
-                    //     let param = plugin_state.params.type_for_index((*extra).param_index as usize);
+                    //     let param = plugin_state.params.type_at((*extra).param_index as usize);
                     //     sequence_err = Some(inst.user_changed_param(&mut plugin_state, param));
                     // }
                     _ => { }
