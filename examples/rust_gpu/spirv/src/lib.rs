@@ -35,5 +35,3 @@ pub fn main(
         output.write(mirror_coord, pixel + add_pixel);
     }
 }
-
-

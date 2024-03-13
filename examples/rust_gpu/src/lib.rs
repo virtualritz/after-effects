@@ -32,7 +32,7 @@ struct KernelParams {
 impl KernelParams {
     fn from_params(params: &mut ae::Parameters<Params>) -> Result<Self, ae::Error> {
         Ok(Self {
-            param_mirror: params.get(Params::Mirror)? .as_checkbox()?.value() as u8 as _,
+            param_mirror: params.get(Params::Mirror)?.as_checkbox()?.value() as u8 as _,
             param_r: params.get(Params::Red)?  .as_float_slider()?.value() as f32 / 100.0,
             param_g: params.get(Params::Green)?.as_float_slider()?.value() as f32 / 100.0,
             param_b: params.get(Params::Blue)? .as_float_slider()?.value() as f32 / 100.0,
@@ -116,7 +116,7 @@ impl AdobePluginGlobal for Plugin {
                 let in_layer = cb.checkout_layer_pixels(0)?;
 
                 if let Ok(mut out_layer) = cb.checkout_output() {
-                    let in_size  = (in_layer.width() as usize, in_layer.height() as usize, in_layer.buffer_stride());
+                    let in_size  = (in_layer.width()  as usize, in_layer.height()  as usize, in_layer.buffer_stride());
                     let out_size = (out_layer.width() as usize, out_layer.height() as usize, out_layer.buffer_stride());
 
                     let _time = std::time::Instant::now();

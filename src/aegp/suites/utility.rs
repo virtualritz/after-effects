@@ -1,6 +1,5 @@
 use crate::*;
 use crate::aegp::*;
-use widestring::U16CString;
 
 pub struct ErrReportState((ae_sys::AEGP_ErrReportState, bool));
 impl Drop for ErrReportState {

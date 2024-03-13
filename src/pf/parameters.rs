@@ -963,6 +963,7 @@ impl<'p> ParamDef<'p> {
                 | ae_sys::PF_Param_BUTTON
                 | ae_sys::PF_Param_CHECKBOX
                 | ae_sys::PF_Param_COLOR
+                | ae_sys::PF_Param_FIX_SLIDER
                 | ae_sys::PF_Param_FLOAT_SLIDER
                 | ae_sys::PF_Param_GROUP_START
                 | ae_sys::PF_Param_GROUP_END
@@ -1039,7 +1040,6 @@ impl Debug for ParamDef<'_> {
     }
 }
 
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -1079,13 +1079,13 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         let in_data_obj = InData::from_raw(in_data);
         Self {
             in_data,
-            params: if params.is_empty() {
+            params: if params.is_empty() || params[0].is_null() {
                 Vec::new()
             } else {
                 params
                     .into_iter()
                     .enumerate()
-                    .map(|(i, p)| ParamDef::from_raw(in_data_obj, unsafe { &mut **p }, Some(i as i32)))
+                    .map(|(i, p)| { debug_assert!(!p.is_null()); ParamDef::from_raw(in_data_obj, unsafe { &mut **p }, Some(i as i32)) })
                     .collect::<Vec<_>>()
             },
             num_params,
@@ -1234,12 +1234,10 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         self.map.borrow().get(&type_).copied()
     }
     pub fn type_for_index(&self, index: usize) -> P {
-        *self
-            .map
-            .borrow()
-            .iter()
-            .find(|(_, v)| **v == index)
-            .unwrap()
-            .0
+        *self.map.borrow().iter().find(|(_, v)| **v == index).unwrap().0
+    }
+
+    pub fn raw_params(&self) -> &[ParamDef<'p>] {
+        &self.params
     }
 }
