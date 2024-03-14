@@ -230,8 +230,7 @@ impl AdobePluginInstance for Instance {
 
                 let pre_render_data = extra.pre_render_data_mut::<PreRenderData>().unwrap();
                 if self.advanced_mode {
-                    let color_param = plugin.params.get(Params::Color)?;
-                    pre_render_data.color = ae::pf::suites::ColorParam::new()?.floating_point_value_from_color_def(in_data.effect_ref(), color_param.as_ref())?;
+                    pre_render_data.color = plugin.params.get(Params::Color)?.as_color()?.float_value()?;
                     // color_param gets checked in here
                 } else {
                     // Basic mode
@@ -290,13 +289,11 @@ impl AdobePluginInstance for Instance {
                 // Toggle enable/disabled state of flavor param
                 if mode == (Mode::Basic as i32) {
                     let mut flavor = params_copy.get_mut(Params::Flavor)?;
-                    flavor.set_param_type(ae::ParamType::PopUp);
                     flavor.set_ui_flag(ae::ParamUIFlags::DISABLED, false);
                     flavor.set_name("Flavor");
                     flavor.update_param_ui()?;
                 } else if mode == Mode::Advanced as i32 && !params_copy.get(Params::Flavor)?.ui_flags().contains(ae::ParamUIFlags::DISABLED) {
                     let mut flavor = params_copy.get_mut(Params::Flavor)?;
-                    flavor.set_param_type(ae::ParamType::PopUp);
                     flavor.set_ui_flag(ae::ParamUIFlags::DISABLED, true);
                     flavor.set_name("Flavor (disabled in Basic mode)");
                     flavor.update_param_ui()?;
@@ -316,7 +313,6 @@ impl AdobePluginInstance for Instance {
                     // Twirl open the slider param
                     {
                         let mut slider = params_copy.get_mut(Params::Slider)?;
-                        slider.set_param_type(ae::ParamType::FloatSlider);
                         slider.set_flag(ae::ParamFlag::TWIRLY, false);
                         slider.update_param_ui()?;
                     }

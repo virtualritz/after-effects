@@ -49,7 +49,12 @@ macro_rules! define_effect {
         }
 
         unsafe fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: RawCommand, in_data: &InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
-            Ok(if std::any::type_name::<S>() == "()" || cmd == RawCommand::GlobalSetup || cmd == RawCommand::GlobalSetdown || cmd == RawCommand::GpuDeviceSetup || cmd == RawCommand::GpuDeviceSetdown {
+            // Sequence data is not available during these commands:
+            const EXCLUDES: &[RawCommand] = &[RawCommand::GlobalSetup, RawCommand::GlobalSetdown, RawCommand::GpuDeviceSetup, RawCommand::GpuDeviceSetdown, RawCommand::ArbitraryCallback];
+            if EXCLUDES.contains(&cmd) {
+                return Ok(None);
+            }
+            Ok(if std::any::type_name::<S>() == "()" {
                 // Don't allocate sequence data
                 None
             } else if cmd == RawCommand::SequenceSetup {

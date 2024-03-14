@@ -36,6 +36,18 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
         // Fill the path with the brush created
         surface.fill_path(&brush, &path, ae::drawbot::FillType::Winding)?;
 
+        // Draw the image
+        static PNG: std::sync::OnceLock<PngImage> = std::sync::OnceLock::new();
+        let png = PNG.get_or_init(|| PngImage::new(include_bytes!("../ferris.png")));
+
+        if let Ok(img) = supplier.new_image_from_buffer(png.width, png.height, png.line_size, drawbot::PixelLayout::Bgra32Straight, &png.data) {
+            let origin = drawbot::PointF32 {
+                x: current_frame.left as f32 + (current_frame.width() as f32 - png.width as f32) / 2.0,
+                y: current_frame.top as f32,
+            };
+            surface.draw_image(&img, &origin, 1.0)?;
+        }
+
         // Get the default font size.
         let default_font_size = supplier.default_font_size()?;
 
@@ -47,7 +59,7 @@ pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
 
         let origin = ae::drawbot::PointF32 {
             x: current_frame.left as f32 + 5.0,
-            y: current_frame.top  as f32 + 50.0,
+            y: current_frame.top  as f32 + 100.0,
         };
 
         surface.draw_string(&string_brush, &font, CUSTOM_UI_STRING, &origin, ae::drawbot::TextAlignment::Left, ae::drawbot::TextTruncation::None, 0.0)?;
@@ -110,3 +122,34 @@ pub fn change_cursor(event: &mut ae::EventExtra) -> Result<(), ae::Error> {
     }
     Ok(())
 }
+
+pub struct PngImage {
+    pub width: usize,
+    pub height: usize,
+    pub line_size: usize,
+    pub data: Vec<u8>,
+}
+impl PngImage {
+    pub fn new(png_bytes: &[u8]) -> Self {
+        let decoder = png::Decoder::new(std::io::Cursor::new(png_bytes));
+        let mut reader = decoder.read_info().unwrap();
+        let mut data = vec![0; reader.output_buffer_size()];
+        let info = reader.next_frame(&mut data).unwrap();
+        if data.len() != info.buffer_size() {
+            data.resize(info.buffer_size(), 0)
+        }
+        Self::rgba_to_bgra(&mut data);
+        Self {
+            width: info.width as _,
+            height: info.height as _,
+            line_size: info.line_size as _,
+            data,
+        }
+    }
+    fn rgba_to_bgra(data: &mut [u8]) {
+        for chunk in data.chunks_exact_mut(4) {
+            chunk.swap(0, 2);
+        }
+    }
+}
+

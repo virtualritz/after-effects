@@ -7,8 +7,8 @@ mod events;
 const CUSTOM_UI_STRING: &str = "Whoopee! A Custom UI!!!\nClick and drag here to\nchange the background color.\nHold down shift or cmd/ctrl\nfor different cursors!";
 const STR_FRANK       : &str = "Frank";
 
-const UI_BOX_WIDTH : u16 = 150;
-const UI_BOX_HEIGHT: u16 = 150;
+const UI_BOX_WIDTH : u16 = 200;
+const UI_BOX_HEIGHT: u16 = 200;
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
 enum Params {
@@ -122,10 +122,12 @@ impl AdobePluginGlobal for Plugin {
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, PartialOrd, Copy, Clone)]
 #[repr(C)]
 struct ArbColor { alpha: u8, red: u8, green: u8, blue: u8 }
-impl ae::ArbitraryData<ArbColor> for ArbColor {
+impl Default for ArbColor {
     fn default() -> Self {
         Self { red: 255, green: 0, blue: 0, alpha: 255 }
     }
+}
+impl ae::ArbitraryData<ArbColor> for ArbColor {
     fn interpolate(&self, other: &Self, v: f64) -> Self {
         let interp = |c1: u8, c2: u8| -> u8 { ((1.0 - v) * c1 as f64 + v * c2 as f64).round() as u8 };
         Self {

@@ -143,6 +143,13 @@ impl AngleDef<'_> {
     pub fn default(&self) -> f32 {
         Fixed::from_fixed(self.def.dephault).into()
     }
+    pub fn float_value(&self) -> Result<f64, Error> {
+        if self._in_data.is_null() || self._parent_ptr.is_none() {
+            return Err(Error::InvalidParms);
+        }
+        Ok(pf::suites::AngleParam::new()?
+            .floating_point_value_from_angle_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())?)
+    }
 }
 // ―――――――――――――――――――――――――――――――――――― Angle ―――――――――――――――――――――――――――――――――――――
 
@@ -192,6 +199,15 @@ define_param_wrapper! {
     ColorDef { },
     impl value: Pixel8,
     impl default: Pixel8,
+}
+impl ColorDef<'_> {
+    pub fn float_value(&self) -> Result<PixelF32, Error> {
+        if self._in_data.is_null() || self._parent_ptr.is_none() {
+            return Err(Error::InvalidParms);
+        }
+        Ok(pf::suites::ColorParam::new()?
+            .floating_point_value_from_color_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())?)
+    }
 }
 // ―――――――――――――――――――――――――――――――――――― Color ――――――――――――――――――――――――――――――――――――――
 
@@ -313,6 +329,13 @@ impl PointDef<'_> {
     pub fn value(&self) -> (f32, f32) {
         (Fixed::from_fixed(self.def.x_value).into(), Fixed::from_fixed(self.def.y_value).into())
     }
+    pub fn float_value(&self) -> Result<ae_sys::A_FloatPoint, Error> {
+        if self._in_data.is_null() || self._parent_ptr.is_none() {
+            return Err(Error::InvalidParms);
+        }
+        Ok(pf::suites::PointParam::new()?
+            .floating_point_value_from_point_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())?)
+    }
 }
 
 define_param_wrapper! {
@@ -430,6 +453,9 @@ impl ArbitraryDef<'_> {
     }
 
     pub fn set_value<T>(&mut self, value: T) -> Result<&mut Self, Error> {
+        if !self.def.value.is_null() {
+            let _ = Handle::<T>::from_raw(self.def.value, true);
+        }
         self.def.value = Handle::into_raw(Handle::new(value)?);
         self.set_value_changed();
         Ok(self)
@@ -446,7 +472,6 @@ impl ArbitraryDef<'_> {
 // ―――――――――――――――――――――――――――――――――― Arbitrary ―――――――――――――――――――――――――――――――――――
 
 pub trait ArbitraryData<T> {
-    fn default() -> T;
     fn interpolate(&self, other: &T, value: f64) -> T;
 }
 
@@ -476,7 +501,7 @@ impl ArbParamsExtra {
     }
 
     pub fn dispatch<T, P>(&mut self, param: P) -> Result<(), Error>
-    where T: ArbitraryData<T> + DeserializeOwned + Serialize + PartialEq + PartialOrd,
+    where T: ArbitraryData<T> + Default + DeserializeOwned + Serialize + PartialEq + PartialOrd,
           P: Eq + PartialEq + Hash + Copy + Debug
     {
         let param_id = Parameters::param_id(param) as i16;
@@ -793,10 +818,7 @@ impl<'p> ParamDef<'p> {
 
     pub fn update_param_ui(&self) -> Result<(), Error> {
         if let Some(index) = self.index {
-            if self.param_type() != ParamType::Layer {
-                self.in_data.effect().update_param_ui(index, self)?;
-            }
-            Ok(())
+            self.in_data.effect().update_param_ui(index, self)
         } else {
             Err(Error::InvalidIndex)
         }
@@ -918,20 +940,21 @@ impl<'p> ParamDef<'p> {
 
     pub fn as_param<'a>(&'a self) -> Result<Param<'a>, Error> where 'p: 'a {
         let param_def = &*self.param_def;
+        let parent_ptr = param_def as *const _;
         unsafe {
             match param_def.param_type {
-                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_ref(&param_def.u.ad,        self.in_data.as_ptr()))),
-                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_ref(&param_def.u.arb_d,     self.in_data.as_ptr()))),
-                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_ref(&param_def.u.button_d,  self.in_data.as_ptr()))),
-                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_ref(&param_def.u.bd,        self.in_data.as_ptr()))),
-                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_ref(&param_def.u.cd,        self.in_data.as_ptr()))),
-                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_ref(&param_def.u.fs_d,      self.in_data.as_ptr()))),
-                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_ref(&param_def.u.pd,        self.in_data.as_ptr()))),
-                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_ref(&param_def.u.sd,        self.in_data.as_ptr()))),
-                ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_ref(&param_def.u.td,        self.in_data.as_ptr()))),
-                ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_ref(&param_def.u.point3d_d, self.in_data.as_ptr()))),
-                ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_ref(&param_def.u.path_d,    self.in_data.as_ptr()))),
-                ae_sys::PF_Param_LAYER          => Ok(Param::Layer      (LayerDef      ::from_ref(&param_def.u.ld,        self.in_data.as_ptr()))),
+                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_ref(&param_def.u.ad,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_ref(&param_def.u.arb_d,     self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_ref(&param_def.u.button_d,  self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_ref(&param_def.u.bd,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_ref(&param_def.u.cd,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_ref(&param_def.u.fs_d,      self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_ref(&param_def.u.pd,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_ref(&param_def.u.sd,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_ref(&param_def.u.td,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_ref(&param_def.u.point3d_d, self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_ref(&param_def.u.path_d,    self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_LAYER          => Ok(Param::Layer      (LayerDef      ::from_ref(&param_def.u.ld,        self.in_data.as_ptr(), parent_ptr))),
                 ae_sys::PF_Param_NO_DATA        => Ok(Param::Null       (NullDef       ::new())),
                 _ => {
                     log::error!("Invalid parameter type: {}", param_def.param_type);
@@ -943,20 +966,21 @@ impl<'p> ParamDef<'p> {
 
     pub fn as_param_mut<'a>(&'a mut self) -> Result<Param<'a>, Error> where 'p: 'a {
         let param_def = &mut *self.param_def;
+        let parent_ptr = param_def as *const _;
         unsafe {
             match param_def.param_type {
-                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_mut(&mut param_def.u.ad,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_mut(&mut param_def.u.arb_d,     self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_mut(&mut param_def.u.button_d,  self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_mut(&mut param_def.u.bd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_mut(&mut param_def.u.cd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_mut(&mut param_def.u.fs_d,      self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_mut(&mut param_def.u.pd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_mut(&mut param_def.u.sd,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_mut(&mut param_def.u.td,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_mut(&mut param_def.u.point3d_d, self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_mut(&mut param_def.u.path_d,    self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
-                ae_sys::PF_Param_LAYER          => Ok(Param::Layer      (LayerDef      ::from_mut(&mut param_def.u.ld,        self.in_data.as_ptr(), &mut param_def.uu.change_flags, param_def.ui_flags))),
+                ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_mut(&mut param_def.u.ad,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_ARBITRARY_DATA => Ok(Param::Arbitrary  (ArbitraryDef  ::from_mut(&mut param_def.u.arb_d,     self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_BUTTON         => Ok(Param::Button     (ButtonDef     ::from_mut(&mut param_def.u.button_d,  self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_CHECKBOX       => Ok(Param::CheckBox   (CheckBoxDef   ::from_mut(&mut param_def.u.bd,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_COLOR          => Ok(Param::Color      (ColorDef      ::from_mut(&mut param_def.u.cd,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_FLOAT_SLIDER   => Ok(Param::FloatSlider(FloatSliderDef::from_mut(&mut param_def.u.fs_d,      self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_POPUP          => Ok(Param::Popup      (PopupDef      ::from_mut(&mut param_def.u.pd,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_SLIDER         => Ok(Param::Slider     (SliderDef     ::from_mut(&mut param_def.u.sd,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_POINT          => Ok(Param::Point      (PointDef      ::from_mut(&mut param_def.u.td,        self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_POINT_3D       => Ok(Param::Point3D    (Point3DDef    ::from_mut(&mut param_def.u.point3d_d, self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_PATH           => Ok(Param::Path       (PathDef       ::from_mut(&mut param_def.u.path_d,    self.in_data.as_ptr(), parent_ptr))),
+                ae_sys::PF_Param_LAYER          => Ok(Param::Layer      (LayerDef      ::from_mut(&mut param_def.u.ld,        self.in_data.as_ptr(), parent_ptr))),
                 ae_sys::PF_Param_NO_DATA        => Ok(Param::Null       (NullDef       ::new())),
                 _ => {
                     log::error!("Invalid parameter type: {}", param_def.param_type);
@@ -989,9 +1013,6 @@ impl<'p> ParamDef<'p> {
     }
     pub fn param_type(&self) -> ParamType {
         self.param_def.param_type.into()
-    }
-    pub fn set_param_type(&mut self, type_: ParamType) {
-        self.param_def.param_type = type_.into()
     }
 
     pub unsafe fn layer_def(&mut self) -> *mut ae_sys::PF_LayerDef {

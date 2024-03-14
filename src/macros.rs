@@ -265,8 +265,7 @@ macro_rules! define_param_wrapper {
         $(#[$attr])*
         pub struct $name<'parent> {
             pub(crate) def: Ownership<'parent, ae_sys::$sys_type>,
-            pub(crate) change_flags: Option<&'parent mut ae_sys::PF_ChangeFlags>,
-            pub(crate) ui_flags: Option<i32>,
+            pub(crate) _parent_ptr: Option<*const ae_sys::PF_ParamDef>,
             pub(crate) _in_data: *const ae_sys::PF_InData,
             $($field_name: $field_type, )*
         }
@@ -275,8 +274,7 @@ macro_rules! define_param_wrapper {
                 Self {
                     def: Ownership::Rust(unsafe { std::mem::zeroed() }),
                     _in_data: std::ptr::null(),
-                    change_flags: None,
-                    ui_flags: None,
+                    _parent_ptr: None,
                     $($field_name: Default::default(), )*
                 }
             }
@@ -285,39 +283,36 @@ macro_rules! define_param_wrapper {
                 cb(&mut ret);
                 ret
             }
-            pub fn from_mut(def: &'parent mut ae_sys::$sys_type, in_data: *const ae_sys::PF_InData, change_flags: &'parent mut ae_sys::PF_ChangeFlags, ui_flags: i32) -> Self {
+            pub fn from_mut(def: &'parent mut ae_sys::$sys_type, in_data: *const ae_sys::PF_InData, parent_ptr: *const ae_sys::PF_ParamDef) -> Self {
                 Self {
                     def: Ownership::AfterEffectsMut(def),
+                    _parent_ptr: Some(parent_ptr),
                     _in_data: in_data,
-                    change_flags: Some(change_flags),
-                    ui_flags: Some(ui_flags),
                     $($field_name: Default::default(), )*
                 }
             }
-            pub fn from_ref(def: &'parent ae_sys::$sys_type, in_data: *const ae_sys::PF_InData) -> Self {
+            pub fn from_ref(def: &'parent ae_sys::$sys_type, in_data: *const ae_sys::PF_InData, parent_ptr: *const ae_sys::PF_ParamDef) -> Self {
                 Self {
                     def: Ownership::AfterEffects(def),
+                    _parent_ptr: Some(parent_ptr),
                     _in_data: in_data,
-                    change_flags: None,
-                    ui_flags: None,
                     $($field_name: Default::default(), )*
                 }
             }
             pub fn from_owned(def: ae_sys::$sys_type) -> Self {
                 Self {
                     def: Ownership::Rust(def),
+                    _parent_ptr: None,
                     _in_data: std::ptr::null(),
-                    change_flags: None,
-                    ui_flags: None,
                     $($field_name: Default::default(), )*
                 }
             }
             pub fn set_value_changed(&mut self) {
-                if let Some(ref mut change_flags) = self.change_flags {
-                    if let Some(ui_flags) = self.ui_flags {
-                        if (ui_flags & ae_sys::PF_PUI_STD_CONTROL_ONLY) == 0 {
-                            **change_flags = ChangeFlag::CHANGED_VALUE.bits();
-                        }
+                if let Some(parent_ptr) = self._parent_ptr {
+                    let parent_ptr = parent_ptr as *mut ae_sys::PF_ParamDef;
+                    let parent = unsafe { &mut *parent_ptr };
+                    if (parent.ui_flags & ae_sys::PF_PUI_STD_CONTROL_ONLY) == 0 {
+                        parent.uu.change_flags = ChangeFlag::CHANGED_VALUE.bits();
                     }
                 }
             }

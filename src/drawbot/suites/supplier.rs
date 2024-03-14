@@ -56,7 +56,7 @@ impl SupplierSuite {
     }
 
     /// Create a new image from buffer passed to `pixel_data`.
-    pub fn new_image_from_buffer(&self, supplier_ref: impl AsPtr<DRAWBOT_SupplierRef>, width: usize, height: usize, row_bytes: usize, pixel_layout: PixelLayout, pixel_data: Vec<u8>) -> Result<Image, Error> {
+    pub fn new_image_from_buffer(&self, supplier_ref: impl AsPtr<DRAWBOT_SupplierRef>, width: usize, height: usize, row_bytes: usize, pixel_layout: PixelLayout, pixel_data: &[u8]) -> Result<Image, Error> {
         assert!(row_bytes * height <= pixel_data.len());
 
         let image_ref = call_suite_fn_single!(
@@ -66,7 +66,7 @@ impl SupplierSuite {
             width as _,
             height as _,
             row_bytes as _,
-            pixel_layout as _,
+            pixel_layout.into(),
             pixel_data.as_ptr() as _
         )?;
         Ok(Image {
@@ -158,7 +158,7 @@ define_suite_item_wrapper!(
         new_default_font(font_size: f32) -> Font => suite.new_default_font,
 
         /// Create a new image from buffer passed to `pixel_data`.
-        new_image_from_buffer(width: usize, height: usize, row_bytes: usize, pixel_layout: PixelLayout, pixel_data: Vec<u8>) -> Image => suite.new_image_from_buffer,
+        new_image_from_buffer(width: usize, height: usize, row_bytes: usize, pixel_layout: PixelLayout, pixel_data: &[u8]) -> Image => suite.new_image_from_buffer,
 
         /// Create a new path.
         new_path() -> Path => suite.new_path,

@@ -62,7 +62,7 @@ impl ArbData {
     }
 }
 
-impl ae::ArbitraryData<ArbData> for ArbData {
+impl Default for ArbData {
     fn default() -> Self {
         Self {
             colors: [
@@ -79,6 +79,8 @@ impl ae::ArbitraryData<ArbData> for ArbData {
             string: "Hello world".to_owned()
         }
     }
+}
+impl ae::ArbitraryData<ArbData> for ArbData {
     fn interpolate(&self, other: &Self, value: f64) -> Self {
         let mut ret = Self::default();
         for i in 0..CG_ARBDATA_ELEMENTS {
