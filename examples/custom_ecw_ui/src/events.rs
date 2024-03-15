@@ -2,7 +2,7 @@ use super::*;
 
 pub fn draw(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> Result<(), ae::Error> {
     // Premiere Pro/Elements does not support a standard parameter type with custom UI (bug #1235407), so we can't use the color values.
-    // Use an static gray value instead.
+    // Use arbitrary data instead
     let param_color: ae::Pixel8 = if !in_data.is_premiere() {
         params.get(Params::Color)?.as_color()?.value()
     } else {

@@ -104,7 +104,7 @@ macro_rules! define_cross_thread_type {
                                 match key {
                                     Field::Id => {
                                         let _id = map.next_value()?;
-                                        if let Some(inner) = [<CrossThread $type_name>]::map().read().get(&_id) {
+                                        if [<CrossThread $type_name>]::map().read().contains_key(&_id) {
                                             return Ok([<CrossThread $type_name>] { id: _id });
                                         }
                                         id = Some(_id);

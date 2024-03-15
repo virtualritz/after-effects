@@ -461,6 +461,7 @@ impl ArbitraryDef<'_> {
         Ok(self)
     }
     pub fn value<T>(&self) -> Result<BorrowedHandleLock<T>, Error> {
+        assert!(!self.def.value.is_null());
         BorrowedHandleLock::<T>::from_raw(self.def.value)
     }
 
@@ -511,6 +512,7 @@ impl ArbParamsExtra {
         }
         match self.as_ref().which_function as _ {
             ae_sys::PF_Arbitrary_NEW_FUNC => unsafe {
+                assert!(!self.as_ref().u.new_func_params.arbPH.is_null());
                 // log::info!("NEW FUNC");
                 // Create a new instance, serialize it to a Vec<u8>
                 // pass it to a FlatHandle and turn that into a raw
@@ -540,8 +542,6 @@ impl ArbParamsExtra {
                 // get a referece to that as a slice create a new
                 // handle from that and write that to the
                 // destination pointer.
-
-                assert!(!self.as_ref().u.copy_func_params.src_arbH.is_null());
 
                 let mut src_handle = Handle::<T>::from_raw(self.as_ref().u.copy_func_params.src_arbH, false)?;
                 let lock = src_handle.lock()?;
@@ -574,6 +574,7 @@ impl ArbParamsExtra {
 
             ae_sys::PF_Arbitrary_FLATTEN_FUNC => unsafe {
                 // log::info!("FLATTEN_FUNC");
+                assert!(!self.as_ref().u.unflatten_func_params.flat_dataPV.is_null());
 
                 let mut handle = Handle::<T>::from_raw(self.as_ref().u.flatten_func_params.arbH, false)?;
                 let lock = handle.lock()?;
@@ -593,6 +594,7 @@ impl ArbParamsExtra {
 
             ae_sys::PF_Arbitrary_UNFLATTEN_FUNC => unsafe {
                 // log::info!("UNFLATTEN_FUNC");
+                assert!(!self.as_ref().u.unflatten_func_params.flat_dataPV.is_null());
 
                 let serialized = std::slice::from_raw_parts(
                     self.as_ref().u.unflatten_func_params.flat_dataPV as *mut u8,
@@ -1077,7 +1079,6 @@ impl Debug for ParamDef<'_> {
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct ParamMapInfo {
@@ -1094,17 +1095,17 @@ impl ParamMapInfo {
 pub struct Parameters<'p, P: Eq + PartialEq + Hash + Copy + Debug> {
     num_params: usize,
     in_data: *const ae_sys::PF_InData,
-    pub map: Rc<RefCell<HashMap<P, ParamMapInfo>>>,
+    pub map: Ownership<'p, HashMap<P, ParamMapInfo>>,
     params: Vec<ParamDef<'p>>,
 }
 impl<P: Eq + PartialEq + Hash + Copy + Debug> Default for Parameters<'_, P> {
     fn default() -> Self {
-        Self::new(Default::default())
+        Self::new()
     }
 }
 impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     pub fn len(&self) -> usize {
-        self.map.borrow().len()
+        self.map.len()
     }
     pub fn set_in_data(&mut self, in_data: *const ae_sys::PF_InData) {
         self.in_data = in_data;
@@ -1112,15 +1113,15 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     pub fn in_data(&self) -> InData {
         InData::from_raw(self.in_data)
     }
-    pub fn new(map: Rc<RefCell<HashMap<P, ParamMapInfo>>>) -> Self {
+    pub fn new() -> Self {
         Self {
             in_data: std::ptr::null(),
             num_params: 1,
-            map,
+            map: Ownership::Rust(Default::default()),
             params: Vec::new(),
         }
     }
-    pub fn with_params(in_data: *const ae_sys::PF_InData, params: &'p [*mut ae_sys::PF_ParamDef], map: Rc<RefCell<HashMap<P, ParamMapInfo>>>, num_params: usize) -> Self {
+    pub fn with_params(in_data: *const ae_sys::PF_InData, params: &'p [*mut ae_sys::PF_ParamDef], map: Option<&'p HashMap<P, ParamMapInfo>>, num_params: usize) -> Self {
         let in_data_obj = InData::from_raw(in_data);
         Self {
             in_data,
@@ -1134,7 +1135,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
                     .collect::<Vec<_>>()
             },
             num_params,
-            map,
+            map: map.map_or_else(|| Ownership::Rust(HashMap::new()), Ownership::AfterEffects),
         }
     }
 
@@ -1154,7 +1155,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         param_def.as_mut().param_type = ParamType::GroupStart.into();
         param_def.set_id(Self::param_id(type_start));
         param_def.add(-1)?;
-        self.map.borrow_mut().insert(type_start, ParamMapInfo::new(self.num_params, ParamType::GroupStart));
+        self.map.insert(type_start, ParamMapInfo::new(self.num_params, ParamType::GroupStart));
         self.num_params += 1;
 
         inner_cb(self);
@@ -1163,7 +1164,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         param_def.as_mut().param_type = ParamType::GroupEnd.into();
         param_def.set_id(Self::param_id(type_end));
         param_def.add(-1)?;
-        self.map.borrow_mut().insert(type_end, ParamMapInfo::new(self.num_params, ParamType::GroupEnd));
+        self.map.insert(type_end, ParamMapInfo::new(self.num_params, ParamType::GroupEnd));
         self.num_params += 1;
         Ok(())
     }
@@ -1182,7 +1183,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
             param_def.set_flags(ParamFlag::SUPERVISE);
         }
         param_def.add(-1)?;
-        self.map.borrow_mut().insert(type_, ParamMapInfo::new(self.num_params, param_type));
+        self.map.insert(type_, ParamMapInfo::new(self.num_params, param_type));
         self.num_params += 1;
         Ok(())
     }
@@ -1200,7 +1201,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         param_def.set_flags(flags);
         param_def.set_ui_flags(ui_flags);
         param_def.add(-1)?;
-        self.map.borrow_mut().insert(type_, ParamMapInfo::new(self.num_params, param_type));
+        self.map.insert(type_, ParamMapInfo::new(self.num_params, param_type));
         self.num_params += 1;
         Ok(())
     }
@@ -1220,7 +1221,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         if index == -1 {
             index = self.num_params as i32;
         }
-        self.map.borrow_mut().insert(type_, ParamMapInfo::new(index as usize, param_type));
+        self.map.insert(type_, ParamMapInfo::new(index as usize, param_type));
         self.num_params += 1;
         Ok(())
     }
@@ -1281,17 +1282,17 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     }
 
     pub fn index(&self, type_: P) -> Option<usize> {
-        self.map.borrow().get(&type_).map(|x| x.index)
+        self.map.get(&type_).map(|x| x.index)
     }
     pub fn type_at(&self, index: usize) -> P {
-        *self.map.borrow().iter().find(|(_, v)| v.index == index).unwrap().0
+        *self.map.iter().find(|(_, v)| v.index == index).unwrap().0
     }
 
     pub fn raw_params(&self) -> &[ParamDef<'p>] {
         &self.params
     }
     pub fn raw_param_type(&self, type_: P) -> Option<ParamType> {
-        self.map.borrow().get(&type_).map(|x| x.type_)
+        self.map.get(&type_).map(|x| x.type_)
     }
 
     pub fn cloned(&self) -> Parameters<'p, P> {

@@ -14,8 +14,9 @@ macro_rules! define_effect {
             out_data: $crate::OutData
         }
 
+        // This struct **must** be thread safe
         struct GlobalData {
-            params_map: Rc<RefCell<HashMap<$params_type, $crate::ParamMapInfo>>>,
+            params_map: std::sync::OnceLock<HashMap<$params_type, $crate::ParamMapInfo>>,
             params_num: usize,
             plugin_instance: $global_type
         }
@@ -111,7 +112,7 @@ macro_rules! define_effect {
             let mut global_handle = if cmd == RawCommand::GlobalSetup {
                 // Allocate global data
                 pf::Handle::new(GlobalData {
-                    params_map: Rc::new(RefCell::new(HashMap::new())),
+                    params_map: std::sync::OnceLock::new(),
                     params_num: 1,
                     plugin_instance: <$global_type>::default()
                 })?
@@ -130,11 +131,12 @@ macro_rules! define_effect {
             let global_inst = global_lock.as_ref_mut()?;
 
             if cmd == RawCommand::ParamsSetup {
-                let mut params = Parameters::<$params_type>::new(global_inst.params_map.clone());
+                let mut params = Parameters::<$params_type>::new();
                 params.set_in_data(in_data_ptr);
                 global_inst.plugin_instance.params_setup(&mut params, InData::from_raw(in_data_ptr), OutData::from_raw(out_data_ptr))?;
                 global_inst.params_num = params.num_params();
                 (*out_data_ptr).num_params = params.num_params() as i32;
+                global_inst.params_map.set((*params.map).clone()).unwrap();
             }
 
             let params_slice = if params.is_null() || global_inst.params_num == 0 {
@@ -143,7 +145,7 @@ macro_rules! define_effect {
                 unsafe { std::slice::from_raw_parts(params, global_inst.params_num) }
             };
 
-            let mut params_state = Parameters::<$params_type>::with_params(in_data_ptr, params_slice, global_inst.params_map.clone(), global_inst.params_num);
+            let mut params_state = Parameters::<$params_type>::with_params(in_data_ptr, params_slice, global_inst.params_map.get(), global_inst.params_num);
             let mut plugin_state = PluginState {
                 global: &mut global_inst.plugin_instance,
                 sequence: sequence_handle.as_ref().map(|x| x.0.as_mut().unwrap()),
@@ -211,6 +213,8 @@ macro_rules! define_effect {
                     }
                 }
             }
+            drop(plugin_state);
+            drop(params_state);
 
             match cmd {
                 RawCommand::GlobalSetup => {

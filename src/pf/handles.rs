@@ -47,7 +47,8 @@ impl<T> BorrowedHandleLock<T> {
     pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<Self, Error> {
         match pf::suites::Handle::new() {
             Ok(suite) => {
-                let ptr = suite.lock_handle(handle) as *mut _;
+                let ptr = suite.lock_handle(handle) as *mut T;
+                assert!(!ptr.is_null());
                 Ok(BorrowedHandleLock {
                     suite,
                     handle,
@@ -158,6 +159,7 @@ impl<'a, T: 'a> Handle<'a, T> {
     }*/
 
     pub fn from_raw(handle: ae_sys::PF_Handle, owned: bool) -> Result<Handle<'a, T>, Error> {
+        assert!(!handle.is_null());
         match pf::suites::Handle::new() {
             Ok(suite) => {
                 Ok(Handle {
