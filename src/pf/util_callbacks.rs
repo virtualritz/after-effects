@@ -65,7 +65,7 @@ macro_rules! define_iterate {
 
                 match cb(x, y, &*in_p, &mut *out_p) {
                     Ok(_)  => ae_sys::PF_Err_NONE as _,
-                    Err(e) => e as _,
+                    Err(e) => e.into(),
                 }
             }
             unsafe {
@@ -154,7 +154,7 @@ macro_rules! define_iterate_lut_and_generic {
                 let cb = &*(refcon as *const Box<Box<dyn Fn(i32, i32, i32) -> Result<(), Error>>>);
                 match cb(thread_index, i, iterations) {
                     Ok(_)  => ae_sys::PF_Err_NONE as _,
-                    Err(e) => e as _,
+                    Err(e) => e.into(),
                 }
             }
             unsafe {

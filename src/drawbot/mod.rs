@@ -197,6 +197,26 @@ impl Path {
         call_suite_fn!(self.suite, AddArc, self.handle, center, radius, start_angle, sweep)
     }
 
+    /// Add a rounded rect to the path.
+    /// * `rect` - specifies the bounds of the rectangle.
+    /// * `radius` - specifies the radius of the rounding circle at each corner.
+    pub fn add_rounded_rect(&mut self, rect: &RectF32, radius: f32) -> Result<(), Error> {
+        let (x, y, w, h) = (rect.left, rect.top, rect.width, rect.height);
+        let r = radius.min(w / 2.0).min(h / 2.0);
+
+        self.move_to(x + r, y)?;
+        self.line_to(x + w - r, y)?;
+        self.add_arc(&PointF32 { x: x + w - r, y: y + r }, r, -90.0, 90.0)?;
+        self.line_to(x + w, y + h - r)?;
+        self.add_arc(&PointF32 { x: x + w - r, y: y + h - r }, r, 0.0, 90.0)?;
+        self.line_to(x + r, y + h)?;
+        self.add_arc(&PointF32 { x: x + r, y: y + h - r }, r, 90.0, 90.0)?;
+        self.line_to(x, y + r)?;
+        self.add_arc(&PointF32 { x: x + r, y: y + r }, r, 180.0, 90.0)?;
+
+        self.close()
+    }
+
     /// Close the path.
     pub fn close(&mut self) -> Result<(), Error> {
         call_suite_fn!(self.suite, Close, self.handle)

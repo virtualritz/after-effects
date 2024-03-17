@@ -36,7 +36,7 @@ impl SurfaceSuite {
 
     /// Fill a path using a brush and fill type.
     pub fn fill_path(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>, brush: &Brush, path: &Path, fill_type: FillType) -> Result<(), Error> {
-        call_suite_fn!(self, FillPath, surface_ref.as_ptr(), brush.handle, path.handle, fill_type as _)
+        call_suite_fn!(self, FillPath, surface_ref.as_ptr(), brush.handle, path.handle, fill_type.into())
     }
 
     /// Stroke a path using a pen.

@@ -188,7 +188,7 @@ impl CanvasSuite {
     /// providing the layer as it appears in its composition, in a composition-sized buffer.
     pub fn render_layer_plus(&self, render_ctx: impl AsPtr<PR_RenderContextH>, layer_handle: LayerHandle, layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, render_hints: RenderHints) -> Result<WorldHandle, Error> {
         Ok(WorldHandle::from_raw(
-            call_suite_fn_single!(self, AEGP_RenderLayerPlus -> ae_sys::AEGP_WorldH, render_ctx.as_ptr(), layer_handle.as_ptr(), layer_ctx.as_ptr(), render_hints as i32 as _)?
+            call_suite_fn_single!(self, AEGP_RenderLayerPlus -> ae_sys::AEGP_WorldH, render_ctx.as_ptr(), layer_handle.as_ptr(), layer_ctx.as_ptr(), render_hints.into())?
         ))
     }
 
@@ -232,7 +232,7 @@ impl CanvasSuite {
             render_ctx.as_ptr(),
             layer_handle.as_ptr(),
             layer_ctx.as_ptr(),
-            render_hints as i32 as _
+            render_hints.into()
         )?;
 
         Ok((

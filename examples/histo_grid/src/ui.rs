@@ -144,7 +144,7 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
             let box_rect = histogrid_get_box_in_grid(&origin, grid_width, grid_height, box_across, box_down);
 
             let mut path = supplier.new_path()?;
-            path.add_rect(&pf_to_drawbot_rect(&box_rect))?;
+            path.add_rounded_rect(&pf_to_drawbot_rect(&box_rect), 5.0)?;
 
             let brush = supplier.new_brush(&pixel_colr[i])?;
             surface.fill_path(&brush, &path, ae::drawbot::FillType::Winding)?;
@@ -167,7 +167,7 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
             let box_rect = histogrid_get_box_in_grid(&origin, grid_width, grid_height, box_across, box_down);
 
             let mut path = supplier.new_path()?;
-            path.add_rect(&pf_to_drawbot_rect(&box_rect))?;
+            path.add_rounded_rect(&pf_to_drawbot_rect(&box_rect), 5.0)?;
 
             surface.stroke_path(&pen, &path)?;
         }
