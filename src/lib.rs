@@ -1,5 +1,4 @@
 // FIXME: make ALL the functions below return Result-wrapped values
-#![allow(temporary_cstring_as_ptr)]
 //! High(er) level bindings for the Adobe AfterEffects® (Ae) SDK.
 //!
 //! This wraps many of the API suites in the Ae SDK and exposes them in safe
@@ -64,12 +63,10 @@
 //!
 //! * Better error handling. Possibly using [`color`](https://crates.io/crates/color-eyre)`-`[`eyre`](https://crates.io/crates/eyre)?
 use after_effects_sys as ae_sys;
-use num_enum::UnsafeFromPrimitive;
 use num_traits::identities::Zero;
 use std::{
     cell::RefCell,
     cmp::{max, min, PartialEq, PartialOrd},
-    convert::TryInto,
     error,
     fmt::Display,
     ops::{Add, RemAssign},
@@ -78,27 +75,39 @@ use std::{
 #[cfg(feature = "ultraviolet")]
 use ultraviolet as uv;
 
-#[cfg(target_os = "macos")]
-pub type EnumIntType = u32;
-#[cfg(target_os = "windows")]
-pub type EnumIntType = i32;
-
 #[macro_use]
 mod macros;
 
+#[macro_use]
+mod plugin_base;
+
+#[macro_use]
+mod cross_thread_type;
+
 pub mod aegp;
-pub use aegp::*;
 pub mod aeio;
-pub use aeio::*;
 pub mod drawbot;
-pub use drawbot::*;
 pub mod pf;
 pub use pf::*;
 pub mod pr;
+pub mod pr_string;
+use pr_string::*;
+
+// re-exports
+pub use after_effects_sys as sys;
+pub use log;
+pub use cstr_literal;
+pub use fastrand;
+pub use parking_lot;
+pub use paste;
+pub use serde;
+#[cfg(windows)]
+pub use win_dbg_logger;
+#[cfg(macos)]
+pub use oslog;
 
 thread_local!(
-    pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> =
-        RefCell::new(ptr::null_mut())
+    pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> = RefCell::new(ptr::null_mut())
 );
 
 #[inline]
@@ -178,70 +187,65 @@ impl Drop for PicaBasicSuite {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, UnsafeFromPrimitive)]
-#[cfg_attr(target_os = "windows", repr(i32))]
-#[cfg_attr(target_os = "macos", repr(u32))]
-pub enum Error {
-    Generic = ae_sys::A_Err_GENERIC as EnumIntType,
-    Struct = ae_sys::A_Err_STRUCT as EnumIntType,
-    Parameter = ae_sys::A_Err_PARAMETER as EnumIntType,
-    // Also called A_Err_ALLOC in Ae.
-    OutOfMemory = ae_sys::A_Err_ALLOC as EnumIntType,
-    // Some calls can only be used on UI (Main) or Render threads.
-    // Also, calls back to Ae can only be made from the same thread Ae
-    // called you on.
-    WrongThread = ae_sys::A_Err_WRONG_THREAD as EnumIntType,
-    // An attempt was made to write to a read only copy of an Ae
-    // project. Project changes must originate in the UI/Main thread.
-    ConstProjectModification = ae_sys::A_Err_CONST_PROJECT_MODIFICATION as EnumIntType,
-    // Acquire suite failed on a required suite.
-    MissingSuite = ae_sys::A_Err_MISSING_SUITE as EnumIntType,
+define_enum! {
+    ae_sys::PF_Err,
+    Error {
+        Generic                  = ae_sys::A_Err_GENERIC,
+        Struct                   = ae_sys::A_Err_STRUCT,
+        Parameter                = ae_sys::A_Err_PARAMETER,
+        // Also called A_Err_ALLOC in Ae.
+        OutOfMemory              = ae_sys::A_Err_ALLOC,
+        // Some calls can only be used on UI (Main) or Render threads.
+        // Also, calls back to Ae can only be made from the same thread Ae called you on.
+        WrongThread              = ae_sys::A_Err_WRONG_THREAD,
+        // An attempt was made to write to a read only copy of an Ae project.
+        // Project changes must originate in the UI/Main thread.
+        ConstProjectModification = ae_sys::A_Err_CONST_PROJECT_MODIFICATION,
+        // Acquire suite failed on a required suite.
+        MissingSuite             = ae_sys::A_Err_MISSING_SUITE,
+        InternalStructDamaged    = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED,
+        // Out of range, or action not allowed on this index.
+        InvalidIndex             = ae_sys::PF_Err_INVALID_INDEX,
+        UnrecogizedParameterType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE,
+        InvalidCallback          = ae_sys::PF_Err_INVALID_CALLBACK,
+        BadCallbackParameter     = ae_sys::PF_Err_BAD_CALLBACK_PARAM,
+        // Returned when user interrupts rendering.
+        InterruptCancel          = ae_sys::PF_Interrupt_CANCEL,
+        // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse arbitrary data from text
+        CannotParseKeyframeText  = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT,
 
-    InternalStructDamaged = ae_sys::PF_Err_INTERNAL_STRUCT_DAMAGED as EnumIntType,
-    // Out of range, or action not allowed on this index.
-    InvalidIndex = ae_sys::PF_Err_INVALID_INDEX as EnumIntType,
-    UnrecogizedParameterType = ae_sys::PF_Err_UNRECOGNIZED_PARAM_TYPE as EnumIntType,
-    InvalidCallback = ae_sys::PF_Err_INVALID_CALLBACK as EnumIntType,
-    BadCallbackParameter = ae_sys::PF_Err_BAD_CALLBACK_PARAM as EnumIntType,
-    // Returned when user interrupts rendering.
-    InterruptCancel = ae_sys::PF_Interrupt_CANCEL as EnumIntType,
-    // Returned from PF_Arbitrary_SCAN_FUNC when effect cannot parse
-    // arbitrary data from text
-    CannotParseKeyframeText = ae_sys::PF_Err_CANNOT_PARSE_KEYFRAME_TEXT as EnumIntType,
+        Reserved11               = ae_sys::A_Err_RESERVED_11,
 
-    None = ae_sys::PF_Err_NONE as EnumIntType,
-}
-impl From<i32> for Error {
-    fn from(value: i32) -> Self {
-        unsafe { Self::unchecked_transmute_from(value as EnumIntType) }
-    }
-}
-impl From<u32> for Error {
-    fn from(value: u32) -> Self {
-        unsafe { Self::unchecked_transmute_from(value as EnumIntType) }
+        StringNotFound           = ae_sys::suiteError_StringNotFound,
+        StringBufferTooSmall     = ae_sys::suiteError_StringBufferTooSmall,
+        InvalidParms             = ae_sys::suiteError_InvalidParms,
+
+        None = ae_sys::PF_Err_NONE,
     }
 }
 
 impl From<Error> for &'static str {
     fn from(error: Error) -> &'static str {
         match error {
-            Error::Generic => "Generic error.",
-            Error::Struct => "Wrong struct.",
-            Error::Parameter => "Wrong parameter.",
-            Error::OutOfMemory => "Out of memory.",
-            Error::WrongThread => "Call made from wrong thread.",
-            Error::ConstProjectModification => {
-                " Project changes must originate in the UI/Main thread."
-            }
-            Error::MissingSuite => "Could no aquire suite.",
-            Error::InternalStructDamaged => "Internal struct is damaged.",
-            Error::InvalidIndex => "Out of range, or action not allowed on this index.",
+            Error::Generic                  => "Generic error.",
+            Error::Struct                   => "Wrong struct.",
+            Error::Parameter                => "Wrong parameter.",
+            Error::OutOfMemory              => "Out of memory.",
+            Error::WrongThread              => "Call made from wrong thread.",
+            Error::ConstProjectModification => "Project changes must originate in the UI/Main thread.",
+            Error::MissingSuite             => "Could no aquire suite.",
+            Error::InternalStructDamaged    => "Internal struct is damaged.",
+            Error::InvalidIndex             => "Out of range, or action not allowed on this index.",
             Error::UnrecogizedParameterType => "Unrecognized parameter type",
-            Error::InvalidCallback => "Invalid callback.",
-            Error::BadCallbackParameter => "Bad callback parameter.",
-            Error::InterruptCancel => "Rendering interrupted.",
-            Error::CannotParseKeyframeText => "Keyframe data damaged.",
-            Error::None => "No error – wtf?",
+            Error::InvalidCallback          => "Invalid callback.",
+            Error::BadCallbackParameter     => "Bad callback parameter.",
+            Error::InterruptCancel          => "Rendering interrupted.",
+            Error::CannotParseKeyframeText  => "Keyframe data damaged.",
+            Error::None                     => "No error",
+            Error::StringNotFound           => "StringNotFound",
+            Error::StringBufferTooSmall     => "StringBufferTooSmall",
+            Error::InvalidParms             => "InvalidParms",
+            Error::Reserved11               => "Reserved11",
         }
     }
 }
@@ -266,34 +270,42 @@ impl From<std::collections::TryReserveError> for Error {
     }
 }
 
-/*
-impl From<Error> for ae_sys::A_Err {
-    fn from(err: Error) -> ae_sys::A_Err {
-        err as ae_sys::A_Err
-    }
-}*/
-
-/*
-impl From<Result<(), Error>> for AeError {
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub struct Matrix3([[f64; 3]; 3]);
+impl From<Matrix3> for ae_sys::A_Matrix3 {
     #[inline]
-    fn from(result: Result<(), Error>) -> Self {
-        match result {
-            Ok(()) => AeError(0),
-            Err(e) => AeError(e.into()),
+    fn from(val: Matrix3) -> Self {
+        ae_sys::A_Matrix3 {
+            mat: val.0
         }
     }
 }
-
-impl From<AeError> for i32 {
+impl From<ae_sys::A_Matrix3> for Matrix3 {
     #[inline]
-    fn from(ae_error: AeError) -> Self {
-        ae_error.0
+    fn from(item: ae_sys::A_Matrix3) -> Self  {
+        Self(item.mat)
     }
-}*/
+}
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
 pub struct Matrix4([[f64; 4]; 4]);
+
+impl From<Matrix4> for ae_sys::A_Matrix4 {
+    #[inline]
+    fn from(val: Matrix4) -> Self {
+        ae_sys::A_Matrix4 {
+            mat: val.0
+        }
+    }
+}
+impl From<ae_sys::A_Matrix4> for Matrix4 {
+    #[inline]
+    fn from(item: ae_sys::A_Matrix4) -> Self  {
+        Self(item.mat)
+    }
+}
 
 impl Matrix4 {
     #[inline]
@@ -356,13 +368,14 @@ fn test_from() {
 
 pub type Color = ae_sys::A_Color;
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
-#[repr(C)]
-pub struct Time {
-    pub value: ae_sys::A_long,
-    pub scale: ae_sys::A_u_long,
+define_struct! {
+    ae_sys::A_Time,
+    #[derive(Eq)]
+    Time {
+        value: i32,
+        scale: u32,
+    }
 }
-
 impl From<Time> for f64 {
     #[inline]
     fn from(time: Time) -> Self {
@@ -370,22 +383,11 @@ impl From<Time> for f64 {
         time.value as Self / time.scale as Self
     }
 }
-
 impl From<Time> for f32 {
     #[inline]
     fn from(time: Time) -> Self {
         debug_assert!(time.scale != 0);
         time.value as Self / time.scale as Self
-    }
-}
-
-impl From<Time> for ae_sys::A_Time {
-    #[inline]
-    fn from(time: Time) -> Self {
-        Self {
-            value: time.value,
-            scale: time.scale,
-        }
     }
 }
 
@@ -468,46 +470,48 @@ impl Add<Time> for Time {
     }
 }
 
-/// Note that this has a different ordering
-/// of values than [`LegacyRect`]!!!
-#[derive(Debug, Copy, Clone, Hash)]
-#[repr(C)]
-pub struct Rect {
-    pub left: i32,
-    pub top: i32,
-    pub right: i32,
-    pub bottom: i32,
-}
-
-impl From<ae_sys::PF_LRect> for Rect {
-    fn from(rect: ae_sys::PF_LRect) -> Self {
-        Rect {
-            left: rect.left,
-            top: rect.top,
-            right: rect.right,
-            bottom: rect.bottom,
-        }
+define_struct! {
+    ae_sys::A_LRect,
+    #[derive(Eq)]
+    /// Note that this has a different ordering of values than LegacyRect!
+    Rect {
+        left: i32,
+        top: i32,
+        right: i32,
+        bottom: i32,
     }
 }
-
-impl From<Rect> for ae_sys::PF_LRect {
-    fn from(rect: Rect) -> Self {
-        ae_sys::PF_LRect {
-            left: rect.left,
-            top: rect.top,
-            right: rect.right,
-            bottom: rect.bottom,
-        }
-    }
-}
+define_struct_conv!(ae_sys::A_LegacyRect, Rect { left, top, right, bottom });
+define_struct_conv!(ae_sys::PF_LRect,     Rect { left, top, right, bottom });
 
 impl Rect {
+    pub fn empty() -> Self {
+        Self {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         (self.left >= self.right) || (self.top >= self.bottom)
     }
+    pub fn width(&self) -> i32 {
+        self.right - self.left
+    }
+    pub fn height(&self) -> i32 {
+        self.bottom - self.top
+    }
+    pub fn origin(&self) -> Point {
+        Point {
+            h: self.left,
+            v: self.top,
+        }
+    }
 
     pub fn union<'a>(&'a mut self, other: &Rect) -> &'a mut Rect {
-        if other.is_empty() {
+        if self.is_empty() {
             *self = *other;
         } else {
             // if !other.is_empty()
@@ -536,13 +540,22 @@ impl Rect {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-#[repr(C)]
-pub struct FloatRect {
-    pub left: f64,
-    pub top: f64,
-    pub right: f64,
-    pub bottom: f64,
+define_struct! {
+    ae_sys::A_FloatPoint,
+    FloatPoint {
+        x: f64,
+        y: f64,
+    }
+}
+
+define_struct! {
+    ae_sys::A_FloatRect,
+    FloatRect {
+        left: f64,
+        top: f64,
+        right: f64,
+        bottom: f64,
+    }
 }
 
 impl FloatRect {
@@ -551,31 +564,11 @@ impl FloatRect {
     }
 }
 
-/// Note that this has a different ordering
-/// of values than [`Rect`]!!!
-#[derive(Debug, Copy, Clone, Hash)]
-#[repr(C)]
-pub struct LegacyRect {
-    pub top: i16,
-    pub left: i16,
-    pub bottom: i16,
-    pub right: i16,
-}
-
-#[derive(Debug, Copy, Clone, Hash)]
-#[repr(C)]
-pub struct Ratio {
-    pub num: ae_sys::A_long,
-    pub den: ae_sys::A_u_long,
-}
-
-impl From<Ratio> for ae_sys::A_Ratio {
-    #[inline]
-    fn from(ratio: Ratio) -> Self {
-        Self {
-            num: ratio.num,
-            den: ratio.den,
-        }
+define_struct! {
+    ae_sys::A_Ratio,
+    Ratio {
+        num: i32,
+        den: u32,
     }
 }
 
@@ -592,6 +585,62 @@ impl From<Ratio> for f32 {
     fn from(ratio: Ratio) -> Self {
         debug_assert!(ratio.den != 0);
         ratio.num as Self / ratio.den as Self
+    }
+}
+
+pub enum Ownership<'a, T: Clone> {
+    AfterEffects(&'a T),
+    AfterEffectsMut(&'a mut T),
+    Rust(T),
+}
+impl<'a, T: Clone> Clone for Ownership<'a, T> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::AfterEffects(ptr)    => Self::Rust((*ptr).clone()),
+            Self::AfterEffectsMut(ptr) => Self::Rust((*ptr).clone()),
+            Self::Rust(ptr)            => Self::Rust(ptr.clone()),
+        }
+    }
+}
+impl<'a, T: Clone> std::ops::Deref for Ownership<'a, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::AfterEffects(ptr) => ptr,
+            Self::AfterEffectsMut(ptr) => ptr,
+            Self::Rust(ptr) => ptr,
+        }
+    }
+}
+impl<'a, T: Clone> std::ops::DerefMut for Ownership<'a, T> {
+    fn deref_mut(&mut self) -> &mut T {
+        match self {
+            Self::AfterEffects(_) => panic!("Tried to mutably borrow immutable data"),
+            Self::AfterEffectsMut(ptr) => ptr,
+            Self::Rust(ptr) => ptr,
+        }
+    }
+}
+
+pub enum PointerOwnership<T> {
+    AfterEffects(*mut T),
+    Rust(T),
+}
+impl<T> std::ops::Deref for PointerOwnership<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::AfterEffects(ptr) => unsafe { &**ptr },
+            Self::Rust(ptr) => ptr,
+        }
+    }
+}
+impl<T> std::ops::DerefMut for PointerOwnership<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        match self {
+            Self::AfterEffects(ptr) => unsafe { &mut **ptr },
+            Self::Rust(ptr) => ptr,
+        }
     }
 }
 
@@ -627,10 +676,15 @@ pub(crate) trait Suite {
     fn new() -> Result<Self, Error>
     where
         Self: Sized;
+}
 
-    fn from_raw(
-        pica_basic_suite_raw_ptr: *const crate::ae_sys::SPBasicSuite,
-    ) -> Result<Self, Error>
+pub trait AsPtr<T> {
+    fn as_ptr(&self) -> T
     where
-        Self: Sized;
+        T: Sized;
+}
+
+pub trait AsMutPtr<T> {
+    fn as_mut_ptr(&mut self) -> T
+    where T: Sized;
 }

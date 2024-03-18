@@ -1,0 +1,21 @@
+[package]
+name = "premiere"
+version = "0.0.1"
+authors = ["Moritz Moeller <virtualritz@protonmail.com>", "Adrian <adrian.eddy@gmail.com>"]
+license = "Apache-2.0 OR BSD-3-Clause OR MIT OR Zlib"
+edition = "2021"
+exclude = [".github/**/*", "crates/**/*"]
+description = "High(er) level bindings for the Adobe Premiere® SDK."
+keywords = ["motion-graphics", "premiere", "graphics", "plugins"]
+categories = ["graphics", "multimedia::video", "rendering::graphics-api"]
+readme = "README.md"
+homepage = "https://developer.adobe.com/console/servicesandapis/pr"
+repository = "https://github.com/virtualritz/after-effects/"
+
+[dependencies]
+premiere-sys = { path = "../premiere-sys" }
+log = "0.4"
+fastrand = "2.0"
+parking_lot = "0.12"
+base64 = "0.22"
+bitflags = "2.4"

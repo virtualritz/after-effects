@@ -1,0 +1,5 @@
+PluginName       := "Custom_Comp_UI"
+BundleIdentifier := "com.adobe.AfterEffects.{{PluginName}}"
+BinaryName       := lowercase(PluginName)
+
+import '../../AdobePlugin.just'

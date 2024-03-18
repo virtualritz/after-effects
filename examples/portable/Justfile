@@ -1,25 +1,5 @@
-set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
+PluginName       := "Portable"
+BundleIdentifier := "com.adobe.AfterEffects.{{PluginName}}"
+BinaryName       := lowercase(PluginName)
 
-TargetDir := "target"
-export AESDK_ROOT := if env_var_or_default("AESDK_ROOT", "") == "" { justfile_directory() / "../../sdk/AfterEffectsSDK" } else { env_var("AESDK_ROOT") }
-
-[windows]
-build:
-    cargo build
-    Start-Process PowerShell -Verb runAs -ArgumentList "-command Copy-Item -Force '{{TargetDir}}\debug\portable.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\portable.aex'"
-
-[macos]
-build:
-    cargo build
-    echo "Creating plugin bundle"
-    rm -Rf {{TargetDir}}/debug/Portable.plugin
-    mkdir {{TargetDir}}/debug/Portable.plugin
-    mkdir {{TargetDir}}/debug/Portable.plugin/Contents
-    mkdir {{TargetDir}}/debug/Portable.plugin/Contents/Resources
-    mkdir {{TargetDir}}/debug/Portable.plugin/Contents/MacOS
-    echo "Creating Plist"
-    /usr/libexec/PlistBuddy -c 'add CFBundleIdenfier string com.adobe.AfterEffects.Portable' {{TargetDir}}/debug/Portable.plugin/Contents/Info.plist
-    cp {{TargetDir}}/debug/portable.rsrc {{TargetDir}}/debug/Portable.plugin/Contents/Resources/Portable.rsrc
-    echo "eFKTFXTC" >> {{TargetDir}}/debug/Portable.plugin/Contents/PkgInfo
-    # codesign with the first development cert we can find using its hash
-    codesign --options runtime --timestamp -strict  --sign $( security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}' ) target/debug/Portable.plugin
+import '../../AdobePlugin.just'
