@@ -493,6 +493,8 @@ pub const PF_KernelFlag_STRAIGHT_CONVOLVE: u32 = 0;
 pub const PF_KernelFlag_ALPHA_WEIGHT_CONVOLVE: u32 = 128;
 pub const PF_Iterations_ONCE_PER_PROCESSOR: i32 = -1;
 pub const PF_Iteratations_ONCE_PER_PROCESSOR: i32 = -1;
+pub const kPFCacheOnLoadSuite: &[u8; 23] = b"PF Cache On Load Suite\0";
+pub const kPFCacheOnLoadSuiteVersion1: u32 = 1;
 pub const kPFPixelFormatSuite: &[u8; 22] = b"PF Pixel Format Suite\0";
 pub const kPFPixelFormatSuiteVersion1: u32 = 1;
 pub const kPFBackgroundFrameSuite: &[u8; 26] = b"PF Background Frame Suite\0";
@@ -3530,17 +3532,194 @@ pub struct ProcessSerialNumber {
     pub lowLongOfPSN: UInt32,
 }
 pub type ProcessSerialNumberPtr = *mut ProcessSerialNumber;
+pub const PF_Stage_DEVELOP: _bindgen_ty_23 = 0;
+pub const PF_Stage_ALPHA: _bindgen_ty_23 = 1;
+pub const PF_Stage_BETA: _bindgen_ty_23 = 2;
+pub const PF_Stage_RELEASE: _bindgen_ty_23 = 3;
+pub type _bindgen_ty_23 = ::std::os::raw::c_uint;
 pub type PF_Stage = A_long;
+pub const PF_Quality_DRAWING_AUDIO: _bindgen_ty_24 = -1;
+pub const PF_Quality_LO: _bindgen_ty_24 = 0;
+pub const PF_Quality_HI: _bindgen_ty_24 = 1;
+pub type _bindgen_ty_24 = ::std::os::raw::c_int;
 pub type PF_Quality = A_long;
+pub const PF_MF_Alpha_PREMUL: _bindgen_ty_25 = 0;
+pub const PF_MF_Alpha_STRAIGHT: _bindgen_ty_25 = 1;
+pub type _bindgen_ty_25 = ::std::os::raw::c_uint;
 pub type PF_ModeFlags = A_long;
+pub const PF_Field_FRAME: _bindgen_ty_26 = 0;
+pub const PF_Field_UPPER: _bindgen_ty_26 = 1;
+pub const PF_Field_LOWER: _bindgen_ty_26 = 2;
+pub type _bindgen_ty_26 = ::std::os::raw::c_uint;
 pub type PF_Field = A_long;
+pub const PF_Param_RESERVED: _bindgen_ty_27 = -1;
+pub const PF_Param_LAYER: _bindgen_ty_27 = 0;
+pub const PF_Param_SLIDER: _bindgen_ty_27 = 1;
+pub const PF_Param_FIX_SLIDER: _bindgen_ty_27 = 2;
+pub const PF_Param_ANGLE: _bindgen_ty_27 = 3;
+pub const PF_Param_CHECKBOX: _bindgen_ty_27 = 4;
+pub const PF_Param_COLOR: _bindgen_ty_27 = 5;
+pub const PF_Param_POINT: _bindgen_ty_27 = 6;
+pub const PF_Param_POPUP: _bindgen_ty_27 = 7;
+pub const PF_Param_CUSTOM: _bindgen_ty_27 = 8;
+pub const PF_Param_NO_DATA: _bindgen_ty_27 = 9;
+pub const PF_Param_FLOAT_SLIDER: _bindgen_ty_27 = 10;
+pub const PF_Param_ARBITRARY_DATA: _bindgen_ty_27 = 11;
+pub const PF_Param_PATH: _bindgen_ty_27 = 12;
+pub const PF_Param_GROUP_START: _bindgen_ty_27 = 13;
+pub const PF_Param_GROUP_END: _bindgen_ty_27 = 14;
+pub const PF_Param_BUTTON: _bindgen_ty_27 = 15;
+pub const PF_Param_RESERVED2: _bindgen_ty_27 = 16;
+pub const PF_Param_RESERVED3: _bindgen_ty_27 = 17;
+pub const PF_Param_POINT_3D: _bindgen_ty_27 = 18;
+pub type _bindgen_ty_27 = ::std::os::raw::c_int;
 pub type PF_ParamType = A_long;
+pub const PF_ParamFlag_RESERVED1: _bindgen_ty_28 = 1;
+pub const PF_ParamFlag_CANNOT_TIME_VARY: _bindgen_ty_28 = 2;
+pub const PF_ParamFlag_CANNOT_INTERP: _bindgen_ty_28 = 4;
+pub const PF_ParamFlag_RESERVED2: _bindgen_ty_28 = 8;
+pub const PF_ParamFlag_RESERVED3: _bindgen_ty_28 = 16;
+pub const PF_ParamFlag_COLLAPSE_TWIRLY: _bindgen_ty_28 = 32;
+pub const PF_ParamFlag_SUPERVISE: _bindgen_ty_28 = 64;
+pub const PF_ParamFlag_START_COLLAPSED: _bindgen_ty_28 = 32;
+pub const PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS: _bindgen_ty_28 = 128;
+pub const PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE: _bindgen_ty_28 = 128;
+pub const PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED: _bindgen_ty_28 = 256;
+pub const PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN: _bindgen_ty_28 = 512;
+pub type _bindgen_ty_28 = ::std::os::raw::c_uint;
 pub type PF_ParamFlags = A_long;
+pub const PF_Err_NONE: _bindgen_ty_29 = 0;
+pub const PF_Err_OUT_OF_MEMORY: _bindgen_ty_29 = 4;
+pub const PF_Err_INTERNAL_STRUCT_DAMAGED: _bindgen_ty_29 = 512;
+pub const PF_Err_INVALID_INDEX: _bindgen_ty_29 = 513;
+pub const PF_Err_UNRECOGNIZED_PARAM_TYPE: _bindgen_ty_29 = 514;
+pub const PF_Err_INVALID_CALLBACK: _bindgen_ty_29 = 515;
+pub const PF_Err_BAD_CALLBACK_PARAM: _bindgen_ty_29 = 516;
+pub const PF_Interrupt_CANCEL: _bindgen_ty_29 = 517;
+pub const PF_Err_CANNOT_PARSE_KEYFRAME_TEXT: _bindgen_ty_29 = 518;
+pub type _bindgen_ty_29 = ::std::os::raw::c_uint;
 pub type PF_Err = A_long;
+pub const PF_WorldFlag_DEEP: _bindgen_ty_30 = 1;
+pub const PF_WorldFlag_WRITEABLE: _bindgen_ty_30 = 2;
+pub const PF_WorldFlag_RESERVED0: _bindgen_ty_30 = 16777216;
+pub const PF_WorldFlag_RESERVED1: _bindgen_ty_30 = 33554432;
+pub const PF_WorldFlag_RESERVED2: _bindgen_ty_30 = 67108864;
+pub const PF_WorldFlag_RESERVED3: _bindgen_ty_30 = 134217728;
+pub const PF_WorldFlag_RESERVED4: _bindgen_ty_30 = 268435456;
+pub const PF_WorldFlag_RESERVED5: _bindgen_ty_30 = 536870912;
+pub const PF_WorldFlag_RESERVED6: _bindgen_ty_30 = 1073741824;
+pub const PF_WorldFlag_RESERVED: _bindgen_ty_30 = 2147483648;
+pub type _bindgen_ty_30 = ::std::os::raw::c_uint;
 pub type PF_WorldFlags = A_long;
+pub const PF_OutFlag_NONE: _bindgen_ty_31 = 0;
+pub const PF_OutFlag_KEEP_RESOURCE_OPEN: _bindgen_ty_31 = 1;
+pub const PF_OutFlag_WIDE_TIME_INPUT: _bindgen_ty_31 = 2;
+pub const PF_OutFlag_NON_PARAM_VARY: _bindgen_ty_31 = 4;
+pub const PF_OutFlag_RESERVED6: _bindgen_ty_31 = 8;
+pub const PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING: _bindgen_ty_31 = 16;
+pub const PF_OutFlag_I_DO_DIALOG: _bindgen_ty_31 = 32;
+pub const PF_OutFlag_USE_OUTPUT_EXTENT: _bindgen_ty_31 = 64;
+pub const PF_OutFlag_SEND_DO_DIALOG: _bindgen_ty_31 = 128;
+pub const PF_OutFlag_DISPLAY_ERROR_MESSAGE: _bindgen_ty_31 = 256;
+pub const PF_OutFlag_I_EXPAND_BUFFER: _bindgen_ty_31 = 512;
+pub const PF_OutFlag_PIX_INDEPENDENT: _bindgen_ty_31 = 1024;
+pub const PF_OutFlag_I_WRITE_INPUT_BUFFER: _bindgen_ty_31 = 2048;
+pub const PF_OutFlag_I_SHRINK_BUFFER: _bindgen_ty_31 = 4096;
+pub const PF_OutFlag_WORKS_IN_PLACE: _bindgen_ty_31 = 8192;
+pub const PF_OutFlag_RESERVED8: _bindgen_ty_31 = 16384;
+pub const PF_OutFlag_CUSTOM_UI: _bindgen_ty_31 = 32768;
+pub const PF_OutFlag_RESERVED7: _bindgen_ty_31 = 65536;
+pub const PF_OutFlag_REFRESH_UI: _bindgen_ty_31 = 131072;
+pub const PF_OutFlag_NOP_RENDER: _bindgen_ty_31 = 262144;
+pub const PF_OutFlag_I_USE_SHUTTER_ANGLE: _bindgen_ty_31 = 524288;
+pub const PF_OutFlag_I_USE_AUDIO: _bindgen_ty_31 = 1048576;
+pub const PF_OutFlag_I_AM_OBSOLETE: _bindgen_ty_31 = 2097152;
+pub const PF_OutFlag_FORCE_RERENDER: _bindgen_ty_31 = 4194304;
+pub const PF_OutFlag_PiPL_OVERRIDES_OUTDATA_OUTFLAGS: _bindgen_ty_31 = 8388608;
+pub const PF_OutFlag_I_HAVE_EXTERNAL_DEPENDENCIES: _bindgen_ty_31 = 16777216;
+pub const PF_OutFlag_DEEP_COLOR_AWARE: _bindgen_ty_31 = 33554432;
+pub const PF_OutFlag_SEND_UPDATE_PARAMS_UI: _bindgen_ty_31 = 67108864;
+pub const PF_OutFlag_AUDIO_FLOAT_ONLY: _bindgen_ty_31 = 134217728;
+pub const PF_OutFlag_AUDIO_IIR: _bindgen_ty_31 = 268435456;
+pub const PF_OutFlag_I_SYNTHESIZE_AUDIO: _bindgen_ty_31 = 536870912;
+pub const PF_OutFlag_AUDIO_EFFECT_TOO: _bindgen_ty_31 = 1073741824;
+pub const PF_OutFlag_AUDIO_EFFECT_ONLY: _bindgen_ty_31 = 2147483648;
+#[doc = " -------------------- Output Flags --------------------\n\nThe out_flags field of the OutData can be set to an OR-ed\ncombination of these flags to communicate various things to\nthe driver program.  The flags are described here:\n\nPF_OutFlag_NONE\nThis is the \"empty\" setting -- no outflags.\n\nPF_OutFlag_WIDE_TIME_INPUT\nSet this flag if the effect calls get_param to inquire a\nparameter at a time besides the current one (e.g. to get\nthe previous video frame). This should be sent, if it is\ngoing to be sent, at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nAs of AE10, this flag is no longer recommended. It still works the\nsame way and is safe to set, but there's a more efficient option.\nSee PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT.\n\nPF_OutFlag_NON_PARAM_VARY\nSet this if the effect uses information other than the parameters\nin the param list to generate its output at the current time.\nFor instance, if the effect uses the current time of the frame\nor some random value to decide the output, set this flag.  This\nflag should be sent at PF_Cmd_GLOBAL_SETUP.  If the effect\nproduces changing frames when applied to a still image and\nall parameters are constant, that's a sure sign that this bit\nshould be set (e.g. Wave Warp).\tCan be over-ridden dynamically\nduring PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING\nWhen you allocate a sequence data handle, the app\nmay write the handle out to disk and reuse it\nlater. Pass this flag if the handle is not \"flat\"\n(i.e. has pointers or handles hanging off of it).\nBasically, this gives you a chance to alter the\nhandle contents before it is written out to disk,\nso  you won't get invalid handles or pointers. Once\nyou have flattened a handle, you will get an\nopportunity to un-flatten it before the effect\nneeds to continue. For sequence data, you will be\ninvoked with a PF_Cmd_SEQUENCE_RESETUP call. You\nshould store a boolean at a common  offset in your\nunflattened and flattened data that says whether\nthe data is flat or not. If you get a\nPF_Cmd_SEQUENCE_RESETUP and the boolean indicated\nthe data is flattened, you should  unflatten the\ndata, free the flattened data handle, and set the\nsequence_data handle in the  PF_OutData. If you\never set the data to NULL when you flatten it, you\nwill NOT get the sequence  resetup call to\nunflatten it. Instead, you may just get a RENDER\ncall with NULL data. Forewarned is  forearmed. This\nflag, indicating if the data will need to be\nflattened, should be set at  PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_I_DO_DIALOG\nSet this is the effect responds to a PF_Cmd_DO_DIALOG, i.e. Does this\neffect bring up an options dialog box.  PF_Cmd_DO_DIALOG is generated\nwhen the user presses the Options button on the Effect floater.\nThis flag should be set at PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_USE_OUTPUT_EXTENT\nThe output layer is passed with an \"extent rect\" indicating\nthe area of the layer that actually contains visible image data.  If\nthe effect changes its behavior based on the extent rect (for instance,\nby not iterating over the entire image), set this flag, so the\napplication will know whether having the extent\tchange should cause\nthe frame to re-render.  Specify this flag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_SEND_DO_DIALOG\nSome filters need their options dialog box to be brought up at least\nonce to be valid.  You can set this flag, and the driver app will\nautomatically send a PF_Cmd_DO_DIALOG to the effect when it is applied.\nThe DO_DIALOG will be sent after PF_Cmd_SEQUENCE_SETUP.  This flag\nshould be set in PF_Cmd_SEQUENCE_SETUP if it is going to be set.\n\nPF_OutFlag_DISPLAY_ERROR_MESSAGE\nWhenever the return_msg field in the PF_OutData is set to a string,\nAfter Effects will bring up a simple dialog box containing that\nstring.  If you set this flag, the dialog box will be made to look\nlike an error message dialog box.  If you don't set this flag, it\nwill be an undecorated dialog box.  Using this flag, an effects module\ncan have and display its own error messages and not worry about the\ncode for dialog boxes -- the program will do it for you.\nThis flag can be sent after any command.\n\nPF_OutFlag_I_EXPAND_BUFFER\nStarting with After Effects 2.0, effects will be able to expand their buffers\nbeyond the current layer's dimensions. This has always been part of the\nPF specification, but as an extra precaution (and hint to the AE rendering\nengine) set this flag at PF_Cmd_GLOBAL_SETUP if you plan to expand your\nbuffer.\n\nPF_OutFlag_I_SHRINK_BUFFER\nSet this flag if you can shrink your buffer based on the extent-rects passed\nto you in order to be more memory efficient.\n\nPF_OutFlag_PIX_INDEPENDENT\nSet this flag if the output at a given pixel is not dependent on the values\nof the pixels around it. If this is set, the pixels After Effects does not\ncare about (because of field rendering, for example) could be filled with garbage\ncolors.  Please set this flag at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_WRITE_INPUT_BUFFER\nSet this flag if your effect would like to write into the input buffer. This\ncan be useful if you need an scratch buffer, but it also invalidates some speedups\nin the AE rendering pipeline, so use it with some discretion. Please set this\nflag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_KEEP_RESOURCE_OPEN\n\nObsoleted in AE 2015 (does nothing when set).\n\nSet this flag if your effect expects its Macintosh resource fork to be open\nat any time other than global setup.  Note that this does not mean that\nthe resource fork will be kept open at all times, just whenever the\neffect is being executed.\n\nPF_OutFlag_NOP_RENDER\n\nSet this flag in PF_Cmd_GLOBAL_SETUP if the render would never result in changes\nto the source image (or audio?). For example, an expression control would set this.\n\nPF_OutFlag_CUSTOM_UI\n\nThis flag must be set if your effect has a custom UI in the Effect Controls\nWindow, Layer Window or Comp Window.\n\nPF_OutFlag2_CUSTOM_UI_ASYNC_MANAGER\t(new in 13.5)\n\nThis flags enables use of AEGP_CheckoutOrRender_*_AsyncManager() calls\nwhich avoid the need for plugin management of the lifetime of async custom UI renders from the UI thread.\nThe plugin asks for what frames it needs and the manager calls PF_Event_DRAW again when they are available\n(or cancels them as needed automatically).  The plugin responds in PF_Event_DRAW by asking for what it needs\nand drawing what it can from what is available.\n\nDue to separation of Render thread and UI thread in 13.5, frames for custom UI should no longer be\nrendered synchronously (see RenderSuite5 for more details). The manager simplifies this, especially when\nthere are multiple requests needed for DRAW.\n\nWhen enabled, this flag associates a \"PF_AsyncManager\" with the NEW_CONTEXT/CLOSE_CONTEXT and PF_Event_DRAW\nthat will automatically track completion of 1 or more asynch render requests made for drawing custom UI.\nAs requests complete,  PF_Event_DRAW will be called again and the current state of the CUSTOM_UI can be drawn.\nSuch requests may be canceled automatically as the user scrubs the time needle or project changes are made and\nbecome invalid.\n\nThis flag is used in addition to the CUSTOM_UI flag during PF_Cmd_GLOBAL_SETUP\n\nPF_OutFlag_REFRESH_UI\n\nCan be returned from PF_Cmd_EVENT, PF_Cmd_RENDER, and PF_Cmd_DO_DIALOG.\nCauses the effects control window, layer window, and comp window to be re-drawn.\n\nPF_OutFlag_I_USE_SHUTTER_ANGLE\n\nMust be set at PF_Cmd_GLOBAL_SETUP time if the effect uses\nthe shutter_angle or the shutter_phase. Can be over-ridden dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_USE_AUDIO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for a visual effect\nthat calls the audio checkout calls.\n\nPF_OutFlag_I_AM_OBSOLETE\n\nSet at PF_Cmd_GLOBAL_SETUP time for effects that don't\nwant to appear in the AE Effects menu (but will still be invoked\nif you load a project that has an old copy of the effect applied).\n\nPF_OutFlag_FORCE_RERENDER\n\nSet at PF_Cmd_EVENT if the effect modified sequence data,\nor did anything else that requires the effect needs to re-render.\nNote that setting PF_ChangeFlag_CHANGED_VALUE automatically\ncauses a re-render, so don't worry about setting PF_OutFlag_FORCE_RERENDER\nin that case. Also, I_MIX_GUID_DEPENDENCIES can be used to trigger a rerender on\ndependant changes if sequence_data has not been changed.\n\nIMPORTANT: FORCE_RERENDER should be used as a last resort. Long term we should be eliminating the need for this\nbecause it causes forced cache invalidation that doesn't work well with undo.\nOnce we have the full set of APIs in place needed to manage render state, we will be able to deprecate this.\nPrefer using ARB data + CHANGED_VALUE or I_MIX_GUID_DEPENDENCIES when possible instead.\n\nIn 13.5 the split between a UI and render threads means that FORCE_RERENDER will now also have the needed\nside effect of copying sequence_data state to the render project.  This can be expensive if the sequence_data is large.\nSupport GET_FLATTENED_SEQUENCE_DATA to prevent deallocation of your sequence_data, which can help.\nGET_FLATTENED_SEQUENCE_DATA support is required for FORCE_RERENDER use in custom mouse/key events.\n\nPF_OutFlag_PiPL_OVERRIDES_OUTDATA_OUTFLAGS\n\nValid only for setting in your PiPL.  When set out_flags will be\nignored at PF_Cmd_GLOBAL_SETUP time (& thus don't need to match).\n\nPF_OutFlag_I_HAVE_EXTERNAL_DEPENDENCIES\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if the effect has dependencies\nthat the user should know about before transporting their project to a\ndifferent machine.  For example, dependencies on an installed font,\nor on an external file.  If set, the effect will receive a\nPF_Cmd_GET_EXTERNAL_DEPENDENCIES request, where the extra\nparam will be a PF_ExtDependenciesExtra, and the effect should\nreport its information based on the given sequence_data.\n\nPF_OutFlag_SEND_UPDATE_PARAMS_UI\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you want to receive\nPF_Cmd_UPDATE_PARAMS_UI messages.\n\nPF_OutFlag_AUDIO_FLOAT_ONLY\n\nSet this flag if you only want to receive PF_SIGNED_FLOAT data\nwhen processing audio data.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_IIR\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you are an\nInfinite-Impulse-Response audio filter (i.e. your output at a given\ntime depends on your output from previous times).\n\nPF_OutFlag_I_SYNTHESIZE_AUDIO\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you generate\naudio even when handed silence.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_EFFECT_TOO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect that\nwants to filter the audio too (as opposed to just reading the audio).\n\nPF_OutFlag_AUDIO_EFFECT_ONLY\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect\nthat only filters audio (no video).\n\nPF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\n\nSet this during PF_Cmd_GLOBAL_SETUP if the effect handles PF_Cmd_QUERY_DYNAMIC_FLAGS.\nSupporting this command can dramatically improve performance for certain\neffects, because it provides dynamic information to the host about what\ncan be cached (as opposed to PIPL bits which cannot be changed at run-time)\n\nPF_OutFlag2_I_USE_3D_CAMERA\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_USE_3D_LIGHTS\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_PARAM_GROUP_START_COLLAPSED_FLAG\n\nIf you want a parameter group to honor the PF_ParamFlag_COLLAPSE_TWIRLY or\nPF_ParamFlag_START_COLLAPSED flag, set this bit.  Otherwise, all parameter\ngroups will be collapsed by default.\n\nPF_OutFlag2_DOESNT_NEED_EMPTY_PIXELS\n\nAdded for render optimizations; shrinks the input buffer passed to the effect to\nexclude any empty pixels (where empty means \"zero alpha\" unless\nPF_OutFlag2_REVEALS_ZERO_ALPHA is set, in which case RGB must be zero as well.)\nThe origin of the trimmed buffer can be found in in_data->pre_effect_source_origin.\nEffects with both this flag and PF_OutFlag_I_EXPAND_BUFFER set may get called with\na null input buffer if their input is completely empty, and must be able to handle\nthis case without crashing. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_REVEALS_ZERO_ALPHA\n\nThe effect can take pixels with zero alpha and reveal the RGB data in them (like\nour Set Channels effect). This tells After Effects not to trim such pixels when\ndetermining the input for the effect. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_AM_DEPRECATED\nthis effect is still available, and shows up under user-visible \"Obsolete\" category\nin the UI. Setting this flag means \"there's a better way to do this, but this effect\nmay still be useful in some situations\".  distinct from PF_OutFlag_I_AM_OBSOLETE in\nthat these will still show up in the GUI and the user can still apply them to new\nprojects.  The category that is set by the effect is pretty much ignored, as it will\ninstead always go into the \"Obsolete\" category\n\nPF_OutFlag2_I_USE_TIMECODE\nNew in AE 9.0.  The effect depends on the Composition's timecode or a layer's\nsource footage timecode.  If the underlying timecode changes the effects will\nbe asked to rerender.\n\nPF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT\nNew in AE 10. Requires setting of PF_OutFlag_WIDE_TIME_INPUT (which allows you\nto support old hosts), but effectively overrides that flag. When set, all\nparameter checkouts are tracked so over-time dependencies are known by AE. Note\nthat if you use this new flag, and you cache any time-dependent data in your\nsequence data (or anywhere else), you must validate that cache using the\nnew PF_HaveInputsChangedOverTimeSpan() before using it.\n\nThis only works for smart effects (those that set PF_OutFlag2_SUPPORTS_SMART_RENDER). If you haven't\nset that, After Effects will silently treat this as PF_OutFlag_WIDE_TIME_INPUT instead.\n\nTo test that it's working, apply your effect with one parameter keyframed on every frame.\nRAM Preview to fill the cache, then change one of the keyframes. The related frame and\nall dependent frames (e.g. later frames, in the case of a simulation) should lose their\ncache marks and require re-rendering. Simlarly, upstream changes to sources of layer\nparameters should cause time-selective invalidation of the cache.\n\nPF_OutFlag2_DEPENDS_ON_UNREFERENCED_MASKS\nSet this if you are going to look at paths that aren't directly referenced by a path\nparam, e.g. if you are going to draw a stroke on all masks.\n\nPF_OutFlag2_OUTPUT_IS_WATERMARKED\nSet this if your output is going to be watermarked in some way that makes it unsuitable for\nfinal use, probably because the user is using an unlicensed demo version. It is ok to change\nthis state during the course of app session, if e.g. a floating license status changes.\nPlugin authors that actually do have this state changing asynchronously must be careful to\nhave the next render match the last state returned from QUERY_DYNAMIC_FLAGS otherwise race conditions\ncould cause incorrect frames to be cached. (This is a non-issue if you only change this in response\nto DO_DIALOG.)\n\nPF_OutFlag2_I_MIX_GUID_DEPENDENCIES\t(new in 13.5)\nSmart effects only. With this option, FORCE_RERENDER becomes a cache-savvy more efficient MAYBE rerender.\nIf custom UI or DO_DIALOG change sequence data, returning FORCE_RERENDER requests AE to check whether\nrerender needs to occur.  During PreRender, the effect uses the GuidMixInPtr callback to mix\nany additional state that affects the render into our internal GUID for the cached frame.\nAE can then tell whether the frame already exists and if so, no longer needs to render.\nThis also means that DO_DIALOG no longer always blows the cache and that undo works across DO_DIALOG.\nCancelation of DO_DIALOG no longer blows the cache either.\nThis also means that I_USE_* flags are now basically redundant since any dependency could be mixed in.\nJust be sure to mix in everything that can uniquely affect resulting rendered pixels (that is not already\nan AE stream parameter).  But don't mixin things that are disabled and have no render effect  (this\nresults in less cache efficiency).\n\nPF_OutFlag2_SUPPORTS_THREADED_RENDERING\nIndicates the effect supports rendering on multiple threads at the same time. Single or multiple\napplications of this effect on a layer can be called to render at the same time on multiple threads.\n\nUI selectors are still sent on the main thread, however Sequence Setup, Sequence Resetup, Sequence SetDown,\nPreRender, and Render may be sent on multiple threads at the same time as the UI selectors are being handled\nso all of these selectors must be thread safe.\n\nGlobal Setup and Global Setdown selectors are unaffected by this flag.  Regardless whether this flag is set\nor not, they will only be sent on the main thread, and will not be sent at the same time as any other selectors.\n\nIf the effect sets PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING indicating the sequence data needs flattening\nthen it must also set PF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA.\n\nsequence_data is read-only at render time and must be accessed with PF_EffectSequenceDataSuite.\nin_data->sequence_data will be NULL during render. AEGP_ComputeCacheSuite is suggested if writing to\nsequence_data at render time is needed for caching. This suite unifies cache entries so multiple threads do\nnot recompute the same cache value. If neither of these solutions work, see the next flag,\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER.\n\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER\nIndicates the effect needs sequence_data replicated for each render thread, thus allowing each render to have\nsequence_data which can be written to. Note that changes to sequence_data will be discarded regularly, currently\nafter each span of frames is rendered such as single RAM Preview or Render Queue export."]
+pub type _bindgen_ty_31 = ::std::os::raw::c_uint;
 pub type PF_OutFlags = A_long;
+pub const PF_OutFlag2_NONE: _bindgen_ty_32 = 0;
+pub const PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS: _bindgen_ty_32 = 1;
+pub const PF_OutFlag2_I_USE_3D_CAMERA: _bindgen_ty_32 = 2;
+pub const PF_OutFlag2_I_USE_3D_LIGHTS: _bindgen_ty_32 = 4;
+pub const PF_OutFlag2_PARAM_GROUP_START_COLLAPSED_FLAG: _bindgen_ty_32 = 8;
+pub const PF_OutFlag2_I_AM_THREADSAFE: _bindgen_ty_32 = 16;
+pub const PF_OutFlag2_CAN_COMBINE_WITH_DESTINATION: _bindgen_ty_32 = 32;
+pub const PF_OutFlag2_DOESNT_NEED_EMPTY_PIXELS: _bindgen_ty_32 = 64;
+pub const PF_OutFlag2_REVEALS_ZERO_ALPHA: _bindgen_ty_32 = 128;
+pub const PF_OutFlag2_PRESERVES_FULLY_OPAQUE_PIXELS: _bindgen_ty_32 = 256;
+pub const PF_OutFlag2_SUPPORTS_SMART_RENDER: _bindgen_ty_32 = 1024;
+pub const PF_OutFlag2_RESERVED9: _bindgen_ty_32 = 2048;
+pub const PF_OutFlag2_FLOAT_COLOR_AWARE: _bindgen_ty_32 = 4096;
+pub const PF_OutFlag2_I_USE_COLORSPACE_ENUMERATION: _bindgen_ty_32 = 8192;
+pub const PF_OutFlag2_I_AM_DEPRECATED: _bindgen_ty_32 = 16384;
+pub const PF_OutFlag2_PPRO_DO_NOT_CLONE_SEQUENCE_DATA_FOR_RENDER: _bindgen_ty_32 = 32768;
+pub const PF_OutFlag2_RESERVED10: _bindgen_ty_32 = 65536;
+pub const PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT: _bindgen_ty_32 = 131072;
+pub const PF_OutFlag2_I_USE_TIMECODE: _bindgen_ty_32 = 262144;
+pub const PF_OutFlag2_DEPENDS_ON_UNREFERENCED_MASKS: _bindgen_ty_32 = 524288;
+pub const PF_OutFlag2_OUTPUT_IS_WATERMARKED: _bindgen_ty_32 = 1048576;
+pub const PF_OutFlag2_I_MIX_GUID_DEPENDENCIES: _bindgen_ty_32 = 2097152;
+pub const PF_OutFlag2_AE13_5_THREADSAFE: _bindgen_ty_32 = 4194304;
+pub const PF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA: _bindgen_ty_32 = 8388608;
+pub const PF_OutFlag2_CUSTOM_UI_ASYNC_MANAGER: _bindgen_ty_32 = 16777216;
+pub const PF_OutFlag2_SUPPORTS_GPU_RENDER_F32: _bindgen_ty_32 = 33554432;
+pub const PF_OutFlag2_RESERVED12: _bindgen_ty_32 = 67108864;
+pub const PF_OutFlag2_SUPPORTS_THREADED_RENDERING: _bindgen_ty_32 = 134217728;
+pub const PF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER: _bindgen_ty_32 = 268435456;
+pub type _bindgen_ty_32 = ::std::os::raw::c_uint;
 pub type PF_OutFlags2 = A_long;
+pub const PF_InFlag_NONE: _bindgen_ty_33 = 0;
+pub const PF_InFlag_PROJECT_IS_RENDER_ONLY: _bindgen_ty_33 = 1;
+#[doc = " -------------------- Input Flags --------------------\n\nThe in_flags field of the InData can be set to an OR-ed\ncombination of these flags to communicate various things from AE to an effect plugin\nThe flags are described here:\n\nPF_InFlag_NONE\nThis is the \"empty\" setting -- no inflags.\n\nPF_InFlag_PROJECT_IS_RENDER_ONLY  (since 13.5)\n\nFor efficiency, if a plugin sets up UI that is not used in render, this flag\ncan be tested to skip that step when an effect is being RESETUP for render only.\nEffect instances with this flag on in RESETUP are in read-only AE projects and will not receive UI related selectors.\n\nThis is an optimization hint.  If you don't make such optimizations in render your plugin should still work.\n\nThis flag should generally not be used to suppress errors in render.  Errors should still be reported as usual via AE standard mechanisms,\nand AE will then handle the differences in context reporting.\n\nIf this is off, UI should be set up normally (and the effect could also be running in an earlier version of\nAE that assumed render and UI on the same effect instance.)"]
+pub type _bindgen_ty_33 = ::std::os::raw::c_uint;
 pub type PF_InFlags = A_long;
+pub const PF_Cmd_ABOUT: _bindgen_ty_34 = 0;
+pub const PF_Cmd_GLOBAL_SETUP: _bindgen_ty_34 = 1;
+pub const PF_Cmd_UNUSED_0: _bindgen_ty_34 = 2;
+pub const PF_Cmd_GLOBAL_SETDOWN: _bindgen_ty_34 = 3;
+pub const PF_Cmd_PARAMS_SETUP: _bindgen_ty_34 = 4;
+pub const PF_Cmd_SEQUENCE_SETUP: _bindgen_ty_34 = 5;
+pub const PF_Cmd_SEQUENCE_RESETUP: _bindgen_ty_34 = 6;
+pub const PF_Cmd_SEQUENCE_FLATTEN: _bindgen_ty_34 = 7;
+pub const PF_Cmd_SEQUENCE_SETDOWN: _bindgen_ty_34 = 8;
+pub const PF_Cmd_DO_DIALOG: _bindgen_ty_34 = 9;
+pub const PF_Cmd_FRAME_SETUP: _bindgen_ty_34 = 10;
+pub const PF_Cmd_RENDER: _bindgen_ty_34 = 11;
+pub const PF_Cmd_FRAME_SETDOWN: _bindgen_ty_34 = 12;
+pub const PF_Cmd_USER_CHANGED_PARAM: _bindgen_ty_34 = 13;
+pub const PF_Cmd_UPDATE_PARAMS_UI: _bindgen_ty_34 = 14;
+pub const PF_Cmd_EVENT: _bindgen_ty_34 = 15;
+pub const PF_Cmd_GET_EXTERNAL_DEPENDENCIES: _bindgen_ty_34 = 16;
+pub const PF_Cmd_COMPLETELY_GENERAL: _bindgen_ty_34 = 17;
+pub const PF_Cmd_QUERY_DYNAMIC_FLAGS: _bindgen_ty_34 = 18;
+pub const PF_Cmd_AUDIO_RENDER: _bindgen_ty_34 = 19;
+pub const PF_Cmd_AUDIO_SETUP: _bindgen_ty_34 = 20;
+pub const PF_Cmd_AUDIO_SETDOWN: _bindgen_ty_34 = 21;
+pub const PF_Cmd_ARBITRARY_CALLBACK: _bindgen_ty_34 = 22;
+pub const PF_Cmd_SMART_PRE_RENDER: _bindgen_ty_34 = 23;
+pub const PF_Cmd_SMART_RENDER: _bindgen_ty_34 = 24;
+pub const PF_Cmd_RESERVED1: _bindgen_ty_34 = 25;
+pub const PF_Cmd_RESERVED2: _bindgen_ty_34 = 26;
+pub const PF_Cmd_RESERVED3: _bindgen_ty_34 = 27;
+pub const PF_Cmd_GET_FLATTENED_SEQUENCE_DATA: _bindgen_ty_34 = 28;
+pub const PF_Cmd_TRANSLATE_PARAMS_TO_PREFS: _bindgen_ty_34 = 29;
+pub const PF_Cmd_RESERVED4: _bindgen_ty_34 = 30;
+pub const PF_Cmd_SMART_RENDER_GPU: _bindgen_ty_34 = 31;
+pub const PF_Cmd_GPU_DEVICE_SETUP: _bindgen_ty_34 = 32;
+pub const PF_Cmd_GPU_DEVICE_SETDOWN: _bindgen_ty_34 = 33;
+pub const PF_Cmd_NUM_CMDS: _bindgen_ty_34 = 34;
+#[doc = " -------------------- Command Selectors --------------------\n\nThe first parameter to the effect routine is one of t\these command\nselectors.  The commands are described here.\n\nPF_Cmd_ABOUT\nThis command should display an information dialog box about the\neffect module.  The easiest thing to do is PF_SPRINTF the info\ninto the out_data->return_msg field.  After Effects will bring\nup a simple undecorated modal dialog with your text proudly displayed.\nThis command can be sent at _any_ time, so don't count on having\nany global data or anything else set.  (Except, as always, the\ncurrent resource file will be set to your effects module.)\n\nPF_Cmd_GLOBAL_SETUP\nWhen you get this command, you should check the version of the\neffect protocol with which you are being invoked, and set any of\nthe necessary out flags (described above) or out data fields\n(described below).  If your global data was flattened, the flat\ndata will be passed here and you should unflatten it, free the\nflat global data, and set the OutData global_data to the new un-flat\ndata.  Alternatively, the global data may come in NULL and you can\nallocate new global data at this time.\n\nPF_Cmd_GLOBAL_SETDOWN\nYou should free any global data you have allocated when you get\nthis command.\n\nPF_Cmd_PARAMS_SETUP\nHere you should add any params your effect wants using the\nPF_ADD_PARAM callback described below.  This is called after global\nsetup -- see the add_param callback described below.\n\nPF_Cmd_SEQUENCE_SETUP\nThis is called when the effect is first applied to a layer.\nA sequence is a series of images that will usually be all be of the same\nsize and in the same context.  You can allocate sequence data\nat this time -- many more input fields are defined at this time.\nSee the PF_InData description below.\n\nAs of 13.5 this only happens on the UI thread.\nExcept for legacy (no GET_FLATTENED_SEQUENCE_DATA) effects that do I_DO_DIALOG which can still hit this in render.\n\nPF_Cmd_SEQUENCE_RESETUP\nThis call is made to unflatten flattened sequence data.\nThere are at least three cases when this can happen:\n1) after the sequence data is written to disk, 2) after the\nsequence data is read in from disk, 3) after a duplicate\nis made (called on both original and the new sequence).\n\nThis can happen in UI or Render thread (13.5),  the effect must handle\ninitialization of a NULL sequence_data input if needed.  See also PF_InFlag_PROJECT_IS_RENDER_ONLY.\n\nPF_Cmd_SEQUENCE_FLATTEN\nThis call is made to flatten unflat sequence data so it can be\ncached to disk.  After the data is flattened, free the un-flat data\nand set the out_data->sequence_data to the new flat data.\nIf you don't want your sequence handle written to disk, you\ncan set it to NULL (after disposing it) at this time.  Presumably\nyou would then reallocate it at another time.\n\nThis command will be sent when saving and when duplicating\nthe sequence.\n\nPF_Cmd_GET_FLATTENED_SEQUENCE_DATA\t(new in 13.5)\nReturns an independent allocation of the sequence data which can be written\nto disk or used to initialise or update other instances of the effect plug-in.\n\nThe host calls this command to serialize the sequence data without\nhaving to flatten and resetup the UI plug-in as was legacy practice. (However, at present effects\nstill may need flattening in render if the sequence_data is about to be assigned.)\n\nAn effect that implements GET_FLATTENED_SEQUENCE_DATA will only receive SEQUENCE_SETUP on the UI thread.\nSEQUENCE_RESETUP can happen on either thread. Make sure you handle a NULL sequence_data in RESETUP.\n(Without GET_FLATTENED, a legacy effect may still get SEQUENCE_SETUP in render but DO_DIALOG will not be called.)\n\nAlso when enabled, this means that the effect is guaranteed to get a\nSEQUENCE_SETDOWN cmd to dispose the effect's sequence_data  (previously\nit was possible for AE to bypass this if the sequence_data was flat,\nbut that lead to SEQUENCE_SETUP/SETDOWN imbalances for some plugins.\nThe imbalance should not happen when using this flag, but the plugin must\nhandle being called on SETDOWN with possibly flat data. For example,\ntry copy and pasting an effect onto itself.\n\nSupport for this command is indicated by setting\nPF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA\n\nThe ownership of the returned handle is transferred to the host.\n\nPF_Cmd_SEQUENCE_SETDOWN\nYou should free any sequence data you have allocated when you\nget this command.\n\nPF_Cmd_DO_DIALOG\nThis command indicated that the Options button or command has\nbeen selected and the effect should bring up its options dialog.\nThis command will only be sent it the effect has indicated that\nit has an options dialog with PF_OutFlag_I_DO_DIALOG.  This\ncommand will automatically be sent once upon applying the filter\nif PF_OutFlag_SEND_DO_DIALOG is set in SEQUENCE_SETUP.\n\nPF_Cmd_FRAME_SETUP\nThis is called immediately before each frame is invoked.  You\ncan allocate frame data at this time, if you wish, or you can\njust wait for the RENDER which will immediately follow.\n\nPF_Cmd_RENDER\nThis is the call to render the frame.  All fields in the in_data\nwill be valid at this time and you can inquire parameters or\nwhat-have-you.  This should set the output frame with the new\nimage data.  This is the main action command.\n\nPF_Cmd_FRAME_SETDOWN\nIf you allocated data in PF_Cmd_FRAME_SETUP, this is the time\nto free it and clean up after rendering the frame.\n\nPF_Cmd_USER_CHANGED_PARAM\nThis command will be sent if you set the PF_ParamFlag_SUPERVISE\nflag for a param.  This allows you to modify the params array contents to\ncontrol values or make one control affect others, including arbitrary\ndata.  This command will be sent whenever the user interacts with a\nstandard param controller that has PF_ParamFlag_SUPERVISE\nset.\n\nThe \"extra\" field will be a pointer to a PF_UserChangedParamExtra structure\nwhich contains the param_index of the changed parameter.\n\nYou can return PF_ChangeFlag_CHANGED_VALUE and/or call PF_UpdateParamUI()\nfor any param.\n\nPF_Cmd_UPDATE_PARAMS_UI\nThis command will be sent when the Effect Controls Window (ECW)\nneeds to updated (e.g. after opening the ECW or moving the comp to\na new time) if you have set PF_OutFlag_SEND_UPDATE_PARAMS_UI at\nglobal setup time.\n\nThis gives you a chance to call PF_UpdateParamUI() to modify certain\nui fields for the params.  See the doc for PF_UpdateParamUI()\nto see which fields can be modified.\n\nWARNING: When handling PF_Cmd_UPDATE_PARAMS_UI, you can call\nPF_UpdateParamUI() for any param(s), but not PF_ChangeFlag_CHANGED_VALUE --\nonly cosmetic changes can be made in response to this command.\n\nPF_Cmd_QUERY_DYNAMIC_FLAGS\nThis command will be sent at arbitrary times if PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\nis set during global setup. During this call the effect may examine the values\nof its parameters at the current time (except layer parameters) by checking them out,\nand decide whether any of the flags that support PF_Cmd_QUERY_DYNAMIC_FLAGS should be set.\n\nThe appropriate flags must be set in out_data->out_flags and out_data->out_flags2 before\nreturning. The effect must decide what information is necessary to render a frame at\nthe current time, given only the values of parameters at that time. Clearing the\nappropriate bits when possible can result in great performance improvements, but\nincorrectly clearing bits will result in caching bugs, and you won't like that. Nope.\n\n Important Reminder***\nBefore you add a new PF_Cmd, evaluate whether it should allow\nnew Sequence Data allocations! If so, remember to add it to\nCmdCanChangeSequenceData() in FLT_Host.cpp!"]
+pub type _bindgen_ty_34 = ::std::os::raw::c_uint;
 pub type PF_Cmd = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3698,6 +3877,10 @@ pub struct PF_ChannelChunk {
     pub dataH: PF_Handle,
     pub dataPV: *mut ::std::os::raw::c_void,
 }
+pub const PF_LayerDefault_MYSELF: _bindgen_ty_35 = -1;
+pub const PF_LayerDefault_NONE: _bindgen_ty_35 = 0;
+#[doc = " -------------------- Effect Parameter Description Structures --------------------\n\nIn general each structure is divided into two parts:\na) description of the parameter\nb) setting of parameter at the current invocation time\n\nA number of these structures end in A_char*, A_char[] unions.  These\nstructures are \"flattened\" between the add_param callback (in which\nthe A_char * should be used) and the read-only values accessible when\nthe effect is later invoked (at which time the A_char [] is used and\nthe string data is concatenated right at the end of the struct)."]
+pub type _bindgen_ty_35 = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PF_LayerDef {
@@ -3720,8 +3903,19 @@ pub struct PF_LayerDef {
     pub dephault: A_long,
 }
 pub type PF_EffectWorld = PF_LayerDef;
+pub const PF_UNSIGNED_PCM: _bindgen_ty_36 = 0;
+pub const PF_SIGNED_PCM: _bindgen_ty_36 = 1;
+pub const PF_SIGNED_FLOAT: _bindgen_ty_36 = 2;
+pub type _bindgen_ty_36 = ::std::os::raw::c_uint;
 pub type PF_SoundFormat = A_short;
+pub const PF_SSS_1: _bindgen_ty_37 = 1;
+pub const PF_SSS_2: _bindgen_ty_37 = 2;
+pub const PF_SSS_4: _bindgen_ty_37 = 4;
+pub type _bindgen_ty_37 = ::std::os::raw::c_uint;
 pub type PF_SoundSampleSize = A_short;
+pub const PF_Channels_MONO: _bindgen_ty_38 = 1;
+pub const PF_Channels_STEREO: _bindgen_ty_38 = 2;
+pub type _bindgen_ty_38 = ::std::os::raw::c_uint;
 pub type PF_SoundChannels = A_short;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3738,6 +3932,12 @@ pub struct PF_SoundWorld {
     pub num_samples: A_long,
     pub dataP: *mut ::std::os::raw::c_void,
 }
+pub const PF_ValueDisplayFlag_NONE: _bindgen_ty_39 = 0;
+pub const PF_ValueDisplayFlag_PERCENT: _bindgen_ty_39 = 1;
+pub const PF_ValueDisplayFlag_PIXEL: _bindgen_ty_39 = 2;
+pub const PF_ValueDisplayFlag_RESERVED1: _bindgen_ty_39 = 4;
+pub const PF_ValueDisplayFlag_REVERSE: _bindgen_ty_39 = 8;
+pub type _bindgen_ty_39 = ::std::os::raw::c_uint;
 pub type PF_ValueDisplayFlags = A_short;
 #[doc = " Slider -- PF_Param_SLIDER"]
 #[repr(C)]
@@ -3767,6 +3967,9 @@ pub struct PF_FixedSliderDef {
     pub precision: A_short,
     pub display_flags: PF_ValueDisplayFlags,
 }
+pub const PF_FSliderFlag_NONE: _bindgen_ty_40 = 0;
+pub const PF_FSliderFlag_WANT_PHASE: _bindgen_ty_40 = 1;
+pub type _bindgen_ty_40 = ::std::os::raw::c_uint;
 pub type PF_FSliderFlags = A_u_long;
 #[doc = " Floating Point Slider -- PF_Param_FLOAT_SLIDER"]
 #[repr(C)]
@@ -3867,7 +4070,19 @@ pub struct PF_ButtonDef {
 pub union PF_ButtonDef__bindgen_ty_1 {
     pub namesptr: *const A_char,
 }
+pub const PF_PathID_NONE: _bindgen_ty_41 = 0;
+pub type _bindgen_ty_41 = ::std::os::raw::c_uint;
 pub type PF_PathID = A_u_long;
+pub const PF_MaskMode_NONE: _bindgen_ty_42 = 0;
+pub const PF_MaskMode_ADD: _bindgen_ty_42 = 1;
+pub const PF_MaskMode_SUBTRACT: _bindgen_ty_42 = 2;
+pub const PF_MaskMode_INTERSECT: _bindgen_ty_42 = 3;
+pub const PF_MaskMode_LIGHTEN: _bindgen_ty_42 = 4;
+pub const PF_MaskMode_DARKEN: _bindgen_ty_42 = 5;
+pub const PF_MaskMode_DIFFERENCE: _bindgen_ty_42 = 6;
+pub const PF_MaskMode_ACCUM: _bindgen_ty_42 = 7;
+pub const PF_NUM_MASKMODES: _bindgen_ty_42 = 8;
+pub type _bindgen_ty_42 = ::std::os::raw::c_uint;
 pub type PF_MaskMode = A_long;
 #[doc = " Path -- PF_Param_PATH\n\nPath parameters give access to the mask/path/shapes of the layer on which\nthe effect is applied.  For more information\non how to use these paths, see the PF_PathQuerySuite, and the PF_PathDataSuite\nin AE_EffectSuites.h"]
 #[repr(C)]
@@ -3887,8 +4102,28 @@ pub struct PF_ArbitraryDef {
     pub value: PF_ArbitraryH,
     pub refconPV: *mut ::std::os::raw::c_void,
 }
+pub const PF_Arbitrary_NEW_FUNC: _bindgen_ty_43 = 0;
+pub const PF_Arbitrary_DISPOSE_FUNC: _bindgen_ty_43 = 1;
+pub const PF_Arbitrary_COPY_FUNC: _bindgen_ty_43 = 2;
+pub const PF_Arbitrary_FLAT_SIZE_FUNC: _bindgen_ty_43 = 3;
+pub const PF_Arbitrary_FLATTEN_FUNC: _bindgen_ty_43 = 4;
+pub const PF_Arbitrary_UNFLATTEN_FUNC: _bindgen_ty_43 = 5;
+pub const PF_Arbitrary_INTERP_FUNC: _bindgen_ty_43 = 6;
+pub const PF_Arbitrary_COMPARE_FUNC: _bindgen_ty_43 = 7;
+pub const PF_Arbitrary_PRINT_SIZE_FUNC: _bindgen_ty_43 = 8;
+pub const PF_Arbitrary_PRINT_FUNC: _bindgen_ty_43 = 9;
+pub const PF_Arbitrary_SCAN_FUNC: _bindgen_ty_43 = 10;
+pub type _bindgen_ty_43 = ::std::os::raw::c_uint;
 pub type PF_FunctionSelector = A_long;
+pub const PF_ArbCompare_EQUAL: _bindgen_ty_44 = 0;
+pub const PF_ArbCompare_LESS: _bindgen_ty_44 = 1;
+pub const PF_ArbCompare_MORE: _bindgen_ty_44 = 2;
+pub const PF_ArbCompare_NOT_EQUAL: _bindgen_ty_44 = 3;
+pub type _bindgen_ty_44 = ::std::os::raw::c_uint;
 pub type PF_ArbCompareResult = A_long;
+pub const PF_ArbPrint_NONE: _bindgen_ty_45 = 0;
+pub const PF_ArbPrint_ABBREVIATED: _bindgen_ty_45 = 1;
+pub type _bindgen_ty_45 = ::std::os::raw::c_uint;
 pub type PF_ArbPrintFlags = A_long;
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -4013,6 +4248,10 @@ pub struct PF_TranslateParamsToPrefsExtra {
     pub prefsPC: PF_ImporterPrefsDataPtr,
     pub prefs_sizeLu: A_u_long,
 }
+pub const PF_DepCheckType_NONE: _bindgen_ty_46 = 0;
+pub const PF_DepCheckType_ALL_DEPENDENCIES: _bindgen_ty_46 = 1;
+pub const PF_DepCheckType_MISSING_DEPENDENCIES: _bindgen_ty_46 = 2;
+pub type _bindgen_ty_46 = ::std::os::raw::c_uint;
 pub type PF_DepCheckType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4037,7 +4276,27 @@ pub union PF_ParamDefUnion {
     pub button_d: PF_ButtonDef,
     pub point3d_d: PF_Point3DDef,
 }
+pub const PF_PUI_NONE: _bindgen_ty_47 = 0;
+pub const PF_PUI_TOPIC: _bindgen_ty_47 = 1;
+pub const PF_PUI_CONTROL: _bindgen_ty_47 = 2;
+pub const PF_PUI_STD_CONTROL_ONLY: _bindgen_ty_47 = 4;
+pub const PF_PUI_NO_ECW_UI: _bindgen_ty_47 = 8;
+pub const PF_PUI_ECW_SEPARATOR: _bindgen_ty_47 = 16;
+pub const PF_PUI_DISABLED: _bindgen_ty_47 = 32;
+pub const PF_PUI_DONT_ERASE_TOPIC: _bindgen_ty_47 = 64;
+pub const PF_PUI_DONT_ERASE_CONTROL: _bindgen_ty_47 = 128;
+pub const PF_PUI_RADIO_BUTTON: _bindgen_ty_47 = 256;
+pub const PF_PUI_INVISIBLE: _bindgen_ty_47 = 512;
+#[doc = " Param UI Flags\n\nPF_PUI_TOPIC\n\nSet this flag if you handle PF_Cmd_EVENTs for the \"topic\" of\nthe parameter.  The \"topic\" is the portion of the param UI\nin the Effect Controls Window (ECW) that is still visible\nwhen the twirly-arrow is twirled up for that param.\n\nIf you set this flag, you must also set PF_OutFlag_CUSTOM_UI\nat PF_Cmd_GLOBAL_SETUP time.\n\nPF_PUI_CONTROL\n\nSet this flag if you handle PF_Cmd_EVENTs for the control\narea in the ECW.  This is the area that becomes invisible\nwhen you twirl up a parameter's twirly arrow (and is the\nusual place to have your custom UI).\n\nIf you set this flag, you must also set PF_OutFlag_CUSTOM_UI\nat PF_Cmd_GLOBAL_SETUP time.\n\nPF_PUI_STD_CONTROL_ONLY\n\nSet this flag if you want the standard control only -- no\ndata stream will be associated with this parameter, and\nthus no keyframes (nothing appears in the Time Layout window\nfor this type of param).\n\nYou might want to do this to control something in your\nsequence data with a standard control.  Or in your arb\ndata, or custom UI in the comp window, or to group-set multiple\nother controls.\n\n\nThis flag can be used with these param types:\nPF_Param_SLIDER, PF_Param_FIX_SLIDER, PF_Param_ANGLE,\nPF_Param_CHECKBOX, PF_Param_COLOR, PF_Param_POINT,\nPF_Param_POPUP, PF_Param_FLOAT_SLIDER, PF_Param_POINT_3D\n\nbut NOT:\n\nPF_Param_CUSTOM, PF_Param_NO_DATA,\nPF_Param_LAYER, PF_Param_ARBITRARY_DATA, PF_Param_PATH\n\nIf you set this flag, you must also set PF_ParamFlag_SUPERVISE\n(otherwise you would never find out about value changes, and\nthe setting would never be used for anything).  This flag\ndoes not require the setting of PF_OutFlag_CUSTOM_UI.\n\nIf you want a standard control for PF_Param_ARBITRARY_DATA,\njust add one (or more) using PF_PUI_STD_CONTROL_ONLY with\nthe supported param types, and then when handling\nPF_Cmd_USER_CHANGED_PARAM you can modify your arb data.\n\n\nPF_PUI_NO_ECW_UI\n\nSet this flag if you want no UI to appear in the Effect Controls\nWindow.  Presumably, you are setting the value of the parameter\nthrough some other method (e.g. custom UI in the comp window,\nor while handling PF_Cmd_USER_CHANGED_PARAM for a different param with\nPF_ParamFlag_SUPERVISE set). In AE, this doesn't affect keyframe\nvisibility in the timeline. In PPro it does remove the entire row,\nso you won't see keyframes.\n\nPF_PUI_ECW_SEPARATOR\n\nSet this flag if you'd like a thick line above this parameter\nin the effect control window. This is provided so that parameters\ncan be grouped visually, if needed (without adding groups).\nThis flag can be changed at runtime through the PF_UpdateParamUI()\nmethod. Not used by AE.\n\nPF_PUI_INVISIBLE\n\nSet this flag if you'd like the parameter to be initially invisible. This is useful\nif your effect needs hidden data parameters that affect rendering.\n\nPremiere only: The parameter can later be made visible by clearing the flag\nduring the PF_UpdateParamUI() callback."]
+pub type _bindgen_ty_47 = ::std::os::raw::c_uint;
 pub type PF_ParamUIFlags = A_long;
+pub const PF_ChangeFlag_NONE: _bindgen_ty_48 = 0;
+pub const PF_ChangeFlag_CHANGED_VALUE: _bindgen_ty_48 = 1;
+pub const PF_ChangeFlag_RESERVED: _bindgen_ty_48 = 2;
+pub const PF_ChangeFlag_SET_TO_VARY: _bindgen_ty_48 = 4;
+pub const PF_ChangeFlag_SET_TO_CONSTANT: _bindgen_ty_48 = 8;
+#[doc = " PF_ChangeFlags\n\nNew in AE 4.0 (although PF_ChangeFlag_CHANGED_VALUE was implemented\nby setting low bit of old changed field).\n\nPF_ChangeFlag_CHANGED_VALUE\n\nSet this flag for each param whose value you change when handling\na PF_Cmd_USER_CHANGED_PARAM or specific PF_Cmd_EVENT events\n(PF_Event_DO_CLICK, PF_Event_DRAG, & PF_Event_KEYDOWN). If set during\nPF_Cmd_EVENT, but sure to also set PF_EO_HANDLED_EVENT before returning.\nYou can change as many params as you want at once.  These changes are undoable and\nre-doable by the user.  Exception: do not set PF_PUI_STD_CONTROL_ONLY\nparam values with this flag, use PF_UpdateParamUI() instead.\n\nPF_ChangeFlag_SET_TO_VARY\n\nNot yet implemented.  Same restrictions as PF_ChangeFlag_CHANGED_VALUE.\n\nPF_ChangeFlag_SET_TO_CONSTANT\n\nNot yet implemented.  Same restrictions as PF_ChangeFlag_CHANGED_VALUE."]
+pub type _bindgen_ty_48 = ::std::os::raw::c_uint;
 pub type PF_ChangeFlags = A_long;
 #[doc = " ParamDef"]
 #[repr(C)]
@@ -4064,7 +4323,19 @@ pub type PF_ParamDefPtr = *mut PF_ParamDef;
 #[doc = " ParamDef"]
 pub type PF_ParamDefH = *mut *mut PF_ParamDef;
 pub type PF_ParamList = *mut *mut PF_ParamDef;
+pub const PF_ChannelMask_ALPHA: _bindgen_ty_49 = 1;
+pub const PF_ChannelMask_RED: _bindgen_ty_49 = 2;
+pub const PF_ChannelMask_GREEN: _bindgen_ty_49 = 4;
+pub const PF_ChannelMask_BLUE: _bindgen_ty_49 = 8;
+pub const PF_ChannelMask_ARGB: _bindgen_ty_49 = 15;
+#[doc = " -------------------- Smart Render Interface Constants and Structures --------------------\n\nPF_Cmd_SMART_PRE_RENDER gets a PF_PreRenderExtra struct in the extra pointer, and must\nfill out the \"output\" field before returning.\n\nPF_Cmd_SMART_RENDER gets a PF_SmartRenderExtra struct in the extra pointer, if pre-render was invoked.\n"]
+pub type _bindgen_ty_49 = ::std::os::raw::c_uint;
 pub type PF_ChannelMask = A_long;
+pub const PF_GPU_Framework_NONE: _bindgen_ty_50 = 0;
+pub const PF_GPU_Framework_OPENCL: _bindgen_ty_50 = 1;
+pub const PF_GPU_Framework_METAL: _bindgen_ty_50 = 2;
+pub const PF_GPU_Framework_CUDA: _bindgen_ty_50 = 3;
+pub type _bindgen_ty_50 = ::std::os::raw::c_uint;
 pub type PF_GPU_Framework = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4087,6 +4358,10 @@ pub struct PF_PreRenderInput {
 }
 pub type PF_DeletePreRenderDataFunc =
     ::std::option::Option<unsafe extern "C" fn(pre_render_data: *mut ::std::os::raw::c_void)>;
+pub const PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS: _bindgen_ty_51 = 1;
+pub const PF_RenderOutputFlag_GPU_RENDER_POSSIBLE: _bindgen_ty_51 = 2;
+pub const PF_RenderOutputFlag_RESERVED1: _bindgen_ty_51 = 4;
+pub type _bindgen_ty_51 = ::std::os::raw::c_uint;
 pub type PF_RenderOutputFlags = ::std::os::raw::c_short;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4348,7 +4623,62 @@ pub type PF_FilterProc = ::std::option::Option<
     ) -> PF_Err,
 >;
 pub type PF_KernelFlags = A_u_long;
+pub const PF_SampleEdgeBehav_ZERO: _bindgen_ty_52 = 0;
+#[doc = " ---------- PF_SampleEdgeBehav ----------\n\nThe sampling routines always deal with 32 bit images, and thus\nneed to compute properly alpha-weighted samples. An issue arises\nwhen an attempt is made to sample outside of the image content area.\n\nBefore PF_PLUG_IN_VERSION 2, After Effects always treated pixels\noutside of the image content area as having alpha = 0, which is desirable\nin many cases. Distortions and other effects may want different sampling\nbehaviors, however, hence the PF_SampleEdgeBehav.\n"]
+pub type _bindgen_ty_52 = ::std::os::raw::c_uint;
 pub type PF_SampleEdgeBehav = A_u_long;
+pub const PF_Xfer_NONE: _bindgen_ty_53 = -1;
+pub const PF_Xfer_COPY: _bindgen_ty_53 = 0;
+pub const PF_Xfer_BEHIND: _bindgen_ty_53 = 1;
+pub const PF_Xfer_IN_FRONT: _bindgen_ty_53 = 2;
+pub const PF_Xfer_DISSOLVE: _bindgen_ty_53 = 3;
+pub const PF_Xfer_ADD: _bindgen_ty_53 = 4;
+pub const PF_Xfer_MULTIPLY: _bindgen_ty_53 = 5;
+pub const PF_Xfer_SCREEN: _bindgen_ty_53 = 6;
+pub const PF_Xfer_OVERLAY: _bindgen_ty_53 = 7;
+pub const PF_Xfer_SOFT_LIGHT: _bindgen_ty_53 = 8;
+pub const PF_Xfer_HARD_LIGHT: _bindgen_ty_53 = 9;
+pub const PF_Xfer_DARKEN: _bindgen_ty_53 = 10;
+pub const PF_Xfer_LIGHTEN: _bindgen_ty_53 = 11;
+pub const PF_Xfer_DIFFERENCE: _bindgen_ty_53 = 12;
+pub const PF_Xfer_HUE: _bindgen_ty_53 = 13;
+pub const PF_Xfer_SATURATION: _bindgen_ty_53 = 14;
+pub const PF_Xfer_COLOR: _bindgen_ty_53 = 15;
+pub const PF_Xfer_LUMINOSITY: _bindgen_ty_53 = 16;
+pub const PF_Xfer_MULTIPLY_ALPHA: _bindgen_ty_53 = 17;
+pub const PF_Xfer_MULTIPLY_ALPHA_LUMA: _bindgen_ty_53 = 18;
+pub const PF_Xfer_MULTIPLY_NOT_ALPHA: _bindgen_ty_53 = 19;
+pub const PF_Xfer_MULTIPLY_NOT_ALPHA_LUMA: _bindgen_ty_53 = 20;
+pub const PF_Xfer_ADDITIVE_PREMUL: _bindgen_ty_53 = 21;
+pub const PF_Xfer_ALPHA_ADD: _bindgen_ty_53 = 22;
+pub const PF_Xfer_COLOR_DODGE: _bindgen_ty_53 = 23;
+pub const PF_Xfer_COLOR_BURN: _bindgen_ty_53 = 24;
+pub const PF_Xfer_EXCLUSION: _bindgen_ty_53 = 25;
+pub const PF_Xfer_DIFFERENCE2: _bindgen_ty_53 = 26;
+pub const PF_Xfer_COLOR_DODGE2: _bindgen_ty_53 = 27;
+pub const PF_Xfer_COLOR_BURN2: _bindgen_ty_53 = 28;
+pub const PF_Xfer_LINEAR_DODGE: _bindgen_ty_53 = 29;
+pub const PF_Xfer_LINEAR_BURN: _bindgen_ty_53 = 30;
+pub const PF_Xfer_LINEAR_LIGHT: _bindgen_ty_53 = 31;
+pub const PF_Xfer_VIVID_LIGHT: _bindgen_ty_53 = 32;
+pub const PF_Xfer_PIN_LIGHT: _bindgen_ty_53 = 33;
+pub const PF_Xfer_HARD_MIX: _bindgen_ty_53 = 34;
+pub const PF_Xfer_LIGHTER_COLOR: _bindgen_ty_53 = 35;
+pub const PF_Xfer_DARKER_COLOR: _bindgen_ty_53 = 36;
+pub const PF_Xfer_SUBTRACT: _bindgen_ty_53 = 37;
+pub const PF_Xfer_DIVIDE: _bindgen_ty_53 = 38;
+pub const PF_Xfer_RESERVED0: _bindgen_ty_53 = 39;
+pub const PF_Xfer_RESERVED1: _bindgen_ty_53 = 40;
+pub const PF_Xfer_NUM_MODES: _bindgen_ty_53 = 41;
+pub type _bindgen_ty_53 = ::std::os::raw::c_int;
+pub const PF_Xfer_TINT: _bindgen_ty_54 = 29;
+pub const PF_Xfer_SHADE: _bindgen_ty_54 = 30;
+pub const PF_Xfer_INTENSE_LIGHT: _bindgen_ty_54 = 32;
+pub type _bindgen_ty_54 = ::std::os::raw::c_uint;
+pub const PF_MaskFlag_NONE: _bindgen_ty_55 = 0;
+pub const PF_MaskFlag_INVERTED: _bindgen_ty_55 = 1;
+pub const PF_MaskFlag_LUMINANCE: _bindgen_ty_55 = 2;
+pub type _bindgen_ty_55 = ::std::os::raw::c_uint;
 pub type PF_MaskFlags = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4374,6 +4704,53 @@ pub struct PF_SampPB {
     pub fcd_table: *mut A_u_char,
     pub reserved: [A_long; 8usize],
 }
+pub const PF_Callback_NONE: _bindgen_ty_56 = 0;
+pub const PF_Callback_BEGIN_SAMPLING: _bindgen_ty_56 = 1;
+pub const PF_Callback_SUBPIXEL_SAMPLE: _bindgen_ty_56 = 2;
+pub const PF_Callback_AREA_SAMPLE: _bindgen_ty_56 = 3;
+pub const PF_Callback_OBSOLETE0: _bindgen_ty_56 = 4;
+pub const PF_Callback_END_SAMPLING: _bindgen_ty_56 = 5;
+pub const PF_Callback_COMPOSITE_RECT: _bindgen_ty_56 = 6;
+pub const PF_Callback_BLEND: _bindgen_ty_56 = 7;
+pub const PF_Callback_CONVOLVE: _bindgen_ty_56 = 8;
+pub const PF_Callback_COPY: _bindgen_ty_56 = 9;
+pub const PF_Callback_FILL: _bindgen_ty_56 = 10;
+pub const PF_Callback_GAUSSIAN: _bindgen_ty_56 = 11;
+pub const PF_Callback_ITERATE: _bindgen_ty_56 = 12;
+pub const PF_Callback_PREMUL: _bindgen_ty_56 = 13;
+pub const PF_Callback_PREMUL_COLOR: _bindgen_ty_56 = 14;
+pub const PF_Callback_RGB_TO_HLS: _bindgen_ty_56 = 15;
+pub const PF_Callback_HLS_TO_RGB: _bindgen_ty_56 = 16;
+pub const PF_Callback_RGB_TO_YIQ: _bindgen_ty_56 = 17;
+pub const PF_Callback_YIQ_TO_RGB: _bindgen_ty_56 = 18;
+pub const PF_Callback_LUMINANCE: _bindgen_ty_56 = 19;
+pub const PF_Callback_HUE: _bindgen_ty_56 = 20;
+pub const PF_Callback_LIGHTNESS: _bindgen_ty_56 = 21;
+pub const PF_Callback_SATURATION: _bindgen_ty_56 = 22;
+pub const PF_Callback_NEW_WORLD: _bindgen_ty_56 = 23;
+pub const PF_Callback_DISPOSE_WORLD: _bindgen_ty_56 = 24;
+pub const PF_Callback_ITERATE_ORIGIN: _bindgen_ty_56 = 25;
+pub const PF_Callback_ITERATE_LUT: _bindgen_ty_56 = 26;
+pub const PF_Callback_TRANSFER_RECT: _bindgen_ty_56 = 27;
+pub const PF_Callback_TRANSFORM_WORLD: _bindgen_ty_56 = 28;
+pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC: _bindgen_ty_56 = 29;
+pub const PF_Callback_ITERATE_GENERIC: _bindgen_ty_56 = 30;
+pub const PF_Callback_SUBPIXEL_SAMPLE16: _bindgen_ty_56 = 31;
+pub const PF_Callback_AREA_SAMPLE16: _bindgen_ty_56 = 32;
+pub const PF_Callback_FILL16: _bindgen_ty_56 = 33;
+pub const PF_Callback_PREMUL_COLOR16: _bindgen_ty_56 = 34;
+pub const PF_Callback_ITERATE16: _bindgen_ty_56 = 35;
+pub const PF_Callback_ITERATE_ORIGIN16: _bindgen_ty_56 = 36;
+pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC16: _bindgen_ty_56 = 37;
+pub const PF_Callback_ITERATE_GENERIC_NO_MAX_THREADS: _bindgen_ty_56 = 38;
+pub const PF_Callback_ITERATE_NO_MAX_THREADS: _bindgen_ty_56 = 39;
+pub const PF_Callback_ITERATE_ORIGIN_NO_MAX_THREADS: _bindgen_ty_56 = 40;
+pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC_NO_MAX_THREADS: _bindgen_ty_56 = 41;
+pub const PF_Callback_ITERATE16_NO_MAX_THREADS: _bindgen_ty_56 = 42;
+pub const PF_Callback_ITERATE_ORIGIN16_NO_MAX_THREADS: _bindgen_ty_56 = 43;
+pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC16_NO_MAX_THREADS: _bindgen_ty_56 = 44;
+#[doc = " ---------- Callback Selectors ----------\n\nSome callbacks have different high and low quality versions.\nThe parameter block of function pointers will automatically\nbe filled with the appropriate versions for the current quality\nsetting, but some filters may wish to override this and access\na callback of different quality.  To do this, a get_callback_addr\ncallback is provided which will take a callback selector and a\ndesired quality and return the callback of that quality.  The\nselectors for the various callbacks are listed here.  Also, a\ntypedef for the function pointer that will be returned is given."]
+pub type _bindgen_ty_56 = ::std::os::raw::c_uint;
 pub type PF_CallbackID = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4382,7 +4759,23 @@ pub struct PF_YouMustCastThisToActualFunctionType {
 }
 #[doc = "Previous versions of PF_CallbackFunc were defined using varargs in attempt to enforce\nthe effect_ref passed as the first argument to all callbacks. The actual host\nimplementations are generally *not* varargs, and on some platforms the calling\nconventions between normal C ABI and C varargs ABI are not compatible. If your\ncode is trying to call through a PF_CallbackFunc it is unsafe; with this definition\nit will now no longer compile. To fix, cast to the proper API signature before\ncalling. Or better, use the extensive Suite implementations which are explicitly typed"]
 pub type PF_CallbackFunc = *mut PF_YouMustCastThisToActualFunctionType;
+pub const PF_PlatData_MAIN_WND: _bindgen_ty_57 = 0;
+pub const PF_PlatData_EXE_FILE_PATH_DEPRECATED: _bindgen_ty_57 = 1;
+pub const PF_PlatData_RES_FILE_PATH_DEPRECATED: _bindgen_ty_57 = 2;
+pub const PF_PlatData_RES_REFNUM: _bindgen_ty_57 = 3;
+pub const PF_PlatData_RES_DLLINSTANCE: _bindgen_ty_57 = 4;
+pub const PF_PlatData_SP_PLUG_REF: _bindgen_ty_57 = 5;
+pub const PF_PlatData_BUNDLE_REF: _bindgen_ty_57 = 6;
+pub const PF_PlatData_EXE_FILE_PATH_W: _bindgen_ty_57 = 7;
+pub const PF_PlatData_RES_FILE_PATH_W: _bindgen_ty_57 = 8;
+pub type _bindgen_ty_57 = ::std::os::raw::c_uint;
 pub type PF_PlatDataID = A_long;
+pub const PF_Plane_ALPHA: _bindgen_ty_58 = 1;
+pub const PF_Plane_RED: _bindgen_ty_58 = 2;
+pub const PF_Plane_GREEN: _bindgen_ty_58 = 4;
+pub const PF_Plane_BLUE: _bindgen_ty_58 = 8;
+#[doc = " ---------- Image Plane Selectors ----------\n\nThese constants can be used to specify a subset\nof the planes of the 32-bit image."]
+pub type _bindgen_ty_58 = ::std::os::raw::c_uint;
 pub type PF_Plane = A_u_long;
 #[doc = " ---------- ANSI Routines Block ----------\n\nWithin the callback routines block there is a block of ANSI\nroutines, so that the filter will not need to link with the\nANSI library.  The following structure describes that block\nand is included in the larger Callback Routines block below.\n\nAll angles are expressed in radians; use PF_RAD_PER_DEGREE\nto convert from degrees to radians, if necessary.  Be aware\nthat angle parameter types use degrees (in fixed point).\n\nSprintf and strcpy are provided to facilitate string usage,\nsuch as printing for names and supervised controls.\n\nNone of these callbacks vary based on the Quality setting."]
 #[repr(C)]
@@ -4476,6 +4869,12 @@ pub struct PF_ColorCallbacks {
 }
 pub type PF_BatchSampleFunc = *mut ::std::os::raw::c_void;
 pub type PF_BatchSample16Func = *mut ::std::os::raw::c_void;
+pub const PF_NewWorldFlag_NONE: _bindgen_ty_59 = 0;
+pub const PF_NewWorldFlag_CLEAR_PIXELS: _bindgen_ty_59 = 1;
+pub const PF_NewWorldFlag_DEEP_PIXELS: _bindgen_ty_59 = 2;
+pub const PF_NewWorldFlag_RESERVED0: _bindgen_ty_59 = 4;
+pub const PF_NewWorldFlag_RESERVED1: _bindgen_ty_59 = 8;
+pub type _bindgen_ty_59 = ::std::os::raw::c_uint;
 pub type PF_NewWorldFlags = A_long;
 #[doc = "prototypes for PF_ITERATE8 and PF_ITERATE16 pixel functions\n\nthe user of PF_ITERATE provides a refcon; After Effects may distribute iteration\nacross multiple threads, so any data pointed to by refconL should be read-only or\nproperly synchronized\n\ninP is writable only if the world you pass to PF_ITERATE() is PF_WorldFlag_WRITEABLE\n\n"]
 pub type PF_IteratePixel8Func = ::std::option::Option<
@@ -4853,6 +5252,26 @@ pub struct _PF_UtilCallbacks {
     pub reserved: [A_long; 1usize],
 }
 pub type PF_UtilCallbacks = _PF_UtilCallbacks;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct PF_CacheOnLoadSuite1 {
+    pub PF_SetNoCacheOnLoad: ::std::option::Option<
+        unsafe extern "C" fn(
+            effect_ref: PF_ProgPtr,
+            effectAvailable: ::std::os::raw::c_long,
+        ) -> PF_Err,
+    >,
+}
+pub const PF_TimeDisplay_24: _bindgen_ty_60 = 1;
+pub const PF_TimeDisplay_25: _bindgen_ty_60 = 2;
+pub const PF_TimeDisplay_30Drop: _bindgen_ty_60 = 3;
+pub const PF_TimeDisplay_30NonDrop: _bindgen_ty_60 = 4;
+pub const PF_TimeDisplay_50: _bindgen_ty_60 = 5;
+pub const PF_TimeDisplay_60Drop: _bindgen_ty_60 = 6;
+pub const PF_TimeDisplay_60NonDrop: _bindgen_ty_60 = 7;
+pub const PF_TimeDisplay_NonStandard: _bindgen_ty_60 = 8;
+pub const PF_TimeDisplay_Invalid: _bindgen_ty_60 = 9;
+pub type _bindgen_ty_60 = ::std::os::raw::c_uint;
 pub type PF_TimeDisplay = csSDK_uint32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

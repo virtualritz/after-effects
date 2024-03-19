@@ -274,7 +274,7 @@ impl VideoSegmentSuite {
     pub fn next_keyframe_time(&self, video_node_id: i32, index: i32, time: i64) -> Result<(i64, KeyframeInterpolationMode), Error> {
         let mut keyframe_time = 0;
         let mut keyframe_interpolation_mode: pr_sys::PrKeyframeInterpolationModeFlag = 0;
-        call_suite_fn!(self, GetNextKeyframeTime, video_node_id, index, time, &mut keyframe_time, &mut keyframe_interpolation_mode)?;
+        call_suite_fn!(self, GetNextKeyframeTime, video_node_id, index, time, &mut keyframe_time, &mut keyframe_interpolation_mode as *mut pr_sys::PrKeyframeInterpolationModeFlag as _)?;
         Ok((keyframe_time, keyframe_interpolation_mode.into()))
     }
 

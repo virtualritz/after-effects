@@ -311,7 +311,7 @@ macro_rules! define_param_wrapper {
                 if let Some(parent_ptr) = self._parent_ptr {
                     let parent_ptr = parent_ptr as *mut ae_sys::PF_ParamDef;
                     let parent = unsafe { &mut *parent_ptr };
-                    if (parent.ui_flags & ae_sys::PF_PUI_STD_CONTROL_ONLY) == 0 {
+                    if (parent.ui_flags & (ae_sys::PF_PUI_STD_CONTROL_ONLY as ae_sys::PF_ParamUIFlags)) == 0 {
                         parent.uu.change_flags = ChangeFlag::CHANGED_VALUE.bits();
                     }
                 }
