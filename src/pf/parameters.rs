@@ -461,7 +461,9 @@ impl ArbitraryDef<'_> {
         Ok(self)
     }
     pub fn value<T>(&self) -> Result<BorrowedHandleLock<T>, Error> {
-        assert!(!self.def.value.is_null());
+        if self.def.value.is_null() {
+            return Err(Error::InvalidParms);
+        }
         BorrowedHandleLock::<T>::from_raw(self.def.value)
     }
 
@@ -531,9 +533,9 @@ impl ArbParamsExtra {
                 // Create a new handle from the raw Ae handle. This
                 // disposes then handle when it goes out of scope
                 // and is dropped just after.
-                assert!(unsafe { !self.as_ref().u.dispose_func_params.arbH.is_null() });
-
-                Handle::<T>::from_raw(unsafe { self.as_ref().u.dispose_func_params.arbH }, true)?;
+                if unsafe { !self.as_ref().u.dispose_func_params.arbH.is_null() } {
+                    Handle::<T>::from_raw(unsafe { self.as_ref().u.dispose_func_params.arbH }, true)?;
+                }
             }
 
             ae_sys::PF_Arbitrary_COPY_FUNC => unsafe {

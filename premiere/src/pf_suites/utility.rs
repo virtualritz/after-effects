@@ -88,7 +88,7 @@ impl UtilitySuite {
 
     /// Sets the instance name of the effect.
     pub fn set_effect_instance_name(&self, effect_ref: impl AsPtr<PF_ProgPtr>, name: &str) -> Result<(), Error> {
-        let pr_string = PrStringSuite::new()?.allocate_from_utf8(name)?;
+        let pr_string = suites::PrString::new()?.allocate_from_utf8(name)?;
         call_suite_fn!(self, SetEffectInstanceName, effect_ref.as_ptr(), &pr_string)
     }
 

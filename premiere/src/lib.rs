@@ -1,4 +1,6 @@
 use premiere_sys as pr_sys;
+use std::ptr;
+use std::cell::RefCell;
 
 #[macro_use]
 mod macros;
@@ -6,17 +8,37 @@ mod macros;
 mod types;
 pub use types::*;
 
-mod suites;
-pub use suites::*;
-
-pub mod pf_suites {
-    pub(crate) mod background_frame; pub use background_frame::BackgroundFrameSuite as BackgroundFrame;
-    pub(crate) mod cache_on_load;    pub use cache_on_load   ::CacheOnLoadSuite     as CacheOnLoad;
-    pub(crate) mod pixel_format;     pub use pixel_format    ::PixelFormatSuite     as PixelFormat;
-    pub(crate) mod source_settings;  pub use source_settings ::SourceSettingsSuite  as SourceSettings;
-    pub(crate) mod transition;       pub use transition      ::TransitionSuite      as Transition;
-    pub(crate) mod utility;          pub use utility         ::UtilitySuite         as Utility;
+pub(crate) mod pf_suites {
+    pub(crate) mod background_frame;
+    pub(crate) mod cache_on_load;
+    pub(crate) mod pixel_format;
+    pub(crate) mod source_settings;
+    pub(crate) mod transition;
+    pub(crate) mod utility;
 }
+pub mod suites {
+    pub(crate) mod gpu_device;               pub use gpu_device          ::GPUDeviceSuite          as GPUDevice;
+    pub(crate) mod gpu_image_processing;     pub use gpu_image_processing::GPUImageProcessingSuite as GPUImageProcessing;
+    pub(crate) mod memory_manager;           pub use memory_manager      ::MemoryManagerSuite      as MemoryManager;
+    pub(crate) mod ppix;                     pub use ppix                ::{PPixSuite              as PPix,
+                                                                            PPix2Suite             as PPix2 };
+    pub(crate) mod time;                     pub use time                ::TimeSuite               as Time;
+    pub(crate) mod sequence_info;            pub use sequence_info       ::SequenceInfoSuite       as SequenceInfo;
+    pub(crate) mod video_segment;            pub use video_segment       ::VideoSegmentSuite       as VideoSegment;
+    pub(crate) mod string;                   pub use string              ::PrStringSuite           as PrString;
+    pub(crate) mod video_segment_properties;
+    #[cfg(has_ae_sdk)] mod opaque_effect_data;
+    #[cfg(has_ae_sdk)] pub use opaque_effect_data::OpaqueEffectDataSuite as OpaqueEffectData;
+
+    pub use crate::pf_suites::background_frame::BackgroundFrameSuite as BackgroundFrame;
+    pub use crate::pf_suites::cache_on_load   ::CacheOnLoadSuite     as CacheOnLoad;
+    pub use crate::pf_suites::pixel_format    ::PixelFormatSuite     as PixelFormat;
+    pub use crate::pf_suites::source_settings ::SourceSettingsSuite  as SourceSettings;
+    pub use crate::pf_suites::transition      ::TransitionSuite      as Transition;
+    pub use crate::pf_suites::utility         ::UtilitySuite         as Utility;
+}
+pub use suites::string::PrString;
+pub use suites::video_segment_properties::*;
 pub use pf_suites::background_frame::TransferMode;
 pub use pf_suites::pixel_format::NewWorldFlags;
 
@@ -158,4 +180,80 @@ impl From<Error> for &'static str {
             Error::InstanceDestroyed                    => "Instance destroyed",
         }
     }
+}
+
+thread_local! {
+    pub(crate) static PICA_BASIC_SUITE: RefCell<*const pr_sys::SPBasicSuite> = RefCell::new(ptr::null_mut());
+}
+
+#[inline]
+pub(crate) fn borrow_pica_basic_as_ptr() -> *const pr_sys::SPBasicSuite {
+    let mut pica_basic_ptr: *const pr_sys::SPBasicSuite = ptr::null();
+
+    PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
+        pica_basic_ptr = *pica_basic_ptr_cell.borrow();
+    });
+
+    pica_basic_ptr
+}
+
+/// This lets us access a thread-local version of the `PicaBasic`
+/// suite. Whenever we generate a new `SPBasic_Suite` from Ae somehow,
+/// we create a PicaBasicSuite::new() from that and use that to initialize
+/// access to any suites.
+///
+/// When we leave scope, `drop()` ic alled automatically and restores the
+/// previous value to our thread-local storage so the caller
+/// can continue using their pointer to the suite.
+///
+/// FIXME: Is this really neccessary? Check if the pointer is always the
+///        same and if so, confirm with Adobe we can get rid of it.
+pub struct PicaBasicSuite {
+    previous_pica_basic_suite_ptr: *const pr_sys::SPBasicSuite,
+}
+
+impl PicaBasicSuite {
+    fn set(pica_basic_suite_ptr: *const pr_sys::SPBasicSuite) -> *const pr_sys::SPBasicSuite {
+        let mut previous_pica_basic_suite_ptr: *const pr_sys::SPBasicSuite = ptr::null();
+
+        PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
+            previous_pica_basic_suite_ptr = pica_basic_ptr_cell.replace(pica_basic_suite_ptr);
+        });
+
+        previous_pica_basic_suite_ptr
+    }
+
+    #[inline]
+    pub fn from_sp_basic_suite_raw(pica_basic_suite_ptr: *const pr_sys::SPBasicSuite) -> Self {
+        Self {
+            previous_pica_basic_suite_ptr: PicaBasicSuite::set(pica_basic_suite_ptr),
+        }
+    }
+}
+
+impl Drop for PicaBasicSuite {
+    #[inline]
+    fn drop(&mut self) {
+        PICA_BASIC_SUITE.with(|pica_basic_ptr_cell| {
+            pica_basic_ptr_cell.replace(self.previous_pica_basic_suite_ptr);
+        });
+    }
+}
+
+pub(crate) trait Suite {
+    fn new() -> Result<Self, Error>
+    where
+        Self: Sized;
+
+}
+
+pub trait AsPtr<T> {
+    fn as_ptr(&self) -> T
+    where
+        T: Sized;
+}
+
+pub trait AsMutPtr<T> {
+    fn as_mut_ptr(&mut self) -> T
+    where T: Sized;
 }

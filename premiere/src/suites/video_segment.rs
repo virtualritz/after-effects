@@ -230,7 +230,7 @@ impl VideoSegmentSuite {
 
         let result = key.parse_result(value);
 
-        match crate::MemoryManagerSuite::new() {
+        match crate::suites::MemoryManager::new() {
             Ok(mem) => mem.dispose_ptr(ptr),
             Err(e) => log::error!("Failed to dispose pointer in get_node_property. Failed to acquire memory suite: {e:?}")
         }
@@ -387,6 +387,8 @@ impl VideoSegmentSuite {
     /// Get graphic layer params at a specific time
     /// * `video_node_id` - The Video Node ID
     /// * `time` - The time requested (in Media time)
+    ///
+    /// Returns a tuple containing: (position, anchor, scale, rotation)
     pub fn graphics_transformed_params(&self, video_node_id: i32, time: i64) -> Result<(pr_sys::prFPoint64, pr_sys::prFPoint64, pr_sys::prFPoint64, f32), Error> {
         let mut position = pr_sys::prFPoint64 { x: 0.0, y: 0.0 };
         let mut anchor = pr_sys::prFPoint64 { x: 0.0, y: 0.0 };

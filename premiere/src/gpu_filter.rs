@@ -60,12 +60,12 @@ impl RenderParams {
 
 pub struct GpuFilterData {
     pub instance_ptr: *mut crate::sys::PrGPUFilterInstance,
-    pub gpu_device_suite: GPUDeviceSuite,
-    pub gpu_image_processing_suite: GPUImageProcessingSuite,
-    pub memory_manager_suite: MemoryManagerSuite,
-    pub ppix_suite: PPixSuite,
-    pub ppix2_suite: PPix2Suite,
-    pub video_segment_suite: VideoSegmentSuite,
+    pub gpu_device_suite: suites::GPUDevice,
+    pub gpu_image_processing_suite: suites::GPUImageProcessing,
+    pub memory_manager_suite: suites::MemoryManager,
+    pub ppix_suite: suites::PPix,
+    pub ppix2_suite: suites::PPix2,
+    pub video_segment_suite: suites::VideoSegment,
     pub gpu_info: crate::sys::PrGPUDeviceInfo,
 }
 impl GpuFilterData {
@@ -85,6 +85,18 @@ impl GpuFilterData {
         let index = index as i32 - 1; // GPU filters don't include the input frame as first paramter
 
         self.video_segment_suite.param(self.node_id(), index, time)
+    }
+    pub fn param_arbitrary_data<T: for<'a> serde::Deserialize<'a>>(&self, index: usize, time: i64) -> Result<T, Error> {
+        let ptr = self.param(index, time)?;
+        if let crate::Param::MemoryPtr(ptr) = ptr {
+            if !ptr.is_null() {
+                let serialized = unsafe { std::slice::from_raw_parts(ptr as *mut u8, self.memory_manager_suite.ptr_size(ptr) as _) };
+                if let Ok(t) = bincode::deserialize::<T>(serialized) {
+                    return Ok(t);
+                }
+            }
+        }
+        Err(Error::InvalidParms)
     }
     pub fn property(&self, property: Property) -> Result<PropertyData, Error> {
         self.video_segment_suite.node_property(self.node_id(), property)
@@ -147,17 +159,17 @@ macro_rules! define_gpu_filter {
             let _pica = $crate::PicaBasicSuite::from_sp_basic_suite_raw(sp_basic_suite);
 
             let result = (|| -> Result<Box<$crate::GpuFilterInstance<$struct_name>>, $crate::Error> {
-                let gpu_suite = $crate::GPUDeviceSuite::new()?;
+                let gpu_suite = $crate::suites::GPUDevice::new()?;
                 let gpu_info = gpu_suite.device_info((*instance_data).inDeviceIndex)?;
                 Ok(Box::new($crate::GpuFilterInstance {
                     data: $crate::GpuFilterData {
                         instance_ptr: instance_data,
                         gpu_device_suite:           gpu_suite,
-                        gpu_image_processing_suite: $crate::GPUImageProcessingSuite::new()?,
-                        memory_manager_suite:       $crate::MemoryManagerSuite::new()?,
-                        ppix_suite:                 $crate::PPixSuite::new()?,
-                        ppix2_suite:                $crate::PPix2Suite::new()?,
-                        video_segment_suite:        $crate::VideoSegmentSuite::new()?,
+                        gpu_image_processing_suite: $crate::suites::GPUImageProcessing::new()?,
+                        memory_manager_suite:       $crate::suites::MemoryManager::new()?,
+                        ppix_suite:                 $crate::suites::PPix::new()?,
+                        ppix2_suite:                $crate::suites::PPix2::new()?,
+                        video_segment_suite:        $crate::suites::VideoSegment::new()?,
                         gpu_info
                     },
                     instance: <$struct_name>::default(),
