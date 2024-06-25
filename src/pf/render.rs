@@ -72,8 +72,7 @@ impl PreRenderExtra {
     pub fn set_pre_render_data<T: Any>(&mut self, val: T) {
         let boxed: Box<Box<dyn Any>> = Box::new(Box::new(val));
         unsafe {
-            (*self.as_mut().output).pre_render_data =
-                Box::<Box<dyn Any>>::into_raw(boxed) as *mut _;
+            (*self.as_mut().output).pre_render_data = Box::<Box<dyn Any>>::into_raw(boxed) as *mut _;
         }
         unsafe {
             (*self.as_mut().output).delete_pre_render_data_func = Some(delete_pre_render_data);
@@ -93,7 +92,7 @@ impl PreRenderExtra {
             if val {
                 (*self.as_mut().output).flags |= ae_sys::PF_RenderOutputFlag_GPU_RENDER_POSSIBLE as i16;
             } else {
-                (*self.as_mut().output).flags &= !ae_sys::PF_RenderOutputFlag_GPU_RENDER_POSSIBLE as i16;
+                (*self.as_mut().output).flags &= !(ae_sys::PF_RenderOutputFlag_GPU_RENDER_POSSIBLE as i16);
             }
         }
     }
@@ -101,11 +100,9 @@ impl PreRenderExtra {
         assert!(!self.as_mut().output.is_null());
         unsafe {
             if val {
-                (*self.as_mut().output).flags |=
-                    ae_sys::PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS as i16;
+                (*self.as_mut().output).flags |= ae_sys::PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS as i16;
             } else {
-                (*self.as_mut().output).flags &=
-                    !ae_sys::PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS as i16;
+                (*self.as_mut().output).flags &= !(ae_sys::PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS as i16);
             }
         }
     }
@@ -185,8 +182,7 @@ impl SmartRenderExtra {
         if unsafe { (*(*self.ptr).input).gpu_data.is_null() } {
             return None;
         }
-        let data =
-            unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
+        let data = unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
         let data = Box::<Box<dyn Any>>::leak(data);
         match data.downcast_ref::<T>() {
             Some(data) => Some(data),
@@ -242,7 +238,7 @@ impl PreRenderCallbacks {
         &self,
         index: i32,
         checkout_id: i32,
-        // FIXME: warp this struct
+        // FIXME: wrap this struct
         req: &ae_sys::PF_RenderRequest,
         what_time: i32,
         time_step: i32,

@@ -261,7 +261,8 @@ macro_rules! define_param_wrapper {
     ($sys_enum:ident, $sys_type:ident, $sys_field:ident, $param_enum:path, $(#[$attr:meta])* $name:ident {
         $($field_name:ident: $field_type:ty, )*
     },
-    $(impl $impl_name:tt: $impl_type:tt, )*) => {
+    $(impl $impl_name:tt: $impl_type:tt, )*
+    $(fn init($self_name:ident) $init_fn:block)? ) => {
         $(#[$attr])*
         pub struct $name<'parent> {
             pub(crate) def: Ownership<'parent, ae_sys::$sys_type>,
@@ -271,12 +272,15 @@ macro_rules! define_param_wrapper {
         }
         impl<'parent> $name<'parent> {
             pub fn new() -> Self {
-                Self {
+                #[allow(unused_mut)]
+                let mut param = Self {
                     def: Ownership::Rust(unsafe { std::mem::zeroed() }),
                     _in_data: std::ptr::null(),
                     _parent_ptr: None,
                     $($field_name: Default::default(), )*
-                }
+                };
+                $( let $self_name = &mut param; $init_fn; )?
+                param
             }
             pub fn setup<F: FnOnce(&mut Self)>(cb: F) -> Self {
                 let mut ret = Self::new();

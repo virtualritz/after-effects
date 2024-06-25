@@ -87,7 +87,7 @@ macro_rules! define_cross_thread_type {
 
                         fn visit_seq<V>(self, mut seq: V) -> Result<[<CrossThread $type_name>], V::Error> where V: $crate::serde::de::SeqAccess<'de> {
                             let id: u64 = seq.next_element()?.ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
-                            if let Some(inner) = [<CrossThread $type_name>]::map().read().get(&id) {
+                            if [<CrossThread $type_name>]::map().read().contains_key(&id) {
                                 return Ok([<CrossThread $type_name>] { id });
                             }
 

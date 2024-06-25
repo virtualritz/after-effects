@@ -172,6 +172,9 @@ define_param_wrapper! {
         label: CString,
     },
     impl value: bool,
+    fn init(param) {
+        param.set_label(" ");
+    }
 }
 impl<'a> CheckBoxDef<'_> {
     pub fn set_default(&mut self, v: bool) -> &mut Self {
