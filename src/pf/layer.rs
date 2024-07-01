@@ -66,6 +66,15 @@ impl Layer {
     pub fn extent_hint(&self) -> Rect {
         self.layer.extent_hint.into()
     }
+    pub fn pix_aspect_ratio(&self) -> RationalScale {
+        self.layer.pix_aspect_ratio.into()
+    }
+    pub fn origin(&self) -> Point {
+        Point {
+            h: self.layer.origin_x.into(),
+            v: self.layer.origin_y.into(),
+        }
+    }
 
     pub fn buffer(&self) -> &[u8] {
         // Stride can be negative, so we need to offset the pointer to get to the real beginning of the buffer
