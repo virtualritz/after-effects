@@ -214,7 +214,6 @@ impl ItemSuite {
 // ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
 register_handle!(AEGP_ItemH);
 define_handle_wrapper!(ItemHandle, AEGP_ItemH);
-define_handle_wrapper!(ProjectHandle, AEGP_ProjectH);
 
 define_enum! {
     ae_sys::AEGP_ItemType,

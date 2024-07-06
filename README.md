@@ -128,7 +128,7 @@ AfterEffectsSDK
 | 🔳 Output Module        | ✅ Pixel Data                     |            |                      |
 | 🔳 Persistent Data      | ✅ Pixel Format                   |            |                      |
 | ✅ PF Interface         | ✅ PointParam                     |            |                      |
-| 🔳 Proj                 | 🔳 Sampling8                      |            |                      |
+| ✅ Proj                 | 🔳 Sampling8                      |            |                      |
 | 🔳 QueryXform           | 🔳 Sampling16                     |            |                      |
 | 🔳 Register             | 🔳 SamplingFloat                  |            |                      |
 | ✅ Render Asyc Manager  | ✅ Source Settings                |            |                      |
