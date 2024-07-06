@@ -23,7 +23,7 @@ pub fn produce_resource(pipl: &[u8], _macos_rsrc_path: Option<&str>) {
         #[rustfmt::skip]
         let rsrc_content = create_rsrc(&[
             (b"PiPL", &[
-                (16001, pipl)
+                (16000, pipl)
             ])
         ]).unwrap();
         std::fs::write(rsrc_path, rsrc_content).unwrap();
