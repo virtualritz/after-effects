@@ -58,11 +58,12 @@ impl AdobePluginGlobal for Plugin {
                 f.set_default(XFORM_COLOR_BLEND_DFLT);
                 f.set_value(f.default());
                 f.set_display_flags(ae::ValueDisplayFlag::PERCENT);
-            })).unwrap();
+            }))?;
 
             params.add(Params::Layer, "Layer Blend Ratio", ae::LayerDef::setup(|f| {
                 f.set_default_to_this_layer();
-            })).unwrap();
+            }))?;
+            Ok(())
         })?;
 
         Ok(())

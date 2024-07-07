@@ -49,7 +49,7 @@ impl AdobePluginGlobal for Plugin {
                 f.set_curve_tolerance(CURVE_TOLERANCE);
                 f.set_precision(2);
                 f.set_display_flags(ae::ValueDisplayFlag::PERCENT);
-            })).unwrap();
+            }))?;
 
             params.add(Params::BlendColor, "Blend color", ae::ColorDef::setup(|f| {
                 f.set_default(ae::Pixel8 {
@@ -59,7 +59,8 @@ impl AdobePluginGlobal for Plugin {
                     alpha: 255
                 });
                 f.set_value(f.default());
-            })).unwrap();
+            }))?;
+            Ok(())
         })?;
 
         Ok(())
