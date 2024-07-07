@@ -31,7 +31,7 @@ impl SoundDataSuite {
     }
 
     /// Obtains information about the format of a given [`SoundDataHandle`].
-    pub fn get_sound_data_format(&self, sound_data: impl AsPtr<AEGP_SoundDataH>) -> Result<AEGP_SoundDataFormat, Error> {
+    pub fn sound_data_format(&self, sound_data: impl AsPtr<AEGP_SoundDataH>) -> Result<AEGP_SoundDataFormat, Error> {
         call_suite_fn_single!(self, AEGP_GetSoundDataFormat -> AEGP_SoundDataFormat, sound_data.as_ptr())
     }
 
@@ -46,7 +46,7 @@ impl SoundDataSuite {
     }
 
     /// Obtains the number of samples in the given [`SoundDataHandle`].
-    pub fn get_num_samples(&self, sound_data: impl AsPtr<AEGP_SoundDataH>) -> Result<i32, Error> {
+    pub fn num_samples(&self, sound_data: impl AsPtr<AEGP_SoundDataH>) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetNumSamples -> A_long, sound_data.as_ptr())?)
     }
 }

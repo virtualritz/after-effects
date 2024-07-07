@@ -100,5 +100,5 @@ impl InteractCallbacks {
 
     // fn checkout_layer_audio(effect_ref: PF_ProgPtr, index: PF_ParamIndex, start_time: A_long, duration: A_long, time_scale: A_u_long, rate: PF_UFixed, bytes_per_sample: A_long, num_channels: A_long, fmt_signed: A_long, audio: *mut PF_LayerAudio) -> PF_Err,
     // fn checkin_layer_audio(effect_ref: PF_ProgPtr, audio: PF_LayerAudio) -> PF_Err,
-    // fn get_audio_data(effect_ref: PF_ProgPtr, audio: PF_LayerAudio, data0: *mut PF_SndSamplePtr, num_samples0: *mut A_long, rate0: *mut PF_UFixed, bytes_per_sample0: *mut A_long, num_channels0: *mut A_long, fmt_signed0: *mut A_long) -> PF_Err,
+    // fn audio_data(effect_ref: PF_ProgPtr, audio: PF_LayerAudio, data0: *mut PF_SndSamplePtr, num_samples0: *mut A_long, rate0: *mut PF_UFixed, bytes_per_sample0: *mut A_long, num_channels0: *mut A_long, fmt_signed0: *mut A_long) -> PF_Err,
 }

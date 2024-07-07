@@ -21,7 +21,7 @@ impl BackgroundFrameSuite {
         call_suite_fn!(self, AddSupportedBackgroundTransferMode, effect_ref.as_ptr(), supported_transfer_mode.into(), supported_pixel_format.into())
     }
 
-    pub fn get_background_frame(&self, in_data: impl AsPtr<*const PF_InData>) -> Result<(*mut PF_EffectWorld, TransferMode), Error> {
+    pub fn background_frame(&self, in_data: impl AsPtr<*const PF_InData>) -> Result<(*mut PF_EffectWorld, TransferMode), Error> {
         let mut background_frame = std::ptr::null_mut();
         let mut background_transfer_mode: pr_sys::PF_TransferMode = 0;
         call_suite_fn!(self, GetBackgroundFrame, (*in_data.as_ptr()).effect_ref, &mut background_frame, &mut background_transfer_mode)?;

@@ -22,7 +22,7 @@ impl PixelDataSuite {
     /// It will return [`Error::BadCallbackParameter`] if the world is not 8-bpc.
     ///
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
-    pub fn get_pixel_data8(self, world: impl AsPtr<*mut PF_EffectWorld>, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel8, Error> {
+    pub fn pixel_data8(self, world: impl AsPtr<*mut PF_EffectWorld>, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel8, Error> {
         let mut ptr = std::ptr::null_mut();
         call_suite_fn!(self, get_pixel_data8, world.as_ptr(), pixels.unwrap_or(std::ptr::null_mut()), &mut ptr)?;
         if ptr.is_null() {
@@ -36,7 +36,7 @@ impl PixelDataSuite {
     /// It will return [`Error::BadCallbackParameter`] if the world is not 16-bpc.
     ///
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
-    pub fn get_pixel_data16(self, world: impl AsPtr<*mut PF_EffectWorld>, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel16, Error> {
+    pub fn pixel_data16(self, world: impl AsPtr<*mut PF_EffectWorld>, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel16, Error> {
         let mut ptr = std::ptr::null_mut();
         call_suite_fn!(self, get_pixel_data16, world.as_ptr(), pixels.unwrap_or(std::ptr::null_mut()), &mut ptr)?;
         if ptr.is_null() {
@@ -50,7 +50,7 @@ impl PixelDataSuite {
     /// It will return [`Error::BadCallbackParameter`] if the world is not 32-bpc.
     ///
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
-    pub fn get_pixel_data_float(self, world: impl AsPtr<*mut PF_EffectWorld>, pixels: Option<*mut Pixel8>) -> Result<*mut PixelF32, Error> {
+    pub fn pixel_data_float(self, world: impl AsPtr<*mut PF_EffectWorld>, pixels: Option<*mut Pixel8>) -> Result<*mut PixelF32, Error> {
         let mut ptr = std::ptr::null_mut();
         call_suite_fn!(self, get_pixel_data_float, world.as_ptr(), pixels.unwrap_or(std::ptr::null_mut()), &mut ptr)?;
         if ptr.is_null() {
@@ -62,7 +62,7 @@ impl PixelDataSuite {
     /// Obtain a pointer to a 32-bpc float pixel within the specified GPU world.
     ///
     /// It will return [`Error::BadCallbackParameter`] if the world is not 32-bpc float.
-    pub fn get_pixel_data_float_gpu(self, world: impl AsPtr<*mut PF_EffectWorld>) -> Result<*mut std::ffi::c_void, Error> {
+    pub fn pixel_data_float_gpu(self, world: impl AsPtr<*mut PF_EffectWorld>) -> Result<*mut std::ffi::c_void, Error> {
         let mut ptr = std::ptr::null_mut();
         call_suite_fn!(self, get_pixel_data_float_gpu, world.as_ptr(), &mut ptr)?;
         if ptr.is_null() {

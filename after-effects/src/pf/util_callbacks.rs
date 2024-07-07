@@ -410,7 +410,7 @@ impl UtilCallbacks {
         )
     }
 
-    pub fn get_platform_data(&self, type_: PlatformDataType) -> Result<PlatformData, Error> {
+    pub fn platform_data(&self, type_: PlatformDataType) -> Result<PlatformData, Error> {
         match type_ {
             PlatformDataType::MainWnd => {
                 let mut hwnd: usize = 0;
@@ -445,7 +445,7 @@ impl UtilCallbacks {
     /// It will return [`Error::BadCallbackParameter`] if the world is not 8-bpc.
     ///
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
-    pub fn get_pixel_data8(&self, world: *mut PF_EffectWorld, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel8, Error> {
+    pub fn pixel_data8(&self, world: *mut PF_EffectWorld, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel8, Error> {
         let mut ret = std::ptr::null_mut();
         unsafe {
             let in_data = &(*self.0.as_ptr());
@@ -469,7 +469,7 @@ impl UtilCallbacks {
     /// It will return [`Error::BadCallbackParameter`] if the world is not 16-bpc.
     ///
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
-    pub fn get_pixel_data16(&self, world: *mut PF_EffectWorld, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel16, Error> {
+    pub fn pixel_data16(&self, world: *mut PF_EffectWorld, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel16, Error> {
         let mut ret = std::ptr::null_mut();
         unsafe {
             let in_data = &(*self.0.as_ptr());

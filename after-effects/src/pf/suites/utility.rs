@@ -265,7 +265,7 @@ impl UtilitySuite {
     // /// Retrieves the current media time, including ticks per frame and a formatted string representing that time.
     // ///
     // /// Returns a tuple containing `(current_media_time, media_ticks_per_frame, media_time_display)`
-    // pub fn get_source_track_current_media_time_info(&self, effect_ref: impl AsPtr<PF_ProgPtr>, layer_param_index: u32, use_sound_timecode_as_start_time: bool, sequence_time: PrTime) -> Result<(PrTime, PrTime, PF_TimeDisplay), Error> {
+    // pub fn source_track_current_media_time_info(&self, effect_ref: impl AsPtr<PF_ProgPtr>, layer_param_index: u32, use_sound_timecode_as_start_time: bool, sequence_time: PrTime) -> Result<(PrTime, PrTime, PF_TimeDisplay), Error> {
     //     let mut current_media_time = 0;
     //     let mut media_ticks_per_frame = 0;
     //     let mut media_time_display = 0;

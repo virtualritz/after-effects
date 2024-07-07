@@ -18,19 +18,19 @@ impl ProjectSuite {
     pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Currently will never return more than 1. After Effects can have only one project open at a time.
-    pub fn get_num_projects(&self) -> Result<i32, Error> {
+    pub fn num_projects(&self) -> Result<i32, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetNumProjects -> ae_sys::A_long)?.into())
     }
 
     /// Retrieves a specific project by index. as per `num_projects`, this will only ever take 0 as an argument.
-    pub fn get_project_by_index(&self, proj_index: i32) -> Result<ProjectHandle, Error> {
+    pub fn project_by_index(&self, proj_index: i32) -> Result<ProjectHandle, Error> {
         Ok(ProjectHandle::from_raw(
             call_suite_fn_single!( self, AEGP_GetProjectByIndex -> AEGP_ProjectH, proj_index)?,
         ))
     }
 
      /// Retrieves the current time display settings.
-    pub fn get_project_time_display_config(&self, proj_handle: ProjectHandle) -> Result<TimeDisplayConfig, Error> {
+    pub fn project_time_display_config(&self, proj_handle: ProjectHandle) -> Result<TimeDisplayConfig, Error> {
         Ok(call_suite_fn_single!( self, AEGP_GetProjectTimeDisplay -> AEGP_TimeDisplay3, proj_handle.into())?.into())
     }
 
@@ -44,7 +44,7 @@ impl ProjectSuite {
 
 
     /// Obtain the current project name
-    pub fn get_project_name(&self, proj_handle: ProjectHandle) -> Result<String, Error> {
+    pub fn project_name(&self, proj_handle: ProjectHandle) -> Result<String, Error> {
 
         let mut buffer = [0i8; (ae_sys::AEGP_MAX_PROJ_NAME_SIZE + 1) as _];
         call_suite_fn!(self, AEGP_GetProjectName, proj_handle.into(), buffer.as_mut_ptr() as *mut _)?;
@@ -52,7 +52,7 @@ impl ProjectSuite {
     }
 
     /// Get the path of the project (empty string the project hasn’t been saved yet). The path is a handle to a NULL-terminated A_UTF16Char string,
-    pub fn get_project_path(&self, proj_handle: ProjectHandle) -> Result<String, Error> {
+    pub fn project_path(&self, proj_handle: ProjectHandle) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetProjectPath -> ae_sys::AEGP_MemHandle, proj_handle.into())?;
 
         Ok(unsafe {
@@ -80,7 +80,7 @@ impl ProjectSuite {
     }
 
     /// Get the root of the project, which After Effects also treats as a folder.
-    pub fn get_project_root_folder(&self, proj_handle: ProjectHandle) -> Result<ItemHandle, Error> {
+    pub fn project_root_folder(&self, proj_handle: ProjectHandle) -> Result<ItemHandle, Error> {
         Ok(ItemHandle::from_raw(
             call_suite_fn_single!(self, AEGP_GetProjectRootFolder -> AEGP_ItemH, proj_handle.into())?,
         ))
@@ -100,7 +100,7 @@ impl ProjectSuite {
     }
 
     /// Retrieves the project bit depth.
-    pub fn get_project_bit_depth(
+    pub fn project_bit_depth(
         &self,
         proj_handle: ProjectHandle,
     ) -> Result<ProjectBitDepth, Error> {

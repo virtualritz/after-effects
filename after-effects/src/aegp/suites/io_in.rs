@@ -127,7 +127,7 @@ impl IOInSuite {
     }
 
     /// Retrieves the width, height, bounding rect, and scaling factor applied to an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_get_rational_dimensions(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<(ae_sys::AEIO_RationalScale, i32, i32, Rect), Error> {
+    pub fn in_spec_rational_dimensions(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<(ae_sys::AEIO_RationalScale, i32, i32, Rect), Error> {
         let mut rs: ae_sys::AEIO_RationalScale = unsafe { std::mem::zeroed() };
         let mut width = 0;
         let mut height = 0;
@@ -319,7 +319,7 @@ define_suite_item_wrapper!(
         set_dimensions(width: i32, height: i32) -> () => suite.set_in_spec_dimensions,
 
         /// Retrieves the width, height, bounding rect, and scaling factor applied to an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-        get_rational_dimensions() -> (ae_sys::AEIO_RationalScale, i32, i32, Rect) => suite.in_spec_get_rational_dimensions,
+        rational_dimensions() -> (ae_sys::AEIO_RationalScale, i32, i32, Rect) => suite.in_spec_rational_dimensions,
 
         /// Retrieves the horizontal scaling factor applied to an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
         hsf() -> Ratio => suite.in_spec_hsf,

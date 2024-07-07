@@ -4,9 +4,9 @@ define_suite!(
     /// New in CS4. Calls to get the frame size and pixel aspect ratio of a sequence.
     /// This is useful for importers, transitions, or video filters, that provide a custom setup dialog with a preview of the video, so that the preview frame can be rendered at the right dimensions.
     ///
-    /// Version 2, new in CS5.5, adds [`get_frame_rate()`](Self::get_frame_rate).
+    /// Version 2, new in CS5.5, adds [`frame_rate()`](Self::frame_rate).
     ///
-    /// Version 3, new in CC, adds [`get_field_type()`](Self::get_field_type), [`get_zero_point()`](Self::get_zero_point) and [`get_timecode_drop_frame()`](Self::get_timecode_drop_frame).
+    /// Version 3, new in CC, adds [`field_type()`](Self::field_type), [`zero_point()`](Self::zero_point) and [`timecode_drop_frame()`](Self::timecode_drop_frame).
     SequenceInfoSuite,
     PrSDKSequenceInfoSuite,
     kPrSDKSequenceInfoSuite,
