@@ -61,7 +61,7 @@ impl ProjectSuite {
     }
     /// Returns TRUE if the project has been modified since it was opened.
     pub fn project_is_dirty(&self, proj_handle: ProjectHandle) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_ProjectIsDirty -> ae_sys::Boolean, proj_handle.into())? != 0)
+        Ok(call_suite_fn_single!(self, AEGP_ProjectIsDirty -> ae_sys::A_Boolean, proj_handle.into())? != 0)
     }
 
     /// Saves the entire project to the specified full path.
@@ -71,7 +71,7 @@ impl ProjectSuite {
         Ok(())
     }
 
-    /// Saves the project to the specified path. 
+    /// Saves the project to the specified path.
     /// NOTE: This will overwrite an existing file.
     pub fn save_project_as(&self, proj_handle: ProjectHandle, path: &str) -> Result<(), Error> {
         let path = widestring::U16CString::from_str(path).map_err(|_| Error::InvalidParms)?;
