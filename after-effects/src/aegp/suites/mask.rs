@@ -143,7 +143,7 @@ define_suite!(
     /// New for CS6, masks can be feathered.
     ///
     /// `AEGP_MaskFeather` is defined as follows:
-    /// ```
+    /// ```ignore
     /// pub struct AEGP_MaskFeather {
     ///     pub segment:          A_long,     // mask segment where feather is
     ///     pub segment_sF:       PF_FpLong,  // 0-1: feather location on segment
@@ -376,7 +376,7 @@ define_suite_item_wrapper!(
     /// New for CS6, masks can be feathered.
     ///
     /// `AEGP_MaskFeather` is defined as follows:
-    /// ```
+    /// ```ignore
     /// pub struct AEGP_MaskFeather {
     ///     pub segment:          A_long,     // mask segment where feather is
     ///     pub segment_sF:       PF_FpLong,  // 0-1: feather location on segment

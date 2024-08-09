@@ -13,7 +13,7 @@ define_suite!(
     /// Use [`suites::Layer::set_layer_offset()`] and [`suites::Layer::set_layer_in_point_and_duration()`] to properly set the layer's time information.
     ///
     /// When the layer stretch factor (obtained using [`suites::Layer::layer_stretch()`], naturally) is not 100%, the following computation will be needed to yield the correct layer offset:
-    /// ```
+    /// ```ignore
     /// offset = compIn - stretch * layerIn;
     /// ```
     LayerSuite,

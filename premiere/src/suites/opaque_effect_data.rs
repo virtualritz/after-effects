@@ -21,7 +21,7 @@ define_suite!(
     /// The `Opaque Effect Data Suite` functions need the instanceID of the effect.
     /// For the software entry point, you can obtain this using GetFilterInstanceID() in PF_UtilitySuite, defined in PrSDKAESupport.h. For the GPU Render entry point, you can use the following code:
     ///
-    /// ```
+    /// ```ignore
     /// let instance_id = filter.get_property(pr::Property::Effect_RuntimeInstanceID);
     /// if let Ok(pr::PropertyData::UInt32(id)) = instance_id {
     ///     ...
@@ -56,7 +56,7 @@ impl OpaqueEffectDataSuite {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// // Try to acquire first, in case another thread registered the opaque effect data earlier
     /// let mut data = opaque_effect_data_suite.acquire_opaque_effect_data(instance_id)?;
     ///

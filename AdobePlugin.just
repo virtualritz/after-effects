@@ -7,13 +7,17 @@ export PRSDK_ROOT := if env("PRSDK_ROOT", "") == "" { justfile_directory() / "..
 [windows]
 build:
     cargo build
-    Start-Process PowerShell -Verb runAs -ArgumentList "-command Copy-Item -Force '{{TargetDir}}\debug\{{BinaryName}}.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\{{PluginName}}.aex'"
+    if (-not $env:NO_INSTALL) { \
+        Start-Process PowerShell -Verb runAs -ArgumentList "-command Copy-Item -Force '{{TargetDir}}\debug\{{BinaryName}}.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\{{PluginName}}.aex'" \
+    }
 
 [windows]
 release:
     cargo build --release
     Copy-Item -Force '{{TargetDir}}\release\{{BinaryName}}.dll' '{{TargetDir}}\release\{{PluginName}}.aex'
-    Start-Process PowerShell -Verb runAs -ArgumentList "-command Copy-Item -Force '{{TargetDir}}\release\{{BinaryName}}.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\{{PluginName}}.aex'"
+    if (-not $env:NO_INSTALL) { \
+        Start-Process PowerShell -Verb runAs -ArgumentList "-command Copy-Item -Force '{{TargetDir}}\release\{{BinaryName}}.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\{{PluginName}}.aex'" \
+    }
 
 [macos]
 build:
@@ -56,7 +60,11 @@ create_bundle profile TargetDir:
     fi
 
     # codesign with the first development cert we can find using its hash
-    codesign --options runtime --timestamp -strict  --sign $( security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}' ) {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
+    if [ -z "$NO_SIGN" ]; then
+        codesign --options runtime --timestamp -strict  --sign $( security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}' ) {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
+    fi
 
     # Install
-    sudo cp -rf "{{TargetDir}}/{{profile}}/{{PluginName}}.plugin" "/Applications/Adobe After Effects 2024/Plug-ins/"
+    if [ -z "$NO_INSTALL" ]; then
+        sudo cp -rf "{{TargetDir}}/{{profile}}/{{PluginName}}.plugin" "/Applications/Adobe After Effects 2024/Plug-ins/"
+    fi

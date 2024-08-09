@@ -26,7 +26,7 @@ define_suite!(
     ///
     /// When the source settings effect parameters are changed, the effect gets called with *PF_Cmd_TRANSLATE_PARAMS_TO_PREFS*. The function signature is:
     ///
-    /// ```
+    /// ```ignore
     ///   PF_Err TranslateParamsToPrefs(
     ///     PF_InData*                      in_data,
     ///     PF_OutData*                     out_data,

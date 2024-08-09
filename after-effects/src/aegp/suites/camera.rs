@@ -12,7 +12,7 @@ define_suite!(
     ///
     /// # Orthographic Camera Matrix
     /// Internally, we use composition width and height to set the matrix described by the OpenGL specification as
-    /// ```
+    /// ```ignore
     ///     glOrtho(-width/2, width/2, -height/2, height/2, -1, 100);
     /// ```
     /// The orthographic matrix describes the projection. The position of the camera is described by another, scaled matrix. The inverse of the camera position matrix provides the "eye" coordinates.
@@ -110,7 +110,7 @@ define_suite_item_wrapper!(
     ///
     /// # Orthographic Camera Matrix
     /// Internally, we use composition width and height to set the matrix described by the OpenGL specification as
-    /// ```
+    /// ```ignore
     ///     glOrtho(-width/2, width/2, -height/2, height/2, -1, 100);
     /// ```
     /// The orthographic matrix describes the projection. The position of the camera is described by another, scaled matrix. The inverse of the camera position matrix provides the "eye" coordinates.

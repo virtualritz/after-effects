@@ -76,6 +76,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "apply_lut"
+version = "0.0.1"
+dependencies = [
+ "after-effects",
+ "log-panics",
+ "pipl",
+ "win_dbg_logger",
+]
+
+[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -14,7 +14,7 @@ define_suite!(
     /// The basic structure of the video segments is that of a tree structure. There is a Compositor node with n inputs. Each of those inputs is a Clip node, which has one input which is a Media node, and it also has n Operators, which are effects.
     ///
     /// So, a simple example, three clips in a stack, the top one with three effects looks like this:
-    /// ```
+    /// ```text
     /// Segment
     ///   Compositor Node
     ///     Clip Node
