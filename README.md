@@ -41,6 +41,7 @@ Add `after-effects` or `premiere` to your dependencies and `pipl` to your dev-de
 
 ```rust
 cargo add after-effects
+cargo add --dev pipl
 ```
 
 ### After Effects vs Premiere
@@ -61,6 +62,28 @@ A few basic examples are included in the repository. For more advanced use cases
 refer to the C/C++ examples from the SDK.
 
 For a more advanced sample with full GPU rendering you can check out the [Gyroflow plugin](https://github.com/gyroflow/gyroflow-plugins)
+
+### Development
+
+When developing your plugin it's best to use the debug build - it will catch and display panics for you and it will log any messages and stack traces to `DbgView` (on Windows) or `Console` (on macOS). This is done by running `just build`.
+
+The release version can be built using `just release`
+
+Some plugins may be slow in debug build, in this case you can add optimizations to the debug build by using
+```toml
+[profile.dev]
+opt-level = 3
+```
+or add debug symbols to your release build by using
+```toml
+[profile.release]
+debug = true
+debug-assertions = true
+```
+
+in your `Cargo.toml` file.
+
+The release build doesn't catch panics by default to not any additional overhead.
 
 ### Help Wanted/To Do
 
