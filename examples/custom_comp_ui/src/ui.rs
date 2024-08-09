@@ -254,10 +254,10 @@ where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Resu
             // hit = i as isize;
             done = true;
             event.set_send_drag(true);
-            event.set_continue_refcon(0, Ccu::Handles as i64);
-            event.set_continue_refcon(1, mouse_layer.x as i64);
-            event.set_continue_refcon(2, mouse_layer.y as i64);
-            event.set_continue_refcon(3, false as i64);
+            event.set_continue_refcon(0, Ccu::Handles as _);
+            event.set_continue_refcon(1, mouse_layer.x as _);
+            event.set_continue_refcon(2, mouse_layer.y as _);
+            event.set_continue_refcon(3, false as _);
             break;
         }
     }
@@ -307,13 +307,13 @@ where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Resu
     params.get_mut(Params::YRadius)?.as_float_slider_mut()?.set_value(new_y.abs() as _);
 
     event.set_send_drag(true);
-    event.set_continue_refcon(0, Ccu::Handles as i64);
-    event.set_continue_refcon(1, mouse_layer.x as i64);
-    event.set_continue_refcon(2, mouse_layer.y as i64);
-    event.set_continue_refcon(3, true as i64);
+    event.set_continue_refcon(0, Ccu::Handles as _);
+    event.set_continue_refcon(1, mouse_layer.x as _);
+    event.set_continue_refcon(2, mouse_layer.y as _);
+    event.set_continue_refcon(3, true as _);
 
     if event.last_time() {
-        event.set_continue_refcon(0, Ccu::None as i64);
+        event.set_continue_refcon(0, Ccu::None as _);
         event.set_send_drag(false);
     }
 
@@ -323,7 +323,7 @@ where F: Fn(&ae::InData, &mut ae::EventExtra, ae::Point, &mut ae::Point) -> Resu
 pub fn drag(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &mut ae::EventExtra) -> Result<(), ae::Error> {
     // let mut frame = frame_from_params(in_data, params)?;
 
-    if event.continue_refcon(0) == Ccu::Handles as i64 {
+    if event.continue_refcon(0) == Ccu::Handles as ae::sys::A_intptr_t {
         if event.window_type() == ae::WindowType::Layer {
             do_drag_handles(in_data, params, layer_frame_to_layer, event)?;
         } else if event.window_type() == ae::WindowType::Comp {
