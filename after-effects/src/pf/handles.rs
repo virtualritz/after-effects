@@ -48,7 +48,9 @@ impl<T> BorrowedHandleLock<T> {
         match pf::suites::Handle::new() {
             Ok(suite) => {
                 let ptr = suite.lock_handle(handle) as *mut T;
-                assert!(!ptr.is_null());
+                if ptr.is_null() {
+                    return Err(Error::InvalidCallback);
+                }
                 Ok(BorrowedHandleLock {
                     suite,
                     handle,

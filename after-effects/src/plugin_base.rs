@@ -298,11 +298,11 @@ macro_rules! define_effect {
 
                 #[cfg(debug_assertions)]
                 {
-                    #[cfg(windows)]
+                    #[cfg(target_os = "windows")]
                     {
                         let _ = $crate::log::set_logger(&$crate::win_dbg_logger::DEBUGGER_LOGGER);
                     }
-                    #[cfg(macos)]
+                    #[cfg(target_os = "macos")]
                     {
                         let _ = $crate::oslog::OsLogger::new(env!("CARGO_PKG_NAME")).init();
                     }

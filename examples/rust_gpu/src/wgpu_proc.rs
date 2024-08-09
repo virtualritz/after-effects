@@ -41,7 +41,8 @@ impl<T: Sized> WgpuProcessing<T> {
             adapter.request_device(&DeviceDescriptor {
                 label: None,
                 required_features: adapter.features(),
-                required_limits: adapter.limits()
+                required_limits: adapter.limits(),
+                memory_hints: wgpu::MemoryHints::Performance,
             }, None)
         ).unwrap();
 
@@ -76,6 +77,8 @@ impl<T: Sized> WgpuProcessing<T> {
             entry_point: "main",
             label: None,
             layout: Some(&pipeline_layout),
+            compilation_options: Default::default(),
+            cache: Default::default()
         });
 
         Self {

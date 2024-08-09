@@ -101,9 +101,9 @@ pub use fastrand;
 pub use parking_lot;
 pub use paste;
 pub use serde;
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 pub use win_dbg_logger;
-#[cfg(macos)]
+#[cfg(target_os = "macos")]
 pub use oslog;
 
 thread_local!(
@@ -617,6 +617,27 @@ impl<'a, T: Clone> std::ops::DerefMut for Ownership<'a, T> {
         match self {
             Self::AfterEffects(_) => panic!("Tried to mutably borrow immutable data"),
             Self::AfterEffectsMut(ptr) => ptr,
+            Self::Rust(ptr) => ptr,
+        }
+    }
+}
+pub enum ReadOnlyOwnership<'a, T: Clone> {
+    AfterEffects(&'a T),
+    Rust(T),
+}
+impl<'a, T: Clone> Clone for ReadOnlyOwnership<'a, T> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::AfterEffects(ptr) => Self::Rust((*ptr).clone()),
+            Self::Rust(ptr)         => Self::Rust(ptr.clone()),
+        }
+    }
+}
+impl<'a, T: Clone> std::ops::Deref for ReadOnlyOwnership<'a, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::AfterEffects(ptr) => ptr,
             Self::Rust(ptr) => ptr,
         }
     }
