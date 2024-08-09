@@ -14,6 +14,7 @@ repository = "https://github.com/virtualritz/after-effects/"
 
 [features]
 artisan-2-api = ["after-effects-sys/artisan-2-api"]
+catch-panics = []
 default = []
 
 [dependencies]

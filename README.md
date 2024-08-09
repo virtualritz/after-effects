@@ -83,7 +83,7 @@ debug-assertions = true
 
 in your `Cargo.toml` file.
 
-The release build doesn't catch panics by default to not any additional overhead.
+The release build doesn't catch panics by default to not any additional overhead. You can opt-in for the panic handler by enabling cargo feature "catch-panics" (`features = ["catch-panics"]`)
 
 ### Help Wanted/To Do
 

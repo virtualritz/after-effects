@@ -327,7 +327,7 @@ macro_rules! define_effect {
             // struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", RawCommand::from(self.cmd), std::thread::current().id()); } }
             // let _x = X { cmd: cmd as i32 };
 
-            #[cfg(debug_assertions)]
+            #[cfg(any(debug_assertions, feature = "catch-panics"))]
             {
                 let result = std::panic::catch_unwind(|| {
                     handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra)
@@ -350,7 +350,10 @@ macro_rules! define_effect {
 
                         let mut msg = format!("EffectMain panicked! {s}");
 
-                        $crate::log::error!("{msg}, backtrace: {}", BACKTRACE_STR.read().unwrap());
+                        #[cfg(debug_assertions)]
+                        {
+                            $crate::log::error!("{msg}, backtrace: {}", BACKTRACE_STR.read().unwrap());
+                        }
 
                         if msg.len() > 255 {
                             msg.truncate(255);
@@ -364,7 +367,7 @@ macro_rules! define_effect {
                 }
             }
 
-            #[cfg(not(debug_assertions))]
+            #[cfg(not(any(debug_assertions, feature = "catch-panics")))]
             match handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra) {
                 Ok(_) => $crate::sys::PF_Err_NONE as $crate::sys::PF_Err,
                 Err(e) => {
