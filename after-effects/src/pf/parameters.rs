@@ -1232,7 +1232,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     }
 
     #[inline(always)]
-    pub fn get(&self, type_: P) -> Result<Ownership<ParamDef<'p>>, Error> {
+    pub fn get(&self, type_: P) -> Result<ReadOnlyOwnership<ParamDef<'p>>, Error> {
         self.get_at(type_, None, None, None)
     }
 
@@ -1246,12 +1246,16 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         self.checkout_at(type_, None, None, None)
     }
 
-    pub fn get_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
+    pub fn get_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<ReadOnlyOwnership<ParamDef<'p>>, Error> {
         if self.params.is_empty() || time.is_some() {
-            self.checkout_at(type_, time, time_step, time_scale)
+            match self.checkout_at(type_, time, time_step, time_scale) {
+                Ok(Ownership::Rust(param)) => Ok(ReadOnlyOwnership::Rust(param)),
+                Ok(_) => unreachable!(),
+                Err(e) => Err(e)
+            }
         } else {
             let index = self.index(type_).ok_or(Error::InvalidIndex)?;
-            Ok(Ownership::AfterEffects(self.params.get(index).ok_or(Error::InvalidIndex)?))
+            Ok(ReadOnlyOwnership::AfterEffects(self.params.get(index).ok_or(Error::InvalidIndex)?))
         }
     }
 
