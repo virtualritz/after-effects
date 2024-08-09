@@ -625,11 +625,11 @@ pub enum ReadOnlyOwnership<'a, T: Clone> {
     AfterEffects(&'a T),
     Rust(T),
 }
-impl<'a, T: Clone> Clone for ReadOnlyOwnership<'a, T> {
-    fn clone(&self) -> Self {
+impl<'a, T: Clone> ReadOnlyOwnership<'a, T> {
+    pub fn clone(&self) -> Ownership<'a, T> {
         match self {
-            Self::AfterEffects(ptr) => Self::Rust((*ptr).clone()),
-            Self::Rust(ptr)         => Self::Rust(ptr.clone()),
+            Self::AfterEffects(ptr) => Ownership::Rust((*ptr).clone()),
+            Self::Rust(ptr)         => Ownership::Rust(ptr.clone()),
         }
     }
 }
