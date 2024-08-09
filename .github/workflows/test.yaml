@@ -9,49 +9,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: just
-
-      - name: Build
-        env:
-          NO_INSTALL: 1
-          NO_SIGN: 1
+      - name: Build and test
         run: |
-          pushd after-effects ; cargo build ; cargo test ; popd
-          pushd premiere      ; cargo build ; cargo test ; popd
-          pushd pipl          ; cargo build ; cargo test ; popd
-          pushd examples
-            for dir in */; do
-              if [ -d "$dir" ]; then
-                pushd "$dir"
-                  just release
-                popd
-              fi
-            done
-          popd
+          cargo build
+          cargo test
 
   test_windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: just
-
-      - name: Build
-        env:
-          NO_INSTALL: 1
+      - name: Build and test
         run: |
-          pushd after-effects ; cargo build ; cargo test ; popd
-          pushd premiere      ; cargo build ; cargo test ; popd
-          pushd pipl          ; cargo build ; cargo test ; popd
-          pushd examples
-            $directories = Get-ChildItem -Directory
-            foreach ($dir in $directories) {
-                Set-Location $dir.FullName
-                just release
-                Set-Location ..
-            }
-          popd
+          cargo build
+          cargo test

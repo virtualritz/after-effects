@@ -65,7 +65,7 @@
 //!
 //! # Usage
 //!
-//! ```
+//! ```ignore
 //! cargo add after-effects-sys.
 //! ```
 
