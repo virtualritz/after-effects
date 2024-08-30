@@ -38,7 +38,7 @@ impl AdobePluginGlobal for Plugin {
             f.set_display_flags(ae::ValueDisplayFlag::PERCENT);
         }))?;
 
-        params.add_group(Params::BlendGroupStart, Params::BlendGroupEnd, "Blend Controls", |params| {
+        params.add_group(Params::BlendGroupStart, Params::BlendGroupEnd, "Blend Controls", false, |params| {
             params.add(Params::BlendColorAmount, "Blend percentage", ae::FloatSliderDef::setup(|f| {
                 f.set_valid_min(CONVO_AMOUNT_MIN);
                 f.set_valid_max(CONVO_AMOUNT_MAX);

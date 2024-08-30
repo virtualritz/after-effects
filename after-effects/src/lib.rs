@@ -509,6 +509,16 @@ impl Rect {
             v: self.top,
         }
     }
+    pub fn set_width(&mut self, width: i32) {
+        self.right = self.left + width
+    }
+    pub fn set_height(&mut self, height: i32) {
+        self.bottom = self.top + height
+    }
+    pub fn set_origin(&mut self, origin: Point) {
+        self.left = origin.h;
+        self.top = origin.v;
+    }
 
     pub fn union<'a>(&'a mut self, other: &Rect) -> &'a mut Rect {
         if self.is_empty() {

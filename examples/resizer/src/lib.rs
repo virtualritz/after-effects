@@ -214,6 +214,117 @@ impl AdobePluginGlobal for Plugin {
                 out_data.set_out_flag2(OutFlags2::IUse3DLights, use_3d);
                 out_data.set_out_flag2(OutFlags2::IUse3DCamera, use_3d);
             }
+
+            ae::Command::SmartPreRender { mut extra } => {
+                let req = extra.output_request();
+
+                // Output buffer resizing may only occur during PF_Cmd_FRAME_SETUP.
+                let border = params.get(Params::Amount)?.as_slider()?.value() as f32;
+
+                let (border_x, border_y) = if params.get(Params::Downsample)?.as_checkbox()?.value() {
+                    // shrink the border to accomodate decreased resolutions.
+                    (
+                        border * f32::from(in_data.downsample_x()),
+                        border * f32::from(in_data.downsample_y())
+                    )
+                } else {
+                    (border, border)
+                };
+
+                if let Ok(in_result) = extra.callbacks().checkout_layer(0, 0, &req, in_data.current_time(), in_data.time_step(), in_data.time_scale()) {
+                    let mut res_rect = ae::Rect::from(in_result.result_rect);
+                    res_rect.set_origin(ae::Point {
+                        h: -border_x as _,
+                        v: -border_y as _
+                    });
+
+                    res_rect.set_width( (border_x + res_rect.width()  as f32).round() as _);
+                    res_rect.set_height((border_y + res_rect.height() as f32).round() as _);
+
+                    let _ = extra.union_result_rect(res_rect);
+                    let _ = extra.union_max_result_rect(res_rect);
+
+                    extra.set_returns_extra_pixels(true);
+                }
+            }
+            ae::Command::SmartRender { extra } => {
+                let cb = extra.callbacks();
+                let in_layer = cb.checkout_layer_pixels(0)?;
+
+                if let Ok(mut out_layer) = cb.checkout_output() {
+                    let border = params.get(Params::Amount)?.as_slider()?.value() as f32;
+
+                    let color = params.get(Params::Color)?.as_color()?.value();
+
+                    // For PPro, since effects operate on the sequence rectangle, not the clip rectangle, we need to take care to color the proper area
+                    let (border_x, border_y) = if params.get(Params::Downsample)?.as_checkbox()?.value() {
+                        // shrink the border to accomodate decreased resolutions.
+                        (
+                            border * f32::from(in_data.downsample_x()),
+                            border * f32::from(in_data.downsample_y())
+                        )
+                    } else {
+                        (border, border)
+                    };
+
+                    let origin_pt = ae::Point {
+                        h: border_x as _,
+                        v: border_y as _
+                    };
+
+                    let pre_effect_origin = in_data.pre_effect_source_origin();
+
+                    let rect = if in_data.is_premiere() {
+                        Some(ae::Rect {
+                            left:   pre_effect_origin.h,
+                            top:    pre_effect_origin.v,
+                            right:  pre_effect_origin.h + in_data.width()  + 2 * border_x as i32,
+                            bottom: pre_effect_origin.v + in_data.height() + 2 * border_y as i32
+                        })
+                    } else {
+                        None
+                    };
+
+                    match out_layer.bit_depth() {
+                        8  => out_layer.fill(Some(color), rect)?,
+                        16 => out_layer.fill16(Some(ae::pixel8_to_16(color)), rect)?,
+                        _ => {}
+                    }
+
+                    // Now, copy the input frame
+                    let dst_rect = ae::Rect {
+                        left:   origin_pt.h,
+                        top:    origin_pt.v,
+                        right:  origin_pt.h + in_layer.width()  as i32,
+                        bottom: origin_pt.v + in_layer.height() as i32
+                    };
+
+                    // The suite functions do not automatically detect the requested output quality. Call different functions based on the current quality state.
+                    if in_data.quality() == ae::Quality::Hi && !in_data.is_premiere() {
+                        ae::pf::suites::WorldTransform::new()?.copy_hq(in_data.effect_ref(), in_layer, out_layer, None, Some(dst_rect))?;
+                    } else if !in_data.is_premiere() {
+                        ae::pf::suites::WorldTransform::new()?.copy(in_data.effect_ref(), in_layer, out_layer, None, Some(dst_rect))?;
+                    } else {
+                        let src_rect = ae::Rect {
+                            left:   pre_effect_origin.h,
+                            top:    pre_effect_origin.v,
+                            right:  pre_effect_origin.h + in_data.width() ,
+                            bottom: pre_effect_origin.v + in_data.height()
+                        };
+
+                        let dst_rect = ae::Rect {
+                            left:   pre_effect_origin.h + border_x as i32,
+                            top:    pre_effect_origin.v + border_y as i32,
+                            right:  pre_effect_origin.h + in_data.width()  + border_x as i32,
+                            bottom: pre_effect_origin.v + in_data.height() + border_y as i32
+                        };
+
+                        out_layer.copy_from(&in_layer, Some(src_rect), Some(dst_rect))?;
+                    }
+                }
+
+                cb.checkin_layer_pixels(0)?;
+            }
             _ => {}
         }
         Ok(())

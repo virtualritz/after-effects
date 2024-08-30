@@ -117,7 +117,17 @@ impl Layer {
         UtilCallbacks::new(self.in_data_ptr)
     }
 
-    pub fn fill(&mut self, color: Option<Pixel8>, rect: Option<Rect>) -> Result<(), Error> {
+    fn clamp_rect(&self, rect: &mut Option<Rect>) {
+        if let Some(ref mut rect) = rect {
+            if rect.left < 0 { rect.left = 0; }
+            if rect.top  < 0 { rect.top  = 0; }
+            if rect.width()  > self.width()  as i32 { rect.set_width(self.width() as i32); }
+            if rect.height() > self.height() as i32 { rect.set_height(self.height() as i32); }
+        }
+    }
+
+    pub fn fill(&mut self, color: Option<Pixel8>, mut rect: Option<Rect>) -> Result<(), Error> {
+        self.clamp_rect(&mut rect);
         if self.bit_depth() == 16 {
             return self.fill16(color.map(pixel8_to_16), rect);
         }
@@ -128,7 +138,8 @@ impl Layer {
         }
         self.utils().fill(self, color, rect)
     }
-    pub fn fill16(&mut self, color: Option<Pixel16>, rect: Option<Rect>) -> Result<(), Error> {
+    pub fn fill16(&mut self, color: Option<Pixel16>, mut rect: Option<Rect>) -> Result<(), Error> {
+        self.clamp_rect(&mut rect);
         if self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
                 return fill_suite.fill16(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);

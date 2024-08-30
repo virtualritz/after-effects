@@ -36,6 +36,7 @@ fn main() {
             OutFlags2::SupportsQueryDynamicFlags |
             OutFlags2::IUse3DCamera |
             OutFlags2::IUse3DLights |
+            OutFlags2::SupportsSmartRender |
             OutFlags2::SupportsThreadedRendering |
             OutFlags2::SupportsGetFlattenedSequenceData
         ),

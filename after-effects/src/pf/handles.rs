@@ -49,7 +49,7 @@ impl<T> BorrowedHandleLock<T> {
             Ok(suite) => {
                 let ptr = suite.lock_handle(handle) as *mut T;
                 if ptr.is_null() {
-                    return Err(Error::InvalidCallback);
+                    return Err(Error::Generic);
                 }
                 Ok(BorrowedHandleLock {
                     suite,

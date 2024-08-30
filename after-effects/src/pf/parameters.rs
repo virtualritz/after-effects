@@ -1152,13 +1152,16 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         hasher.finish() as i32
     }
 
-    pub fn add_group<F: FnOnce(&mut Self) -> Result<(), Error>>(&mut self, type_start: P, type_end: P, name: &str, inner_cb: F) -> Result<(), Error> {
+    pub fn add_group<F: FnOnce(&mut Self) -> Result<(), Error>>(&mut self, type_start: P, type_end: P, name: &str, start_collapsed: bool, inner_cb: F) -> Result<(), Error> {
         assert!(!self.in_data.is_null());
 
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
         param_def.set_name(name);
         param_def.as_mut().param_type = ParamType::GroupStart.into();
         param_def.set_id(Self::param_id(type_start));
+        if start_collapsed {
+            param_def.set_flags(ParamFlag::START_COLLAPSED);
+        }
         param_def.add(-1)?;
         self.map.insert(type_start, ParamMapInfo::new(self.num_params, ParamType::GroupStart));
         self.num_params += 1;

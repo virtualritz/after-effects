@@ -49,7 +49,7 @@ impl AdobePluginGlobal for Plugin {
         }))?;
 
         // def.flags = PF_ParamFlag_START_COLLAPSED;
-        params.add_group(Params::GroupStart, Params::GroupEnd, "Layer Controls", |params| {
+        params.add_group(Params::GroupStart, Params::GroupEnd, "Layer Controls", false, |params| {
             params.add(Params::LayerBlend, "Layer Opacity", ae::FloatSliderDef::setup(|f| {
                 f.set_valid_min(XFORM_AMOUNT_MIN);
                 f.set_valid_max(XFORM_AMOUNT_MAX);
