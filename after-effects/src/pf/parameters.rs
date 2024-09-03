@@ -823,6 +823,10 @@ impl<'p> ParamDef<'p> {
         &mut *self.param_def
     }
 
+    pub fn index(&self) -> Option<i32> {
+        self.index
+    }
+
     pub fn update_param_ui(&self) -> Result<(), Error> {
         if let Some(index) = self.index {
             self.in_data.effect().update_param_ui(index, self)

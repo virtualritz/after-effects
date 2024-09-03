@@ -81,11 +81,38 @@ impl GpuFilterData {
         assert!(!self.instance_ptr.is_null());
         unsafe { (*self.instance_ptr).inDeviceIndex as u32 }
     }
+
+    /// Get a specific param value at a specific time
+    /// * `index` - The index of the param
+    /// * `time` - The time requested (in Media time)
+    ///
+    /// Returns the param
     pub fn param(&self, index: usize, time: i64) -> Result<crate::Param, Error> {
         let index = index as i32 - 1; // GPU filters don't include the input frame as first paramter
 
         self.video_segment_suite.param(self.node_id(), index, time)
     }
+
+    /// Get the next keyframe time after the specified time.
+    /// Example: Keyframes at 0 and 10
+    /// - `time` = -1, keyframe_time = 0
+    /// - `time` = 0, keyframe_time = 10
+    /// - `time` = 9, keyframe_time = 10
+    /// - `time` = 10, returns [`Error::NoKeyframeAfterInTime`]
+    ///
+    /// Parameters:
+    /// * `index` - The index of the param
+    /// * `time` - The lower bound time
+    ///
+    /// Returns a tuple containing:
+    /// * `keyframe_time` - The time of the next keyframe > inTime
+    /// * `keyframe_interpolation_mode` - The temporal interpolation mode of the keyframe
+    pub fn next_keyframe_time(&self, index: usize, time: i64) -> Result<(i64, KeyframeInterpolationMode), Error> {
+        let index = index as i32 - 1; // GPU filters don't include the input frame as first paramter
+
+        self.video_segment_suite.next_keyframe_time(self.node_id(), index, time)
+    }
+
     pub fn param_arbitrary_data<T: for<'a> serde::Deserialize<'a>>(&self, index: usize, time: i64) -> Result<T, Error> {
         let ptr = self.param(index, time)?;
         if let crate::Param::MemoryPtr(ptr) = ptr {
