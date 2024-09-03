@@ -56,7 +56,7 @@ impl DerefMut for Binary {
 // -------------------- Keyframes --------------------
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
-pub struct Keyframes(String); // TODO: not implemented
+pub struct Keyframes(pub String); // TODO: not implemented
 
 impl FromStr for Keyframes {
     type Err = Error;
