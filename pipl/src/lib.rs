@@ -1520,10 +1520,17 @@ pub fn plugin_build(properties: Vec<Property>) {
     for prop in properties.iter() {
         match prop {
             Property::Kind(x) => {
-                println!(
-                    "cargo:rustc-env=PIPL_KIND={}",
-                    u32::from_le_bytes(x.as_bytes())
-                );
+                let bytes = {
+                    #[cfg(target_os = "windows")]
+                    {
+                        u32::from_le_bytes(x.as_bytes())
+                    }
+                    #[cfg(target_os = "macos")]
+                    {
+                        u32::from_be_bytes(x.as_bytes())
+                    }
+                };
+                println!("cargo:rustc-env=PIPL_KIND={bytes}");
             }
             Property::Name(x) => {
                 println!("cargo:rustc-env=PIPL_NAME={x}");

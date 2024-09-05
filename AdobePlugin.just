@@ -66,5 +66,5 @@ create_bundle profile TargetDir:
 
     # Install
     if [ -z "$NO_INSTALL" ]; then
-        sudo cp -rf "{{TargetDir}}/{{profile}}/{{PluginName}}.plugin" "/Applications/Adobe After Effects 2024/Plug-ins/"
+        sudo cp -rf "{{TargetDir}}/{{profile}}/{{PluginName}}.plugin" "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/"
     fi
