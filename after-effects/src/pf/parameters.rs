@@ -548,6 +548,16 @@ impl ArbParamsExtra {
                 // handle from that and write that to the
                 // destination pointer.
 
+                if self.as_ref().u.copy_func_params.src_arbH.is_null() {
+                    // Create a new default value
+                    self.as_ref()
+                        .u
+                        .copy_func_params
+                        .dst_arbPH
+                        .write(Handle::into_raw(Handle::<T>::new(T::default())?));
+                    return Ok(());
+                }
+
                 let mut src_handle = Handle::<T>::from_raw(self.as_ref().u.copy_func_params.src_arbH, false)?;
                 let lock = src_handle.lock()?;
 

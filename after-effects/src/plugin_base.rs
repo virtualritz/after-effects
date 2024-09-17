@@ -244,6 +244,7 @@ macro_rules! define_effect {
         static BACKTRACE_STR: std::sync::RwLock<String> = std::sync::RwLock::new(String::new());
 
         #[no_mangle]
+        #[allow(non_snake_case)]
         pub unsafe extern "C" fn PluginDataEntryFunction2(
             in_ptr: $crate::sys::PF_PluginDataPtr,
             in_plugin_data_callback_ptr: $crate::sys::PF_PluginDataCB2,
@@ -283,6 +284,7 @@ macro_rules! define_effect {
         }
 
         #[no_mangle]
+        #[allow(non_snake_case)]
         pub unsafe extern "C" fn EffectMain(
             cmd: $crate::sys::PF_Cmd,
             in_data_ptr: *mut $crate::sys::PF_InData,
