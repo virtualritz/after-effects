@@ -534,7 +534,7 @@ define_enum! {
         Scale       = ae_sys::AEGP_LayerStream_SCALE,
         // This is the layer's rotation for a 2D layer
         RotateZ     = ae_sys::AEGP_LayerStream_ROTATION,
-        Opcaity     = ae_sys::AEGP_LayerStream_OPACITY,
+        Opacity     = ae_sys::AEGP_LayerStream_OPACITY,
         Audio       = ae_sys::AEGP_LayerStream_AUDIO,
         Marker      = ae_sys::AEGP_LayerStream_MARKER,
         TimeRemap   = ae_sys::AEGP_LayerStream_TIME_REMAP,

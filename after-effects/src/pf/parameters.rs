@@ -1041,9 +1041,9 @@ impl<'p> ParamDef<'p> {
     }
 
     pub fn set_name(&mut self, name: &str) {
-        assert!(name.len() < 32);
         let name_cstr = CString::new(name).unwrap();
         let name_slice = name_cstr.to_bytes_with_nul();
+        assert!(name_slice.len() <= 32);
         self.param_def.name[0..name_slice.len()].copy_from_slice(unsafe { std::mem::transmute(name_slice) });
     }
 
