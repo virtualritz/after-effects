@@ -69,10 +69,9 @@ impl WorldSuite {
         Ok(call_suite_fn_single!(self, AEGP_GetBaseAddr32 -> *mut ae_sys::PF_PixelFloat, world_handle.as_ptr())? as _)
     }
 
-    /// Populates and returns a [`EffectWorld`] representing the given [`WorldHandle`], for use with numerous pixel processing callbacks.
+    /// Populates a [`Layer`] representing the given [`WorldHandle`], for use with numerous pixel processing callbacks.
     ///
     /// NOTE: This does not give your plug-in ownership of the world referenced; destroy the source [`WorldHandle`] only if you allocated it.
-    /// It just returns an [`EffectWorld`] that points to the same pixel buffer.
     pub fn fill_out_pf_effect_world(&self, world: impl AsPtr<AEGP_WorldH>, handle: &mut ae_sys::PF_EffectWorld) -> Result<(), Error> {
        call_suite_fn!(self, AEGP_FillOutPFEffectWorld, world.as_ptr(), handle)
     }
@@ -172,7 +171,7 @@ impl World {
     /// Returns a [`pf::Layer`] representing this world, for use with numerous pixel processing callbacks.
     ///
     /// NOTE: This does not give your plug-in ownership of the world referenced; destroy the source [`WorldHandle`] only if you allocated it.
-    /// It just returns an [`EffectWorld`] that points to the same pixel buffer.
+    /// It just returns an [`pf::Layer`] that points to the same pixel buffer.
     pub fn pf_layer(&self, in_data: &InData) -> Result<pf::Layer, Error> {
         pf::Layer::from_aegp_world(in_data, self.handle.as_ptr())
     }

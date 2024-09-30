@@ -28,11 +28,11 @@ define_suite!(
     ///
     /// That's right, even with over-bright colors, we'd only ever tell you '255, 255, 255'. Yeah, right.
     ///
-    /// Use the [`AngleParamSuite`](crate::pf::suites::AngleParamSuite) to get floating point values for angle parameters.
+    /// Use the [`AngleParamSuite`](crate::pf::suites::AngleParam) to get floating point values for angle parameters.
     ///
-    /// Use the [`ColorParamSuite`](crate::pf::suites::ColorParamSuite) to get floating point values for color parameters.
+    /// Use the [`ColorParamSuite`](crate::pf::suites::ColorParam) to get floating point values for color parameters.
     ///
-    /// Use the [`PointParamSuite`](crate::pf::suites::PointParamSuite) to get floating point values for point parameters.
+    /// Use the [`PointParamSuite`](crate::pf::suites::PointParam) to get floating point values for point parameters.
     ParamUtilsSuite,
     PF_ParamUtilsSuite3,
     kPFParamUtilsSuite,

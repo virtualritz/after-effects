@@ -5,17 +5,17 @@ define_suite!(
     /// The data is opaque to the host and effects are responsible for maintaining thread safety of the shared data.
     /// The host provides reference-counting that the effect can use to manage the lifetime of the shared data. Here's an overview of how this suite should be used:
     ///
-    /// When the effect is applied, in [`Command::SequenceSetup`], the effect plugin allocates and initializes the sequence data in PF_OutData->out_data.
+    /// When the effect is applied, in `Command::SequenceSetup`, the effect plugin allocates and initializes the sequence data in PF_OutData->out_data.
     ///
     /// Then it calls AcquireOpaqueEffectData(). The opaque effect data does not yet exist, so the plugin allocates it, and calls RegisterOpaqueEffectData, and then copies over the data from the sequence data. So both sequence data and opaque effect data are allocated.
     ///
-    /// Then [`Command::SequenceResetup`] is called (multiple times) for clones of the effect used for rendering. The effect instance knows it's a clone because the PF_InData->sequence_data is NULL (there is a special case if the effect has Opaque Effect Data - in that case, its render clones will receive [`Command::SequenceResetup`] with a NULL sequence_data pointer). It then calls AcquireOpaqueEffectData(). As a render clone, it relies on this opaque effect data, rather than sequence data, and does not try to copy the sequence data to opaque effect data.
+    /// Then `Command::SequenceResetup` is called (multiple times) for clones of the effect used for rendering. The effect instance knows it's a clone because the PF_InData->sequence_data is NULL (there is a special case if the effect has Opaque Effect Data - in that case, its render clones will receive `Command::SequenceResetup` with a NULL sequence_data pointer). It then calls AcquireOpaqueEffectData(). As a render clone, it relies on this opaque effect data, rather than sequence data, and does not try to copy the sequence data to opaque effect data.
     ///
-    /// When, on the other hand, [`Command::SequenceResetup`] is called with valid sequence_data in PF_InData, this is not a render clone. The plugin unflattens this sequence data. It then calls AcquireOpaqueEffectData(), and if the opaque effect data does not yet exist (i.e. when reopening a saved project), the plugin allocates it, and calls RegisterOpaqueEffectData. It then copies the sequence data to opaque effect data.
+    /// When, on the other hand, `Command::SequenceResetup` is called with valid sequence_data in PF_InData, this is not a render clone. The plugin unflattens this sequence data. It then calls AcquireOpaqueEffectData(), and if the opaque effect data does not yet exist (i.e. when reopening a saved project), the plugin allocates it, and calls RegisterOpaqueEffectData. It then copies the sequence data to opaque effect data.
     ///
-    /// On [`Command::SequenceFlatten`], the plugin takes the unflattened data, flattens it, and disposes of the un-flat data.
+    /// On `Command::SequenceFlatten`, the plugin takes the unflattened data, flattens it, and disposes of the un-flat data.
     ///
-    /// When [`Command::SequenceSetdown`] is called (it may be called multiple times to dispose of render clones), ReleaseOpaqueEffectData() is called.
+    /// When `Command::SequenceSetdown` is called (it may be called multiple times to dispose of render clones), ReleaseOpaqueEffectData() is called.
     ///
     /// # instanceID
     /// The `Opaque Effect Data Suite` functions need the instanceID of the effect.

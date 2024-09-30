@@ -1,10 +1,10 @@
 use crate::*;
 
 define_suite!(
-    /// This suite provides info on any GPU devices available. For example, [`get_device_info()`] allows an effect/transition to see if the device supports OpenCL or CUDA.
+    /// This suite provides info on any GPU devices available. For example, [`device_info()`](Self::device_info) allows an effect/transition to see if the device supports OpenCL or CUDA.
     ///
-    /// Use this suite to get exclusive access to a device using [`acquire_exclusive_device_access()`] and [`release_exclusive_device_access()`].
-    /// If needed, you can reconcile devices using the outDeviceHandle passed back from [`get_device_info()`].
+    /// Use this suite to get exclusive access to a device using [`acquire_exclusive_device_access()`](Self::acquire_exclusive_device_access) and [`release_exclusive_device_access()`](Self::release_exclusive_device_access).
+    /// If needed, you can reconcile devices using the outDeviceHandle passed back from [`device_info()`](Self::device_info).
     ///
     /// Device memory should ideally be allocated through this suite. In some cases you may find it more efficient to use a texture / image object as the source.
     /// With CUDA, you can bind a texture reference to an existing linear buffer.

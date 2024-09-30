@@ -2,7 +2,7 @@ use crate::*;
 use ae_sys::PF_ProgPtr;
 
 define_suite!(
-    /// Use these functions to create and destroy [`EffectWorld`], and to find out their bit-depth.
+    /// Use these functions to create and destroy [`Layer`], and to find out their bit-depth.
     WorldSuite,
     PF_WorldSuite2,
     kPFWorldSuite,

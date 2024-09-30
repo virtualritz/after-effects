@@ -169,8 +169,8 @@ define_suite_item_wrapper!(
         /// But you are not allowed to change the value during `PF_Cmd_UPDATE_PARAMS_UI`.
         update_param_ui(param_index: i32, param_def: &ParamDef) -> () => param_utils.update_param_ui,
 
-        /// This API, combined with [`are_states_identical()`](Self::are_states_identical) below, lets you determine if a set of inputs (either layers, other properties, or both)
-        /// are different between when you first called [`current_state()`](Self::current_state) and a current call, so it can be used for caching.
+        /// This API, combined with [`are_param_states_identical()`](Self::are_param_states_identical) below, lets you determine if a set of inputs (either layers, other properties, or both)
+        /// are different between when you first called [`current_param_state()`](Self::current_param_state) and a current call, so it can be used for caching.
         /// You can specify a range of time to consider or all of time.
         ///
         /// Updated in CS6 to add `param_index`, `start`, and `duration`. Pre-defined constants for `param_index` are as follows:
@@ -217,7 +217,7 @@ define_suite_item_wrapper!(
         ///
         /// Button name can be up to 31 characters.
         ///
-        /// NOTE: This must be called during [`Command::ParamSetup`].
+        /// NOTE: This must be called during [`Command::ParamsSetup`].
         set_options_button_name(name: &str) -> () => effect_ui.set_options_button_name,
     }
 );

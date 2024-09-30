@@ -171,7 +171,7 @@ pub struct GpuFilterInstance<T: GpuFilter> {
 /// GPU filter instances are created and destroyed on demand. They work together with the AfterEffects main entry point, where you define
 /// all the parameters and handle other properties. Premiere's GPU filter is an additional layer to just handle the rendering on the GPU.
 ///
-/// To share data between AfterEffects plugin interface and GPU filter interface, see [`OpaqueEffectDataSuite`]
+/// To share data between AfterEffects plugin interface and GPU filter interface, see [`suites::OpaqueEffectData`]
 #[macro_export]
 macro_rules! define_gpu_filter {
     ($struct_name:ty) => {

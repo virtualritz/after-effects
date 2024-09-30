@@ -3,13 +3,13 @@ use crate::*;
 use pr_sys::*;
 
 define_suite!(
-    /// Premiere Pro loads all the plug-ins, reads the PiPL, and sends PF_Cmd_GLOBAL_SETUP to determine the plug-ins' capabilities.
+    /// Premiere Pro loads all the plug-ins, reads the PiPL, and sends `Command::GlobalSetup` to determine the plug-ins' capabilities.
     /// To save time on future application launches, it saves some of these capabilities in what we call the plug-in cache (the registry on Windows, a Property List file on macOS).
     /// The next time the application is launched, the cached information is used wherever possible, rather than loading the plug-ins.
     ///
     /// If your effect needs to be reloaded each time, there is a way to disable this caching.
     ///
-    /// The plug-in can use the PF Cache On Load Suite to call [`set_no_cache_on_load()`](Self::set_no_cache_on_load) during [`Command::GlobalSetup`].
+    /// The plug-in can use the PF Cache On Load Suite to call [`set_no_cache_on_load()`](Self::set_no_cache_on_load) during `Command::GlobalSetup`.
     CacheOnLoadSuite,
     PF_CacheOnLoadSuite1,
     kPFCacheOnLoadSuite,

@@ -1,25 +1,11 @@
 use super::*;
 use std::any::Any;
 
-// define_struct_wrapper!(OutData, PF_OutData);
-
 // struct PF_OutData {
-//     pub my_version: A_u_long,            // Set this flag (using the PF_VERSION macro) to the version of your plug-in code. After Effects uses this data to decide which of duplicate effects to load.
-//     pub name: [A_char; 32usize],         // Unused.
-//     pub global_data: PF_Handle,          // Handle which will be returned to you in PF_InData with every call. Use After Effects’ memory allocation functions.
-//     pub num_params: A_long,              // After Effects checks this field against the number of calls made to PF_ADD_PARAM, as well as the implicit input layer.
-//     pub sequence_data: PF_Handle,        // Allocatable upon receiving PF_Cmd_SEQUENCE_SETUP, this handle will be passed back to you in PF_InData during all subsequent calls.
-//     pub flat_sdata_size: A_long,         // Unused (After Effects knows the size, because you used its allocation functions to get the memory in the first place).
-//     pub frame_data: PF_Handle,           // Handle you (might have) allocated during PF_Cmd_FRAME_SETUP. This is never written to disk; it was used to pass information from your PF_Cmd_FRAME_SETUP response to your PF_Cmd_RENDER or PF_Cmd_FRAME_SETDOWN (which you must do if you resize the output buffer). Otherwise, this memory is rarely used.
-//     pub width: A_long,                   // Set during PF_Cmd_FRAME_SETUP if the output image size differs from the input. width and height are the size of the output buffer, and origin is the point the input should map to in the output. To create a 5-pixel drop shadow up and left, set origin to (5, 5).
-//     pub height: A_long,                  // --^
-//     pub origin: PF_Point,                // --^
-//     pub out_flags: PF_OutFlags,          // Send messages to After Effects. OR together multiple values.
-//     pub return_msg: [A_char; 256usize],  // After Effects displays any C string you put here (checked and cleared after every command selector).
 //     pub start_sampL: A_long,             // Used only for Audio commands
 //     pub dur_sampL: A_long,               // --^
 //     pub dest_snd: PF_SoundWorld,         // --^
-//     pub out_flags2: PF_OutFlags2,        // Send messages to After Effects. OR together multiple values.
+//     ...
 // }
 
 #[derive(Clone, Copy, Debug)]
@@ -51,21 +37,34 @@ impl OutData {
     pub fn width(&self) -> u32 {
         self.as_ref().width as u32
     }
+
+    /// Set during [`Command::FrameSetup`] if the output image size differs from the input. width and height are the size of the output buffer, and origin is the point the input should map to in the output.
+    /// To create a 5-pixel drop shadow up and left, set origin to (5, 5).
     pub fn set_width(&mut self, width: u32) {
         self.as_mut().width = width as ae_sys::A_long;
     }
+
     pub fn height(&self) -> u32 {
         self.as_ref().height as u32
     }
+
+    /// Set during [`Command::FrameSetup`] if the output image size differs from the input. width and height are the size of the output buffer, and origin is the point the input should map to in the output.
+    /// To create a 5-pixel drop shadow up and left, set origin to (5, 5).
     pub fn set_height(&mut self, height: u32) {
         self.as_mut().height = height as ae_sys::A_long;
     }
+
     pub fn origin(&self) -> Point {
         self.as_ref().origin.into()
     }
+
+    /// Set during [`Command::FrameSetup`] if the output image size differs from the input. width and height are the size of the output buffer, and origin is the point the input should map to in the output.
+    /// To create a 5-pixel drop shadow up and left, set origin to (5, 5).
     pub fn set_origin(&mut self, origin: Point) {
         self.as_mut().origin = origin.into();
     }
+
+    /// After Effects displays any string you put here (checked and cleared after every command selector).
     pub fn set_return_msg(&mut self, msg: &str) {
         //let buf = std::ffi::CString::new(s).unwrap().into_bytes_with_nul();
         //self.return_msg[0..buf.len()].copy_from_slice(unsafe { std::mem::transmute(buf.as_slice()) });
@@ -73,19 +72,29 @@ impl OutData {
         assert!(msg.len() < 256);
         self.as_mut().return_msg[..msg.len()].copy_from_slice(unsafe { std::mem::transmute(msg) });
     }
+
+    /// After Effects displays any string you put here as an error (checked and cleared after every command selector).
     pub fn set_error_msg(&mut self, msg: &str) {
         self.set_return_msg(msg);
         self.set_out_flag(OutFlags::DisplayErrorMessage, true);
     }
+
+    /// Set this flag to the version of your plug-in code. After Effects uses this data to decide which of duplicate effects to load.
     pub fn set_version(&mut self, v: u32) {
         self.as_mut().my_version = v as ae_sys::A_u_long;
     }
+
+    /// Send messages to After Effects. OR together multiple values.
     pub fn set_out_flags(&mut self, v: OutFlags) {
         self.as_mut().out_flags = v.into();
     }
+
+    /// Send messages to After Effects. OR together multiple values.
     pub fn set_out_flags2(&mut self, v: OutFlags2) {
         self.as_mut().out_flags2 = v.into();
     }
+
+    /// Send messages to After Effects. OR together multiple values.
     pub fn set_out_flag(&mut self, flag: OutFlags, enabled: bool) {
         if enabled {
             self.as_mut().out_flags |= Into::<ae_sys::PF_OutFlags>::into(flag);
@@ -93,6 +102,8 @@ impl OutData {
             self.as_mut().out_flags &= !(Into::<ae_sys::PF_OutFlags>::into(flag));
         }
     }
+
+    /// Send messages to After Effects. OR together multiple values.
     pub fn set_out_flag2(&mut self, flag: OutFlags2, enabled: bool) {
         if enabled {
             self.as_mut().out_flags2 |= Into::<ae_sys::PF_OutFlags2>::into(flag);
@@ -100,10 +111,15 @@ impl OutData {
             self.as_mut().out_flags2 &= !(Into::<ae_sys::PF_OutFlags2>::into(flag));
         }
     }
+
+    /// Set the [`OutFlags::ForceRerender`] flag
     pub fn set_force_rerender(&mut self) {
         self.set_out_flag(OutFlags::ForceRerender, true);
     }
 
+    /// Data you (might have) allocated during [`Command::FrameSetup`].
+    /// This is never written to disk; it was used to pass information from your [`Command::FrameSetup`] response to your [`Command::Render`] or [`Command::FrameSetdown`]
+    /// (which you must do if you resize the output buffer). Otherwise, this memory is rarely used.
     pub fn set_frame_data<T: Any>(&mut self, val: T) {
         let boxed: Box<Box<dyn Any>> = Box::new(Box::new(val));
         self.as_mut().frame_data = Box::<Box<dyn Any>>::into_raw(boxed) as *mut _;

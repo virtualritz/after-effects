@@ -39,6 +39,9 @@ pub mod suites {
 }
 pub use suites::string::PrString;
 pub use suites::video_segment_properties::*;
+pub use suites::video_segment::VideoSegmentProperties;
+pub use suites::ppix::YUV420PlanarBuffers;
+pub use suites::sequence_info::ImmersiveVideoVRConfiguration;
 pub use pf_suites::background_frame::TransferMode;
 pub use pf_suites::pixel_format::NewWorldFlags;
 

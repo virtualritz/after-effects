@@ -10,7 +10,7 @@ define_suite!(
     /// To allow a plugin to be informed of changes to these values, there are two new functions in the PF TransitionSuite:
     /// [`register_transition_start_param()`](Self::register_transition_start_param) and [`register_transition_end_param()`](Self::register_transition_end_param),
     /// which register these parameters with the plugin as float parameters.
-    /// Once registered, the plugin will receive [`Command::UserChangedParam`] when these params change,
+    /// Once registered, the plugin will receive `Command::UserChangedParam` when these params change,
     /// as well as when the transition is first applied, so the plugin can initialize them to the desired value.
     ///
     /// AE-style Transitions can now retrieve GPU frames from arbitrary locations in the underlying clips.
@@ -41,12 +41,12 @@ impl TransitionSuite {
         call_suite_fn!(self, RegisterTransitionInputParam, effect_ref.as_ptr(), index as _)
     }
 
-    /// Register a PF_ADD_FLOAT_SLIDER parameter to receive changes to the start of the transition region through the [`Command::UserChangedParam`] command.
+    /// Register a PF_ADD_FLOAT_SLIDER parameter to receive changes to the start of the transition region through the `Command::UserChangedParam` command.
     pub fn register_transition_start_param(&self, effect_ref: impl AsPtr<PF_ProgPtr>, index: i32) -> Result<(), Error> {
         call_suite_fn!(self, RegisterTransitionStartParam, effect_ref.as_ptr(), index as _)
     }
 
-    /// Register a PF_ADD_FLOAT_SLIDER parameter to receive changes to the end of the transition region through the [`Command::UserChangedParam`] command.
+    /// Register a PF_ADD_FLOAT_SLIDER parameter to receive changes to the end of the transition region through the `Command::UserChangedParam` command.
     pub fn register_transition_end_param(&self, effect_ref: impl AsPtr<PF_ProgPtr>, index: i32) -> Result<(), Error> {
         call_suite_fn!(self, RegisterTransitionEndParam, effect_ref.as_ptr(), index as _)
     }

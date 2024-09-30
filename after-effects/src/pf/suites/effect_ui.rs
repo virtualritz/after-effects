@@ -19,7 +19,7 @@ impl EffectUISuite {
     ///
     /// Button name can be up to 31 characters.
     ///
-    /// NOTE: This must be called during [`Command::ParamSetup`].
+    /// NOTE: This must be called during [`Command::ParamsSetup`].
     pub fn set_options_button_name(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, name: &str) -> Result<(), Error> {
         assert!(name.len() < 31);
         let name = std::ffi::CString::new(name).unwrap();

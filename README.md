@@ -1,11 +1,9 @@
 # `after-effects`
 
-Current version: 0.2.0
+High level bindings for the Adobe AfterEffects® (Ae) and Adobe Premiere Pro® SDKs.
 
-High level bindings for the Adobe AfterEffects® (Ae) SDK and Adobe Premiere Pro®.
+This wraps many of the API suites in the Ae and Pr SDK and exposes them in safe Rust.
 
-This wraps many of the API suites in the Ae and Pr SDK and exposes them in safe
-Rust.
 It also defines a set of macros that implement all the plugin boilerplate for you,
 so you can focus just on your actual plugin implementation.
 
@@ -58,7 +56,7 @@ While they have many common parts, there are some areas that are separated.
 
 ### Examples
 
-A few basic examples are included in the repository. For more advanced use cases,
+A few basic examples are [included in the repository](https://github.com/virtualritz/after-effects/tree/master/examples). For more advanced use cases,
 refer to the C/C++ examples from the SDK.
 
 For a more advanced sample with full GPU rendering you can check out the [Gyroflow plugin](https://github.com/gyroflow/gyroflow-plugins)
@@ -106,7 +104,7 @@ Download the [*Adobe After Effects SDK*](https://console.adobe.io/downloads/ae).
 Define the `AESDK_ROOT` environment variable that contains the path to your
 Ae SDK. Typically the directory structure will look like this:
 
-```
+```text
 AfterEffectsSDK
 ├── After_Effects_SDK_Guide.pdf
 ├── Examples

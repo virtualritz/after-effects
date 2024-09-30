@@ -1,11 +1,6 @@
 # `after-effects-sys`
 
-Current version: 0.1.5
-
 Raw After Effects® (Ae) API bindings via [bindgen](https://github.com/rust-lang/rust-bindgen).
-
-This is WIP – only tested on `macOS`. Will likely require additional work to
-build on `Windows`.
 
 ## Prequisites
 
@@ -29,7 +24,7 @@ AfterEffectsSDK
     ├── ...
 ```
 
-Crate `version 0.1.5` was tested with the *Ae SDK* from **October 2021**.
+Crate `version 0.2.0` was tested with the *Ae SDK* from **May 2023**.
 
 ## Configuration
 
@@ -56,10 +51,6 @@ The `build.rs` contains `Clang` arguments to find neccessary system headers.
 This is configured for _macOS 10.15_ (Catalina).
 
 You may need to edit this if you are targeting older system headers.
-
-### Windows
-
-TBD. Help wanted!
 
 ## Usage
 

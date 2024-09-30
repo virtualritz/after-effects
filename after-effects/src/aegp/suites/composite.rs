@@ -15,12 +15,12 @@ impl CompositeSuite {
         crate::Suite::new()
     }
 
-    /// For the given [`EffectWorld`], sets the alpha to fully transparent except for the specified rectangle.
+    /// For the given `EffectWorld`, sets the alpha to fully transparent except for the specified rectangle.
     pub fn clear_alpha_except_rect(&self, clipped_dest_rect: Rect, dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_ClearAlphaExceptRect, &mut clipped_dest_rect.into() as *mut _, dst_world.as_ptr())
     }
 
-    /// Blends two [`EffectWorld`]s using a transfer mode, with an optional mask.
+    /// Blends two `EffectWorld`s using a transfer mode, with an optional mask.
     ///
     /// Pass `None` for the `blending_tables` parameter to perform blending in the current working color space.
     pub fn transfer_rect(
@@ -54,16 +54,16 @@ impl CompositeSuite {
         )
     }
 
-    /// Mattes the pixels in a [`EffectWorld`] with the `PF_Pixel` described in src_masks, putting the output into an array of pixels dst_mask.
+    /// Mattes the pixels in a `EffectWorld` with the `PF_Pixel` described in src_masks, putting the output into an array of pixels dst_mask.
     ///
-    /// NOTE: Unlike most of the other pixel mangling functions provided by After Effects, this one doesn't take [`EffectWorld`] arguments;
-    /// rather, you can simply pass the data pointer from within the [`EffectWorld`].
+    /// NOTE: Unlike most of the other pixel mangling functions provided by After Effects, this one doesn't take `EffectWorld` arguments;
+    /// rather, you can simply pass the data pointer from within the `EffectWorld`.
     /// This can be confusing, but as a bonus, the function pads output appropriately so that `num_pix` pixels are always output.
     pub fn prep_track_matte(&self, num_pix: i32, deep: bool, src_mask: &[ae_sys::PF_Pixel], mask_flags: MaskFlags, dst_mask: &mut [ae_sys::PF_Pixel]) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_PrepTrackMatte, num_pix, deep as _, src_mask.as_ptr(), mask_flags.into(), dst_mask.as_mut_ptr())
     }
 
-    /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one [`EffectWorld`] to another, at low quality.
+    /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one `EffectWorld` to another, at low quality.
     pub fn copy_bits_lq(&self, src_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>, src_r: Option<Rect>, dst_r: Option<Rect>, dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<(), Error> {
         call_suite_fn!(self,
             AEGP_CopyBits_LQ,
@@ -74,7 +74,7 @@ impl CompositeSuite {
         )
     }
 
-    /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one [`EffectWorld`] to another, at high quality, with a straight alpha channel.
+    /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one `EffectWorld` to another, at high quality, with a straight alpha channel.
     pub fn copy_bits_hq_straight(&self, src_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>, src_r: Option<Rect>, dst_r: Option<Rect>, dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<(), Error> {
         call_suite_fn!(self,
             AEGP_CopyBits_HQ_Straight,
@@ -85,7 +85,7 @@ impl CompositeSuite {
         )
     }
 
-    /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one [`EffectWorld`] to another, at high quality, premultiplying the alpha channel.
+    /// Copies a rectangle of pixels (pass a `None` rectangle to get all pixels) from one `EffectWorld` to another, at high quality, premultiplying the alpha channel.
     pub fn copy_bits_hq_premul(&self, src_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>, src_r: Option<Rect>, dst_r: Option<Rect>, dst_world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<(), Error> {
         call_suite_fn!(self,
             AEGP_CopyBits_HQ_Premul,

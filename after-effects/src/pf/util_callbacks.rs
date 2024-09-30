@@ -36,6 +36,7 @@ macro_rules! call_fn {
 
 
 #[macro_export]
+#[doc(hidden)]
 macro_rules! define_iterate {
     ($(+ $in_data:ident: $in_data_ty:ty, )? $name:ident, $pixel:ident, $pixel_ptr:ident $(, $additional:ident: $additional_type:ty)?) => {
         /// This invokes a function you specify on a region of pixels in the source and dest images.
@@ -101,6 +102,7 @@ macro_rules! define_iterate {
 }
 
 #[macro_export]
+#[doc(hidden)]
 macro_rules! define_iterate_lut_and_generic {
     ($(+ $in_data:ident: $in_data_ty:ty, )?) => {
         /// Allows a Look-Up Table (LUT) to be passed for iteration; you can pass the same or different LUTs for each color channel.
@@ -347,7 +349,7 @@ impl UtilCallbacks {
         }
     }
 
-    /// This creates a new [`EffectWorld`] for scratch for you. You must dispose of it. This is quality independent.
+    /// This creates a new [`Layer`] for scratch for you. You must dispose of it. This is quality independent.
     pub fn new_world(&self, width: usize, height: usize, flags: NewWorldFlags) -> Result<Layer, Error> {
         let mut world = unsafe { std::mem::zeroed() };
         call_fn!(self, new_world, width as _, height as _, flags.bits() as _, &mut world)?;
@@ -356,7 +358,7 @@ impl UtilCallbacks {
         }))
     }
 
-    /// This disposes a [`EffectWorld`], deallocating pixels, etc. Only call it on worlds you have created. Quality independent.
+    /// This disposes a [`Layer`], deallocating pixels, etc. Only call it on worlds you have created. Quality independent.
     pub fn dispose_world(&self, world: *mut ae_sys::PF_EffectWorld) -> Result<(), Error> {
         call_fn!(self, dispose_world, world)
     }

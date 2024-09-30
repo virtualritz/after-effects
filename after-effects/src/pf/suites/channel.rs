@@ -89,7 +89,7 @@ define_enum! {
     /// These are the elementary data types we understand.
     /// By convention we reserve the last characters of the type to designate the size in bytes of a plane of data.
     /// This together with the dimension tells us the size of each pixel.
-    /// For example, data of [`ChannelType::Color`] with [`DataType::Double`] would consist of 32 bytes per pixel.
+    /// For example, data of [`ChannelType::BackgroundColor`] with [`DataType::Double`] would consist of 32 bytes per pixel.
     DataType {
         /// 4 byte
         Float         = PF_DATATYPE_FLOAT,

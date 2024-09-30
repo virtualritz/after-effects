@@ -57,7 +57,7 @@ impl RenderSuite {
     ///
     /// Create the [`aegp::LayerRenderOptions`] using the [`aegp::LayerRenderOptions::from_upstream_of_effect()`].
     ///
-    /// You can actually use [`aegp::LayerRenderOptions::new_from_layer()`] to get other layer param's layers with their effects applied.
+    /// You can actually use [`aegp::LayerRenderOptions::from_layer()`] to get other layer param's layers with their effects applied.
     /// However, be careful. If you do it in your effect A, and there's an effect B on the other layer that does the same thing during rendering, you'd create an infinite loop.
     /// If you're not doing it for render purposes then it could be okay.
     ///

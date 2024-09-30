@@ -1,3 +1,114 @@
+/// This macro defines the main entry point for an After Effects plugin.
+///
+/// You have to pass 3 arguments to this macro:
+/// - The global type, which will be the same across all instances of the plugin
+/// - The instance type, which will be created for each instance of the plugin
+/// - The parameters type
+///
+/// # 1. The global type
+/// This type will be the same across all instances of the plugin. It can be used to store global state, such as the plugin version, data cache, or any other global data.
+/// It must implement the `Default` trait which will be called on [`Command::GlobalSetup`](crate::pf::Command::GlobalSetup). You can use the `Drop` trait to clean up any resources on [`Command::GlobalSetdown`](crate::pf::Command::GlobalSetdown).
+///
+/// Your global type must implement the `AdobePluginGlobal` trait, which defines the plugin's command selectors.
+/// ```rust
+/// trait AdobePluginGlobal : Default {
+///     fn can_load(host_name: &str, host_version: &str) -> bool;
+///
+///     fn params_setup(&self,
+///         params: &mut Parameters<ParamsType>,
+///         in_data: InData,
+///         out_data: OutData
+///     ) -> Result<(), Error>;
+///
+///     fn handle_command(&mut self,
+///         command: Command,
+///         in_data: InData,
+///         out_data: OutData,
+///         params: &mut Parameters<ParamsType>
+///     ) -> Result<(), Error>;
+/// }
+/// ```
+///
+/// # 2. The instance type
+/// This type will be created in [`Command::SequenceSetup`](crate::pf::Command::SequenceSetup) and destroyed in [`Command::SequenceSetdown`](crate::pf::Command::SequenceSetdown).
+/// It can be used to store instance-specific state, such as some data calculated from the plugin's parameters.
+/// It must implement the `Default` trait which will be called on [`Command::SequenceSetup`](crate::pf::Command::SequenceSetup).
+/// You can use the `Drop` trait to clean up any resources on [`Command::SequenceSetdown`](crate::pf::Command::SequenceSetdown).
+///
+/// Your instance type must implement the `AdobePluginInstance` trait, which defines the instance's command selectors.
+///
+/// Use the `flatten()` method to serialize the contents of your struct to a `Vec<u8>` (you can use serde, bincode, or any other serialization library).
+/// The serialized data will be stored in the project file and used to create copies of the instance for Multi-Frame Rendering. It will be passed to the `unflatten()` method to restore the instance.
+///
+/// The `unflatten()` method will be called to restore the instance from the serialized data. The `u16` parameter specifies the version of the serialized data,
+/// so you can always restore the data correctly even if user updates your plugin and tries to load a project file with older data version in it.
+/// ```rust
+/// trait AdobePluginInstance : Default {
+///     fn flatten(&self) -> Result<(u16, Vec<u8>), Error>;
+///     fn unflatten(version: u16, serialized: &[u8]) -> Result<Self, Error>;
+///
+///     fn render(&self,
+///         plugin: &mut PluginState,
+///         in_layer: &Layer,
+///         out_layer: &mut Layer
+///     ) -> Result<(), ae::Error>;
+///
+///     #[cfg(does_dialog)]
+///     fn do_dialog(&mut self,
+///         plugin: &mut PluginState
+///     ) -> Result<(), ae::Error>;
+///
+///     fn handle_command(&mut self,
+///         plugin: &mut PluginState,
+///         command: Command
+///     ) -> Result<(), Error>;
+/// }
+/// ```
+///
+/// ### ⚠️ Caution: The creation and destruction of the instance type is not intuitive when Multi-Frame Rendering is enabled.
+/// After Effects will create many copies of this instance using [`Command::SequenceFlatten`](crate::pf::Command::SequenceFlatten) and [`Command::SequenceResetup`](crate::pf::Command::SequenceResetup).
+/// These copies may be created and destroyed in a weird order and in different threads.
+///
+/// If you want to keep an consistent and shared state between all these copies, consider using the [`define_cross_thread_type!`](crate::define_cross_thread_type) macro.
+///
+/// If your state is entirely serializable to the `Vec<u8>` in `flatten()` and doesn't depend on any global pointers or shared resources, you don't have to worry about this.
+///
+/// # 3. The parameters type
+/// This is an enum which covers all parameters in your plugin. It must implement the `Eq`, `PartialEq`, `Hash`, `Clone`, `Copy`, and `Debug` traits.
+/// You will use this enum to define the parameters in `params_setup()` and to access the parameters from the [`Parameters`](crate::pf::Parameters) struct in the `handle_command()` method.
+///
+///
+/// ## Refer to the [Adobe After Effects SDK](https://ae-plugins.docsforadobe.dev/effect-basics/command-selectors.html) to learn more about the plugin entry point and command selectors.
+///
+/// # Example usage:
+///
+/// ```rust
+/// #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
+/// enum Params { Opacity }
+///
+/// #[derive(Default)]
+/// struct Plugin { }
+///
+/// #[derive(Default)]
+/// struct Instance {
+///     my_state: i32,
+/// }
+///
+/// ae::define_effect!(Plugin, Instance, Params);
+/// ```
+///
+/// If you don't need any specific state for each instance, you can pass the unit type (`()`) as the second argument.
+///
+/// ```rust
+/// #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
+/// enum Params { Opacity }
+///
+/// #[derive(Default)]
+/// struct Plugin { }
+///
+/// ae::define_effect!(Plugin, (), Params);
+/// ```
+///
 #[macro_export]
 macro_rules! define_effect {
     ($global_type:ty, $sequence_type:tt, $params_type:ty) => {
