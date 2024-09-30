@@ -10,7 +10,7 @@
 /// It must implement the `Default` trait which will be called on [`Command::GlobalSetup`](crate::pf::Command::GlobalSetup). You can use the `Drop` trait to clean up any resources on [`Command::GlobalSetdown`](crate::pf::Command::GlobalSetdown).
 ///
 /// Your global type must implement the `AdobePluginGlobal` trait, which defines the plugin's command selectors.
-/// ```rust
+/// ```ignore
 /// trait AdobePluginGlobal : Default {
 ///     fn can_load(host_name: &str, host_version: &str) -> bool;
 ///
@@ -42,7 +42,7 @@
 ///
 /// The `unflatten()` method will be called to restore the instance from the serialized data. The `u16` parameter specifies the version of the serialized data,
 /// so you can always restore the data correctly even if user updates your plugin and tries to load a project file with older data version in it.
-/// ```rust
+/// ```ignore
 /// trait AdobePluginInstance : Default {
 ///     fn flatten(&self) -> Result<(u16, Vec<u8>), Error>;
 ///     fn unflatten(version: u16, serialized: &[u8]) -> Result<Self, Error>;
@@ -82,7 +82,7 @@
 ///
 /// # Example usage:
 ///
-/// ```rust
+/// ```ignore
 /// #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
 /// enum Params { Opacity }
 ///
@@ -99,7 +99,7 @@
 ///
 /// If you don't need any specific state for each instance, you can pass the unit type (`()`) as the second argument.
 ///
-/// ```rust
+/// ```ignore
 /// #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
 /// enum Params { Opacity }
 ///

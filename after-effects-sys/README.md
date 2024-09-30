@@ -15,7 +15,7 @@ Download the [*Adobe AfterEffects SDK*](https://console.adobe.io/downloads/ae).
 Define the `AESDK_ROOT` environment variable that contains the path to your
 Ae SDK. Typically the directory structure will look like this:
 
-```
+```ignore
 AfterEffectsSDK
 ├── After_Effects_SDK_Guide.pdf
 ├── Examples
@@ -56,8 +56,9 @@ You may need to edit this if you are targeting older system headers.
 
 Until this is published it is suggested to use a link to this repository:
 
-````rust
-cargo add after-effects-sys.
+```text
+cargo add after-effects-sys
+```
 
 ## License
 

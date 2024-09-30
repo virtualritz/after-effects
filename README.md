@@ -37,7 +37,7 @@ You can also re-generate the bindings by downloading the SDK headers from Adobe 
 
 Add `after-effects` or `premiere` to your dependencies and `pipl` to your dev-dependencies.
 
-```rust
+```text
 cargo add after-effects
 cargo add --dev pipl
 ```
@@ -104,7 +104,7 @@ Download the [*Adobe After Effects SDK*](https://console.adobe.io/downloads/ae).
 Define the `AESDK_ROOT` environment variable that contains the path to your
 Ae SDK. Typically the directory structure will look like this:
 
-```text
+```ignore
 AfterEffectsSDK
 ├── After_Effects_SDK_Guide.pdf
 ├── Examples

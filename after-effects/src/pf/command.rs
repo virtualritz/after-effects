@@ -157,7 +157,7 @@ pub enum Command {
     /// If this flag is not set the requested render is not possible with the requested GPU, because of parameters or render settings.
     ///
     /// The host may re-call PreRender with another what_gpu option (or PF_GPU_Framework_None).
-    /// ```rust
+    /// ```ignore
     /// struct PF_PreRenderInput{
     ///   output_request: PF_RenderRequest, // what the effect is being asked to render
     ///   bitdepth: u16,                    // bitdepth the effect is being driven in (in bpc)
@@ -180,7 +180,7 @@ pub enum Command {
     /// [`Command::SmartRenderGpu`] will only be called when `what_gpu != PF_GPU_Framework_None`, and has effects on any input / output PF_LayerDef’s.
     ///
     /// All frame check-ins and check-outs will operate on GPU frames when this selector is in progress. Note [`Command::SmartRender`] shares the Extra structs.
-    /// ```rust
+    /// ```ignore
     /// struct PF_SmartRenderInput {
     ///   output_request: PF_RenderRequest, // what the effect is being asked to render
     ///   bitdepth: u16,                    // bitdepth the effect is being driven in (in bpc)
@@ -226,7 +226,7 @@ pub enum Command {
     /// This pointer is also available at render time.
     GpuDeviceSetup { extra: GpuDeviceSetupExtra },
     /// Release any resources associated with gpu_data. In AE this will be called just before GPU device release.
-    /// ```rust
+    /// ```ignore
     /// struct PF_GPUDeviceSetdownInput {
     ///   gpu_data: *mut c_void,  // effect must dispose.
     ///   what_gpu: PF_GPU_Framework,
