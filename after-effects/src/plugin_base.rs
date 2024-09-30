@@ -37,11 +37,6 @@
 ///
 /// Your instance type must implement the `AdobePluginInstance` trait, which defines the instance's command selectors.
 ///
-/// Use the `flatten()` method to serialize the contents of your struct to a `Vec<u8>` (you can use serde, bincode, or any other serialization library).
-/// The serialized data will be stored in the project file and used to create copies of the instance for Multi-Frame Rendering. It will be passed to the `unflatten()` method to restore the instance.
-///
-/// The `unflatten()` method will be called to restore the instance from the serialized data. The `u16` parameter specifies the version of the serialized data,
-/// so you can always restore the data correctly even if user updates your plugin and tries to load a project file with older data version in it.
 /// ```ignore
 /// trait AdobePluginInstance : Default {
 ///     fn flatten(&self) -> Result<(u16, Vec<u8>), Error>;
@@ -62,6 +57,23 @@
 ///         plugin: &mut PluginState,
 ///         command: Command
 ///     ) -> Result<(), Error>;
+/// }
+/// ```
+///
+/// Use the `flatten()` method to serialize the contents of your struct to a `Vec<u8>` (you can use serde, bincode, or any other serialization library).
+/// The serialized data will be stored in the project file and used to create copies of the instance for Multi-Frame Rendering. It will be passed to the `unflatten()` method to restore the instance.
+///
+/// The `unflatten()` method will be called to restore the instance from the serialized data. The `u16` parameter specifies the version of the serialized data,
+/// so you can always restore the data correctly even if user updates your plugin and tries to load a project file with older data version in it.
+///
+/// The `PluginState` struct allows you to access the global struct, instance struct, parameters, and input/output data in your plugin's command selectors.
+/// ```ignore
+/// struct PluginState {
+///    global: &mut GlobalType,
+///    sequence: Option<&mut InstanceType>,
+///    params: &mut Parameters<ParamsType>,
+///    in_data: InData,
+///    out_data: OutData
 /// }
 /// ```
 ///
