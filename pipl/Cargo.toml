@@ -4,8 +4,16 @@ version = "0.1.0"
 authors = ["Adrian <adrian.eddy@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
+exclude = ["tests"]
 description = "Library for building Adobe's PiPL plugin info resource"
-keywords = ["motion-graphics", "adobe", "after-effects", "premiere", "graphics", "plugins"]
+keywords = [
+    "motion-graphics",
+    "adobe",
+    "after-effects",
+    "premiere",
+    "graphics",
+    "plugins",
+]
 categories = ["graphics", "multimedia::video", "rendering::graphics-api"]
 repository = "https://github.com/virtualritz/after-effects/"
 
@@ -13,11 +21,11 @@ repository = "https://github.com/virtualritz/after-effects/"
 name = "pipl"
 
 [dependencies]
-byteorder = "1.5"
 bitflags = "2.6"
-winres = "0.1"
+byteorder = "1.5"
 pretty-hex = "0.4"
+winres = "0.1"
 
 [dev-dependencies]
-similar-asserts = "1.6.0"
 pretty-hex = "0.4"
+similar-asserts = "1.6.0"
