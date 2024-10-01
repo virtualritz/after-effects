@@ -1,7 +1,9 @@
 [package]
 name = "after-effects-sys"
 version = "0.2.0"
-authors = ["Moritz Moeller <virtualritz@protonmail.com>"]
+authors = [
+    "Adrian Eddy <adrian.eddy@gmail.com>, Moritz Moeller <virtualritz@protonmail.com>",
+]
 license = "Apache-2.0 OR BSD-3-Clause OR MIT OR Zlib"
 edition = "2021"
 description = "Auto-generated After Effects® bindings"
@@ -15,4 +17,4 @@ repository = "https://github.com/virtualritz/after-effects/"
 artisan-2-api = []
 
 [build-dependencies]
-bindgen = "0.70.1"
+bindgen = "0.70"
