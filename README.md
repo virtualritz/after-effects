@@ -1,18 +1,19 @@
-# `after-effects`
+# Rust Bindings for Adobe AfterEffects® & Premiere Pro® SDKs
 
 High level bindings for the Adobe AfterEffects® (Ae) and Adobe Premiere Pro® SDKs.
 
-This wraps many of the API suites in the Ae and Pr SDK and exposes them in safe Rust.
+This wraps many of the API suites in the Ae and Pr SDK and exposes them in _safe_ Rust.
 
-It also defines a set of macros that implement all the plugin boilerplate for you,
-so you can focus just on your actual plugin implementation.
+It also defines a set of macros that implement all the plugin boilerplate for you, so you can
+focus just on your actual plugin implementation.
 
-Building the plugins is done entirely with Rust – there's no need to use any external
-programs or dependencies.
+_Building the plugins is done entirely with Rust – there's no need to use any external programs or
+dependencies._
 
-Packaging of the final plugin is done using a `just` script. Install with `cargo install just` and
-download [`AdobePlugin.just`](https://raw.githubusercontent.com/virtualritz/after-effects/master/AdobePlugin.just)
-and put it next to your Cargo.toml.
+Packaging of the final plugin is done using a [`just`](https://github.com/casey/just) script.
+Install with `cargo install just` and download
+[`AdobePlugin.just`](https://raw.githubusercontent.com/virtualritz/after-effects/master/AdobePlugin.just)
+and put it next to your `Cargo.toml`.
 
 Adobe plugins contain a special resource describing the plugin called `PiPL`. This repository
 includes a `PiPL` tool written in Rust which generates the needed resource in `build.rs`.
@@ -22,16 +23,6 @@ Pre-generated SDK bindings are included, so you can compile the final plugin by 
 
 You can also re-generate the bindings by downloading the SDK headers from Adobe and setting
 `AESDK_ROOT` and/or `PRSDK_ROOT` environment variables.
-
-## Features
-
-* `artisan-2-api` – Use the 2nd generation Artisan 3D API. This is not
-  included in the official Ae SDK. Specifically it requires:
-  * `AE_Scene3D_Private.h`
-  * `PR_Feature.h`
-
-  Contact the Adobe Ae SDK team and ask nicely and they may send you
-  theses headers.
 
 ## Using
 
@@ -50,15 +41,15 @@ The main engine is based on After Effects, but Premiere loads most of the Ae plu
 While they have many common parts, there are some areas that are separated.
 
 - Premiere is missing all `AEGP` suites.
-  
-- Premiere uses only software rendering, even if the AE plugin supports GPU render and Smart
+
+- Premiere uses only software rendering, even if the Ae plugin supports GPU render and Smart
   Render.
-  
-- Premiere has a separate entry point for GPU rendering, which can be defined using
+
+- Premiere has a separate entry point for GPU rendering, which can be defined using the
   `premiere::define_gpu_filter!` macro.
-  
+
 - After Effects and Premiere also have some separate areas that are implemented independently.
-  
+
 - You can't write a video filter plugin using only the Premiere SDK, the base engine is using Ae
   SDK.
 
@@ -98,20 +89,24 @@ debug-assertions = true
 
 in your `Cargo.toml` file.
 
-The release build doesn't catch panics by default to not any additional overhead. You can opt-in
-for the panic handler by enabling cargo feature "catch-panics" (`features = ["catch-panics"]`).
+The release build doesn't catch panics by default to not add any additional overhead. You can
+opt-in for the panic handler by enabling `catch-panics` `cargo` feature:
+
+```toml
+features = ["catch-panics"]
+```
 
 ## Help Wanted/To Do
 
-* If you need a suite that's not yet wrapped, feel free to create a PR wrapping that suite.
+- If you need a suite that's not yet wrapped, feel free to create a PR wrapping that suite.
 
-* Examples and documentation.
+- Examples and documentation.
 
-* Better error handling. Possibly using [`color`](https://crates.io/crates/color-eyre)`-`[`eyre`](https://crates.io/crates/eyre)?
+- Better error handling. Possibly using [`color`](https://crates.io/crates/color-eyre)`-`[`eyre`](https://crates.io/crates/eyre)?
 
-### Using the Adobe SDK C++ headers
+### Using the Adobe SDK C++ Headers
 
-Download the [*Adobe After Effects SDK*](https://console.adobe.io/downloads/ae).
+Download the [_Adobe After Effects SDK_](https://console.adobe.io/downloads/ae).
 
 > ⚠️ The SDK published by Adobe is outdated if you are using the 3D
 > Artisan API to write your own 3D renderer plug-in.
@@ -135,8 +130,9 @@ AfterEffectsSDK
 ## Wrapped Suites
 
 ### After Effects
+
 | AEGP                    | PF                                | DRAWBOT     | Other                 |
-|-------------------------|-----------------------------------|-------------|-----------------------|
+| ----------------------- | --------------------------------- | ----------- | --------------------- |
 | 🔳 Artisan Util         | ✅ AE Adv App                     | ✅ Draw     | ✅ AE Plugin Helper   |
 | ✅ Camera               | ✅ AE Adv Item                    | ✅ Image    | ✅ AE Plugin Helper 2 |
 | ✅ Canvas               | 🔳 AE Adv Time                    | ✅ Path     |                       |
@@ -190,7 +186,7 @@ AfterEffectsSDK
 ### Premiere
 
 | Premiere                  | MediaCore                        | Control Surface                 | Other                    |
-|---------------------------|----------------------------------|---------------------------------|--------------------------|
+| ------------------------- | -------------------------------- | ------------------------------- | ------------------------ |
 | 🔳 Audio                  | 🔳 Accelerated Render Invocation | 🔳 ControlSurface               | ✅ PF Background Frame   |
 | 🔳 Clip Render            | 🔳 App Info                      | 🔳 ControlSurface Command       | ✅ PF Cache On Load      |
 | 🔳 Deferred Processing    | 🔳 Application Settings          | 🔳 ControlSurface Lumetri       | ✅ PF Pixel Format       |

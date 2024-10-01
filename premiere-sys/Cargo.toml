@@ -11,4 +11,4 @@ homepage = "https://developer.adobe.com/premiere-pro/"
 repository = "https://github.com/virtualritz/after-effects/"
 
 [build-dependencies]
-bindgen = "0.70.1"
+bindgen = "0.70"
