@@ -6,14 +6,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 exclude = ["tests"]
 description = "Library for building Adobe's PiPL plugin info resource"
-keywords = [
-    "motion-graphics",
-    "adobe",
-    "after-effects",
-    "premiere",
-    "graphics",
-    "plugins",
-]
+keywords = ["motion-graphics", "adobe", "after-effects", "premiere", "plugins"]
 categories = ["graphics", "multimedia::video", "rendering::graphics-api"]
 repository = "https://github.com/virtualritz/after-effects/"
 
