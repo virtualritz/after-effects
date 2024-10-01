@@ -1,0 +1,16 @@
+[package]
+name = "sdk_noise"
+version = "0.0.1"
+authors = ["Adrian <adrian.eddy@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+after-effects = { path = "../../after-effects" }
+rayon = "1.9"
+
+[build-dependencies]
+pipl = { path = "../../pipl" }

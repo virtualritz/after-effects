@@ -1,0 +1,15 @@
+[package]
+name = "paramarama"
+version = "0.0.1"
+authors = ["Adrian <adrian.eddy@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+after-effects = { path = "../../after-effects" }
+
+[build-dependencies]
+pipl = { path = "../../pipl" }

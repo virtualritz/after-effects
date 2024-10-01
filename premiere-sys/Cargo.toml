@@ -1,0 +1,14 @@
+[package]
+name = "premiere-sys"
+version = "0.2.0"
+authors = ["Adrian <adrian.eddy@gmail.com>"]
+license = "Apache-2.0 OR BSD-3-Clause OR MIT OR Zlib"
+edition = "2021"
+description = "Auto-generated Adobe Premiere® bindings"
+keywords = ["motion-graphics", "premiere", "graphics", "plugins"]
+categories = ["graphics", "multimedia::video", "rendering::graphics-api"]
+homepage = "https://developer.adobe.com/premiere-pro/"
+repository = "https://github.com/virtualritz/after-effects/"
+
+[build-dependencies]
+bindgen = "0.70.1"

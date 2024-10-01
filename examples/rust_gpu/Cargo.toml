@@ -1,0 +1,21 @@
+[package]
+name = "rustgpu"
+version = "0.0.1"
+authors = ["Adrian <adrian.eddy@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+after-effects = { path = "../../after-effects" }
+log = "0.4"
+wgpu = { version = "22.1", features = ["spirv"] }
+pollster = "0.3"
+futures-intrusive = "0.5"
+parking_lot = "0.12"
+num_cpus = "1.16"
+
+[build-dependencies]
+pipl = { path = "../../pipl" }

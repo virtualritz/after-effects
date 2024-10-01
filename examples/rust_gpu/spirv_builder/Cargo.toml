@@ -1,0 +1,11 @@
+[package]
+name = "spirv_builder"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+
+[build-dependencies]
+spirv-builder = "0.9"

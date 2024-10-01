@@ -29,10 +29,12 @@ fn main() {
         Property::AE_Effect_Info_Flags(0),
         Property::AE_Effect_Global_OutFlags(
             OutFlags::PixIndependent |
-            OutFlags::UseOutputExtent
+            OutFlags::UseOutputExtent |
+            OutFlags::DeepColorAware
         ),
         Property::AE_Effect_Global_OutFlags_2(
-            OutFlags2::SupportsThreadedRendering
+            OutFlags2::SupportsThreadedRendering |
+            OutFlags2::SupportsGetFlattenedSequenceData
         ),
         Property::AE_Effect_Match_Name("ADBE Portable"),
         Property::AE_Reserved_Info(0),

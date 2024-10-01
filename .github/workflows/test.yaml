@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+
+jobs:
+  test_macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build and test
+        run: |
+          cargo build
+          cargo test
+
+  test_windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build and test
+        run: |
+          cargo build
+          cargo test

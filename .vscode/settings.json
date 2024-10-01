@@ -1,0 +1,24 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./Cargo.toml",
+        "./after-effects-sys/Cargo.toml",
+        "./premiere-sys/Cargo.toml",
+        "./premiere/Cargo.toml",
+        "./pipl/Cargo.toml",
+        "./examples/checkout/Cargo.toml",
+        "./examples/color_grid/Cargo.toml",
+        "./examples/convolutrix/Cargo.toml",
+        "./examples/custom_comp_ui/Cargo.toml",
+        "./examples/custom_ecw_ui/Cargo.toml",
+        "./examples/gamma_table/Cargo.toml",
+        "./examples/histo_grid/Cargo.toml",
+        "./examples/paramarama/Cargo.toml",
+        "./examples/portable/Cargo.toml",
+        "./examples/resizer/Cargo.toml",
+        "./examples/rust_gpu/Cargo.toml",
+        "./examples/sdk_noise/Cargo.toml",
+        "./examples/simplest/Cargo.toml",
+        "./examples/supervisor/Cargo.toml",
+        "./examples/transformer/Cargo.toml"
+    ]
+}

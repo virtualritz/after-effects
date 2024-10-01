@@ -5,12 +5,15 @@ use std::{
     env,
     path::{Path, PathBuf},
 };
-//use std::process::Command;
 
 fn main() {
-    // TODO: make this generic & work on bot macOS & Windows
-
     println!("cargo:rerun-if-changed=wrapper.hpp");
+
+    println!("cargo::rustc-check-cfg=cfg(builtin_bindings)");
+    if env::var("AESDK_ROOT").is_err() {
+        println!("cargo:rustc-cfg=builtin_bindings");
+        return;
+    }
 
     let ae_sdk_path = &env::var("AESDK_ROOT").expect(
         "AESDK_ROOT environment variable not set – cannot find AfterEffcts SDK.\n\
@@ -25,27 +28,26 @@ fn main() {
     let mut ae_bindings = bindgen::Builder::default()
         .header("wrapper.hpp")
         //.derive_debug(true)
-        .allowlist_function("A_.*")
-        .allowlist_type("A_.*")
+        .allowlist_item("A_.*")
         .allowlist_var("A_.*")
-        .allowlist_function("AEGP.*")
-        .allowlist_type("AEGP.*")
+        .allowlist_item("AEGP.*")
         .allowlist_var("AEGP.*")
-        .allowlist_var("kAEGP.*")
-        .allowlist_var("AEIO_.*")
-        .allowlist_function("DRAWBOT_.*")
-        .allowlist_type("DRAWBOT_.*")
-        .allowlist_var("DRAWBOT_.*")
+        .allowlist_item("kAEGP.*")
+        .allowlist_item("AEIO_.*")
+        .allowlist_item("DRAWBOT_.*")
+        .allowlist_item("kDRAWBOT_.*")
         .allowlist_var("kDRAWBOT_.*")
-        .allowlist_var("FIEL_.*")
-        .allowlist_function("PF_.*")
-        .allowlist_type("PF_.*")
-        .allowlist_var("PF_.*")
-        .allowlist_var("kPF.*")
-        .allowlist_function("PR_.*")
-        .allowlist_type("PR_.*")
-        .allowlist_var("PR_.*")
-        .allowlist_var("kSP.*")
+        .allowlist_item("FIEL_.*")
+        .allowlist_item("PF.*")
+        .allowlist_var("PF.*")
+        .allowlist_item("kPF.*")
+        .allowlist_item("kPR.*")
+        .allowlist_item("kPr.*")
+        .allowlist_item("PR_.*")
+        .allowlist_item("Pr.*")
+        .allowlist_item("kSP.*")
+        .allowlist_var("suiteError.*")
+        .layout_tests(false)
         //.clang_arg("-include stdint.h")
         .clang_arg(format!(
             "-I{}",
