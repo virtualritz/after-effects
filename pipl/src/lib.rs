@@ -4,7 +4,7 @@
 mod resource;
 pub use resource::*;
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 use byteorder::BigEndian as ByteOrder;
 #[cfg(target_os = "windows")]
 use byteorder::LittleEndian as ByteOrder;
@@ -52,7 +52,7 @@ const fn fourcc(code: &[u8; 4]) -> [u8; 4] {
     {
         [code[3], code[2], code[1], code[0]]
     }
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
         *code
     }
@@ -62,7 +62,7 @@ const fn u32_bytes(v: u32) -> [u8; 4] {
     {
         v.to_le_bytes()
     }
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
         v.to_be_bytes()
     }
@@ -1517,6 +1517,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
 }
 
 pub fn plugin_build(properties: Vec<Property>) {
+    let mut any_entrypoint_emitted = false;
     for prop in properties.iter() {
         match prop {
             Property::Kind(x) => {
@@ -1525,7 +1526,7 @@ pub fn plugin_build(properties: Vec<Property>) {
                     {
                         u32::from_le_bytes(x.as_bytes())
                     }
-                    #[cfg(target_os = "macos")]
+                    #[cfg(any(target_os = "macos", target_os = "linux"))]
                     {
                         u32::from_be_bytes(x.as_bytes())
                     }
@@ -1545,12 +1546,15 @@ pub fn plugin_build(properties: Vec<Property>) {
                 println!("cargo:rustc-env=PIPL_SUPPORT_URL={x}");
             }
             Property::CodeWin64X86(x) => {
+                any_entrypoint_emitted = true;
                 println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
             }
             Property::CodeMacIntel64(x) => {
+                any_entrypoint_emitted = true;
                 println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
             }
             Property::CodeMacARM64(x) => {
+                any_entrypoint_emitted = true;
                 println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
             }
             Property::AE_Effect_Spec_Version { major, minor } => {
@@ -1598,6 +1602,9 @@ pub fn plugin_build(properties: Vec<Property>) {
             }
             _ => {}
         }
+    }
+    if !any_entrypoint_emitted {
+        println!("cargo:rustc-env=PIPL_ENTRYPOINT=EffectMain");
     }
     let pipl = build_pipl(properties).unwrap();
 

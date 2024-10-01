@@ -1,6 +1,6 @@
 [package]
 name = "premiere-sys"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Adrian <adrian.eddy@gmail.com>"]
 license = "Apache-2.0 OR BSD-3-Clause OR MIT OR Zlib"
 edition = "2021"

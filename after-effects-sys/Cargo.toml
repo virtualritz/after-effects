@@ -1,6 +1,6 @@
 [package]
 name = "after-effects-sys"
-version = "0.2.0"
+version = "0.2.1"
 authors = [
     "Adrian Eddy <adrian.eddy@gmail.com>, Moritz Moeller <virtualritz@protonmail.com>",
 ]

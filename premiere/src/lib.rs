@@ -1,3 +1,5 @@
+#![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
+
 use premiere_sys as pr_sys;
 use std::ptr;
 use std::cell::RefCell;

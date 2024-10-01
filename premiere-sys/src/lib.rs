@@ -12,7 +12,7 @@
 #[cfg(all(target_os = "windows", builtin_bindings))]
 include!(concat!(env!("CARGO_MANIFEST_DIR"), "/bindings_win.rs"));
 
-#[cfg(all(target_os = "macos", builtin_bindings))]
+#[cfg(all(any(target_os = "macos", target_os = "linux"), builtin_bindings))]
 include!(concat!(env!("CARGO_MANIFEST_DIR"), "/bindings_macos.rs"));
 
 #[cfg(not(builtin_bindings))]
