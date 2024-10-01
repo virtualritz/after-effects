@@ -1,8 +1,8 @@
 # `premiere-sys`
 
-Raw Premiere® (Ae) API bindings via [bindgen](https://github.com/rust-lang/rust-bindgen).
+Raw Premiere® (Ae) API bindings via [`bindgen`](https://github.com/rust-lang/rust-bindgen).
 
-You probably want to use the high level [premiere](https://crates.io/crates/premiere) crate instead.
+You probably want to use the high level [`premiere`](https://crates.io/crates/premiere) crate instead.
 
 ## License
 

@@ -2,8 +2,7 @@
 
 High level bindings for the Adobe AfterEffects® (Ae) SDK.
 
-Please see the README in the
-[repository workspace root](https://github.com/virtualritz/after-effects) for more information.
+Please see the `README` in the [repository workspace root](https://github.com/virtualritz/after-effects) for more information.
 
 ## License
 
