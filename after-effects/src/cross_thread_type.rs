@@ -38,7 +38,7 @@ macro_rules! define_cross_thread_type {
             }
             impl Default for [<CrossThread $type_name>] {
                 fn default() -> Self {
-                    let id = fastrand::u64(..);
+                    let id = $crate::fastrand::u64(..);
                     let mut inst = <$type_name>::default();
                     Self::map().write().insert(id, std::sync::Arc::new($crate::parking_lot::RwLock::new(inst)));
                     Self { id }
