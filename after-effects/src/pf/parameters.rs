@@ -277,6 +277,19 @@ impl FloatSliderDef<'_> {
         }
     }
 }
+
+// This is not an enum because the set_precision method of the FloatSlider takes i16,
+// and since this is a preference thing (some people prefer to use 0 instead of Precision::Integer),
+// having it as a module with constants is more flexible.
+#[allow(non_upper_case_globals, non_snake_case)]
+pub mod Precision {
+    pub const Integer: i16 = 0;
+    pub const Tenths: i16 = 1;
+    pub const Hundredths: i16 = 2;
+    pub const Thousandths: i16 = 3;
+    pub const TenThousandths: i16 = 4;
+}
+
 // ―――――――――――――――――――――――――――――――――― FloatSlider ――――――――――――――――――――――――――――――――――
 
 // ―――――――――――――――――――――――――――――――――――― Path ―――――――――――――――――――――――――――――――――――――――
