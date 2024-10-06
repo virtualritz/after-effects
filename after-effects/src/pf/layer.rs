@@ -260,7 +260,51 @@ impl Layer {
         } else if flags.contains(WorldFlags::RESERVED1) {
             32
         } else {
-            (self.row_bytes().abs() as f32 / self.width() as f32).floor() as i16 / 4 * 8
+            if InData::from_raw(self.in_data_ptr).is_premiere() {
+                match self.pr_pixel_format() {
+                    Ok(pr::PixelFormat::Rgb444_10u) |
+                    Ok(pr::PixelFormat::V210422_10u601) |
+                    Ok(pr::PixelFormat::V210422_10u709) => { 10 }
+                    Ok(pr::PixelFormat::Rgb444_12uPq709) |
+                    Ok(pr::PixelFormat::Rgb444_12uPqP3) |
+                    Ok(pr::PixelFormat::Rgb444_12uPq2020) => { 12 }
+                    Ok(pr::PixelFormat::Bgra4444_16u) |
+                    Ok(pr::PixelFormat::Vuya4444_16u) |
+                    Ok(pr::PixelFormat::Argb4444_16u) |
+                    Ok(pr::PixelFormat::Bgrx4444_16u) |
+                    Ok(pr::PixelFormat::Xrgb4444_16u) |
+                    Ok(pr::PixelFormat::Bgrp4444_16u) |
+                    Ok(pr::PixelFormat::Prgb4444_16u) => { 16 }
+                    Ok(pr::PixelFormat::Bgra4444_32f) |
+                    Ok(pr::PixelFormat::Vuya4444_32f) |
+                    Ok(pr::PixelFormat::Vuya4444_32f709) |
+                    Ok(pr::PixelFormat::Argb4444_32f) |
+                    Ok(pr::PixelFormat::Bgrx4444_32f) |
+                    Ok(pr::PixelFormat::Vuyx4444_32f) |
+                    Ok(pr::PixelFormat::Vuyx4444_32f709) |
+                    Ok(pr::PixelFormat::Xrgb4444_32f) |
+                    Ok(pr::PixelFormat::Bgrp4444_32f) |
+                    Ok(pr::PixelFormat::Vuyp4444_32f) |
+                    Ok(pr::PixelFormat::Vuyp4444_32f709) |
+                    Ok(pr::PixelFormat::Prgb4444_32f) |
+                    Ok(pr::PixelFormat::Uyvy422_32f601) |
+                    Ok(pr::PixelFormat::Uyvy422_32f709) |
+                    Ok(pr::PixelFormat::Bgra4444_32fLinear) |
+                    Ok(pr::PixelFormat::Bgrp4444_32fLinear) |
+                    Ok(pr::PixelFormat::Bgrx4444_32fLinear) |
+                    Ok(pr::PixelFormat::Argb4444_32fLinear) |
+                    Ok(pr::PixelFormat::Prgb4444_32fLinear) |
+                    Ok(pr::PixelFormat::Xrgb4444_32fLinear) => { 32 }
+                    _ => { 8 }
+                }
+            } else {
+                match self.pixel_format() {
+                    Ok(PixelFormat::Argb64) => { 16 }
+                    Ok(PixelFormat::Argb128) |
+                    Ok(PixelFormat::GpuBgra128) => { 32 }
+                    _ => { 8 }
+                }
+            }
         }
     }
 
