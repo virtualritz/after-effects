@@ -2,22 +2,6 @@ use crate::*;
 use std::ffi::c_void;
 use ae_sys::{ PF_ProgPtr, PF_EffectWorld, _PF_UtilCallbacks, PF_Pixel, PF_Pixel16, PF_FloatMatrix };
 
-define_enum! {
-    ae_sys::PF_Quality,
-    Quality {
-        DrawingAudio = ae_sys::PF_Quality_DRAWING_AUDIO,
-        Lo           = ae_sys::PF_Quality_LO,
-        Hi           = ae_sys::PF_Quality_HI,
-    }
-}
-define_enum! {
-    ae_sys::PF_ModeFlags,
-    ModeFlags {
-        AlphaPremul   = ae_sys::PF_MF_Alpha_PREMUL,
-        AlphaStraight = ae_sys::PF_MF_Alpha_STRAIGHT,
-    }
-}
-
 macro_rules! call_fn {
     ($self:ident, $fn:ident, $($args:expr),*) => {
         unsafe {
@@ -33,7 +17,6 @@ macro_rules! call_fn {
         }
     };
 }
-
 
 #[macro_export]
 #[doc(hidden)]
