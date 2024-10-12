@@ -33,7 +33,17 @@ pub enum ProcShaderSource<'a> {
 impl<T: Sized> WgpuProcessing<T> {
     pub fn new(shader: ProcShaderSource) -> Self {
         let power_preference = util::power_preference_from_env().unwrap_or(PowerPreference::HighPerformance);
-        let instance = Instance::new(InstanceDescriptor::default());
+        let mut instance_desc = InstanceDescriptor::default();
+
+        // We can't use the DX12 backend with validation turned on, otherwise it
+        // will remove AE's internal D3D12 device:
+        // https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug-enabledebuglayer
+        if instance_desc.backends.contains(Backends::DX12) && instance_desc.flags.contains(InstanceFlags::VALIDATION) {
+            instance_desc.backends.remove(Backends::DX12);
+            log::info!("Disabling {:?} because {:?} is on", Backends::DX12, InstanceFlags::VALIDATION);
+        }
+
+        let instance = Instance::new(instance_desc);
 
         let adapter = pollster::block_on(instance.request_adapter(&RequestAdapterOptions { power_preference, ..Default::default() })).unwrap();
 

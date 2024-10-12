@@ -6,8 +6,6 @@ use after_effects as ae;
 //
 // This example is *not* gpu zero-copy (yet)
 // To build the SPIR-V module from Rust code, cd to `spirv_builder` and run `cargo run --release`
-//
-// For some reason, this example doesn't work in Debug build, but it works if you run `just release`
 
 mod wgpu_proc;
 use wgpu_proc::*;
