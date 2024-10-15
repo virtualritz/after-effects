@@ -252,13 +252,22 @@ impl PreRenderCallbacks {
         self.rc_ptr
     }
 
-    pub fn guid_mix_in_ptr(
+    pub fn guid_mix_in_ptr<T>(
         &self,
-        buf_size: ae_sys::A_u_long,
-        buf: *const std::ffi::c_void,
+        buf: &T,
     ) -> Result<(), Error> {
+        let buf_ptr: *const std::ffi::c_void = buf as *const _ as *const std::ffi::c_void;
+        if buf_ptr.is_null() {
+            return Err(Error::InvalidCallback);
+        }
+
+        let buf_size = std::mem::size_of_val(buf);
+        if buf_size == 0 {
+            return Err(Error::InvalidCallback);
+        }
+
         if let Some(guid_mix_in_ptr) = unsafe { *self.rc_ptr }.GuidMixInPtr {
-            match unsafe { guid_mix_in_ptr((*self.in_data_ptr).effect_ref, buf_size, buf) } {
+            match unsafe { guid_mix_in_ptr((*self.in_data_ptr).effect_ref, buf_size as u32, buf_ptr) } {
                 0 => Ok(()),
                 e => Err(Error::from(e)),
             }
