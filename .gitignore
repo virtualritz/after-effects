@@ -2,3 +2,6 @@ target/
 sdk/
 .vscode
 .DS_Store
+
+# Cargo.lock should be ignored for libraries
+Cargo.lock
