@@ -28,6 +28,7 @@ pub mod suites {
     pub(crate) mod sequence_info;            pub use sequence_info       ::SequenceInfoSuite       as SequenceInfo;
     pub(crate) mod video_segment;            pub use video_segment       ::VideoSegmentSuite       as VideoSegment;
     pub(crate) mod string;                   pub use string              ::PrStringSuite           as PrString;
+    pub(crate) mod window;                   pub use window              ::WindowSuite             as Window;
     pub(crate) mod video_segment_properties;
     #[cfg(has_ae_sdk)] mod opaque_effect_data;
     #[cfg(has_ae_sdk)] pub use opaque_effect_data::OpaqueEffectDataSuite as OpaqueEffectData;
