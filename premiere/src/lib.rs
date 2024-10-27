@@ -43,7 +43,7 @@ pub mod suites {
 }
 
 pub mod utils {
-    pub(crate) mod video_sequence_parser;
+    pub mod video_sequence_parser; pub use video_sequence_parser::VideoSequenceParser;
 }
 
 pub use suites::string::PrString;
