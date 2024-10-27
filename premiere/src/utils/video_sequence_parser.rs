@@ -17,16 +17,20 @@ pub struct VideoSequenceParser {
 }
 
 impl VideoSequenceParser {
-    pub fn parse_clip_operators(
-        &self,
-        clip_node_id: i32,
-    ) -> Result<ClipOperatorsMap, Error> {
+    pub fn new() -> Result<Self, Error> {
+        Ok(Self {
+            segment_suite: suites::VideoSegment::new()?,
+        })
+    }
+
+    pub fn parse_clip_operators(&self, clip_node_id: i32) -> Result<ClipOperatorsMap, Error> {
         let clip_node_operators = self.segment_suite.node_operator_count(clip_node_id)?;
         let mut operators_map: ClipOperatorsMap = HashMap::new();
 
         for operator_node_index in 0..clip_node_operators {
-            let operator_node_id =
-                self.segment_suite.acquire_operator_node_id(clip_node_id, operator_node_index)?;
+            let operator_node_id = self
+                .segment_suite
+                .acquire_operator_node_id(clip_node_id, operator_node_index)?;
 
             let (operator_node_type, operator_node_hash, operator_node_flags) =
                 self.segment_suite.node_info(operator_node_id)?;
@@ -41,17 +45,20 @@ impl VideoSequenceParser {
             if operator_node_type
                 == String::from_utf8_lossy(kVideoSegment_NodeType_Effect).to_string()
             {
-                let effect_name = self.segment_suite
+                let effect_name = self
+                    .segment_suite
                     .node_property(operator_node_id, Property::Effect_FilterMatchName)
                     .unwrap_or_else(|_| PropertyData::String("<Unknown Effect>".to_string()));
                 log::debug!("\tEffect: {:?}", effect_name);
 
-                let effect_instance_id = self.segment_suite
+                let effect_instance_id = self
+                    .segment_suite
                     .node_property(operator_node_id, Property::Effect_RuntimeInstanceID);
                 log::debug!("\tEffect Instance ID: {:?}", effect_instance_id);
 
-                let filter_params =
-                    self.segment_suite.node_property(operator_node_id, Property::Effect_FilterParams);
+                let filter_params = self
+                    .segment_suite
+                    .node_property(operator_node_id, Property::Effect_FilterParams);
                 log::debug!("\tEffect Params: {filter_params:?}");
             }
 
