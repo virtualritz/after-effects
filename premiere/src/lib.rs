@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 #![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
 
 use premiere_sys as pr_sys;
@@ -39,6 +40,11 @@ pub mod suites {
     pub use crate::pf_suites::transition      ::TransitionSuite      as Transition;
     pub use crate::pf_suites::utility         ::UtilitySuite         as Utility;
 }
+
+pub mod utils {
+    pub(crate) mod video_sequence_parser;
+}
+
 pub use suites::string::PrString;
 pub use suites::video_segment_properties::*;
 pub use suites::video_segment::VideoSegmentProperties;
