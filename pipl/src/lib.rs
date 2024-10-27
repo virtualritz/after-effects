@@ -1597,6 +1597,10 @@ pub fn plugin_build(properties: Vec<Property>) {
                 }
                 if x.contains(OutFlags2::SupportsThreadedRendering) {
                     println!("cargo:rustc-cfg=threaded_rendering");
+
+                    if !x.contains(OutFlags2::SupportsGetFlattenedSequenceData) {
+                        println!("cargo:warning=Setting the SupportsThreadedRendering flag without the SupportsGetFlattenedSequenceData flag can cause plugins to fail to load in some older versions of After Effects.");
+                    }
                 }
                 println!("cargo:rustc-env=PIPL_OUTFLAGS2={}", x.bits());
             }
