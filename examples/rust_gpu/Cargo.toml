@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 after-effects = { path = "../../after-effects" }
 log = "0.4"
 wgpu = { version = "22.1", features = ["spirv"] }
-pollster = "0.3"
+pollster = "0.4"
 futures-intrusive = "0.5"
 parking_lot = "0.12"
 num_cpus = "1.16"
