@@ -17,6 +17,18 @@ define_suite!(
     /// offset = compIn - stretch * layerIn;
     /// ```
     LayerSuite,
+    AEGP_LayerSuite7,
+    kAEGPLayerSuite,
+    kAEGPLayerSuiteVersion7
+);
+define_suite!(
+    LayerSuite8,
+    AEGP_LayerSuite8,
+    kAEGPLayerSuite,
+    kAEGPLayerSuiteVersion8
+);
+define_suite!(
+    LayerSuite9,
     AEGP_LayerSuite9,
     kAEGPLayerSuite,
     kAEGPLayerSuiteVersion9
@@ -332,7 +344,8 @@ impl LayerSuite {
     /// - [`LayerSamplingQuality::Bilinear`]
     /// - [`LayerSamplingQuality::Bicubic`]
     pub fn layer_sampling_quality(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LayerSamplingQuality, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetLayerSamplingQuality -> ae_sys::AEGP_LayerSamplingQuality, layer_handle.as_ptr())?.into())
+        let v8 = LayerSuite8::new()?;
+        Ok(call_suite_fn_single!(v8, AEGP_GetLayerSamplingQuality -> ae_sys::AEGP_LayerSamplingQuality, layer_handle.as_ptr())?.into())
     }
 
     /// New in CC. Sets the sampling quality of a layer (see flag values above).
@@ -342,12 +355,14 @@ impl LayerSuite {
     /// If you want to force it on you must also set the layer quality to [`LayerQuality::Best`] with [`Self::set_layer_quality`].
     /// Otherwise it will only be using the specified layer sampling quality whenever the layer quality is set to [`LayerQuality::Best`].
     pub fn set_layer_sampling_quality(&self, layer_handle: impl AsPtr<AEGP_LayerH>, quality: LayerSamplingQuality) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetLayerSamplingQuality, layer_handle.as_ptr(), quality.into())
+        let v8 = LayerSuite8::new()?;
+        call_suite_fn!(v8, AEGP_SetLayerSamplingQuality, layer_handle.as_ptr(), quality.into())
     }
 
     /// New in 23.0. Returns the track matte layer of [`LayerHandle`]. Returns `None` if there is no track matte layer.
     pub fn track_matte_layer(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<Option<LayerHandle>, Error> {
-        let track_matte_handle = call_suite_fn_single!(self, AEGP_GetTrackMatteLayer -> ae_sys::AEGP_LayerH, layer_handle.as_ptr())?;
+        let v9 = LayerSuite9::new()?;
+        let track_matte_handle = call_suite_fn_single!(v9, AEGP_GetTrackMatteLayer -> ae_sys::AEGP_LayerH, layer_handle.as_ptr())?;
         if track_matte_handle.is_null() {
             Ok(None)
         } else {
@@ -359,12 +374,14 @@ impl LayerSuite {
     ///
     /// Setting the track matte type as [`TrackMatte::NoTrackMatte`] removes track matte.
     pub fn set_track_matte(&self, layer_handle: impl AsPtr<AEGP_LayerH>, track_matte_layer: Option<LayerHandle>, track_matte_type: TrackMatte) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetTrackMatte, layer_handle.as_ptr(), track_matte_layer.map_or(std::ptr::null_mut(), |h| h.as_ptr()), track_matte_type.into())
+        let v9 = LayerSuite9::new()?;
+        call_suite_fn!(v9, AEGP_SetTrackMatte, layer_handle.as_ptr(), track_matte_layer.map_or(std::ptr::null_mut(), |h| h.as_ptr()), track_matte_type.into())
     }
 
     /// New in 23.0. Removes the track matte layer of [`LayerHandle`].
     pub fn remove_track_matte(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_RemoveTrackMatte, layer_handle.as_ptr())
+        let v9 = LayerSuite9::new()?;
+        call_suite_fn!(v9, AEGP_RemoveTrackMatte, layer_handle.as_ptr())
     }
 }
 
