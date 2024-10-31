@@ -84,7 +84,7 @@ impl<T: Sized> WgpuProcessing<T> {
 
         let pipeline = device.create_compute_pipeline(&ComputePipelineDescriptor {
             module: &shader,
-            entry_point: "main",
+            entry_point: Some("main"),
             label: None,
             layout: Some(&pipeline_layout),
             compilation_options: Default::default(),
