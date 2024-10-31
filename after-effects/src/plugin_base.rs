@@ -229,6 +229,13 @@ macro_rules! define_effect {
             let in_data = InData::from_raw(in_data_ptr);
             let out_data = OutData::from_raw(out_data_ptr);
 
+            #[cfg(with_premiere)]
+            let _pr_pica = if in_data.is_premiere() {
+                Some(::premiere::PicaBasicSuite::from_sp_basic_suite_raw(in_data.pica_basic_suite_ptr() as _))
+            }  else {
+                None
+            };
+
             let cmd = RawCommand::from(cmd);
 
             // Allocate or restore global data pointer

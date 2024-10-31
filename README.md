@@ -33,6 +33,9 @@ cargo add after-effects
 cargo add --dev pipl
 ```
 
+> [!NOTE]
+> When using with Premiere and you want to use any of the Premiere's suites, make sure to add `println!("cargo:rustc-cfg=with_premiere");` to your `build.rs` so that the plugin can initialize `premiere`'s basic suite in `EffectMain`
+
 ## After Effects vs. Premiere
 
 Adobe plugins are shared between After Effects and Premiere.
