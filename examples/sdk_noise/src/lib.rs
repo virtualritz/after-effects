@@ -156,9 +156,11 @@ impl AdobePluginGlobal for Plugin {
             }
             ae::Command::SmartRender { extra } => {
                 let cb = extra.callbacks();
-                let input_world = cb.checkout_layer_pixels(0)?;
+                let Some(input_world) = cb.checkout_layer_pixels(0)? else {
+                    return Ok(());
+                };
 
-                if let Ok(mut output_world) = cb.checkout_output() {
+                if let Ok(Some(mut output_world)) = cb.checkout_output() {
                     let progress_final = output_world.height() as _;
 
                     let value = params.get(Params::Noise)?.as_float_slider()?.value() as f32 / 100.0;

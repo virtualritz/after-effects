@@ -266,7 +266,9 @@ impl AdobePluginInstance for Instance {
                 let mut current_color = 0;
 
                 let cb = extra.callbacks();
-                let input_world = cb.checkout_layer_pixels(0)?;
+                let Some(input_world) = cb.checkout_layer_pixels(0)? else {
+                    return Ok(());
+                };
 
                 let mut color_cache = ColorCache::new();
                 color_cache.compute_color_grid_from_frame(&input_world)?;
@@ -294,7 +296,7 @@ impl AdobePluginInstance for Instance {
                     let color16_g = (color32.green * ae::MAX_CHANNEL16 as f32) as u32;
                     let color16_b = (color32.blue  * ae::MAX_CHANNEL16 as f32) as u32;
 
-                    if let Ok(mut output_world) = cb.checkout_output() {
+                    if let Ok(Some(mut output_world)) = cb.checkout_output() {
                         let progress_final = output_world.height() as _;
 
                         origin = in_data.output_origin();

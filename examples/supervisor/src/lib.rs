@@ -226,7 +226,9 @@ impl AdobePluginInstance for Instance {
             }
             ae::Command::SmartRender { mut extra } => {
                 let cb = extra.callbacks();
-                let input_world = cb.checkout_layer_pixels(0)?;
+                let Some(input_world) = cb.checkout_layer_pixels(0)? else {
+                    return Ok(());
+                };
 
                 let pre_render_data = extra.pre_render_data_mut::<PreRenderData>().unwrap();
                 if self.advanced_mode {
@@ -246,7 +248,7 @@ impl AdobePluginInstance for Instance {
 
                 let pixel_float = pre_render_data.color;
 
-                if let Ok(mut output_world) = cb.checkout_output() {
+                if let Ok(Some(mut output_world)) = cb.checkout_output() {
                     let out_extent_hint = output_world.extent_hint();
                     let progress_final = output_world.height() as _;
                     // iterate over image data.

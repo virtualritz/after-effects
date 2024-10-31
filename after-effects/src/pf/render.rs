@@ -331,24 +331,27 @@ impl SmartRenderCallbacks {
         self.rc_ptr
     }
 
-    pub fn checkout_layer_pixels(&self, checkout_id: u32) -> Result<Layer, Error> {
+    /// Check out a layer corresponding to the ID you checked it out with in SmartPreRender.
+    /// Note that the resulting layer may be None even if the ID is valid--for example, if the target layer is an
+    /// adjustment layer with nothing beneath it.
+    pub fn checkout_layer_pixels(&self, checkout_id: u32) -> Result<Option<Layer>, Error> {
         if let Some(checkout_layer_pixels) = unsafe { *self.rc_ptr }.checkout_layer_pixels {
-            let mut effect_world_ptr =
-                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
+            let mut effect_world_ptr = std::ptr::null_mut();
 
-            match unsafe {
+            match (unsafe {
                 checkout_layer_pixels(
                     (*self.in_data_ptr).effect_ref,
                     checkout_id as i32,
-                    effect_world_ptr.as_mut_ptr(),
+                    &mut effect_world_ptr,
                 )
-            } {
-                0 => Ok(Layer::from_raw(
-                    unsafe { effect_world_ptr.assume_init() },
+            }, effect_world_ptr.is_null()) {
+                (0, false) => Ok(Some(Layer::from_raw(
+                    effect_world_ptr,
                     self.in_data_ptr,
                     None,
-                )),
-                e => Err(Error::from(e)),
+                ))),
+                (0, true) => Ok(None),
+                (e, _) => Err(Error::from(e)),
             }
         } else {
             Err(Error::InvalidCallback)
@@ -368,23 +371,25 @@ impl SmartRenderCallbacks {
         }
     }
 
-    pub fn checkout_output(&self) -> Result<Layer, Error> {
+    /// Check out the output layer. Note that the resulting layer may be None in certain cases--for example, if the
+    /// target layer is an adjustment layer with nothing beneath it.
+    pub fn checkout_output(&self) -> Result<Option<Layer>, Error> {
         if let Some(checkout_output) = unsafe { *self.rc_ptr }.checkout_output {
-            let mut effect_world_ptr =
-                std::mem::MaybeUninit::<*mut ae_sys::PF_EffectWorld>::uninit();
+            let mut effect_world_ptr = std::ptr::null_mut();
 
-            match unsafe {
+            match (unsafe {
                 checkout_output(
                     (*self.in_data_ptr).effect_ref,
-                    effect_world_ptr.as_mut_ptr(),
+                    &mut effect_world_ptr,
                 )
-            } {
-                0 => Ok(Layer::from_raw(
-                    unsafe { effect_world_ptr.assume_init() },
+            }, effect_world_ptr.is_null()) {
+                (0, false) => Ok(Some(Layer::from_raw(
+                    effect_world_ptr,
                     self.in_data_ptr,
                     None,
-                )),
-                e => Err(Error::from(e)),
+                ))),
+                (0, true) => Ok(None),
+                (e, _) => Err(Error::from(e)),
             }
         } else {
             Err(Error::InvalidCallback)
