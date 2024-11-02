@@ -214,7 +214,7 @@ AfterEffectsSDK
 | 🔳 RollCrawl              | 🔳 Video Segment Render          |                                 |                          |
 | 🔳 Threaded Work          |                                  |                                 |                          |
 | ✅ Time                   |                                  |                                 |                          |
-| 🔳 Window                 |                                  |                                 |                          |
+| ✅ Window                 |                                  |                                 |                          |
 
 ## License
 
