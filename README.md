@@ -162,8 +162,8 @@ AfterEffectsSDK
 | 🔳 Marker               | ✅ iterate16                      |             |                       |
 | ✅ Mask Outline         | ✅ iterateFloat                   |             |                       |
 | ✅ Mask                 | ✅ Param Utils                    |             |                       |
-| 🔳 Math                 | 🔳 Path Data                      |             |                       |
-| ✅ Memory               | 🔳 Path Query                     |             |                       |
+| 🔳 Math                 | ✅ Path Data                      |             |                       |
+| ✅ Memory               | ✅ Path Query                     |             |                       |
 | 🔳 Output Module        | ✅ Pixel Data                     |             |                       |
 | 🔳 Persistent Data      | ✅ Pixel Format                   |             |                       |
 | ✅ PF Interface         | ✅ PointParam                     |             |                       |
