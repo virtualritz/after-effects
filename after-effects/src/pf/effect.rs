@@ -223,6 +223,12 @@ define_suite_item_wrapper!(
 
         // ―――――――――――――――――――――――――――― Path Query suite functions ――――――――――――――――――――――――――――
 
+        /// Retrieves the number of paths associated with the effect’s source layer.
+        num_paths() -> i32 => path_query.num_paths,
+
+        /// Retrieves the `PF_PathID` for the specified path.
+        path_info(index: i32) -> ae_sys::PF_PathID => path_query.path_info,
+
         /// Acquires the [`PathOutline`] for the path at the specified time.
         /// `PathOutline` automatically calls `checkin_path` on drop.
         /// Note the result may be `None` even if `unique_id != PF_PathID_NONE` (the path may have been deleted).
