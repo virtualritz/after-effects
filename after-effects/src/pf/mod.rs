@@ -86,7 +86,11 @@ pub use suites::param_utils::{
     TimeDir,
 };
 pub use suites::pixel_format::PixelFormat;
-pub use suites::path::MaskMode;
+pub use suites::path::{
+    MaskMode,
+    PathOutline,
+    PathSegPrep,
+};
 
 define_enum! {
     ae_sys::PF_XferMode,

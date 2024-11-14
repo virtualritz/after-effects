@@ -11,6 +11,7 @@ define_suite_item_wrapper!(
     effect_sequence_data: pf::suites::EffectSequenceData,
     param_utils: pf::suites::ParamUtils,
     effect_ui: pf::suites::EffectUI,
+    path_query: pf::suites::PathQuery,
     /// TODO: write docs for Effect
     Effect {
         dispose: ;
@@ -219,6 +220,13 @@ define_suite_item_wrapper!(
         ///
         /// NOTE: This must be called during [`Command::ParamsSetup`].
         set_options_button_name(name: &str) -> () => effect_ui.set_options_button_name,
+
+        // ―――――――――――――――――――――――――――― Path Query suite functions ――――――――――――――――――――――――――――
+
+        /// Acquires the [`PathOutline`] for the path at the specified time.
+        /// `PathOutline` automatically calls `checkin_path` on drop.
+        /// Note the result may be `None` even if `unique_id != PF_PathID_NONE` (the path may have been deleted).
+        checkout_path(unique_id: ae_sys::PF_PathID, what_time: i32, time_step: i32, time_scale: u32) -> Option<PathOutline> => path_query.checkout_path,
     }
 );
 
