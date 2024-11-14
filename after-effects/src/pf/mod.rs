@@ -53,6 +53,8 @@ pub mod suites {
                                                                           PointParamSuite          as PointParam };
     pub(crate) mod gpu_device;            pub use gpu_device          ::GPUDeviceSuite             as GPUDevice;
     pub(crate) mod fill_matte;            pub use fill_matte          ::FillMatteSuite             as FillMatte;
+    pub(crate) mod path;                  pub use path                ::{ PathQuerySuite           as PathQuery,
+                                                                          PathDataSuite            as PathData };
 }
 
 pub use suites::adv_item::Step;
@@ -84,6 +86,7 @@ pub use suites::param_utils::{
     TimeDir,
 };
 pub use suites::pixel_format::PixelFormat;
+pub use suites::path::MaskMode;
 
 define_enum! {
     ae_sys::PF_XferMode,
