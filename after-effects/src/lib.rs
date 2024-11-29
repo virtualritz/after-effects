@@ -126,7 +126,7 @@ impl Drop for PicaBasicSuite {
     }
 }
 
-const UNKNOWN_ERR_10007: i32 = 10007; // Seen in the wild in AE2019
+const UNKNOWN_ERR_10007: ae_sys::PF_Err = 10007; // Seen in the wild in AE2019
 
 define_enum! {
     ae_sys::PF_Err,
