@@ -126,6 +126,8 @@ impl Drop for PicaBasicSuite {
     }
 }
 
+const UNKNOWN_ERR_10007: i32 = 10007; // Seen in the wild in AE2019
+
 define_enum! {
     ae_sys::PF_Err,
     Error {
@@ -159,6 +161,8 @@ define_enum! {
         StringBufferTooSmall     = ae_sys::suiteError_StringBufferTooSmall,
         InvalidParms             = ae_sys::suiteError_InvalidParms,
 
+        Unknown10007             = UNKNOWN_ERR_10007,
+
         None = ae_sys::PF_Err_NONE,
     }
 }
@@ -185,6 +189,7 @@ impl From<Error> for &'static str {
             Error::StringBufferTooSmall     => "StringBufferTooSmall",
             Error::InvalidParms             => "InvalidParms",
             Error::Reserved11               => "Reserved11",
+            Error::Unknown10007             => "Unknown10007",
         }
     }
 }
