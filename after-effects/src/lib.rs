@@ -126,7 +126,11 @@ impl Drop for PicaBasicSuite {
     }
 }
 
-const UNKNOWN_ERR_10007: ae_sys::PF_Err = 10007; // Seen in the wild in AE2019
+// Error 10007 was Seen in the wild in AE2019
+#[cfg(target_os = "macos")]
+const UNKNOWN_ERR_10007: ::std::os::raw::c_uint = 10007;
+#[cfg(target_os = "windows")]
+const UNKNOWN_ERR_10007: ::std::os::raw::c_int = 10007;
 
 define_enum! {
     ae_sys::PF_Err,
