@@ -111,9 +111,11 @@ impl AdobePluginGlobal for Plugin {
             }
             ae::Command::SmartRender { extra } => {
                 let cb = extra.callbacks();
-                let in_layer = cb.checkout_layer_pixels(0)?;
+                let Some(in_layer) = cb.checkout_layer_pixels(0)? else {
+                    return Ok(());
+                };
 
-                if let Ok(mut out_layer) = cb.checkout_output() {
+                if let Ok(Some(mut out_layer)) = cb.checkout_output() {
                     let in_size  = (in_layer.width()  as usize, in_layer.height()  as usize, in_layer.buffer_stride());
                     let out_size = (out_layer.width() as usize, out_layer.height() as usize, out_layer.buffer_stride());
 

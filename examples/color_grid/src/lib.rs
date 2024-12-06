@@ -197,7 +197,9 @@ impl AdobePluginGlobal for Plugin {
                 let mut current_color = 0;
 
                 let cb = extra.callbacks();
-                let input_world = cb.checkout_layer_pixels(0)?;
+                let Some(input_world) = cb.checkout_layer_pixels(0)? else {
+                    return Ok(());
+                };
 
                 let param = params.get(Params::GridUI)?;
                 let colors = param.as_arbitrary()?.value::<ArbData>()?;
@@ -225,7 +227,7 @@ impl AdobePluginGlobal for Plugin {
                     let color16_g = (color32.green * ae::MAX_CHANNEL16 as f32) as u32;
                     let color16_b = (color32.blue  * ae::MAX_CHANNEL16 as f32) as u32;
 
-                    if let Ok(mut output_world) = cb.checkout_output() {
+                    if let Ok(Some(mut output_world)) = cb.checkout_output() {
                         let progress_final = output_world.height() as _;
 
                         origin = in_data.output_origin();

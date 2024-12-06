@@ -249,9 +249,11 @@ impl AdobePluginGlobal for Plugin {
             }
             ae::Command::SmartRender { extra } => {
                 let cb = extra.callbacks();
-                let in_layer = cb.checkout_layer_pixels(0)?;
+                let Some(in_layer) = cb.checkout_layer_pixels(0)? else {
+                    return Ok(());
+                };
 
-                if let Ok(mut out_layer) = cb.checkout_output() {
+                if let Ok(Some(mut out_layer)) = cb.checkout_output() {
                     let border = params.get(Params::Amount)?.as_slider()?.value() as f32;
 
                     let color = params.get(Params::Color)?.as_color()?.value();
