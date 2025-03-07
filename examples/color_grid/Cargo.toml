@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 [dependencies]
 after-effects = { path = "../../after-effects" }
 serde = { version = "1", features = ["derive"] }
-bincode = "1.3"
+bincode = "2.0"
 fastrand = "2.0"
 
 [build-dependencies]
