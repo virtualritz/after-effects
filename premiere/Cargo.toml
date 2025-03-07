@@ -16,7 +16,7 @@ repository = "https://github.com/virtualritz/after-effects/"
 
 [dependencies]
 base64 = "0.22"
-bincode = "1.3"
+bincode = "2.0"
 bitflags = "2.6"
 fastrand = "2.1"
 log = "0.4"
