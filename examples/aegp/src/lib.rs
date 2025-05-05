@@ -1,12 +1,21 @@
-use after_effects::{sys::SPBasicSuite, Error};
+use after_effects::{
+    aegp::suites::Utility, define_general_plugin, sys::SPBasicSuite, AegpPlugin, Error,
+    PicaBasicSuite,
+};
 
-#[no_mangle]
-pub unsafe extern "C" fn EntryPointFunc(
-    _pica_basic: *const SPBasicSuite,
-    _major_version: i32,
-    _minor_version: i32,
-    _aegp_plugin_id: i32,
-    _global_refcon: *mut *mut std::ffi::c_void,
-) -> Error {
-    Error::None
+define_general_plugin!(Grabber);
+
+struct Grabber {}
+
+impl AegpPlugin for Grabber {
+    fn entry_point(
+        basic_suite: after_effects::PicaBasicSuite,
+        major_version: i32,
+        minor_version: i32,
+        aegp_plugin_id: i32,
+    ) -> Result<Self, after_effects::Error> {
+        let util_suite = Utility::new()?;
+        util_suite.report_info_unicode(aegp_plugin_id, "Succesfully Loaded Test AEGP")?;
+        Ok(Grabber {})
+    }
 }

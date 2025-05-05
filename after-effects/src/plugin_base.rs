@@ -120,7 +120,6 @@
 ///
 /// ae::define_effect!(Plugin, (), Params);
 /// ```
-///
 #[macro_export]
 macro_rules! define_effect {
     ($global_type:ty, $sequence_type:tt, $params_type:ty) => {
@@ -512,5 +511,56 @@ macro_rules! define_effect {
     (check_size: ()) => { };
     (check_size: $t:tt) => {
         const _: () = assert!(std::mem::size_of::<$t>() > 0, concat!("Type `", stringify!($t), "` cannot be zero-sized"));
+    };
+}
+
+/// Trait used to implement generic plugins such as menu commands and background tasks.
+pub trait AegpPlugin: Sized {
+    fn entry_point(
+        basic_suite: crate::PicaBasicSuite,
+        major_version: i32,
+        minor_version: i32,
+        aegp_plugin_id: i32,
+    ) -> Result<Self, crate::Error>;
+}
+
+#[macro_export]
+macro_rules! define_general_plugin {
+    ($main_type:ty) => {
+        // Static Assertsion
+        const _: () = {
+            fn assert_implements_aegp_plugin<T: AegpPlugin>() {}
+            fn call_with_main_type() { assert_implements_aegp_plugin::<$main_type>(); }
+        };
+
+        #[no_mangle]
+        pub unsafe extern "C" fn EntryPointFunc(
+            pica_basic: *const SPBasicSuite,
+            major_version: i32,
+            minor_version: i32,
+            aegp_plugin_id: i32,
+            _global_refcon: *mut *mut std::ffi::c_void,
+        ) -> Error {
+            #[cfg(target_os = "windows")]
+            {
+                let _ = $crate::log::set_logger(&$crate::win_dbg_logger::DEBUGGER_LOGGER);
+            }
+            #[cfg(target_os = "macos")]
+            {
+                let _ = $crate::oslog::OsLogger::new(env!("CARGO_PKG_NAME")).init();
+            }
+            $crate::log::set_max_level($crate::log::LevelFilter::Debug);
+
+            let basic_suite = PicaBasicSuite::from_sp_basic_suite_raw(pica_basic);
+            match <$main_type>::entry_point(
+                basic_suite,
+                major_version,
+                minor_version,
+                aegp_plugin_id,
+            ) {
+                Ok(_) => Error::None,
+                Err(e) => e.into(),
+            }
+        }
     };
 }

@@ -61,7 +61,8 @@ create_bundle profile TargetDir:
 
     DEV_CERT=$(security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}')
 
-    # Perform signing
+    # Perform signing - as of AE and PR 25.2 all macos plugins require a signature or else
+    # they will fail to load with error code "2685337601" - see your "Plugin Loading.log" for details
     if [ -n "$DEV_CERT" ]; then
        codesign --options runtime --timestamp -strict --sign "$DEV_CERT" {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
     else

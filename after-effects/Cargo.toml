@@ -19,7 +19,7 @@ catch-panics = []
 default = []
 
 [dependencies]
-after-effects-sys = "0.2"                                              #{path = "../after-effects-sys"}
+after-effects-sys = { path = "../after-effects-sys" }
 bincode = "1.3"
 bitflags = "2.6"
 cstr-literal = "0.1"
