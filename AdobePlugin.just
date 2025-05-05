@@ -59,9 +59,14 @@ create_bundle profile TargetDir:
         cp {{TargetDir}}/{{profile}}/lib{{BinaryName}}.dylib {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS/{{PluginName}}
     fi
 
-    # codesign with the first development cert we can find using its hash
-    if [ -z "$NO_SIGN" ]; then
-        codesign --options runtime --timestamp -strict  --sign $( security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}' ) {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
+    DEV_CERT=$(security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}')
+
+    # Perform signing
+    if [ -n "$DEV_CERT" ]; then
+       codesign --options runtime --timestamp -strict --sign "$DEV_CERT" {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
+    else
+       codesign --options runtime --timestamp -strict --sign - {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
+       echo "Note: Using ad-hoc signature. For distribution, a valid Apple Developer certificate is recommended."
     fi
 
     # Install

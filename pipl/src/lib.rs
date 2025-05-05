@@ -90,7 +90,7 @@ impl PIPLType {
             Self::AEEffect       => fourcc(b"eFKT"),
             Self::AEImageFormat  => fourcc(b"FXIF"),
             Self::AEAccelerator  => fourcc(b"eFST"),
-            Self::AEGeneral      => fourcc(b"AEgp"),
+            Self::AEGeneral      => fourcc(b"AEgx"),
             // Premiere plug-in typefourcc
             Self::PrEffect       => fourcc(b"SPFX"),
             Self::PrVideoFilter  => fourcc(b"VFlt"),

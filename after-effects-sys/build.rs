@@ -81,6 +81,7 @@ fn main() {
 
     if cfg!(target_os = "macos") {
         ae_bindings = ae_bindings
+            .clang_arg("-Wno-elaborated-enum-base")
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework/Versions/A/Headers/")
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Versions/A/Headers/")
             //.clang_arg("-I/Library/Developer/CommandLineTools/usr/include/c++/v1/")
