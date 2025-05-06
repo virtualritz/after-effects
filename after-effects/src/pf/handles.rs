@@ -33,7 +33,9 @@ impl<'a, T> HandleLock<'a, T> {
 
 impl<'a, T> Drop for HandleLock<'a, T> {
     fn drop(&mut self) {
-        self.parent_handle.suite.unlock_handle(self.parent_handle.handle);
+        self.parent_handle
+            .suite
+            .unlock_handle(self.parent_handle.handle);
     }
 }
 
@@ -51,11 +53,7 @@ impl<T> BorrowedHandleLock<T> {
                 if ptr.is_null() {
                     return Err(Error::Generic);
                 }
-                Ok(BorrowedHandleLock {
-                    suite,
-                    handle,
-                    ptr
-                })
+                Ok(BorrowedHandleLock { suite, handle, ptr })
             }
             Err(_) => Err(Error::InvalidCallback),
         }
@@ -63,19 +61,14 @@ impl<T> BorrowedHandleLock<T> {
 }
 impl<T> std::ops::Deref for BorrowedHandleLock<T> {
     type Target = T;
-    fn deref(&self) -> &T {
-        unsafe { &*self.ptr }
-    }
+
+    fn deref(&self) -> &T { unsafe { &*self.ptr } }
 }
 impl<T> std::ops::DerefMut for BorrowedHandleLock<T> {
-    fn deref_mut(&mut self) -> &mut T {
-        unsafe { &mut *self.ptr }
-    }
+    fn deref_mut(&mut self) -> &mut T { unsafe { &mut *self.ptr } }
 }
 impl<T> Drop for BorrowedHandleLock<T> {
-    fn drop(&mut self) {
-        self.suite.unlock_handle(self.handle);
-    }
+    fn drop(&mut self) { self.suite.unlock_handle(self.handle); }
 }
 
 impl<'a, T: 'a> Handle<'a, T> {
@@ -151,9 +144,7 @@ impl<'a, T: 'a> Handle<'a, T> {
         }
     }
 
-    pub fn size(&self) -> usize {
-        self.suite.handle_size(self.handle) as usize
-    }
+    pub fn size(&self) -> usize { self.suite.handle_size(self.handle) as usize }
 
     /*
     pub fn resize(&mut self, size: usize) -> Result<(), Error> {
@@ -163,14 +154,12 @@ impl<'a, T: 'a> Handle<'a, T> {
     pub fn from_raw(handle: ae_sys::PF_Handle, owned: bool) -> Result<Handle<'a, T>, Error> {
         assert!(!handle.is_null());
         match pf::suites::Handle::new() {
-            Ok(suite) => {
-                Ok(Handle {
-                    suite,
-                    handle,
-                    owned,
-                    _marker: PhantomData,
-                })
-            }
+            Ok(suite) => Ok(Handle {
+                suite,
+                handle,
+                owned,
+                _marker: PhantomData,
+            }),
             Err(_) => Err(Error::InvalidCallback),
         }
     }
@@ -193,9 +182,7 @@ impl<'a, T: 'a> Handle<'a, T> {
     }
 
     /// Returns the raw handle.
-    pub fn as_raw(&self) -> ae_sys::PF_Handle {
-        self.handle
-    }
+    pub fn as_raw(&self) -> ae_sys::PF_Handle { self.handle }
 }
 
 impl<'a, T: 'a> Drop for Handle<'a, T> {
@@ -217,7 +204,9 @@ pub struct FlatHandleLock<'a, 'b: 'a> {
 
 impl<'a, 'b> Drop for FlatHandleLock<'a, 'b> {
     fn drop(&mut self) {
-        self.parent_handle.suite.unlock_handle(self.parent_handle.handle);
+        self.parent_handle
+            .suite
+            .unlock_handle(self.parent_handle.handle);
     }
 }
 
@@ -235,7 +224,6 @@ pub struct FlatHandle<'a> {
 
 impl<'a> FlatHandle<'a> {
     pub fn new(slice: impl Into<Vec<u8>>) -> Result<FlatHandle<'a>, Error> {
-
         let suite = pf::suites::Handle::new()?;
         let vector = slice.into();
 
@@ -270,7 +258,7 @@ impl<'a> FlatHandle<'a> {
     }
 
     #[inline]
-    pub fn lock<'b: 'a>(&'b self) -> Result<FlatHandleLock, Error> {
+    pub fn lock<'b: 'a>(&'b self) -> Result<FlatHandleLock<'b, 'a>, Error> {
         let ptr = self.suite.lock_handle(self.handle) as *mut u8;
         if ptr.is_null() {
             Err(Error::InvalidIndex)
@@ -302,14 +290,10 @@ impl<'a> FlatHandle<'a> {
     }
 
     #[inline]
-    pub fn as_ptr(&self) -> *const u8 {
-        unsafe { *(self.handle as *const *const u8) }
-    }
+    pub fn as_ptr(&self) -> *const u8 { unsafe { *(self.handle as *const *const u8) } }
 
     #[inline]
-    pub fn as_ptr_mut(&self) -> *mut u8 {
-        unsafe { *(self.handle as *const *mut u8) }
-    }
+    pub fn as_ptr_mut(&self) -> *mut u8 { unsafe { *(self.handle as *const *mut u8) } }
 
     #[inline]
     pub fn to_vec(&self) -> Vec<u8> {
@@ -325,9 +309,7 @@ impl<'a> FlatHandle<'a> {
     }
 
     #[inline]
-    pub fn size(&self) -> usize {
-        self.suite.handle_size(self.handle) as usize
-    }
+    pub fn size(&self) -> usize { self.suite.handle_size(self.handle) as usize }
 
     #[inline]
     pub fn from_raw(handle: ae_sys::PF_Handle) -> Result<FlatHandle<'a>, Error> {
@@ -390,9 +372,7 @@ impl<'a> FlatHandle<'a> {
     }
 
     #[inline]
-    pub fn as_raw(&self) -> ae_sys::PF_Handle {
-        self.handle
-    }
+    pub fn as_raw(&self) -> ae_sys::PF_Handle { self.handle }
 }
 /*
 impl<'a> Clone for FlatHandle<'a> {

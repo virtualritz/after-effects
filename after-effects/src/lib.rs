@@ -19,7 +19,7 @@ mod macros;
 
 #[macro_use]
 mod plugin_base;
-pub use plugin_base::AegpPlugin;
+pub use plugin_base::{AegpPlugin, AegpSeal};
 
 #[macro_use]
 mod cross_thread_type;

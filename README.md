@@ -140,7 +140,7 @@ AfterEffectsSDK
 | ✅ Camera               | ✅ AE Adv Item                    | ✅ Image    | ✅ AE Plugin Helper 2 |
 | ✅ Canvas               | 🔳 AE Adv Time                    | ✅ Path     |                       |
 | 🔳 Collection           | ✅ AE App                         | ✅ Pen      |                       |
-| 🔳 Command              | ✅ AngleParam                     | ✅ Supplier |                       |
+| ✅ Command              | ✅ AngleParam                     | ✅ Supplier |                       |
 | ✅ Comp                 | 🔳 ANSI                           | ✅ Surface  |                       |
 | ✅ Composite            | ✅ Background Frame               |             |                       |
 | 🔳 Compute              | 🔳 Batch Sampling                 |             |                       |
@@ -169,7 +169,7 @@ AfterEffectsSDK
 | ✅ PF Interface         | ✅ PointParam                     |             |                       |
 | ✅ Proj                 | 🔳 Sampling8                      |             |                       |
 | 🔳 QueryXform           | 🔳 Sampling16                     |             |                       |
-| 🔳 Register             | 🔳 SamplingFloat                  |             |                       |
+| ✅  Register             | 🔳 SamplingFloat                  |             |                       |
 | ✅ Render Asyc Manager  | ✅ Source Settings                |             |                       |
 | ✅ Render Options       | ✅ Transition                     |             |                       |
 | 🔳 Render Queue Item    | ✅ Utility                        |             |                       |
@@ -185,6 +185,8 @@ AfterEffectsSDK
 | ✅ Utility              |                                   |             |                       |
 | 🔳 Workspace Panel      |                                   |             |                       |
 | ✅ World                |                                   |             |                       |
+
+*The register suite currently excludes the artisan and AEIO registration API
 
 ### Premiere
 

@@ -514,11 +514,17 @@ macro_rules! define_effect {
     };
 }
 
+/// This is a marker trait - it is meant to discourage users from
+/// implementing AegpPlugin without the scaffolding in `define_general_plugin`.
+/// If you try to use a type that implements `AegpPlugin` from a callback
+/// without it being initialized by the plugin entry point your program *will segfault*.
+pub unsafe trait AegpSeal {}
+
 /// Trait used to implement generic plugins such as menu commands and background tasks.
 /// A struct which implements this will be passed to all register suite callbacks
-pub trait AegpPlugin: Sized {
+/// Warning: Do not implement this without calling `define_general_plugin`
+pub trait AegpPlugin: Sized + AegpSeal {
     fn entry_point(
-        basic_suite: crate::PicaBasicSuite,
         major_version: i32,
         minor_version: i32,
         aegp_plugin_id: crate::sys::AEGP_PluginID,
@@ -533,6 +539,8 @@ macro_rules! define_general_plugin {
             fn assert_implements_aegp_plugin<T: AegpPlugin>() {}
             fn call_with_main_type() { assert_implements_aegp_plugin::<$main_type>(); }
         };
+
+        unsafe impl $crate::AegpSeal for $main_type {}
 
         #[no_mangle]
         pub unsafe extern "C" fn EntryPointFunc(
@@ -556,44 +564,28 @@ macro_rules! define_general_plugin {
                 env!("PIPL_NAME")
             );
 
-            let basic_suite = PicaBasicSuite::from_sp_basic_suite_raw(pica_basic);
+            let mut basic_suite = PicaBasicSuite::from_sp_basic_suite_raw(pica_basic);
 
-            let result = if cfg!(any(debug_assertions, feature = "catch-panics")) {
-                std::panic::catch_unwind(|| {
-                    <$main_type>::entry_point(
-                        basic_suite,
-                        major_version,
-                        minor_version,
-                        aegp_plugin_id,
-                    )
-                })
-            } else {
-                Ok(<$main_type>::entry_point(
-                    basic_suite,
-                    major_version,
-                    minor_version,
-                    aegp_plugin_id,
-                ))
-            };
+            let result = <$main_type>::entry_point(major_version, minor_version, aegp_plugin_id);
+
+            // When the basic suite `Drop` runs it removes the basic suite
+            // pointer from memory and nulls it. For AEGP's it's standard to
+            // store the pointer in the global ref con. Doing it statically by
+            // leaking the basic suite here is a more general solution.
+            std::mem::forget(basic_suite);
 
             match result {
-                Ok(Ok(t)) => {
-                    let boxed_instance = Box::new(Some(t));
+                Ok(t) => {
+                    let boxed_instance = Box::new(t);
                     *global_refcon = Box::into_raw(boxed_instance) as *mut _;
                     $crate::log::debug!("AEGP Setup Succesful for {}.", env!("PIPL_NAME"));
                     Error::None
                 }
-                Ok(Err(e)) => {
-                    *global_refcon = Box::into_raw(Box::new(None::<$main_type>)) as *mut _;
+                Err(e) => {
+                    *global_refcon = std::ptr::null_mut();
                     $crate::log::error!("Error while setting up {}.", env!("PIPL_NAME"));
                     $crate::log::error!("{:?}", e.clone());
                     e.into()
-                }
-                // panic caught
-                Err(e) => {
-                    *global_refcon = Box::into_raw(Box::new(None::<$main_type>)) as *mut _;
-                    $crate::log::error!("Panic while setting up {}.", env!("PIPL_NAME"));
-                    Error::None
                 }
             }
         }

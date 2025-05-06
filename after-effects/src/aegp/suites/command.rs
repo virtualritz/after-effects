@@ -34,6 +34,25 @@ define_enum! {
     }
 }
 
+#[repr(i32)]
+pub enum MenuOrder {
+    Sorted = -2,
+    Top    = -1,
+    Bottom = 0,
+    Other(i32),
+}
+
+impl Into<i32> for MenuOrder {
+    fn into(self) -> i32 {
+        match self {
+            MenuOrder::Sorted => -2,
+            MenuOrder::Top => -1,
+            MenuOrder::Bottom => 0,
+            MenuOrder::Other(val) => val,
+        }
+    }
+}
+
 impl CommandSuite {
     pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
@@ -56,13 +75,13 @@ impl CommandSuite {
         )
     }
 
-    /// Inserts a command into a menu
+    /// Inserts a command into a menu, after_item indicates ordering corresponding to the
     pub fn insert_command(
         &self,
         command_name: &str,
         command_id: AEGP_Command,
         menu_id: MenuId,
-        after_item: i32,
+        after_item: MenuOrder,
     ) -> Result<(), Error> {
         let command_name = CString::new(command_name).map_err(|_| Error::InvalidParms)?;
 
@@ -72,7 +91,7 @@ impl CommandSuite {
             command_id,
             command_name.as_ptr(),
             menu_id.into(),
-            after_item,
+            after_item.into(),
         )
     }
 

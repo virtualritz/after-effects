@@ -43,6 +43,8 @@ pub type PluginId = ae_sys::AEGP_PluginID;
 pub type ItemId = i32;
 pub type LayerId = u32;
 
+pub use suites::command::{MenuId, MenuOrder};
+pub use suites::register::{HookPriority, CommandHookStatus};
 pub use suites::project::{
     ProjectHandle,
     ProjectBitDepth,
