@@ -28,7 +28,8 @@ pub mod suites {
     pub(crate) mod memory;               pub use memory              ::MemorySuite             as Memory;
     pub(crate) mod pf_interface;         pub use pf_interface        ::PFInterfaceSuite        as PFInterface;
     pub(crate) mod project;              pub use project             ::ProjectSuite            as Project;
-    pub(crate) mod register;             pub use register            ::RegisterSuite           as Register;
+    pub(crate) mod register;             pub use register            ::{ RegisterSuite         as Register,
+                                                                         RegisterNonAegpSuite  as RegisterNonAegp };
     pub(crate) mod render_async_manager; pub use render_async_manager::RenderAsyncManagerSuite as RenderAsyncManager;
     pub(crate) mod render_options;       pub use render_options      ::RenderOptionsSuite      as RenderOptions;
     pub(crate) mod render;               pub use render              ::RenderSuite             as Render;
