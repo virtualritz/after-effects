@@ -11,7 +11,7 @@ struct Grabber {}
 
 impl AegpPlugin for Grabber {
     fn entry_point(
-        basic_suite: after_effects::PicaBasicSuite,
+        _basic_suite: after_effects::PicaBasicSuite,
         major_version: i32,
         minor_version: i32,
         aegp_plugin_id: AEGP_PluginID,

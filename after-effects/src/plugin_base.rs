@@ -515,6 +515,7 @@ macro_rules! define_effect {
 }
 
 /// Trait used to implement generic plugins such as menu commands and background tasks.
+/// A struct which implements this will be passed to all register suite callbacks
 pub trait AegpPlugin: Sized {
     fn entry_point(
         basic_suite: crate::PicaBasicSuite,
@@ -539,8 +540,7 @@ macro_rules! define_general_plugin {
             major_version: i32,
             minor_version: i32,
             aegp_plugin_id: $crate::sys::AEGP_PluginID,
-            // TODO: assign the new instance to this
-            _global_refcon: *mut $crate::sys::AEGP_GlobalRefcon,
+            global_refcon: *mut $crate::sys::AEGP_GlobalRefcon,
         ) -> Error {
             #[cfg(target_os = "windows")]
             {
@@ -557,20 +557,43 @@ macro_rules! define_general_plugin {
             );
 
             let basic_suite = PicaBasicSuite::from_sp_basic_suite_raw(pica_basic);
-            match <$main_type>::entry_point(
-                basic_suite,
-                major_version,
-                minor_version,
-                aegp_plugin_id,
-            ) {
-                Ok(_) => {
+
+            let result = if cfg!(any(debug_assertions, feature = "catch-panics")) {
+                std::panic::catch_unwind(|| {
+                    <$main_type>::entry_point(
+                        basic_suite,
+                        major_version,
+                        minor_version,
+                        aegp_plugin_id,
+                    )
+                })
+            } else {
+                Ok(<$main_type>::entry_point(
+                    basic_suite,
+                    major_version,
+                    minor_version,
+                    aegp_plugin_id,
+                ))
+            };
+
+            match result {
+                Ok(Ok(t)) => {
+                    let boxed_instance = Box::new(Some(t));
+                    *global_refcon = Box::into_raw(boxed_instance) as *mut _;
                     $crate::log::debug!("AEGP Setup Succesful for {}.", env!("PIPL_NAME"));
                     Error::None
                 }
-                Err(e) => {
-                    $crate::log::error!("AEGP Setup FAILURE for {}.", env!("PIPL_NAME"));
+                Ok(Err(e)) => {
+                    *global_refcon = Box::into_raw(Box::new(None::<$main_type>)) as *mut _;
+                    $crate::log::error!("Error while setting up {}.", env!("PIPL_NAME"));
                     $crate::log::error!("{:?}", e.clone());
                     e.into()
+                }
+                // panic caught
+                Err(e) => {
+                    *global_refcon = Box::into_raw(Box::new(None::<$main_type>)) as *mut _;
+                    $crate::log::error!("Panic while setting up {}.", env!("PIPL_NAME"));
+                    Error::None
                 }
             }
         }
