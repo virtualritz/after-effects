@@ -520,7 +520,7 @@ pub trait AegpPlugin: Sized {
         basic_suite: crate::PicaBasicSuite,
         major_version: i32,
         minor_version: i32,
-        aegp_plugin_id: i32,
+        aegp_plugin_id: crate::sys::AEGP_PluginID,
     ) -> Result<Self, crate::Error>;
 }
 
@@ -538,8 +538,9 @@ macro_rules! define_general_plugin {
             pica_basic: *const SPBasicSuite,
             major_version: i32,
             minor_version: i32,
-            aegp_plugin_id: i32,
-            _global_refcon: *mut *mut std::ffi::c_void,
+            aegp_plugin_id: $crate::sys::AEGP_PluginID,
+            // TODO: assign the new instance to this
+            _global_refcon: *mut $crate::sys::AEGP_GlobalRefcon,
         ) -> Error {
             #[cfg(target_os = "windows")]
             {
@@ -550,6 +551,10 @@ macro_rules! define_general_plugin {
                 let _ = $crate::oslog::OsLogger::new(env!("CARGO_PKG_NAME")).init();
             }
             $crate::log::set_max_level($crate::log::LevelFilter::Debug);
+            $crate::log::debug!(
+                "Logging initialized for {} - entry point found.",
+                env!("PIPL_NAME")
+            );
 
             let basic_suite = PicaBasicSuite::from_sp_basic_suite_raw(pica_basic);
             match <$main_type>::entry_point(
@@ -558,8 +563,15 @@ macro_rules! define_general_plugin {
                 minor_version,
                 aegp_plugin_id,
             ) {
-                Ok(_) => Error::None,
-                Err(e) => e.into(),
+                Ok(_) => {
+                    $crate::log::debug!("AEGP Setup Succesful for {}.", env!("PIPL_NAME"));
+                    Error::None
+                }
+                Err(e) => {
+                    $crate::log::error!("AEGP Setup FAILURE for {}.", env!("PIPL_NAME"));
+                    $crate::log::error!("{:?}", e.clone());
+                    e.into()
+                }
             }
         }
     };

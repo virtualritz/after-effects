@@ -32,6 +32,7 @@ pub enum PIPLType {
     AEImageFormat,
     AEAccelerator,
     AEGeneral,
+    AEGP,
     PrEffect,
     PrVideoFilter,
     PrAudioFilter,
@@ -90,7 +91,8 @@ impl PIPLType {
             Self::AEEffect       => fourcc(b"eFKT"),
             Self::AEImageFormat  => fourcc(b"FXIF"),
             Self::AEAccelerator  => fourcc(b"eFST"),
-            Self::AEGeneral      => fourcc(b"AEgx"),
+            Self::AEGeneral      => fourcc(b"AEgp"),
+            Self::AEGP           => fourcc(b"AEgx"),
             // Premiere plug-in typefourcc
             Self::PrEffect       => fourcc(b"SPFX"),
             Self::PrVideoFilter  => fourcc(b"VFlt"),
@@ -370,27 +372,27 @@ bitflags::bitflags! {
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum FilterCaseInfoIn {
-    CantFilter = 0,
-    StraightData = 1,
-    BlackMat = 2,
-    GrayMat = 3,
-    WhiteMat = 4,
-    Defringe = 5,
-    BlackZap = 6,
-    GrayZap = 7,
-    WhiteZap = 8,
+    CantFilter    = 0,
+    StraightData  = 1,
+    BlackMat      = 2,
+    GrayMat       = 3,
+    WhiteMat      = 4,
+    Defringe      = 5,
+    BlackZap      = 6,
+    GrayZap       = 7,
+    WhiteZap      = 8,
     BackgroundZap = 10,
     ForegroundZap = 11,
 }
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum FilterCaseInfoOut {
-    CantFilter = 0,
+    CantFilter   = 0,
     StraightData = 1,
-    BlackMat = 2,
-    GrayMat = 3,
-    WhiteMat = 4,
-    FillMask = 9,
+    BlackMat     = 2,
+    GrayMat      = 3,
+    WhiteMat     = 4,
+    FillMask     = 9,
 }
 #[derive(Debug)]
 pub struct FilterCaseInfoStruct {
@@ -405,20 +407,20 @@ pub struct FilterCaseInfoStruct {
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 pub enum BitTypes {
-    None = 0x00,
-    Top = 0x01,
-    Right = 0x02,
-    Bottom = 0x04,
-    Left = 0x08,
+    None       = 0x00,
+    Top        = 0x01,
+    Right      = 0x02,
+    Bottom     = 0x04,
+    Left       = 0x08,
     UpperRight = 0x10,
     LowerRight = 0x20,
-    LowerLeft = 0x40,
-    UpperLeft = 0x80,
+    LowerLeft  = 0x40,
+    UpperLeft  = 0x80,
 }
 #[repr(u32)]
 #[derive(Debug, Clone, Copy)]
 pub enum PixelAspectRatio {
-    AnyPAR = 0x10000,
+    AnyPAR   = 0x10000,
     UnityPAR = 0x20000,
 }
 
@@ -1580,7 +1582,10 @@ pub fn plugin_build(properties: Vec<Property>) {
                 if x.contains(OutFlags::IDoDialog) {
                     println!("cargo:rustc-cfg=does_dialog");
                 }
-                if x.contains(OutFlags::IUseAudio) || x.contains(OutFlags::AudioEffectToo) || x.contains(OutFlags::AudioEffectOnly) {
+                if x.contains(OutFlags::IUseAudio)
+                    || x.contains(OutFlags::AudioEffectToo)
+                    || x.contains(OutFlags::AudioEffectOnly)
+                {
                     println!("cargo:rustc-cfg=uses_audio");
                 }
                 if x.contains(OutFlags::SendUpdateParamsUI) {
