@@ -5,7 +5,7 @@ use after_effects::{
     },
     define_general_plugin,
     sys::{AEGP_PluginID, PF_InData, SPBasicSuite},
-    AegpPlugin, Error, InData, Layer, PicaBasicSuite, Time,
+    AegpPlugin, Error, Layer, PicaBasicSuite, Time,
 };
 
 mod img_proc;
@@ -14,7 +14,7 @@ mod window_handle;
 define_general_plugin!(Grabber);
 
 #[derive(Clone, Debug)]
-struct Grabber {}
+struct Grabber;
 
 impl AegpPlugin for Grabber {
     fn entry_point(
@@ -65,7 +65,7 @@ impl AegpPlugin for Grabber {
 
                                 if cfg!(target_os = "windows") {
                                     let parent =
-                                        window_handle::WindowAndDisplayHandle::try_get_main_handles().map_err(|e| Error::Generic)?;
+                                        window_handle::WindowAndDisplayHandle::try_get_main_handles().map_err(|_| Error::Generic)?;
                                     dialog = dialog.set_parent(&parent);
                                 }
 

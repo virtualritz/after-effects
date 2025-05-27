@@ -63,6 +63,20 @@ While they have many common parts, there are some areas that are separated.
 A few basic examples are [included in the repository](https://github.com/virtualritz/after-effects/tree/master/examples).
 For more advanced use cases, refer to the C/C++ examples from the SDK.
 
+To build each example simply run the following from inside the desired exampel directory.
+
+```bash
+CARGO_TARGET_DIR=$(pwd)/target
+just build
+```
+
+The `just` command will package and install the example plugin.
+
+To debug loading process consult the `Plugin Loading.log` or run AfterEffects from the CLI in
+your debugger of choice.
+
+The most common causes of plugin loading failure on MacOs are lack of signing, and incorrect PkgInfo or Info.plist contents.
+
 For a more advanced sample with full GPU rendering you can check out the
 [Gyroflow plugin](https://github.com/gyroflow/gyroflow-plugins)
 

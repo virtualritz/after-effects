@@ -9,6 +9,9 @@ use byteorder::BigEndian as ByteOrder;
 #[cfg(target_os = "windows")]
 use byteorder::LittleEndian as ByteOrder;
 
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+mod plist;
+
 use byteorder::WriteBytesExt;
 use std::io::Result;
 use std::io::Write;
@@ -1520,6 +1523,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
 
 pub fn plugin_build(properties: Vec<Property>) {
     let mut any_entrypoint_emitted = false;
+    let mut kind = None;
+    let mut name = None;
     for prop in properties.iter() {
         match prop {
             Property::Kind(x) => {
@@ -1533,9 +1538,12 @@ pub fn plugin_build(properties: Vec<Property>) {
                         u32::from_be_bytes(x.as_bytes())
                     }
                 };
+                // take the final one
+                kind = Some(x);
                 println!("cargo:rustc-env=PIPL_KIND={bytes}");
             }
             Property::Name(x) => {
+                name = Some(x);
                 println!("cargo:rustc-env=PIPL_NAME={x}");
             }
             Property::Category(x) => {
@@ -1615,6 +1623,26 @@ pub fn plugin_build(properties: Vec<Property>) {
     if !any_entrypoint_emitted {
         println!("cargo:rustc-env=PIPL_ENTRYPOINT=EffectMain");
     }
+
+    // output 8byte PkgInfo and the Info.plist
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    if let Some(kind) = kind {
+        let pkginfo_path = format!("{}/../../../PkgInfo", std::env::var("OUT_DIR").unwrap(),);
+
+        let fxtc_tag = b"FXTC";
+        let kind_tag = kind.as_bytes();
+        let pkginfo_bytes = [kind_tag, *fxtc_tag].concat();
+
+        std::fs::write(pkginfo_path, &pkginfo_bytes).unwrap();
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    if let (Some(kind), Some(name)) = (kind, name) {
+        let plist_path = format!("{}/../../../Info.plist", std::env::var("OUT_DIR").unwrap(),);
+
+        plist::produce_plist(plist_path, kind, name);
+    }
+
     let pipl = build_pipl(properties).unwrap();
 
     resource::produce_resource(

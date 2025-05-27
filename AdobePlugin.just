@@ -37,11 +37,7 @@ create_bundle profile TargetDir:
     rm -Rf {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
     mkdir -p {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Resources
     mkdir -p {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS
-
-    echo "eFKTFXTC" >> {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/PkgInfo
-    /usr/libexec/PlistBuddy -c 'add CFBundlePackageType string eFKT' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
-    /usr/libexec/PlistBuddy -c 'add CFBundleSignature string FXTC' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
-    /usr/libexec/PlistBuddy -c 'add CFBundleIdentifier string {{BundleIdentifier}}' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
+    cp {{TargetDir}}/{{profile}}/PkgInfo {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/PkgInfo
 
     if [ "{{profile}}" == "release" ]; then
         # Build universal binary
@@ -72,5 +68,6 @@ create_bundle profile TargetDir:
 
     # Install
     if [ -z "$NO_INSTALL" ]; then
+        echo "Installing to /Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/"
         sudo cp -rf "{{TargetDir}}/{{profile}}/{{PluginName}}.plugin" "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/"
     fi
