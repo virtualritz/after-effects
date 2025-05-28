@@ -103,11 +103,8 @@ impl RegisterSuite {
             };
 
             let already_handled_bool = already_handled != 0;
-            let hook_priority_enum = match hook_priority {
-                ae_sys::AEGP_HP_BeforeAE => HookPriority::BeforeAE,
-                ae_sys::AEGP_HP_AfterAE => HookPriority::AfterAE,
-                _ => HookPriority::BeforeAE,
-            };
+
+            let hook_priority_enum = HookPriority::from(hook_priority);
 
             let res = callback(
                 global,
@@ -456,11 +453,8 @@ impl RegisterNonAegpSuite {
         ) -> ae_sys::A_Err {
             let (cb, refcon) = &mut *(refcon as *mut (NonAegpCommandHook<T>, T));
             let already_handled_bool = already_handled != 0;
-            let hook_priority_enum = match hook_priority {
-                ae_sys::AEGP_HP_BeforeAE => HookPriority::BeforeAE,
-                ae_sys::AEGP_HP_AfterAE => HookPriority::AfterAE,
-                _ => HookPriority::BeforeAE,
-            };
+
+            let hook_priority_enum = HookPriority::from(hook_priority);
 
             let res = cb(refcon, command, hook_priority_enum, already_handled_bool);
 
