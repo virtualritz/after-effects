@@ -1624,11 +1624,11 @@ pub fn plugin_build(properties: Vec<Property>) {
         println!("cargo:rustc-env=PIPL_ENTRYPOINT=EffectMain");
     }
 
-    let Some(kind) = kind else {
+    let Some(_kind) = kind else {
         panic!("No `Property::Kind` found in pipl specification. ");
     };
 
-    let Some(name) = name else {
+    let Some(_name) = name else {
         panic!("No `Property::Name` found in pipl specification. ");
     };
 
@@ -1638,14 +1638,12 @@ pub fn plugin_build(properties: Vec<Property>) {
         let pkginfo_path = format!("{}/../../../PkgInfo", std::env::var("OUT_DIR").unwrap(),);
 
         let fxtc_tag = b"FXTC";
-        let kind_tag = kind.as_bytes();
+        let kind_tag = _kind.as_bytes();
         let pkginfo_bytes = [kind_tag, *fxtc_tag].concat();
-
         std::fs::write(pkginfo_path, &pkginfo_bytes).unwrap();
 
         let plist_path = format!("{}/../../../Info.plist", std::env::var("OUT_DIR").unwrap(),);
-
-        plist::produce_plist(plist_path, kind, name);
+        plist::produce_plist(plist_path, _kind, _name);
     }
 
     let pipl = build_pipl(properties).unwrap();
