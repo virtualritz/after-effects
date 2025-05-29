@@ -72,7 +72,7 @@ just build
 
 The `just` command will package and install the example plugin.
 
-To debug loading process consult the `Plugin Loading.log` or run AfterEffects from the CLI in
+To debug the loading process consult the `Plugin Loading.log` or run AfterEffects from the CLI in
 your debugger of choice.
 
 The most common causes of plugin loading failure on MacOs are lack of signing, and incorrect PkgInfo or Info.plist contents.
