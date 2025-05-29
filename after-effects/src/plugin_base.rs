@@ -516,8 +516,6 @@ macro_rules! define_effect {
 
 /// This is a marker trait - it is meant to discourage users from
 /// implementing AegpPlugin without the scaffolding in `define_general_plugin`.
-/// If you try to use a type that implements `AegpPlugin` from a callback
-/// without it being initialized by the plugin entry point your program *will segfault*.
 pub unsafe trait AegpSeal {}
 
 /// Trait used to implement generic plugins such as menu commands and background tasks.

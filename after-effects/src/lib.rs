@@ -35,16 +35,16 @@ use pr_string::*;
 
 // re-exports
 pub use after_effects_sys as sys;
+pub use log;
 pub use cstr_literal;
 pub use fastrand;
-pub use log;
-#[cfg(target_os = "macos")]
-pub use oslog;
 pub use parking_lot;
 pub use paste;
 pub use serde;
 #[cfg(target_os = "windows")]
 pub use win_dbg_logger;
+#[cfg(target_os = "macos")]
+pub use oslog;
 
 thread_local!(
     pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> = RefCell::new(ptr::null_mut())
@@ -175,28 +175,26 @@ define_enum! {
 impl From<Error> for &'static str {
     fn from(error: Error) -> &'static str {
         match error {
-            Error::Generic => "Generic error.",
-            Error::Struct => "Wrong struct.",
-            Error::Parameter => "Wrong parameter.",
-            Error::OutOfMemory => "Out of memory.",
-            Error::WrongThread => "Call made from wrong thread.",
-            Error::ConstProjectModification => {
-                "Project changes must originate in the UI/Main thread."
-            }
-            Error::MissingSuite => "Could no aquire suite.",
-            Error::InternalStructDamaged => "Internal struct is damaged.",
-            Error::InvalidIndex => "Out of range, or action not allowed on this index.",
+            Error::Generic                  => "Generic error.",
+            Error::Struct                   => "Wrong struct.",
+            Error::Parameter                => "Wrong parameter.",
+            Error::OutOfMemory              => "Out of memory.",
+            Error::WrongThread              => "Call made from wrong thread.",
+            Error::ConstProjectModification => "Project changes must originate in the UI/Main thread.",
+            Error::MissingSuite             => "Could no aquire suite.",
+            Error::InternalStructDamaged    => "Internal struct is damaged.",
+            Error::InvalidIndex             => "Out of range, or action not allowed on this index.",
             Error::UnrecogizedParameterType => "Unrecognized parameter type",
-            Error::InvalidCallback => "Invalid callback.",
-            Error::BadCallbackParameter => "Bad callback parameter.",
-            Error::InterruptCancel => "Rendering interrupted.",
-            Error::CannotParseKeyframeText => "Keyframe data damaged.",
-            Error::None => "No error",
-            Error::StringNotFound => "StringNotFound",
-            Error::StringBufferTooSmall => "StringBufferTooSmall",
-            Error::InvalidParms => "InvalidParms",
-            Error::Reserved11 => "Reserved11",
-            Error::Unknown10007 => "Unknown10007",
+            Error::InvalidCallback          => "Invalid callback.",
+            Error::BadCallbackParameter     => "Bad callback parameter.",
+            Error::InterruptCancel          => "Rendering interrupted.",
+            Error::CannotParseKeyframeText  => "Keyframe data damaged.",
+            Error::None                     => "No error",
+            Error::StringNotFound           => "StringNotFound",
+            Error::StringBufferTooSmall     => "StringBufferTooSmall",
+            Error::InvalidParms             => "InvalidParms",
+            Error::Reserved11               => "Reserved11",
+            Error::Unknown10007             => "Unknown10007",
         }
     }
 }
@@ -209,12 +207,16 @@ impl Display for Error {
 }
 
 impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(self) }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(self)
+    }
 }
 
 //FIXME uncomment this once TryReserve() becomes stable in nightly
 impl From<std::collections::TryReserveError> for Error {
-    fn from(_: std::collections::TryReserveError) -> Self { Error::OutOfMemory }
+    fn from(_: std::collections::TryReserveError) -> Self {
+        Error::OutOfMemory
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -222,11 +224,17 @@ impl From<std::collections::TryReserveError> for Error {
 pub struct Matrix3([[f64; 3]; 3]);
 impl From<Matrix3> for ae_sys::A_Matrix3 {
     #[inline]
-    fn from(val: Matrix3) -> Self { ae_sys::A_Matrix3 { mat: val.0 } }
+    fn from(val: Matrix3) -> Self {
+        ae_sys::A_Matrix3 {
+            mat: val.0
+        }
+    }
 }
 impl From<ae_sys::A_Matrix3> for Matrix3 {
     #[inline]
-    fn from(item: ae_sys::A_Matrix3) -> Self { Self(item.mat) }
+    fn from(item: ae_sys::A_Matrix3) -> Self  {
+        Self(item.mat)
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -235,11 +243,17 @@ pub struct Matrix4([[f64; 4]; 4]);
 
 impl From<Matrix4> for ae_sys::A_Matrix4 {
     #[inline]
-    fn from(val: Matrix4) -> Self { ae_sys::A_Matrix4 { mat: val.0 } }
+    fn from(val: Matrix4) -> Self {
+        ae_sys::A_Matrix4 {
+            mat: val.0
+        }
+    }
 }
 impl From<ae_sys::A_Matrix4> for Matrix4 {
     #[inline]
-    fn from(item: ae_sys::A_Matrix4) -> Self { Self(item.mat) }
+    fn from(item: ae_sys::A_Matrix4) -> Self  {
+        Self(item.mat)
+    }
 }
 
 impl Matrix4 {
@@ -287,7 +301,9 @@ fn test_from() {
 #[cfg(feature = "nalgebra")]
 impl From<Matrix4> for nalgebra::Matrix4<f64> {
     #[inline]
-    fn from(m: Matrix4) -> Self { nalgebra::Matrix4::<f64>::from_row_slice(m.as_slice()) }
+    fn from(m: Matrix4) -> Self {
+        nalgebra::Matrix4::<f64>::from_row_slice(m.as_slice())
+    }
 }
 
 #[cfg(feature = "nalgebra")]
@@ -414,24 +430,8 @@ define_struct! {
         bottom: i32,
     }
 }
-define_struct_conv!(
-    ae_sys::A_LegacyRect,
-    Rect {
-        left,
-        top,
-        right,
-        bottom
-    }
-);
-define_struct_conv!(
-    ae_sys::PF_LRect,
-    Rect {
-        left,
-        top,
-        right,
-        bottom
-    }
-);
+define_struct_conv!(ae_sys::A_LegacyRect, Rect { left, top, right, bottom });
+define_struct_conv!(ae_sys::PF_LRect,     Rect { left, top, right, bottom });
 
 impl Rect {
     pub fn empty() -> Self {
@@ -443,23 +443,27 @@ impl Rect {
         }
     }
 
-    pub fn is_empty(&self) -> bool { (self.left >= self.right) || (self.top >= self.bottom) }
-
-    pub fn width(&self) -> i32 { self.right - self.left }
-
-    pub fn height(&self) -> i32 { self.bottom - self.top }
-
+    pub fn is_empty(&self) -> bool {
+        (self.left >= self.right) || (self.top >= self.bottom)
+    }
+    pub fn width(&self) -> i32 {
+        self.right - self.left
+    }
+    pub fn height(&self) -> i32 {
+        self.bottom - self.top
+    }
     pub fn origin(&self) -> Point {
         Point {
             h: self.left,
             v: self.top,
         }
     }
-
-    pub fn set_width(&mut self, width: i32) { self.right = self.left + width }
-
-    pub fn set_height(&mut self, height: i32) { self.bottom = self.top + height }
-
+    pub fn set_width(&mut self, width: i32) {
+        self.right = self.left + width
+    }
+    pub fn set_height(&mut self, height: i32) {
+        self.bottom = self.top + height
+    }
     pub fn set_origin(&mut self, origin: Point) {
         self.left = origin.h;
         self.top = origin.v;
@@ -551,15 +555,14 @@ pub enum Ownership<'a, T: Clone> {
 impl<'a, T: Clone> Clone for Ownership<'a, T> {
     fn clone(&self) -> Self {
         match self {
-            Self::AfterEffects(ptr) => Self::Rust((*ptr).clone()),
+            Self::AfterEffects(ptr)    => Self::Rust((*ptr).clone()),
             Self::AfterEffectsMut(ptr) => Self::Rust((*ptr).clone()),
-            Self::Rust(ptr) => Self::Rust(ptr.clone()),
+            Self::Rust(ptr)            => Self::Rust(ptr.clone()),
         }
     }
 }
 impl<'a, T: Clone> std::ops::Deref for Ownership<'a, T> {
     type Target = T;
-
     fn deref(&self) -> &Self::Target {
         match self {
             Self::AfterEffects(ptr) => ptr,
@@ -585,13 +588,12 @@ impl<'a, T: Clone> ReadOnlyOwnership<'a, T> {
     pub fn clone(&self) -> Ownership<'a, T> {
         match self {
             Self::AfterEffects(ptr) => Ownership::Rust((*ptr).clone()),
-            Self::Rust(ptr) => Ownership::Rust(ptr.clone()),
+            Self::Rust(ptr)         => Ownership::Rust(ptr.clone()),
         }
     }
 }
 impl<'a, T: Clone> std::ops::Deref for ReadOnlyOwnership<'a, T> {
     type Target = T;
-
     fn deref(&self) -> &Self::Target {
         match self {
             Self::AfterEffects(ptr) => ptr,
@@ -606,7 +608,6 @@ pub enum PointerOwnership<T> {
 }
 impl<T> std::ops::Deref for PointerOwnership<T> {
     type Target = T;
-
     fn deref(&self) -> &Self::Target {
         match self {
             Self::AfterEffects(ptr) => unsafe { &**ptr },
@@ -646,7 +647,9 @@ impl PicaBasicSuiteHandle {
     }
 
     #[inline]
-    pub fn as_ptr(&self) -> *const ae_sys::SPBasicSuite { self.pica_basic_suite_ptr }
+    pub fn as_ptr(&self) -> *const ae_sys::SPBasicSuite {
+        self.pica_basic_suite_ptr
+    }
 }
 
 pub(crate) trait Suite {
@@ -663,6 +666,5 @@ pub trait AsPtr<T> {
 
 pub trait AsMutPtr<T> {
     fn as_mut_ptr(&mut self) -> T
-    where
-        T: Sized;
+    where T: Sized;
 }
