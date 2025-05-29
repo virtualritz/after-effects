@@ -63,7 +63,7 @@ While they have many common parts, there are some areas that are separated.
 A few basic examples are [included in the repository](https://github.com/virtualritz/after-effects/tree/master/examples).
 For more advanced use cases, refer to the C/C++ examples from the SDK.
 
-To build each example simply run the following from inside the desired exampel directory.
+To build each example simply run the following from inside the desired example directory.
 
 ```bash
 CARGO_TARGET_DIR=$(pwd)/target
