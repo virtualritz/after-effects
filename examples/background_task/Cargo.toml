@@ -5,6 +5,10 @@ authors = ["mobile-bungalow"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
+[features]
+default = ["global_refcon"]
+global_refcon = []
+
 [lib]
 crate-type = ["cdylib"]
 

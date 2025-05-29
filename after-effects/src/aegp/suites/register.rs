@@ -70,13 +70,13 @@ pub type AboutHook<G, R> = Box<dyn FnMut(Option<&mut G>, &mut R) -> Result<(), E
 pub type IdleHook<G, R> = Box<dyn FnMut(Option<&mut G>, &mut R, &mut i32) -> Result<(), Error>>;
 
 /// Note: functions in this suite take a `Global` Paramater, for AEGPs this must be the same as your global `AegpPlugin` type, for all
-/// other plugins this should likely be `()` - as you will always receive a `None` Global argument in your callbacks.
+/// other plugins this should likely be the type you registered with the [UtilitySuite::register_aegp_plugin] function.
 impl RegisterSuite {
     pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Register a hook (command handler) function with After Effects.
     /// If you are replacing a function which After Effects also handles, `AEGP_HookPriority` determines whether your plug-in gets run first.
-    pub fn register_command_hook<Global: AegpPlugin, RefCon>(
+    pub fn register_command_hook<Global: AegpSeal, RefCon>(
         &self,
         plugin_id: ae_sys::AEGP_PluginID,
         hook_priority: HookPriority,
@@ -145,7 +145,7 @@ impl RegisterSuite {
 
     /// Register your menu update function (which determines whether or not items are active),
     /// called every time any menu is to be drawn.
-    pub fn register_update_menu_hook<Global: AegpPlugin, UpdateMenuRefCon>(
+    pub fn register_update_menu_hook<Global: AegpSeal, UpdateMenuRefCon>(
         &self,
         plugin_id: ae_sys::AEGP_PluginID,
         update_menu_hook_func: UpdateMenuHook<Global, UpdateMenuRefCon>,
@@ -186,13 +186,13 @@ impl RegisterSuite {
     }
 
     /// Register your termination function. Called when the application quits.
-    pub fn register_death_hook<Global: AegpPlugin, DeathRefcon, F>(
+    pub fn register_death_hook<Global: AegpSeal, DeathRefcon>(
         &self,
         plugin_id: ae_sys::AEGP_PluginID,
         death_hook_func: DeathHook<Global, DeathRefcon>,
         death_refcon: DeathRefcon,
     ) -> Result<(), Error> {
-        unsafe extern "C" fn death_hook_wrapper<P, T, F>(
+        unsafe extern "C" fn death_hook_wrapper<P, T>(
             plugin_refcon: AEGP_GlobalRefcon,
             refcon: AEGP_DeathRefcon,
         ) -> sys::PF_Err {
@@ -215,13 +215,13 @@ impl RegisterSuite {
             self,
             AEGP_RegisterDeathHook,
             plugin_id,
-            Some(death_hook_wrapper::<Global, DeathRefcon, F>),
+            Some(death_hook_wrapper::<Global, DeathRefcon>),
             Box::into_raw(refcon_cb_tuple) as *mut _,
         )
     }
 
     /// Currently not called.
-    pub fn register_version_hook<Global: AegpPlugin, VersionRefCon>(
+    pub fn register_version_hook<Global: AegpSeal, VersionRefCon>(
         &self,
         plugin_id: ae_sys::AEGP_PluginID,
         version_hook_func: VersionHook<Global, VersionRefCon>,
@@ -264,7 +264,7 @@ impl RegisterSuite {
     }
 
     /// Currently not called.
-    pub fn register_about_string_hook<Global: AegpPlugin, AboutString>(
+    pub fn register_about_string_hook<Global: AegpSeal, AboutString>(
         &self,
         plugin_id: ae_sys::AEGP_PluginID,
         about_string_hook_func: AboutStringHook<Global, AboutString>,
@@ -308,7 +308,7 @@ impl RegisterSuite {
     }
 
     /// Currently not called.
-    pub fn register_about_hook<Global: AegpPlugin, About, F>(
+    pub fn register_about_hook<Global: AegpSeal, About>(
         &self,
         plugin_id: ae_sys::AEGP_PluginID,
         about_hook_func: AboutHook<Global, About>,
@@ -348,7 +348,7 @@ impl RegisterSuite {
 
     /// Register your IdleHook function. After Effects will call the function sporadically,
     /// while the user makes difficult artistic decisions (or while they're getting more coffee).
-    pub fn register_idle_hook<Global: AegpPlugin, IdleRefCon, F>(
+    pub fn register_idle_hook<Global: AegpSeal, IdleRefCon>(
         &self,
         plugin_id: ae_sys::AEGP_PluginID,
         idle_hook_func: IdleHook<Global, IdleRefCon>,

@@ -6,7 +6,17 @@ enum Params {
 }
 
 #[derive(Default)]
-struct Plugin {}
+struct Plugin;
+
+#[derive(Debug)]
+struct Global {
+    counter: usize,
+}
+
+// If you plan on storing your plugin state in the after effects global
+// bless it with this marker trait. do this *once and only once*
+// in any given plugin.
+unsafe impl AegpSeal for Global {}
 
 static PLUGIN_ID: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
 
@@ -42,26 +52,52 @@ impl AdobePluginGlobal for Plugin {
             ae::Command::GlobalSetup => {
                 let utility = ae::aegp::suites::Utility::new()?;
 
-                // You can also use all the other useful tools in the register suite!
-                // not just the idle hook!
-                let register = ae::aegp::suites::RegisterNonAegp::new().unwrap();
-
-                // We don't currently support registering a global refcon -
-                // Send messages in channels instead
-                let plugin_id = utility.register_with_aegp(None, "BackgroundTask")?;
+                let plugin_id = if cfg!(feature = "global_refcon") {
+                    utility.register_with_aegp_refcon(Global { counter: 0 }, "BackgroundTask")?
+                } else {
+                    utility.register_with_aegp("BackgroundTask")?
+                };
 
                 PLUGIN_ID.set(plugin_id).unwrap();
 
                 // the register suite can be used on the *main* thread in effect plugins
                 // - using it elsewhere will result in tragedy.
-                register.register_idle_hook(
-                    plugin_id,
-                    Box::new(|_, _min_time| {
-                        log::info!("Background Task plugin called - running useless task on main thread");
-                        Ok(())
-                    }),
-                    (),
-                ).unwrap();
+                // You can also use all the other useful tools in the register suite!
+                // not just the idle hook!
+                if cfg!(feature = "global_refcon") {
+                    // If you want access to global refcons stored for static lifetimes by AE, use the
+                    // register suite.
+                    let register = ae::aegp::suites::Register::new().unwrap();
+                    register
+                        .register_idle_hook::<Global, _>(
+                            plugin_id,
+                            Box::new(|global, _, _min_time| {
+                                // Global is guaranteed to be `Some` unless you implemented `AegpSeal` without calling
+                                // `RegisterSuite::register_with_aegp_store_global`
+                                log::info!(
+                                    "Background Task plugin called - Global counter: {}",
+                                    global.as_ref().unwrap().counter
+                                );
+
+                                global.unwrap().counter += 1;
+
+                                Ok(())
+                            }),
+                            (),
+                        )
+                        .unwrap();
+                } else {
+                    // If you don't care about storing global data use the RegisterNonAegp suite.
+                    let register = ae::aegp::suites::RegisterNonAegp::new().unwrap();
+                    register.register_idle_hook(
+                        plugin_id,
+                        Box::new(|_, _min_time| {
+                            log::info!("Background Task plugin called - running useless task on main thread");
+                            Ok(())
+                        }),
+                        (),
+                    ).unwrap();
+                };
             }
             ae::Command::Render {
                 in_layer,

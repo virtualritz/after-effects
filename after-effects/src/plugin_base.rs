@@ -516,6 +516,8 @@ macro_rules! define_effect {
 
 /// This is a marker trait - it is meant to discourage users from
 /// implementing AegpPlugin without the scaffolding in `define_general_plugin`.
+/// You should implement this *once* and only once in any given plugin. It is used to
+/// mark a singleton type for retrieval from a raw pointer in the [RegisterSuite] api's.
 pub unsafe trait AegpSeal {}
 
 /// Trait used to implement generic plugins such as menu commands and background tasks.
@@ -529,6 +531,16 @@ pub trait AegpPlugin: Sized + AegpSeal {
     ) -> Result<Self, crate::Error>;
 }
 
+/// This macro defines the main entry point for an After Effects general plugin.
+///
+/// The macro generates an `EntryPointFunc` function that must match the entry point name
+/// specified in your PIPL configuration:
+///
+/// ```ignore
+/// Property::CodeWin64X86("EntryPointFunc"),
+/// Property::CodeMacIntel64("EntryPointFunc"),
+/// // etc.
+/// ```
 #[macro_export]
 macro_rules! define_general_plugin {
     ($main_type:ty) => {

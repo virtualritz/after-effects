@@ -132,7 +132,7 @@ impl AdobePluginGlobal for Plugin {
             }
             ae::Command::GlobalSetup => {
                 if let Ok(suite) = ae::aegp::suites::Utility::new() {
-                    self.my_id = suite.register_with_aegp(None, "Supervisor")?;
+                    self.my_id = suite.register_with_aegp("Supervisor")?;
                 }
             }
             _ => { }
