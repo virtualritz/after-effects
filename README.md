@@ -75,7 +75,7 @@ The `just` command will package and install the example plugin.
 To debug the loading process consult the `Plugin Loading.log` or run AfterEffects from the CLI in
 your debugger of choice.
 
-The most common causes of plugin loading failure on MacOs are lack of signing, and incorrect PkgInfo or Info.plist contents.
+The most common causes of plugin loading failure on macOS are lack of signing, and incorrect PkgInfo or Info.plist contents.
 
 For a more advanced sample with full GPU rendering you can check out the
 [Gyroflow plugin](https://github.com/gyroflow/gyroflow-plugins)
@@ -109,7 +109,7 @@ in your `Cargo.toml` file.
 The release build doesn't catch panics by default to not add any additional overhead. You can
 opt-in for the panic handler by adding `catch_panics` cfg to your `build.rs`:
 
-```toml
+```rust
 println!("cargo:rustc-cfg=catch_panics");
 ```
 

@@ -64,11 +64,11 @@ impl UtilitySuite {
     /// Effects should only call this function once, during [`Command::GlobalSetup`], and save the [`PluginId`] for later use.
     /// The first parameter can be a value you expect to retrieve later with the [`RegisterSuite`], and the second parameter should be the plug-in's match name.
     pub fn register_with_aegp_refcon<T: AegpSeal>(&self, global_refcon: T, plugin_name: &str) -> Result<PluginId, Error> {
-        let refcon= Box::into_raw(Box::new(global_refcon));
+        let refcon = Box::into_raw(Box::new(global_refcon));
         let plugin_name = CString::new(plugin_name).map_err(|_| Error::InvalidParms)?;
         call_suite_fn_single!(self, AEGP_RegisterWithAEGP -> ae_sys::AEGP_PluginID, refcon as _, plugin_name.as_ptr())
     }
-    
+
     /// Returns an [`PluginId`], which effect plug-ins can then use in calls to many functions throughout the AEGP API.
     /// Effects should only call this function once, during [`Command::GlobalSetup`], and save the [`PluginId`] for later use.
     /// The first parameter should be the plug-in's match name.

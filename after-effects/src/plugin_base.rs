@@ -544,7 +544,7 @@ pub trait AegpPlugin: Sized + AegpSeal {
 #[macro_export]
 macro_rules! define_general_plugin {
     ($main_type:ty) => {
-        // Static Assertsion
+        // Static Assertion
         const _: () = {
             fn assert_implements_aegp_plugin<T: AegpPlugin>() {}
             fn call_with_main_type() { assert_implements_aegp_plugin::<$main_type>(); }
@@ -588,7 +588,7 @@ macro_rules! define_general_plugin {
                 Ok(t) => {
                     let boxed_instance = Box::new(t);
                     *global_refcon = Box::into_raw(boxed_instance) as *mut _;
-                    $crate::log::debug!("AEGP Setup Succesful for {}.", env!("PIPL_NAME"));
+                    $crate::log::debug!("AEGP setup successful for {}.", env!("PIPL_NAME"));
                     Error::None
                 }
                 Err(e) => {
