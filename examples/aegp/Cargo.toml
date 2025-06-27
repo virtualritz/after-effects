@@ -1,7 +1,7 @@
 [package]
-name = "custom_comp_ui"
+name = "aegpdemo"
 version = "0.0.1"
-authors = ["Adrian <adrian.eddy@gmail.com>"]
+authors = ["mobile-bungalow"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
@@ -9,8 +9,12 @@ license = "MIT OR Apache-2.0"
 crate-type = ["cdylib"]
 
 [dependencies]
+log = "0.4"
 after-effects = { path = "../../after-effects" }
-rfd = "0.15.0"
+image = { version = "0.25.6", default-features = false, features = ["png"] }
+homedir = "0.2.1"
+raw-window-handle = "0.6.2"
+rfd = "0.15.3"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }

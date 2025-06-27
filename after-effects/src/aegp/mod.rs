@@ -12,6 +12,7 @@ pub mod suites {
     pub(crate) mod camera;               pub use camera              ::CameraSuite             as Camera;
     pub(crate) mod canvas;               pub use canvas              ::CanvasSuite             as Canvas;
     pub(crate) mod color_settings;       pub use color_settings      ::ColorSettingsSuite      as ColorSettings;
+    pub(crate) mod command;              pub use command             ::CommandSuite            as Command;
     pub(crate) mod comp;                 pub use comp                ::CompSuite               as Comp;
     pub(crate) mod composite;            pub use composite           ::CompositeSuite          as Composite;
     pub(crate) mod effect;               pub use effect              ::EffectSuite             as Effect;
@@ -27,6 +28,8 @@ pub mod suites {
     pub(crate) mod memory;               pub use memory              ::MemorySuite             as Memory;
     pub(crate) mod pf_interface;         pub use pf_interface        ::PFInterfaceSuite        as PFInterface;
     pub(crate) mod project;              pub use project             ::ProjectSuite            as Project;
+    pub(crate) mod register;             pub use register            ::{ RegisterSuite         as Register,
+                                                                         RegisterNonAegpSuite  as RegisterNonAegp };
     pub(crate) mod render_async_manager; pub use render_async_manager::RenderAsyncManagerSuite as RenderAsyncManager;
     pub(crate) mod render_options;       pub use render_options      ::RenderOptionsSuite      as RenderOptions;
     pub(crate) mod render;               pub use render              ::RenderSuite             as Render;
@@ -41,6 +44,8 @@ pub type PluginId = ae_sys::AEGP_PluginID;
 pub type ItemId = i32;
 pub type LayerId = u32;
 
+pub use suites::command::{MenuId, MenuOrder};
+pub use suites::register::{HookPriority, CommandHookStatus};
 pub use suites::project::{
     ProjectHandle,
     ProjectBitDepth,

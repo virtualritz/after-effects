@@ -170,7 +170,7 @@ impl AdobePluginGlobal for Plugin {
             ae::Command::GlobalSetup => {
                 if let Ok(suite) = ae::aegp::suites::Utility::new() {
                     unsafe {
-                        AEGP_PLUGIN_ID = suite.register_with_aegp(None, "HistoGrid")?;
+                        AEGP_PLUGIN_ID = suite.register_with_aegp("HistoGrid")?;
                     }
                 }
             }

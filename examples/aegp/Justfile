@@ -1,0 +1,5 @@
+PluginName       := "AegpDemo"
+BundleIdentifier := "com.adobe.AfterEffects.AegpDemo"
+BinaryName       := lowercase(PluginName)
+
+import '../../AdobePlugin.just'

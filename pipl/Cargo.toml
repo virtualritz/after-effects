@@ -19,6 +19,9 @@ byteorder = "1.5"
 pretty-hex = "0.4"
 winres = "0.1"
 
+[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
+plist = "1.7.1"
+
 [dev-dependencies]
 pretty-hex = "0.4"
 similar-asserts = "1.6.0"

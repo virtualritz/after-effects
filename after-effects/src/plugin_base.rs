@@ -120,7 +120,6 @@
 ///
 /// ae::define_effect!(Plugin, (), Params);
 /// ```
-///
 #[macro_export]
 macro_rules! define_effect {
     ($global_type:ty, $sequence_type:tt, $params_type:ty) => {
@@ -512,5 +511,93 @@ macro_rules! define_effect {
     (check_size: ()) => { };
     (check_size: $t:tt) => {
         const _: () = assert!(std::mem::size_of::<$t>() > 0, concat!("Type `", stringify!($t), "` cannot be zero-sized"));
+    };
+}
+
+/// This is a marker trait - it is meant to discourage users from
+/// implementing AegpPlugin without the scaffolding in `define_general_plugin`.
+/// You should implement this *once* and only once in any given plugin. It is used to
+/// mark a singleton type for retrieval from a raw pointer in the [RegisterSuite] api's.
+pub unsafe trait AegpSeal {}
+
+/// Trait used to implement generic plugins such as menu commands and background tasks.
+/// A struct which implements this will be passed to all register suite callbacks
+/// Warning: Do not implement this without calling `define_general_plugin`
+pub trait AegpPlugin: Sized + AegpSeal {
+    fn entry_point(
+        major_version: i32,
+        minor_version: i32,
+        aegp_plugin_id: crate::sys::AEGP_PluginID,
+    ) -> Result<Self, crate::Error>;
+}
+
+/// This macro defines the main entry point for an After Effects general plugin.
+///
+/// The macro generates an `EntryPointFunc` function that must match the entry point name
+/// specified in your PIPL configuration:
+///
+/// ```ignore
+/// Property::CodeWin64X86("EntryPointFunc"),
+/// Property::CodeMacIntel64("EntryPointFunc"),
+/// // etc.
+/// ```
+#[macro_export]
+macro_rules! define_general_plugin {
+    ($main_type:ty) => {
+        // Static Assertsion
+        const _: () = {
+            fn assert_implements_aegp_plugin<T: AegpPlugin>() {}
+            fn call_with_main_type() { assert_implements_aegp_plugin::<$main_type>(); }
+        };
+
+        unsafe impl $crate::AegpSeal for $main_type {}
+
+        #[no_mangle]
+        pub unsafe extern "C" fn EntryPointFunc(
+            pica_basic: *const SPBasicSuite,
+            major_version: i32,
+            minor_version: i32,
+            aegp_plugin_id: $crate::sys::AEGP_PluginID,
+            global_refcon: *mut $crate::sys::AEGP_GlobalRefcon,
+        ) -> Error {
+            #[cfg(target_os = "windows")]
+            {
+                let _ = $crate::log::set_logger(&$crate::win_dbg_logger::DEBUGGER_LOGGER);
+            }
+            #[cfg(target_os = "macos")]
+            {
+                let _ = $crate::oslog::OsLogger::new(env!("CARGO_PKG_NAME")).init();
+            }
+            $crate::log::set_max_level($crate::log::LevelFilter::Debug);
+            $crate::log::debug!(
+                "Logging initialized for {} - entry point found.",
+                env!("PIPL_NAME")
+            );
+
+            let mut basic_suite = PicaBasicSuite::from_sp_basic_suite_raw(pica_basic);
+
+            let result = <$main_type>::entry_point(major_version, minor_version, aegp_plugin_id);
+
+            // When the basic suite `Drop` runs it removes the basic suite
+            // pointer from memory and nulls it. For AEGP's it's standard to
+            // store the pointer in the global ref con. Doing it statically by
+            // leaking the basic suite here is a more general solution.
+            std::mem::forget(basic_suite);
+
+            match result {
+                Ok(t) => {
+                    let boxed_instance = Box::new(t);
+                    *global_refcon = Box::into_raw(boxed_instance) as *mut _;
+                    $crate::log::debug!("AEGP Setup Succesful for {}.", env!("PIPL_NAME"));
+                    Error::None
+                }
+                Err(e) => {
+                    *global_refcon = std::ptr::null_mut();
+                    $crate::log::error!("Error while setting up {}.", env!("PIPL_NAME"));
+                    $crate::log::error!("{:?}", e.clone());
+                    e.into()
+                }
+            }
+        }
     };
 }

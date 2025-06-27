@@ -37,11 +37,7 @@ create_bundle profile TargetDir:
     rm -Rf {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
     mkdir -p {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Resources
     mkdir -p {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS
-
-    echo "eFKTFXTC" >> {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/PkgInfo
-    /usr/libexec/PlistBuddy -c 'add CFBundlePackageType string eFKT' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
-    /usr/libexec/PlistBuddy -c 'add CFBundleSignature string FXTC' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
-    /usr/libexec/PlistBuddy -c 'add CFBundleIdentifier string {{BundleIdentifier}}' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
+    cp {{TargetDir}}/{{profile}}/PkgInfo {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/PkgInfo
 
     if [ "{{profile}}" == "release" ]; then
         # Build universal binary
@@ -59,12 +55,19 @@ create_bundle profile TargetDir:
         cp {{TargetDir}}/{{profile}}/lib{{BinaryName}}.dylib {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS/{{PluginName}}
     fi
 
-    # codesign with the first development cert we can find using its hash
-    if [ -z "$NO_SIGN" ]; then
-        codesign --options runtime --timestamp -strict  --sign $( security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}' ) {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
+    DEV_CERT=$(security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}')
+
+    # Perform signing - as of AE and PR 25.2 all macos plugins require a signature or else
+    # they will fail to load with error code "2685337601" - see your "Plugin Loading.log" for details
+    if [ -n "$DEV_CERT" ]; then
+       codesign --options runtime --timestamp -strict --sign "$DEV_CERT" {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
+    else
+       codesign --options runtime --timestamp -strict --sign - {{TargetDir}}/{{profile}}/{{PluginName}}.plugin
+       echo "Note: Using ad-hoc signature. For distribution, a valid Apple Developer certificate is recommended."
     fi
 
     # Install
     if [ -z "$NO_INSTALL" ]; then
+        echo "Installing to /Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/"
         sudo cp -rf "{{TargetDir}}/{{profile}}/{{PluginName}}.plugin" "/Library/Application Support/Adobe/Common/Plug-ins/7.0/MediaCore/"
     fi

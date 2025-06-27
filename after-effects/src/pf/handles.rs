@@ -270,7 +270,7 @@ impl<'a> FlatHandle<'a> {
     }
 
     #[inline]
-    pub fn lock<'b: 'a>(&'b self) -> Result<FlatHandleLock, Error> {
+    pub fn lock<'b: 'a>(&'b self) -> Result<FlatHandleLock<'b, 'a>, Error> {
         let ptr = self.suite.lock_handle(self.handle) as *mut u8;
         if ptr.is_null() {
             Err(Error::InvalidIndex)

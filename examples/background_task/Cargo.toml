@@ -1,16 +1,19 @@
 [package]
-name = "custom_comp_ui"
+name = "backgroundtask"
 version = "0.0.1"
-authors = ["Adrian <adrian.eddy@gmail.com>"]
+authors = ["mobile-bungalow"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
+
+[features]
+default = ["global_refcon"]
+global_refcon = []
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 after-effects = { path = "../../after-effects" }
-rfd = "0.15.0"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }

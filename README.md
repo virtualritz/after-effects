@@ -63,6 +63,20 @@ While they have many common parts, there are some areas that are separated.
 A few basic examples are [included in the repository](https://github.com/virtualritz/after-effects/tree/master/examples).
 For more advanced use cases, refer to the C/C++ examples from the SDK.
 
+To build each example simply run the following from inside the desired example directory.
+
+```bash
+CARGO_TARGET_DIR=$(pwd)/target
+just build
+```
+
+The `just` command will package and install the example plugin.
+
+To debug the loading process consult the `Plugin Loading.log` or run AfterEffects from the CLI in
+your debugger of choice.
+
+The most common causes of plugin loading failure on MacOs are lack of signing, and incorrect PkgInfo or Info.plist contents.
+
 For a more advanced sample with full GPU rendering you can check out the
 [Gyroflow plugin](https://github.com/gyroflow/gyroflow-plugins)
 
@@ -140,7 +154,7 @@ AfterEffectsSDK
 | ✅ Camera               | ✅ AE Adv Item                    | ✅ Image    | ✅ AE Plugin Helper 2 |
 | ✅ Canvas               | 🔳 AE Adv Time                    | ✅ Path     |                       |
 | 🔳 Collection           | ✅ AE App                         | ✅ Pen      |                       |
-| 🔳 Command              | ✅ AngleParam                     | ✅ Supplier |                       |
+| ✅ Command              | ✅ AngleParam                     | ✅ Supplier |                       |
 | ✅ Comp                 | 🔳 ANSI                           | ✅ Surface  |                       |
 | ✅ Composite            | ✅ Background Frame               |             |                       |
 | 🔳 Compute              | 🔳 Batch Sampling                 |             |                       |
@@ -169,7 +183,7 @@ AfterEffectsSDK
 | ✅ PF Interface         | ✅ PointParam                     |             |                       |
 | ✅ Proj                 | 🔳 Sampling8                      |             |                       |
 | 🔳 QueryXform           | 🔳 Sampling16                     |             |                       |
-| 🔳 Register             | 🔳 SamplingFloat                  |             |                       |
+| ✅  Register             | 🔳 SamplingFloat                  |             |                       |
 | ✅ Render Asyc Manager  | ✅ Source Settings                |             |                       |
 | ✅ Render Options       | ✅ Transition                     |             |                       |
 | 🔳 Render Queue Item    | ✅ Utility                        |             |                       |
@@ -185,6 +199,8 @@ AfterEffectsSDK
 | ✅ Utility              |                                   |             |                       |
 | 🔳 Workspace Panel      |                                   |             |                       |
 | ✅ World                |                                   |             |                       |
+
+*The register suite currently excludes the artisan and AEIO registration API
 
 ### Premiere
 

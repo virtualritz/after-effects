@@ -62,10 +62,20 @@ impl UtilitySuite {
 
     /// Returns an [`PluginId`], which effect plug-ins can then use in calls to many functions throughout the AEGP API.
     /// Effects should only call this function once, during [`Command::GlobalSetup`], and save the [`PluginId`] for later use.
-    /// The first parameter can be any value, and the second parameter should be the plug-in's match name.
-    pub fn register_with_aegp(&self, global_refcon: Option<*mut std::ffi::c_void>, plugin_name: &str) -> Result<PluginId, Error> {
+    /// The first parameter can be a value you expect to retrieve later with the [`RegisterSuite`], and the second parameter should be the plug-in's match name.
+    pub fn register_with_aegp_refcon<T: AegpSeal>(&self, global_refcon: T, plugin_name: &str) -> Result<PluginId, Error> {
+        let refcon= Box::into_raw(Box::new(global_refcon));
         let plugin_name = CString::new(plugin_name).map_err(|_| Error::InvalidParms)?;
-        call_suite_fn_single!(self, AEGP_RegisterWithAEGP -> ae_sys::AEGP_PluginID, global_refcon.unwrap_or(std::ptr::null_mut()) as _, plugin_name.as_ptr())
+        call_suite_fn_single!(self, AEGP_RegisterWithAEGP -> ae_sys::AEGP_PluginID, refcon as _, plugin_name.as_ptr())
+    }
+    
+    /// Returns an [`PluginId`], which effect plug-ins can then use in calls to many functions throughout the AEGP API.
+    /// Effects should only call this function once, during [`Command::GlobalSetup`], and save the [`PluginId`] for later use.
+    /// The first parameter should be the plug-in's match name.
+    /// If you need to store global data to use in [`RegisterSuite`] instead call [`register_with_aegp_store_global`].
+    pub fn register_with_aegp(&self, plugin_name: &str) -> Result<PluginId, Error> {
+        let plugin_name = CString::new(plugin_name).map_err(|_| Error::InvalidParms)?;
+        call_suite_fn_single!(self, AEGP_RegisterWithAEGP -> ae_sys::AEGP_PluginID, std::ptr::null_mut() as _, plugin_name.as_ptr())
     }
 
     /// Retrieves After Effects' HWND; useful when displaying your own dialog on Windows.
