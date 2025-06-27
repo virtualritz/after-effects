@@ -1,5 +1,5 @@
 PluginName       := "Custom_ECW_UI"
-BundleIdentifier := "com.adobe.AfterEffects.{{PluginName}}"
+BundleIdentifier := "com.adobe.AfterEffects." + PluginName
 BinaryName       := lowercase(PluginName)
 
 import '../../AdobePlugin.just'
