@@ -178,9 +178,9 @@ impl UtilCallbacks {
     /// * `dest_x`, `dest_y` - upper left-hand corner of src rect in composite image
     /// * `field` - which scanlines to render ([`Field::Frame`], [`Field::Upper`] or [`Field::Lower`])
     /// * `transfer_mode` - can be [`TransferMode::Copy`], [`TransferMode::Behind`] or [`TransferMode::InFront`]
-    pub fn composite_rect(&self, src_rect: Option<Rect>, src_opacity: i32, src: impl AsPtr<*mut PF_EffectWorld>, dest_x: i32, dest_y: i32, field: Field, transfer_mode: TransferMode, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+    pub fn composite_rect(&self, src_rect: Option<Rect>, src_opacity: i32, src: impl AsPtr<*const PF_EffectWorld>, dest_x: i32, dest_y: i32, field: Field, transfer_mode: TransferMode, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
         if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, composite_rect, src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x), src_opacity, src.as_ptr(), dest_x, dest_y, field.into(), transfer_mode.into(), dst.as_mut_ptr())
+        call_fn!(self, composite_rect, src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x), src_opacity, src.as_ptr() as _, dest_x, dest_y, field.into(), transfer_mode.into(), dst.as_mut_ptr())
     }
 
     /// Blends two images, alpha-weighted. Does not deal with different-sized sources, though the destination may be either `PF_EffectWorld`.
@@ -240,9 +240,9 @@ impl UtilCallbacks {
     /// * `forward` - `true` means convert non-premultiplied to pre-multiplied; `false` means un-pre-multiply.
     ///
     /// To convert between premul and straight pixel buffers where the color channels were matted with a color other than black.
-    pub fn premultiply_color(&self, src: impl AsPtr<*mut PF_EffectWorld>, color: &Pixel8, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+    pub fn premultiply_color(&self, src: impl AsPtr<*const PF_EffectWorld>, color: &Pixel8, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
         if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, premultiply_color, src.as_ptr(), color, forward as _, dst.as_mut_ptr())
+        call_fn!(self, premultiply_color, src.as_ptr() as _, color, forward as _, dst.as_mut_ptr())
     }
 
     /// Converts to (and from) having r, g, and b color values premultiplied with any color to represent the alpha channel.
@@ -250,9 +250,9 @@ impl UtilCallbacks {
     /// * `forward` - `true` means convert non-premultiplied to pre-multiplied; `false` means un-pre-multiply.
     ///
     /// To convert between premul and straight pixel buffers where the color channels were matted with a color other than black.
-    pub fn premultiply_color16(&self, src: impl AsPtr<*mut PF_EffectWorld>, color: &Pixel16, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
+    pub fn premultiply_color16(&self, src: impl AsPtr<*const PF_EffectWorld>, color: &Pixel16, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
         if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, premultiply_color16, src.as_ptr(), color, forward as _, dst.as_mut_ptr())
+        call_fn!(self, premultiply_color16, src.as_ptr() as _, color, forward as _, dst.as_mut_ptr())
     }
 
     /// Call this routine before you plan to perform a large number of image resamplings.
