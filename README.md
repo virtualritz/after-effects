@@ -107,10 +107,10 @@ debug-assertions = true
 in your `Cargo.toml` file.
 
 The release build doesn't catch panics by default to not add any additional overhead. You can
-opt-in for the panic handler by enabling `catch-panics` `cargo` feature:
+opt-in for the panic handler by adding `catch_panics` cfg to your `build.rs`:
 
 ```toml
-features = ["catch-panics"]
+println!("cargo:rustc-cfg=catch_panics");
 ```
 
 ## Help Wanted/To Do
@@ -183,7 +183,7 @@ AfterEffectsSDK
 | ✅ PF Interface         | ✅ PointParam                     |             |                       |
 | ✅ Proj                 | 🔳 Sampling8                      |             |                       |
 | 🔳 QueryXform           | 🔳 Sampling16                     |             |                       |
-| ✅  Register             | 🔳 SamplingFloat                  |             |                       |
+| ✅ Register             | 🔳 SamplingFloat                  |             |                       |
 | ✅ Render Asyc Manager  | ✅ Source Settings                |             |                       |
 | ✅ Render Options       | ✅ Transition                     |             |                       |
 | 🔳 Render Queue Item    | ✅ Utility                        |             |                       |

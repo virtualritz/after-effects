@@ -2,7 +2,7 @@
 name = "custom_comp_ui"
 version = "0.0.1"
 authors = ["Adrian <adrian.eddy@gmail.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [lib]
@@ -10,7 +10,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 after-effects = { path = "../../after-effects" }
-rfd = "0.15.0"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }

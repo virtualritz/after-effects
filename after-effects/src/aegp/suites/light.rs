@@ -1,5 +1,6 @@
 use crate::*;
 use ae_sys::AEGP_LayerH;
+use crate::aegp::LayerHandle;
 
 define_suite!(
     /// Get and set the type of lights in a composition.
@@ -21,6 +22,13 @@ define_suite!(
     kAEGPLightSuite,
     kAEGPLightSuiteVersion2
 );
+define_suite!(
+    LightSuite3,
+    AEGP_LightSuite3,
+    kAEGPLightSuite,
+    kAEGPLightSuiteVersion3
+);
+
 
 impl LightSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
@@ -38,6 +46,17 @@ impl LightSuite {
     pub fn set_light_type(&self, layer_handle: impl AsPtr<AEGP_LayerH>, light_type: LightType) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetLightType, layer_handle.as_ptr(), light_type.into())
     }
+
+    pub fn light_source(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LayerHandle, Error> {
+        let v3 = LightSuite3::new()?;
+        Ok(LayerHandle::from_raw(
+            call_suite_fn_single!(v3, AEGP_GetLightSource -> ae_sys::AEGP_LayerH, layer_handle.as_ptr())?
+        ))
+    }
+    pub fn set_light_source(&self, layer_handle: impl AsPtr<AEGP_LayerH>, light_source: impl AsPtr<AEGP_LayerH>) -> Result<(), Error> {
+        let v3 = LightSuite3::new()?;
+        call_suite_fn!(v3, AEGP_SetLightSource, layer_handle.as_ptr(), light_source.as_ptr())
+    }
 }
 
 // ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
@@ -45,10 +64,11 @@ impl LightSuite {
 define_enum! {
     ae_sys::AEGP_LightType,
     LightType {
-        None     = ae_sys::AEGP_LightType_NONE,
-        Parallel = ae_sys::AEGP_LightType_PARALLEL,
-        Spot     = ae_sys::AEGP_LightType_SPOT,
-        Point    = ae_sys::AEGP_LightType_POINT,
-        Ambient  = ae_sys::AEGP_LightType_AMBIENT,
+        None        = ae_sys::AEGP_LightType_NONE,
+        Parallel    = ae_sys::AEGP_LightType_PARALLEL,
+        Spot        = ae_sys::AEGP_LightType_SPOT,
+        Point       = ae_sys::AEGP_LightType_POINT,
+        Ambient     = ae_sys::AEGP_LightType_AMBIENT,
+        Environment = ae_sys::AEGP_LightType_ENVIRONMENT,
     }
 }

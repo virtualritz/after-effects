@@ -4,10 +4,11 @@ use std::any::Any;
 define_enum! {
     ae_sys::PF_GPU_Framework,
     GpuFramework {
-        None   = ae_sys::PF_GPU_Framework_NONE,
-        OpenCl = ae_sys::PF_GPU_Framework_OPENCL,
-        Metal  = ae_sys::PF_GPU_Framework_METAL,
-        Cuda   = ae_sys::PF_GPU_Framework_CUDA,
+        None    = ae_sys::PF_GPU_Framework_NONE,
+        OpenCl  = ae_sys::PF_GPU_Framework_OPENCL,
+        Metal   = ae_sys::PF_GPU_Framework_METAL,
+        Cuda    = ae_sys::PF_GPU_Framework_CUDA,
+        DirectX = ae_sys::PF_GPU_Framework_DIRECTX,
     }
 }
 

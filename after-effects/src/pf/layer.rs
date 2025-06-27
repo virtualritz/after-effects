@@ -118,7 +118,7 @@ impl Layer {
     }
 
     fn clamp_rect(&self, rect: &mut Option<Rect>) {
-        if let Some(ref mut rect) = rect {
+        if let Some(rect) = rect {
             if rect.left < 0 { rect.left = 0; }
             if rect.top  < 0 { rect.top  = 0; }
             if rect.width()  > self.width()  as i32 { rect.set_width(self.width() as i32); }

@@ -42,14 +42,16 @@ macro_rules! define_iterate {
                 if refcon.is_null() || out_p.is_null() {
                     return ae_sys::PF_Err_BAD_CALLBACK_PARAM as ae_sys::PF_Err;
                 }
-                let cb = &*(refcon as *const Box<Box<dyn Fn(i32, i32, &$pixel, &mut $pixel) -> Result<(), Error>>>);
+                unsafe {
+                    let cb = &*(refcon as *const Box<Box<dyn Fn(i32, i32, &$pixel, &mut $pixel) -> Result<(), Error>>>);
 
-                // If `src` is None, there will be no source pixels, so just use the output pixel in both places to simplify the callback
-                if in_p.is_null() { in_p = out_p; }
+                    // If `src` is None, there will be no source pixels, so just use the output pixel in both places to simplify the callback
+                    if in_p.is_null() { in_p = out_p; }
 
-                match cb(x, y, &*in_p, &mut *out_p) {
-                    Ok(_)  => ae_sys::PF_Err_NONE as _,
-                    Err(e) => e.into(),
+                    match cb(x, y, &*in_p, &mut *out_p) {
+                        Ok(_)  => ae_sys::PF_Err_NONE as _,
+                        Err(e) => e.into(),
+                    }
                 }
             }
             unsafe {
@@ -136,7 +138,7 @@ macro_rules! define_iterate_lut_and_generic {
             F: Fn(i32, i32, i32) -> Result<(), Error>,
         {
             unsafe extern "C" fn iterate_c_fn(refcon: *mut c_void, thread_index: ae_sys::A_long, i: ae_sys::A_long, iterations: ae_sys::A_long) -> ae_sys::PF_Err {
-                let cb = &*(refcon as *const Box<Box<dyn Fn(i32, i32, i32) -> Result<(), Error>>>);
+                let cb = unsafe { &*(refcon as *const Box<Box<dyn Fn(i32, i32, i32) -> Result<(), Error>>>) };
                 match cb(thread_index, i, iterations) {
                     Ok(_)  => ae_sys::PF_Err_NONE as _,
                     Err(e) => e.into(),

@@ -7,7 +7,8 @@ fn main() {
     println!("cargo:rerun-if-changed=wrapper.hpp");
 
     println!("cargo::rustc-check-cfg=cfg(builtin_bindings)");
-    if env::var("PRSDK_ROOT").is_err() {
+
+    if !env::var("PRSDK_ROOT").is_ok_and(|x| !x.is_empty()) {
         println!("cargo:rustc-cfg=builtin_bindings");
         return;
     }

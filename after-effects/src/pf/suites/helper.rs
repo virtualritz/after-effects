@@ -112,5 +112,12 @@ define_enum! {
         CameraPanCursor   = ae_sys::PF_ExtendedSuiteTool_CAMERA_PAN_CURSOR,
         CameraDollyTowardsCursor = ae_sys::PF_ExtendedSuiteTool_CAMERA_DOLLY_TOWARDS_CURSOR,
         CameraDollyToCursor = ae_sys::PF_ExtendedSuiteTool_CAMERA_DOLLY_TO_CURSOR,
+        ObjectSelect      = ae_sys::PF_ExtendedSuiteTool_OBJECTSELECT,
+        Cube              = ae_sys::PF_ExtendedSuiteTool_CUBE,
+        Sphere            = ae_sys::PF_ExtendedSuiteTool_SPHERE,
+        Plane             = ae_sys::PF_ExtendedSuiteTool_PLANE,
+        Torus             = ae_sys::PF_ExtendedSuiteTool_TORUS,
+        Cone              = ae_sys::PF_ExtendedSuiteTool_CONE,
+        Cylinder          = ae_sys::PF_ExtendedSuiteTool_CYLINDER,
     }
 }

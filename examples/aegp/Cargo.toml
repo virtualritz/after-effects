@@ -2,7 +2,7 @@
 name = "aegpdemo"
 version = "0.0.1"
 authors = ["mobile-bungalow"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 
 [lib]
@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 log = "0.4"
 after-effects = { path = "../../after-effects" }
 image = { version = "0.25.6", default-features = false, features = ["png"] }
-homedir = "0.2.1"
+homedir = "0.3.5"
 raw-window-handle = "0.6.2"
 rfd = "0.15.3"
 

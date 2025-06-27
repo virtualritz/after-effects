@@ -35,7 +35,7 @@ impl MemoryManagerSuite {
     /// Returns the id the host will use for this item.
     pub fn add_block<F: FnOnce(u32) + Send + Sync + 'static>(&self, size: u64, purge_function: F) -> Result<u32, Error> {
         unsafe extern "C" fn purge_fn(data: *mut std::ffi::c_void, memory_id: u32) {
-            let cb = Box::<Box<dyn FnOnce(u32) + Send + Sync + 'static>>::from_raw(data as *mut _);
+            let cb = unsafe { Box::<Box<dyn FnOnce(u32) + Send + Sync + 'static>>::from_raw(data as *mut _) };
             cb(memory_id);
         }
         let cb = Box::new(Box::new(purge_function));

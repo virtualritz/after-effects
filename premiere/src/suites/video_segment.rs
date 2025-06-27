@@ -194,8 +194,8 @@ impl VideoSegmentSuite {
 
         unsafe extern "C" fn cb(plugin_object: pr_sys::csSDK_int32, in_key: *const std::ffi::c_char, in_value: *const pr_sys::prUTF8Char) -> pr_sys::prSuiteError {
             if let Some(callback) = MAP.get().unwrap().read().get(&plugin_object) {
-                let key   = std::ffi::CStr::from_ptr(in_key   as *const _).to_str().unwrap();
-                let value = std::ffi::CStr::from_ptr(in_value as *const _).to_str().unwrap();
+                let key   = unsafe { std::ffi::CStr::from_ptr(in_key   as *const _).to_str().unwrap() };
+                let value = unsafe { std::ffi::CStr::from_ptr(in_value as *const _).to_str().unwrap() };
 
                 let key = Property::from_id(key.as_bytes());
                 let value = key.parse_result(value);

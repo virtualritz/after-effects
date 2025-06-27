@@ -69,7 +69,7 @@ impl AegpPlugin for Grabber {
                                     dialog = dialog.set_parent(&parent);
                                 }
 
-                                let home_dir = match homedir::get_my_home() {
+                                let home_dir = match homedir::my_home() {
                                     Ok(Some(home)) => home,
                                     _ => "/".into(),
                                 };

@@ -2,7 +2,7 @@
 name = "pipl"
 version = "0.1.1"
 authors = ["Adrian <adrian.eddy@gmail.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 exclude = ["tests"]
 description = "Library for building Adobe's PiPL plugin info resource"
@@ -14,14 +14,14 @@ repository = "https://github.com/virtualritz/after-effects/"
 name = "pipl"
 
 [dependencies]
-bitflags = "2.6"
+bitflags = "2.9"
 byteorder = "1.5"
 pretty-hex = "0.4"
 winres = "0.1"
 
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-plist = "1.7.1"
+plist = "1.7.2"
 
 [dev-dependencies]
 pretty-hex = "0.4"
-similar-asserts = "1.6.0"
+similar-asserts = "1.7.0"

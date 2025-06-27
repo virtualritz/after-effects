@@ -95,10 +95,10 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
-                Some(&mut *(plugin_refcon as *mut P))
+                Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
-            let Some((callback, refcon)) = (refcon as *mut (CommandHook<P, T>, T)).as_mut() else {
+            let Some((callback, refcon)) = (unsafe { (refcon as *mut (CommandHook<P, T>, T)).as_mut() }) else {
                 return Error::Generic.into();
             };
 
@@ -116,15 +116,15 @@ impl RegisterSuite {
 
             match res {
                 Ok(CommandHookStatus::Handled) => {
-                    *handled_p = 1;
+                    unsafe { *handled_p = 1; }
                     Error::None
                 }
                 Ok(CommandHookStatus::Unhandled) => {
-                    *handled_p = 0;
+                    unsafe { *handled_p = 0; }
                     Error::None
                 }
                 Err(e) => {
-                    *handled_p = 0;
+                    unsafe { *handled_p = 0; }
                     e
                 }
             }
@@ -159,10 +159,10 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
-                Some(&mut *(plugin_refcon as *mut P))
+                Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
-            let Some((callback, refcon)) = (refcon as *mut (UpdateMenuHook<P, T>, T)).as_mut()
+            let Some((callback, refcon)) = (unsafe { (refcon as *mut (UpdateMenuHook<P, T>, T)).as_mut() })
             else {
                 return Error::Generic.into();
             };
@@ -199,10 +199,10 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
-                Some(&mut *(plugin_refcon as *mut P))
+                Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
-            let (cb, refcon) = &mut *(refcon as *mut (DeathHook<P, T>, T));
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (DeathHook<P, T>, T)) };
             match cb(global, refcon) {
                 Ok(_) => Error::None,
                 Err(e) => e,
@@ -238,11 +238,11 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
-                Some(&mut *(plugin_refcon as *mut P))
+                Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
-            let (cb, refcon) = &mut *(refcon as *mut (VersionHook<P, T>, T));
-            let pf_version = &mut (*pf_version_p as u32);
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (VersionHook<P, T>, T)) };
+            let pf_version = unsafe { &mut (*pf_version_p as u32) };
 
             match cb(global, refcon, pf_version) {
                 Ok(_) => Error::None,
@@ -283,10 +283,10 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
-                Some(&mut *(plugin_refcon as *mut P))
+                Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
-            let (cb, refcon) = &mut *(refcon as *mut (AboutStringHook<P, T>, T));
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (AboutStringHook<P, T>, T)) };
 
             match cb(global, refcon, &mut []) {
                 Ok(_) => Error::None,
@@ -322,10 +322,10 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
-                Some(&mut *(plugin_refcon as *mut P))
+                Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
-            let (cb, refcon) = &mut *(refcon as *mut (AboutHook<P, T>, T));
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (AboutHook<P, T>, T)) };
 
             match cb(global, refcon) {
                 Ok(_) => Error::None,
@@ -362,11 +362,11 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
-                Some(&mut *(plugin_refcon as *mut P))
+                Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
-            let (cb, refcon) = &mut *(refcon as *mut (IdleHook<P, T>, T));
-            let max_sleep = &mut (*max_sleep_p);
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (IdleHook<P, T>, T)) };
+            let max_sleep = unsafe { &mut (*max_sleep_p) };
 
             match cb(global, refcon, max_sleep) {
                 Ok(_) => Error::None,
@@ -451,7 +451,7 @@ impl RegisterNonAegpSuite {
             already_handled: ae_sys::A_Boolean,
             handled_p: *mut ae_sys::A_Boolean,
         ) -> ae_sys::A_Err {
-            let (cb, refcon) = &mut *(refcon as *mut (NonAegpCommandHook<T>, T));
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpCommandHook<T>, T)) };
             let already_handled_bool = already_handled != 0;
 
             let hook_priority_enum = HookPriority::from(hook_priority);
@@ -460,15 +460,15 @@ impl RegisterNonAegpSuite {
 
             match res {
                 Ok(CommandHookStatus::Handled) => {
-                    *handled_p = 1;
+                    unsafe { *handled_p = 1; }
                     Error::None
                 }
                 Ok(CommandHookStatus::Unhandled) => {
-                    *handled_p = 0;
+                    unsafe { *handled_p = 0; }
                     Error::None
                 }
                 Err(e) => {
-                    *handled_p = 0;
+                    unsafe { *handled_p = 0; }
                     e
                 }
             }
@@ -500,7 +500,7 @@ impl RegisterNonAegpSuite {
             refcon: AEGP_UpdateMenuRefcon,
             window_type: ae_sys::AEGP_WindowType,
         ) -> sys::PF_Err {
-            let (callback, refcon) = &mut *(refcon as *mut (NonAegpUpdateMenuHook<T>, T));
+            let (callback, refcon) = unsafe { &mut *(refcon as *mut (NonAegpUpdateMenuHook<T>, T)) };
 
             match callback(refcon, window_type.into()) {
                 Ok(_) => Error::None,
@@ -531,7 +531,7 @@ impl RegisterNonAegpSuite {
             _: AEGP_GlobalRefcon,
             refcon: AEGP_DeathRefcon,
         ) -> sys::PF_Err {
-            let (cb, refcon) = &mut *(refcon as *mut (NonAegpDeathHook<T>, T));
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpDeathHook<T>, T)) };
             match cb(refcon) {
                 Ok(_) => Error::None,
                 Err(e) => e,
@@ -565,8 +565,8 @@ impl RegisterNonAegpSuite {
                 "The after effects documentation said version hook should never be called!"
             );
 
-            let (cb, refcon) = &mut *(refcon as *mut (NonAegpVersionHook<T>, T));
-            let pf_version = &mut (*pf_version_p as u32);
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpVersionHook<T>, T)) };
+            let pf_version = unsafe { &mut (*pf_version_p as u32) };
 
             match cb(refcon, pf_version) {
                 Ok(_) => Error::None,
@@ -605,7 +605,7 @@ impl RegisterNonAegpSuite {
                 "The after effects documentation said about string hook should never be called!"
             );
 
-            let (cb, refcon) = &mut *(refcon as *mut (NonAegpAboutStringHook<T>, T));
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpAboutStringHook<T>, T)) };
 
             match cb(refcon, &mut []) {
                 Ok(_) => Error::None,
@@ -639,7 +639,7 @@ impl RegisterNonAegpSuite {
         ) -> ae_sys::A_Err {
             log::error!("The after effects documentation said about hook should never be called!");
 
-            let (cb, refcon) = &mut *(refcon as *mut (NonAegpAboutHook<T>, T));
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpAboutHook<T>, T)) };
 
             match cb(refcon) {
                 Ok(_) => Error::None,
@@ -673,8 +673,8 @@ impl RegisterNonAegpSuite {
             refcon: ae_sys::AEGP_IdleRefcon,
             max_sleep_p: *mut ae_sys::A_long,
         ) -> ae_sys::A_Err {
-            let (cb, refcon) = &mut *(refcon as *mut (NonAegpIdleHook<T>, T));
-            let max_sleep = &mut (*max_sleep_p);
+            let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpIdleHook<T>, T)) };
+            let max_sleep = unsafe { &mut (*max_sleep_p) };
 
             match cb(refcon, max_sleep) {
                 Ok(_) => Error::None,

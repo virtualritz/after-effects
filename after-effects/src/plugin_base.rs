@@ -372,7 +372,7 @@ macro_rules! define_effect {
         #[cfg(debug_assertions)]
         static BACKTRACE_STR: std::sync::RwLock<String> = std::sync::RwLock::new(String::new());
 
-        #[no_mangle]
+        #[unsafe(no_mangle)]
         #[allow(non_snake_case)]
         pub unsafe extern "C" fn PluginDataEntryFunction2(
             in_ptr: $crate::sys::PF_PluginDataPtr,
@@ -412,7 +412,7 @@ macro_rules! define_effect {
             }
         }
 
-        #[no_mangle]
+        #[unsafe(no_mangle)]
         #[allow(non_snake_case)]
         pub unsafe extern "C" fn EffectMain(
             cmd: $crate::sys::PF_Cmd,
@@ -458,7 +458,7 @@ macro_rules! define_effect {
             // struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", RawCommand::from(self.cmd), std::thread::current().id()); } }
             // let _x = X { cmd: cmd as i32 };
 
-            #[cfg(any(debug_assertions, feature = "catch-panics"))]
+            #[cfg(any(debug_assertions, catch_panics))]
             {
                 let result = std::panic::catch_unwind(|| {
                     handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra)
@@ -498,7 +498,7 @@ macro_rules! define_effect {
                 }
             }
 
-            #[cfg(not(any(debug_assertions, feature = "catch-panics")))]
+            #[cfg(not(any(debug_assertions, catch_panics)))]
             match handle_effect_main::<$global_type, $sequence_type, $params_type>(cmd, in_data_ptr, out_data_ptr, params, output, extra) {
                 Ok(_) => $crate::sys::PF_Err_NONE as $crate::sys::PF_Err,
                 Err(e) => {
@@ -552,7 +552,7 @@ macro_rules! define_general_plugin {
 
         unsafe impl $crate::AegpSeal for $main_type {}
 
-        #[no_mangle]
+        #[unsafe(no_mangle)]
         pub unsafe extern "C" fn EntryPointFunc(
             pica_basic: *const SPBasicSuite,
             major_version: i32,

@@ -206,6 +206,7 @@ define_properties! {
     (Effect_EffectDuration,                          Time,          kVideoSegmentProperty_Effect_EffectDuration),
     (Effect_RuntimeInstanceID,                       UInt32,        kVideoSegmentProperty_Effect_RuntimeInstanceID),
     (Effect_LayerInputHashes,                        String,        kVideoSegmentProperty_Effect_LayerInputHashes),
+    (Effect_RuntimeHash,                             String,        kVideoSegmentProperty_Effect_RuntimeHash),
     (Effect_StreamLabel,                             String,        kVideoSegmentProperty_Effect_StreamLabel),
     (Effect_ClipName,                                String,        kVideoSegmentProperty_Effect_ClipName),
     (Effect_MasterClipName,                          String,        kVideoSegmentProperty_Effect_MasterClipName),
@@ -228,10 +229,8 @@ define_properties! {
     (Transition_Duration,                            Time,          kVideoSegmentProperty_Transition_TransitionDuration),
     (Transition_Params,                              Keyframes,     kVideoSegmentProperty_Transition_TransitionParams),
     (Transition_RuntimeInstanceID,                   UInt32,        kVideoSegmentProperty_Transition_RuntimeInstanceID),
+    (Transition_TransitionCategoryName,              String,        kVideoSegmentProperty_Transition_TransitionCategoryName),
 
     (Adjustment_MediaIsOpaque,                       Bool,          kVideoSegmentProperty_Adjustment_AdjustmentMediaIsOpaque),
     (Adjustment_InvertAlpha,                         Bool,          kVideoSegmentProperty_Adjustment_InvertAlpha),
 }
-
-const kVideoSegmentProperty_Effect_FilterCategoryName: &[u8; 31] = b"EffectNode::FilterCategoryName\0";
-const kVideoSegmentProperty_Clip_ToneMapSettings: &[u8; 26] = b"ClipNode::ToneMapSettings\0";

@@ -393,12 +393,13 @@ define_handle_wrapper!(LayerHandle, AEGP_LayerH);
 define_enum! {
     ae_sys::AEGP_ObjectType,
     ObjectType {
-        None       = ae_sys::AEGP_ObjectType_NONE,
-        AudioVideo = ae_sys::AEGP_ObjectType_AV,
-        Light      = ae_sys::AEGP_ObjectType_LIGHT,
-        Camera     = ae_sys::AEGP_ObjectType_CAMERA,
-        Text       = ae_sys::AEGP_ObjectType_TEXT,
-        Vector     = ae_sys::AEGP_ObjectType_VECTOR,
+        None        = ae_sys::AEGP_ObjectType_NONE,
+        AudioVideo  = ae_sys::AEGP_ObjectType_AV,
+        Light       = ae_sys::AEGP_ObjectType_LIGHT,
+        Camera      = ae_sys::AEGP_ObjectType_CAMERA,
+        Text        = ae_sys::AEGP_ObjectType_TEXT,
+        Vector      = ae_sys::AEGP_ObjectType_VECTOR,
+        ThreeDModel = ae_sys::AEGP_ObjectType_3D_MODEL,
     }
 }
 

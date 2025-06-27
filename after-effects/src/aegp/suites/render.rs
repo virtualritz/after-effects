@@ -31,8 +31,10 @@ impl RenderSuite {
     /// Optionally, the AEGP can pass a function to be called by After Effects if the user cancels the current render.
     pub fn render_and_checkout_frame<F: Fn() -> bool>(&self, options: impl AsPtr<AEGP_RenderOptionsH>, cancel_function: Option<F>) -> Result<AEGP_FrameReceiptH, Error> {
         unsafe extern "C" fn cancel_fn(refcon: *mut std::ffi::c_void, cancel: *mut ae_sys::A_Boolean) -> A_Err {
-            let cb = Box::<Box<dyn Fn() -> bool + Send + Sync + 'static>>::from_raw(refcon as *mut _);
-            *cancel = cb() as _;
+            unsafe {
+                let cb = Box::<Box<dyn Fn() -> bool + Send + Sync + 'static>>::from_raw(refcon as *mut _);
+                *cancel = cb() as _;
+            }
             ae_sys::PF_Err_NONE as ae_sys::PF_Err
         }
 
@@ -64,8 +66,10 @@ impl RenderSuite {
     /// Optionally, the AEGP can pass a function to be called by After Effects if the user cancels the current render.
     pub fn render_and_checkout_layer_frame<F: FnMut() -> bool>(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, cancel_function: Option<F>) -> Result<AEGP_FrameReceiptH, Error> {
         unsafe extern "C" fn cancel_fn(refcon: *mut std::ffi::c_void, cancel: *mut ae_sys::A_Boolean) -> A_Err {
-            let cb = Box::<Box<dyn Fn() -> bool + Send + Sync + 'static>>::from_raw(refcon as *mut _);
-            *cancel = cb() as _;
+            unsafe {
+                let cb = Box::<Box<dyn Fn() -> bool + Send + Sync + 'static>>::from_raw(refcon as *mut _);
+                *cancel = cb() as _;
+            }
             ae_sys::PF_Err_NONE as ae_sys::PF_Err
         }
 
@@ -82,7 +86,7 @@ impl RenderSuite {
 
     pub fn render_and_checkout_layer_frame_async<R: FnMut(AEGP_AsyncRequestId, bool, Error, AEGP_FrameReceiptH)>(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, callback: R) -> Result<AEGP_AsyncRequestId, Error> {
         unsafe extern "C" fn frame_ready_cb(request_id: AEGP_AsyncRequestId, was_canceled: A_Boolean, error: A_Err, receipt: AEGP_FrameReceiptH, refcon: AEGP_AsyncFrameRequestRefcon) -> A_Err {
-            let cb = Box::<Box<dyn Fn(AEGP_AsyncRequestId, bool, Error, AEGP_FrameReceiptH)>>::from_raw(refcon as *mut _);
+            let cb = unsafe { Box::<Box<dyn Fn(AEGP_AsyncRequestId, bool, Error, AEGP_FrameReceiptH)>>::from_raw(refcon as *mut _) };
             cb(request_id, was_canceled != 0, Error::from(error), receipt);
             ae_sys::PF_Err_NONE as ae_sys::PF_Err
         }
@@ -129,8 +133,10 @@ impl RenderSuite {
     /// unlike the version published here in [`aegp::suites::Render`].
     pub fn render_new_item_sound_data<F: FnMut() -> bool>(&self, item: impl AsPtr<AEGP_ItemH>, start_time: Time, duration: Time, sound_format: &AEGP_SoundDataFormat, cancel_function: Option<F>) -> Result<aegp::SoundDataHandle, Error> {
         unsafe extern "C" fn cancel_fn(refcon: *mut std::ffi::c_void, cancel: *mut ae_sys::A_Boolean) -> A_Err {
-            let cb = Box::<Box<dyn Fn() -> bool + Send + Sync + 'static>>::from_raw(refcon as *mut _);
-            *cancel = cb() as _;
+            unsafe {
+                let cb = Box::<Box<dyn Fn() -> bool + Send + Sync + 'static>>::from_raw(refcon as *mut _);
+                *cancel = cb() as _;
+            }
             ae_sys::PF_Err_NONE as ae_sys::PF_Err
         }
         let cancel_function = cancel_function.map(|x| Box::new(Box::new(x)));

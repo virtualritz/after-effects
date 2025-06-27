@@ -14,7 +14,7 @@ pub fn produce_resource(pipl: &[u8], _macos_rsrc_path: Option<&str>) {
         let mut res = winres::WindowsResource::new();
         res.append_rc_content(&format!(
             "16000 PiPL DISCARDABLE BEGIN \"{}\" END",
-            to_seq(&pipl)
+            to_seq(pipl)
         ));
         res.compile().unwrap();
     }
@@ -52,9 +52,7 @@ pub fn create_rsrc(resources: &[(&[u8; 4], &[RSRCResource])]) -> Result<Vec<u8>>
         + (num_resources * RESOURCE_INFO_LENGTH);
 
     // Fill header with 0 for now
-    for _ in 0..DATA_OFFSET {
-        buffer.push(0);
-    }
+    buffer.extend(std::iter::repeat_n(0, DATA_OFFSET as usize));
 
     // Write resource data
     let mut resource_offsets = Vec::new();
@@ -72,9 +70,7 @@ pub fn create_rsrc(resources: &[(&[u8; 4], &[RSRCResource])]) -> Result<Vec<u8>>
 
     let map_offset = buffer.len() as u32;
     // Fill map header with 0 for now
-    for _ in 0..MAP_HEADER_LENGTH {
-        buffer.push(0);
-    }
+    buffer.extend(std::iter::repeat_n(0, MAP_HEADER_LENGTH as usize));
 
     buffer.write_u16::<BigEndian>(type_list_offset as u16)?;
     buffer.write_u16::<BigEndian>(name_list_offset as u16)?;
@@ -97,7 +93,7 @@ pub fn create_rsrc(resources: &[(&[u8; 4], &[RSRCResource])]) -> Result<Vec<u8>>
             buffer.write_i16::<BigEndian>(resource.0)?;
             // empty name
             if true {
-                buffer.write_u16::<BigEndian>(std::u16::MAX)?;
+                buffer.write_u16::<BigEndian>(u16::MAX)?;
             } else {
                 // buffer.write_u16::<BigEndian>(nameList.len());
                 // buffer.write_u8(name.len());

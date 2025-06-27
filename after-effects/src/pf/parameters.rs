@@ -1050,7 +1050,7 @@ impl<'p> ParamDef<'p> {
     }
 
     pub unsafe fn layer_def(&mut self) -> *mut ae_sys::PF_LayerDef {
-        &mut self.param_def.u.ld
+        unsafe { &mut self.param_def.u.ld }
     }
 
     pub fn set_name(&mut self, name: &str) {

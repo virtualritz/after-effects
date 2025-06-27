@@ -16,6 +16,13 @@ define_suite!(
     kAEGPEffectSuiteVersion4
 );
 
+define_suite!(
+    EffectSuite5,
+    AEGP_EffectSuite5,
+    kAEGPEffectSuite,
+    kAEGPEffectSuiteVersion5
+);
+
 impl EffectSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
@@ -197,6 +204,10 @@ impl EffectSuite {
         Ok(StreamReferenceHandle::from_raw(
             call_suite_fn_single!(self, AEGP_SetEffectMask -> ae_sys::AEGP_StreamRefH, effect_ref.as_ptr(), mask_index as ae_sys::A_u_long, id_val)?
         ))
+    }
+    pub fn is_internal_effect(&self, installed_effect_key: ae_sys::AEGP_InstalledEffectKey) -> Result<bool, Error> {
+        let v5 = EffectSuite5::new()?;
+        Ok(call_suite_fn_single!(v5, AEGP_GetIsInternalEffect -> ae_sys::A_Boolean, installed_effect_key)? != 0)
     }
 }
 

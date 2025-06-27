@@ -7,9 +7,9 @@ define_suite!(
     ///
     /// Any image or audio data in After Effects (except solids) is obtained from an input specification handle, or [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
     IOInSuite,
-    AEGP_IOInSuite5,
+    AEGP_IOInSuite6,
     kAEGPIOInSuite,
-    kAEGPIOInSuiteVersion5
+    kAEGPIOInSuiteVersion6
 );
 
 impl IOInSuite {
@@ -211,7 +211,7 @@ impl IOInSuite {
             None
         };
 
-        call_suite_fn!(self, AEGP_SetInSpecEmbeddedColorProfile, in_spec_handle.as_ptr(), color_profile.unwrap_or(std::ptr::null()), profile_desc.as_ref().map_or(std::ptr::null(), |pd| pd.as_ptr()))
+        call_suite_fn!(self, AEGP_SetInSpecEmbeddedColorProfile, in_spec_handle.as_ptr(), color_profile.unwrap_or(core::ptr::null_mut()), profile_desc.as_ref().map_or(std::ptr::null(), |pd| pd.as_ptr()))
     }
 
     /// Assign a valid RGB color profile to the footage.
@@ -244,6 +244,13 @@ impl IOInSuite {
     /// New in CC. Assign the drop-frame setting of the footage.
     pub fn set_in_spec_native_display_drop_frame(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, drop_frame: bool) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetInSpecNativeDisplayDropFrame, in_spec_handle.as_ptr(), drop_frame as _)
+    }
+    // v6
+    pub fn set_in_spec_still_sequence_native_fps(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, native_still_seq_fps: i32) -> Result<(), Error> {
+        call_suite_fn!(self, AEGP_SetInSpecStillSequenceNativeFPS, in_spec_handle.as_ptr(), native_still_seq_fps as _)
+    }
+    pub fn set_in_spec_color_space_from_cicp(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, color_primaries_code: i32, transfer_characteristics_code: i32, matrix_coefficients_code: i32, full_range_video_flag: i32, bit_depth_l: i32, is_rgb: bool) -> Result<(), Error> {
+        call_suite_fn!(self, AEGP_SetInSpecColorSpaceFromCICP, in_spec_handle.as_ptr(), color_primaries_code as _, transfer_characteristics_code as _, matrix_coefficients_code as _, full_range_video_flag as _, bit_depth_l as _, is_rgb as _)
     }
 }
 

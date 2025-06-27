@@ -148,7 +148,7 @@ impl PreRenderExtra {
 }
 unsafe extern "C" fn delete_pre_render_data(data: *mut std::ffi::c_void) {
     if !data.is_null() {
-        let _ = Box::<Box<dyn Any>>::from_raw(data as *mut _);
+        let _ = unsafe { Box::<Box<dyn Any>>::from_raw(data as *mut _) };
     }
 }
 

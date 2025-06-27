@@ -601,6 +601,10 @@ define_enum! {
         ExtrusionDepth         = ae_sys::AEGP_LayerStream_EXTRUSION_DEPTH,
         PlaneCurvature         = ae_sys::AEGP_LayerStream_PLANE_CURVATURE,
         PlaneSubdivision       = ae_sys::AEGP_LayerStream_PLANE_SUBDIVISION,
+        LightBackgroundVisible = ae_sys::AEGP_LayerStream_LIGHT_BACKGROUND_VISIBLE,
+        LightBackgroundOpacity = ae_sys::AEGP_LayerStream_LIGHT_BACKGROUND_OPACITY,
+        LightBackgroundBlur    = ae_sys::AEGP_LayerStream_LIGHT_BACKGROUND_BLUR,
+        ShadowColor            = ae_sys::AEGP_LayerStream_SHADOW_COLOR,
     }
 }
 

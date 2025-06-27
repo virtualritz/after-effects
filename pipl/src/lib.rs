@@ -347,6 +347,7 @@ bitflags::bitflags! {
         /// Indicates the effect needs sequence_data replicated for each render thread, thus allowing each render to have sequence_data which can be written to.
         /// Note that changes to sequence_data will be discarded regularly, currently after each span of frames is rendered such as single RAM Preview or Render Queue export.
         const MutableRenderSequenceDataSlower     = 1 << 28; // PF_Cmd_GLOBAL_SETUP
+        const SupportsDirectxRendering            = 1 << 29; // PF_Cmd_GLOBAL_SETUP
     }
 }
 
@@ -712,8 +713,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
         key: &[u8; 4],
         mut contents_fn: impl FnMut(&mut Vec<u8>) -> Result<()>,
     ) -> Result<()> {
-        buffer.write(&fourcc(type_))?;
-        buffer.write(&fourcc(key))?;
+        buffer.write_all(&fourcc(type_))?;
+        buffer.write_all(&fourcc(key))?;
         buffer.write_u32::<ByteOrder>(0)?; // pad
         let len = buffer.len();
         buffer.write_u32::<ByteOrder>(0)?; // length placeholder
@@ -766,12 +767,12 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
         buffer.write_u8(0)?; // Reserved
     }
     buffer.write_u32::<ByteOrder>(0)?; // kPIPropertiesVersion
-    buffer.write(&u32_bytes(properties.len() as u32))?;
+    buffer.write_all(&u32_bytes(properties.len() as u32))?;
     for prop in properties {
         match prop {
             Property::Kind(x) => {
                 write(&mut buffer, b"8BIM", b"kind", |buffer| {
-                    buffer.write(&x.as_bytes())?;
+                    buffer.write_all(&x.as_bytes())?;
                     Ok(())
                 })?;
             }
@@ -801,7 +802,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             }
             Property::RequiredHost(x) => {
                 write(&mut buffer, b"8BIM", b"host", |buffer| {
-                    buffer.write(&fourcc(x))?;
+                    buffer.write_all(&fourcc(x))?;
                     Ok(())
                 })?;
             }
@@ -818,13 +819,13 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             }
             Property::Code68k((type_, x)) => {
                 write(&mut buffer, b"8BIM", b"m68k", |buffer| {
-                    buffer.write(&type_.as_bytes())?;
+                    buffer.write_all(&type_.as_bytes())?;
                     buffer.write_u16::<ByteOrder>(x)
                 })?;
             }
             Property::Code68kFPU((type_, x)) => {
                 write(&mut buffer, b"8BIM", b"68fp", |buffer| {
-                    buffer.write(&type_.as_bytes())?;
+                    buffer.write_all(&type_.as_bytes())?;
                     buffer.write_u16::<ByteOrder>(x)
                 })?;
             }
@@ -920,8 +921,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             Property::FmtFileType((type_, creator)) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fmTC", |buffer| {
-                    buffer.write(&fourcc(type_))?;
-                    buffer.write(&fourcc(creator))?;
+                    buffer.write_all(&fourcc(type_))?;
+                    buffer.write_all(&fourcc(creator))?;
                     Ok(())
                 })?;
             }
@@ -930,8 +931,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"RdTy", |buffer| {
                     for type_ in types {
-                        buffer.write(&fourcc(type_.0))?;
-                        buffer.write(&fourcc(type_.1))?;
+                        buffer.write_all(&fourcc(type_.0))?;
+                        buffer.write_all(&fourcc(type_.1))?;
                     }
                     Ok(())
                 })?;
@@ -940,8 +941,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"WrTy", |buffer| {
                     for type_ in types {
-                        buffer.write(&fourcc(type_.0))?;
-                        buffer.write(&fourcc(type_.1))?;
+                        buffer.write_all(&fourcc(type_.0))?;
+                        buffer.write_all(&fourcc(type_.1))?;
                     }
                     Ok(())
                 })?;
@@ -951,8 +952,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fftT", |buffer| {
                     for type_ in types {
-                        buffer.write(&fourcc(type_.0))?;
-                        buffer.write(&fourcc(type_.1))?;
+                        buffer.write_all(&fourcc(type_.0))?;
+                        buffer.write_all(&fourcc(type_.1))?;
                     }
                     Ok(())
                 })?;
@@ -963,7 +964,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"RdEx", |buffer| {
                     for &ext in exts {
-                        buffer.write(&fourcc(ext))?;
+                        buffer.write_all(&fourcc(ext))?;
                     }
                     Ok(())
                 })?;
@@ -972,7 +973,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"WrEx", |buffer| {
                     for &ext in exts {
-                        buffer.write(&fourcc(ext))?;
+                        buffer.write_all(&fourcc(ext))?;
                     }
                     Ok(())
                 })?;
@@ -982,7 +983,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fftE", |buffer| {
                     for &ext in exts {
-                        buffer.write(&fourcc(ext))?;
+                        buffer.write_all(&fourcc(ext))?;
                     }
                     Ok(())
                 })?;
@@ -1031,8 +1032,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psTY", |buffer| {
                     for type_ in types {
-                        buffer.write(&fourcc(type_.0))?;
-                        buffer.write(&fourcc(type_.1))?;
+                        buffer.write_all(&fourcc(type_.0))?;
+                        buffer.write_all(&fourcc(type_.1))?;
                     }
                     Ok(())
                 })?;
@@ -1041,7 +1042,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psCB", |buffer| {
                     for &type_ in types {
-                        buffer.write(&fourcc(type_))?;
+                        buffer.write_all(&fourcc(type_))?;
                     }
                     Ok(())
                 })?;
@@ -1051,8 +1052,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psTy", |buffer| {
                     for type_ in types {
-                        buffer.write(&fourcc(type_.0))?;
-                        buffer.write(&fourcc(type_.1))?;
+                        buffer.write_all(&fourcc(type_.0))?;
+                        buffer.write_all(&fourcc(type_.1))?;
                     }
                     Ok(())
                 })?;
@@ -1063,7 +1064,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psEX", |buffer| {
                     for &ext in exts {
-                        buffer.write(&fourcc(ext))?;
+                        buffer.write_all(&fourcc(ext))?;
                     }
                     Ok(())
                 })?;
@@ -1072,7 +1073,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psEx", |buffer| {
                     for &ext in exts {
-                        buffer.write(&fourcc(ext))?;
+                        buffer.write_all(&fourcc(ext))?;
                     }
                     Ok(())
                 })?;
@@ -1212,7 +1213,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                                      if !has_options     { 1u32 << 10 } else { 0 };
                     buffer.write_u32::<ByteOrder>(flags)?;
                     buffer.write_u32::<ByteOrder>(0)?; // Reserved.
-                    buffer.write(&fourcc(&signature))?;
+                    buffer.write_all(&fourcc(&signature))?;
                     Ok(())
                 })?;
             }
@@ -1525,6 +1526,8 @@ pub fn plugin_build(properties: Vec<Property>) {
     let mut any_entrypoint_emitted = false;
     let mut kind = None;
     let mut name = None;
+    println!("cargo:rustc-check-cfg=cfg(with_premiere)");
+    println!("cargo:rustc-check-cfg=cfg(catch_panics)");
     for prop in properties.iter() {
         match prop {
             Property::Kind(x) => {
@@ -1572,7 +1575,7 @@ pub fn plugin_build(properties: Vec<Property>) {
                 println!("cargo:rustc-env=PIPL_AE_SPEC_VER_MINOR={minor}");
             }
             Property::AE_Reserved_Info(x) => {
-                println!("cargo:rustc-env=PIPL_AE_RESERVED={}", x);
+                println!("cargo:rustc-env=PIPL_AE_RESERVED={x}");
             }
             Property::AE_Effect_Version {
                 version,
@@ -1596,6 +1599,9 @@ pub fn plugin_build(properties: Vec<Property>) {
                 if x.contains(OutFlags::SendUpdateParamsUI) {
                     println!("cargo:rustc-cfg=sends_update_params_ui");
                 }
+                println!("cargo:rustc-check-cfg=cfg(does_dialog)");
+                println!("cargo:rustc-check-cfg=cfg(uses_audio)");
+                println!("cargo:rustc-check-cfg=cfg(sends_update_params_ui)");
                 println!("cargo:rustc-env=PIPL_OUTFLAGS={}", x.bits());
             }
             Property::AE_Effect_Global_OutFlags_2(x) => {
@@ -1612,6 +1618,9 @@ pub fn plugin_build(properties: Vec<Property>) {
                         println!("cargo:warning=Setting the SupportsThreadedRendering flag without the SupportsGetFlattenedSequenceData flag can cause plugins to fail to load in some older versions of After Effects.");
                     }
                 }
+                println!("cargo:rustc-check-cfg=cfg(gpu_render)");
+                println!("cargo:rustc-check-cfg=cfg(smart_render)");
+                println!("cargo:rustc-check-cfg=cfg(threaded_rendering)");
                 println!("cargo:rustc-env=PIPL_OUTFLAGS2={}", x.bits());
             }
             _ => {}
@@ -1632,14 +1641,14 @@ pub fn plugin_build(properties: Vec<Property>) {
     // output 8byte PkgInfo and the Info.plist
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
-        let pkginfo_path = format!("{}/../../../PkgInfo", std::env::var("OUT_DIR").unwrap(),);
+        let pkginfo_path = format!("{}/../../../{}_PkgInfo", std::env::var("OUT_DIR").unwrap(), std::env::var("CARGO_PKG_NAME").unwrap());
 
         let fxtc_tag = b"FXTC";
         let kind_tag = _kind.as_bytes();
         let pkginfo_bytes = [kind_tag, *fxtc_tag].concat();
         std::fs::write(pkginfo_path, &pkginfo_bytes).unwrap();
 
-        let plist_path = format!("{}/../../../Info.plist", std::env::var("OUT_DIR").unwrap(),);
+        let plist_path = format!("{}/../../../{}_Info.plist", std::env::var("OUT_DIR").unwrap(), std::env::var("CARGO_PKG_NAME").unwrap());
         plist::produce_plist(plist_path, _kind, _name);
     }
 

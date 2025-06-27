@@ -39,7 +39,7 @@ impl InData {
     /// If it is running in Premiere Pro & Other Hosts it will be ‘PrMr’.
     /// Use this to test whether your plug-in, licensed for use with one application, is being used with another.
     pub fn application_id(&self) -> [u8; 4] {
-        let bytes: [u8; 4] = unsafe { std::mem::transmute((*self.ptr).appl_id) };
+        let bytes: [u8; 4] = unsafe { i32::to_ne_bytes((*self.ptr).appl_id) };
         [bytes[3], bytes[2], bytes[1], bytes[0]]
     }
 

@@ -301,7 +301,7 @@ macro_rules! define_gpu_filter {
             }
         }
 
-        #[no_mangle]
+        #[unsafe(no_mangle)]
         #[allow(non_snake_case)]
         pub unsafe extern "C" fn xGPUFilterEntry(
             host_interface_version: $crate::sys::csSDK_uint32,
