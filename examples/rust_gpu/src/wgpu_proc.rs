@@ -32,7 +32,7 @@ pub enum ProcShaderSource<'a> {
 
 impl<T: Sized> WgpuProcessing<T> {
     pub fn new(shader: ProcShaderSource) -> Self {
-        let power_preference = util::power_preference_from_env().unwrap_or(PowerPreference::HighPerformance);
+        let power_preference = wgpu::PowerPreference::from_env().unwrap_or(PowerPreference::HighPerformance);
         let mut instance_desc = InstanceDescriptor::default();
 
         // We can't use the DX12 backend with validation turned on, otherwise it
@@ -43,7 +43,7 @@ impl<T: Sized> WgpuProcessing<T> {
             log::info!("Disabling {:?} because {:?} is on", Backends::DX12, InstanceFlags::VALIDATION);
         }
 
-        let instance = Instance::new(instance_desc);
+        let instance = Instance::new(&instance_desc);
 
         let adapter = pollster::block_on(instance.request_adapter(&RequestAdapterOptions { power_preference, ..Default::default() })).unwrap();
 
@@ -53,7 +53,8 @@ impl<T: Sized> WgpuProcessing<T> {
                 required_features: adapter.features(),
                 required_limits: adapter.limits(),
                 memory_hints: wgpu::MemoryHints::Performance,
-            }, None)
+                trace: wgpu::Trace::Off
+            })
         ).unwrap();
 
         let info = adapter.get_info();
@@ -224,7 +225,7 @@ impl<T: Sized> WgpuProcessing<T> {
         self.queue.write_texture(
             state.in_texture.as_image_copy(),
             in_buffer,
-            ImageDataLayout { offset: 0, bytes_per_row: Some(in_size.2 as u32), rows_per_image: None },
+            TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(in_size.2 as u32), rows_per_image: None },
             Extent3d { width: in_size.0 as u32, height: in_size.1 as u32, depth_or_array_layers: 1 },
         );
 
@@ -238,8 +239,8 @@ impl<T: Sized> WgpuProcessing<T> {
 
         // Copy output texture to buffer that we can read
         encoder.copy_texture_to_buffer(
-            ImageCopyTexture { texture: &state.out_texture, mip_level: 0, origin: Origin3d::ZERO, aspect: TextureAspect::All },
-            ImageCopyBuffer { buffer: &state.staging_buffer, layout: ImageDataLayout { offset: 0, bytes_per_row: Some(state.padded_out_stride), rows_per_image: None } },
+            TexelCopyTextureInfo { texture: &state.out_texture, mip_level: 0, origin: Origin3d::ZERO, aspect: TextureAspect::All },
+            TexelCopyBufferInfo { buffer: &state.staging_buffer, layout: TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(state.padded_out_stride), rows_per_image: None } },
             Extent3d { width: width as u32, height: height as u32, depth_or_array_layers: 1 }
         );
 
@@ -250,7 +251,7 @@ impl<T: Sized> WgpuProcessing<T> {
         let (sender, receiver) = futures_intrusive::channel::shared::oneshot_channel();
         buffer_slice.map_async(MapMode::Read, move |v| sender.send(v).unwrap());
 
-        self.device.poll(Maintain::Wait);
+        let _ = self.device.poll(wgpu::PollType::Wait);
 
         if let Some(Ok(())) = pollster::block_on(receiver.receive()) {
             let out_stride = out_size.2;

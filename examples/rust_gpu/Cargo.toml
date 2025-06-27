@@ -11,11 +11,11 @@ crate-type = ["cdylib"]
 [dependencies]
 after-effects = { path = "../../after-effects" }
 log = "0.4"
-wgpu = { version = "23.0", features = ["spirv"] }
+wgpu = { version = "25.0", features = ["spirv"] }
 pollster = "0.4"
 futures-intrusive = "0.5"
 parking_lot = "0.12"
-num_cpus = "1.16"
+num_cpus = "1.17"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }
