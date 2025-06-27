@@ -7,7 +7,7 @@
 
 #![doc = include_str!("../README.md")]
 
-// Included bindings are generated from After Effects SDK dated May 2023
+// Included bindings are generated from After Effects SDK dated Dec 2024
 
 #[cfg(all(target_os = "windows", builtin_bindings))]
 include!(concat!(env!("CARGO_MANIFEST_DIR"), "/bindings_win.rs"));

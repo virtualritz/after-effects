@@ -7,7 +7,7 @@
 
 // TODO Description
 
-// Included bindings are generated from Premiere SDK dated Oct 2021
+// Included bindings are generated from Premiere SDK dated Mar 2024
 
 #[cfg(all(target_os = "windows", builtin_bindings))]
 include!(concat!(env!("CARGO_MANIFEST_DIR"), "/bindings_win.rs"));
