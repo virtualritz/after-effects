@@ -68,7 +68,6 @@ impl AegpPlugin for Persisto {
         register_suite.register_update_menu_hook::<Persisto, _>(
             aegp_plugin_id,
             Box::new(move |_, _, _| {
-                // Always enable the command (similar to C++ version)
                 if let Ok(command_suite) = Command::new() {
                     let _ = command_suite.enable_command(persisto_cmd);
                 }
