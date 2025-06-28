@@ -179,7 +179,7 @@ AfterEffectsSDK
 | 🔳 Math                 | ✅ Path Data                      |             |                       |
 | ✅ Memory               | ✅ Path Query                     |             |                       |
 | 🔳 Output Module        | ✅ Pixel Data                     |             |                       |
-| 🔳 Persistent Data      | ✅ Pixel Format                   |             |                       |
+| ✅ Persistent Data      | ✅ Pixel Format                   |             |                       |
 | ✅ PF Interface         | ✅ PointParam                     |             |                       |
 | ✅ Proj                 | 🔳 Sampling8                      |             |                       |
 | 🔳 QueryXform           | 🔳 Sampling16                     |             |                       |
