@@ -1,4 +1,4 @@
-use std::ffi::{CStr, c_void};
+use std::ffi::c_void;
 
 use after_effects_sys::{A_Boolean, A_FpLong, A_Time, A_long, AEGP_MemHandle, PF_PixelFloat};
 
@@ -69,22 +69,20 @@ impl PersistentDataSuite {
         &self,
         blob_handle: PersistentBlobHandle,
         section_index: i32,
-        max_section_size: i32,
+        max_section_size: usize,
     ) -> Result<String, Error> {
-        let ptr = std::ptr::null_mut();
+        let mut out_data = vec![0i8; max_section_size + 1];
 
         call_suite_fn!(
             self,
             AEGP_GetSectionKeyByIndex,
             blob_handle.into(),
             section_index,
-            max_section_size,
-            ptr
+            max_section_size as _,
+            out_data.as_mut_ptr() as _
         )?;
 
-        let c_str = unsafe { CStr::from_ptr(ptr) };
-
-        Ok(c_str.to_string_lossy().into_owned())
+        buffer_to_string(out_data)
     }
 
     /// Returns whether or not a given key/value pair exists with the blob.
@@ -115,10 +113,10 @@ impl PersistentDataSuite {
         blob_handle: PersistentBlobHandle,
         section_key: &str,
         key_index: i32,
-        max_key_size: i32,
+        max_key_size: usize,
     ) -> Result<String, Error> {
-        let ptr = std::ptr::null_mut();
         let section_key = CString::new(section_key).map_err(|_| Error::InvalidParms)?;
+        let mut out_data = vec![0i8; max_key_size + 1];
 
         call_suite_fn!(
             self,
@@ -126,23 +124,21 @@ impl PersistentDataSuite {
             blob_handle.into(),
             section_key.as_ptr(),
             key_index,
-            max_key_size,
-            ptr
+            max_key_size as _,
+            out_data.as_mut_ptr() as _,
         )?;
 
-        let c_str = unsafe { CStr::from_ptr(ptr) };
-
-        Ok(c_str.to_string_lossy().into_owned())
+        buffer_to_string(out_data)
     }
 
-    pub fn data_handle<'a>(
+    pub fn data_handle<'a, T>(
         &self,
         plugin_id: PluginId,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
         value_key: &str,
-        default: MemHandle<'a, u8>,
-    ) -> Result<MemHandle<u8>, Error> {
+        default: MemHandle<'a, T>,
+    ) -> Result<MemHandle<T>, Error> {
         let section_key = CString::new(section_key).map_err(|_| Error::InvalidParms)?;
         let value_key = CString::new(value_key).map_err(|_| Error::InvalidParms)?;
 
@@ -153,7 +149,7 @@ impl PersistentDataSuite {
                                            value_key.as_ptr(),
                                            default.as_raw())?;
 
-        Ok(MemHandle::from_raw(handle)?)
+        MemHandle::from_raw(handle)
     }
 
     /// Obtains the data located at a given section's value.
@@ -194,13 +190,14 @@ impl PersistentDataSuite {
         section_key: &str,
         value_key: &str,
         default: &str,
+        max_result_length: usize,
     ) -> Result<String, Error> {
         let section_key = CString::new(section_key).map_err(|_| Error::InvalidParms)?;
         let value_key = CString::new(value_key).map_err(|_| Error::InvalidParms)?;
         let default_value = CString::new(default).map_err(|_| Error::InvalidParms)?;
         let default_len = default_value.as_bytes_with_nul().len();
 
-        let out_data_ptr = std::ptr::null_mut();
+        let mut out_data = vec![0i8; max_result_length + 1];
         let mut out_len = 0;
 
         call_suite_fn!(
@@ -211,12 +208,11 @@ impl PersistentDataSuite {
             value_key.as_ptr(),
             default_value.as_ptr(),
             default_len as _,
-            out_data_ptr,
+            out_data.as_mut_ptr() as _,
             &mut out_len
         )?;
 
-        let c_str = unsafe { CStr::from_ptr(out_data_ptr) };
-        Ok(c_str.to_string_lossy().into_owned())
+        buffer_to_string(out_data)
     }
 
     pub fn long(
@@ -489,4 +485,18 @@ impl PersistentDataSuite {
                 .to_string_lossy()
         })
     }
+}
+
+fn buffer_to_string(mut buffer: Vec<i8>) -> Result<String, Error> {
+    if let Some(null_pos) = buffer.iter().position(|b| *b == 0) {
+        buffer.truncate(null_pos + 1);
+    } else {
+        buffer.push(0);
+    }
+
+    let buffer = buffer.into_iter().map(|i| i as u8).collect();
+
+    let c_str = CString::from_vec_with_nul(buffer).map_err(|_| Error::InternalStructDamaged)?;
+
+    Ok(c_str.to_string_lossy().into_owned())
 }

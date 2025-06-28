@@ -136,6 +136,10 @@ pub use suites::memory::{
     MemHandle,
     MemHandleLock,
 };
+pub use suites::persistent_data::{
+   PersistentType,
+   PersistentBlobHandle
+};
 pub use suites::render_async_manager::AsyncManager;
 pub use suites::render_options::{
     RenderOptions,
