@@ -26,6 +26,7 @@ pub mod suites {
     pub(crate) mod mask;                 pub use mask                ::{ MaskSuite             as Mask,
                                                                          MaskOutlineSuite      as MaskOutline };
     pub(crate) mod memory;               pub use memory              ::MemorySuite             as Memory;
+    pub(crate) mod persistent_data;      pub use persistent_data     ::PersistentDataSuite     as PersistentData;
     pub(crate) mod pf_interface;         pub use pf_interface        ::PFInterfaceSuite        as PFInterface;
     pub(crate) mod project;              pub use project             ::ProjectSuite            as Project;
     pub(crate) mod register;             pub use register            ::{ RegisterSuite         as Register,
@@ -134,6 +135,10 @@ pub use suites::mask::{
 pub use suites::memory::{
     MemHandle,
     MemHandleLock,
+};
+pub use suites::persistent_data::{
+   PersistentType,
+   PersistentBlobHandle
 };
 pub use suites::render_async_manager::AsyncManager;
 pub use suites::render_options::{

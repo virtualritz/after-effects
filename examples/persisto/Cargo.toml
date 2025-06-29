@@ -1,0 +1,16 @@
+[package]
+name = "persisto"
+version = "0.0.1"
+authors = ["mobile-bungalow"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+log = "0.4"
+after-effects = { path = "../../after-effects" }
+
+[build-dependencies]
+pipl = { path = "../../pipl" }
