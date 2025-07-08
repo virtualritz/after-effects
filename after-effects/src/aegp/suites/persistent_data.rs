@@ -131,7 +131,7 @@ impl PersistentDataSuite {
         buffer_to_string(out_data)
     }
 
-    pub fn data_handle<'a, T>(
+    pub fn get_data_handle<'a, T>(
         &self,
         plugin_id: PluginId,
         blob_handle: PersistentBlobHandle,
@@ -153,7 +153,7 @@ impl PersistentDataSuite {
     }
 
     /// Obtains the data located at a given section's value.
-    pub fn data(
+    pub fn get_data(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -184,7 +184,7 @@ impl PersistentDataSuite {
     ///
     /// Note: This interperets all stored strings as UTF-8. This is safe if you are retrieving
     /// strings stored from rust, which must be UTF-8.
-    pub fn string(
+    pub fn get_string(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -215,7 +215,7 @@ impl PersistentDataSuite {
         buffer_to_string(out_data)
     }
 
-    pub fn long(
+    pub fn get_long(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -235,7 +235,7 @@ impl PersistentDataSuite {
         )
     }
 
-    pub fn fp_long(
+    pub fn get_fp_long(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -255,7 +255,7 @@ impl PersistentDataSuite {
         )
     }
 
-    pub fn time(
+    pub fn get_time(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -281,7 +281,7 @@ impl PersistentDataSuite {
         .map(|t| t.into())
     }
 
-    pub fn argb(
+    pub fn get_argb(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
