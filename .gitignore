@@ -2,6 +2,7 @@ target/
 sdk/
 .vscode
 .DS_Store
+.rustc_info.json
 
 # Cargo.lock should be ignored for libraries
 Cargo.lock

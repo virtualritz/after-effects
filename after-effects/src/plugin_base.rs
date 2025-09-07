@@ -558,7 +558,7 @@ macro_rules! define_general_plugin {
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn EntryPointFunc(
-            pica_basic: *const SPBasicSuite,
+            pica_basic: *const $crate::sys::SPBasicSuite,
             major_version: i32,
             minor_version: i32,
             aegp_plugin_id: $crate::sys::AEGP_PluginID,
@@ -578,7 +578,7 @@ macro_rules! define_general_plugin {
                 env!("PIPL_NAME")
             );
 
-            let mut basic_suite = PicaBasicSuite::from_sp_basic_suite_raw(pica_basic);
+            let mut basic_suite = $crate::PicaBasicSuite::from_sp_basic_suite_raw(pica_basic);
 
             let result = <$main_type>::entry_point(major_version, minor_version, aegp_plugin_id);
 
