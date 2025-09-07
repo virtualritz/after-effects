@@ -13,12 +13,16 @@ fn main() {
         return;
     }
 
-    let pr_sdk_path = &env::var("PRSDK_ROOT").expect(
+    let pr_sdk_path = &env::var("PRSDK_ROOT").ok().filter(|x| !x.is_empty()).expect(
         "PRSDK_ROOT environment variable not set – cannot find Adobe Premiere SDK.\n\
         Please set PRSDK_ROOT to the root folder of your Adobe Premiere SDK\n\
         installation (this folder contains the Examples folder & the SDK\n\
         Guide PDF).",
     );
+
+    if !Path::new(pr_sdk_path).exists() {
+        panic!("PRSDK_ROOT environment variable points to non-existent path: {pr_sdk_path}");
+    }
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());

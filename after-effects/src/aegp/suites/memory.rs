@@ -111,7 +111,7 @@ impl<'a, T: 'a> MemHandle<'a, T> {
     }
 
     #[inline]
-    pub fn lock(&self) -> Result<MemHandleLock<T>, Error> {
+    pub fn lock(&self) -> Result<MemHandleLock<'_, T>, Error> {
         let ptr = self.suite.lock_mem_handle(self.handle)? as *mut T;
         Ok(MemHandleLock {
             parent_handle: self,

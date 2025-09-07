@@ -192,6 +192,6 @@ define_enum! {
         SupportsGpuRenderF32                = ae_sys::PF_OutFlag2_SUPPORTS_GPU_RENDER_F32,
         SupportsThreadedRendering           = ae_sys::PF_OutFlag2_SUPPORTS_THREADED_RENDERING,
         MutableRenderSequenceDataSlower     = ae_sys::PF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER,
-        SupportedDirectXRendering           = ae_sys::PF_OutFlag2_SUPPORTS_DIRECTX_RENDERING,
+        SupportsDirectXRendering            = ae_sys::PF_OutFlag2_SUPPORTS_DIRECTX_RENDERING,
     }
 }

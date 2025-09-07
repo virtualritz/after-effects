@@ -260,7 +260,7 @@ impl EventExtra {
         EventInFlags::from_bits_truncate(self.as_ref().evt_in_flags as _)
     }
 
-    pub fn callbacks(&self) -> EventCallbacks {
+    pub fn callbacks(&self) -> EventCallbacks<'_> {
         EventCallbacks {
             ptr: &self.as_ref().cbs,
             ctx: self.as_ref().contextH

@@ -51,7 +51,7 @@ impl ColorSettingsSuite {
     /// Retrieves a new ICC profile representing the specified color profile.
     ///
     /// Use [`MemHandle::to_bytes()`] to convert into `Vec<u8>`.
-    pub fn new_icc_profile_from_color_profile(&self, plugin_id: PluginId, color_profile: ConstColorProfileHandle) -> Result<MemHandle<u8>, Error> {
+    pub fn new_icc_profile_from_color_profile(&self, plugin_id: PluginId, color_profile: ConstColorProfileHandle) -> Result<MemHandle<'_, u8>, Error> {
         let handle = call_suite_fn_single!(self, AEGP_GetNewICCProfileFromColorProfile -> ae_sys::AEGP_MemHandle, plugin_id, color_profile.as_ptr())?;
         Ok(MemHandle::from_raw(handle)?)
     }

@@ -53,7 +53,7 @@ impl EffectSuite {
     /// it's provided so AEGPs can access parameter defaults, checkbox names, and pop-up strings.
     ///
     /// Use [`suites::Stream::effect_num_param_streams()`](aegp::suites::Stream::effect_num_param_streams) to get the stream count, useful for determining the maximum `param_index`.
-    pub fn effect_param_union_by_index(&self, effect_ref: impl AsPtr<AEGP_EffectRefH>, plugin_id: PluginId, param_index: i32) -> Result<pf::Param, Error> {
+    pub fn effect_param_union_by_index(&self, effect_ref: impl AsPtr<AEGP_EffectRefH>, plugin_id: PluginId, param_index: i32) -> Result<pf::Param<'_>, Error> {
         let (param_type, u) = call_suite_fn_double!(self, AEGP_GetEffectParamUnionByIndex -> ae_sys::PF_ParamType, ae_sys::PF_ParamDefUnion, plugin_id, effect_ref.as_ptr(), param_index)?;
 
         unsafe {
@@ -272,7 +272,7 @@ define_suite_item_wrapper!(
         /// it's provided so AEGPs can access parameter defaults, checkbox names, and pop-up strings.
         ///
         /// Use [`suites::Stream::effect_num_param_streams()`](aegp::suites::Stream::effect_num_param_streams) to get the stream count, useful for determining the maximum `param_index`.
-        param_union_by_index(plugin_id: PluginId, param_index: i32) -> pf::Param => suite.effect_param_union_by_index,
+        param_union_by_index(plugin_id: PluginId, param_index: i32) -> pf::Param<'_> => suite.effect_param_union_by_index,
 
         /// Obtains the flags for this [`Effect`].
         flags() -> EffectFlags => suite.effect_flags,
