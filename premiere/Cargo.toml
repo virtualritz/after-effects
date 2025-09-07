@@ -21,5 +21,5 @@ bitflags = "2.9"
 fastrand = "2.3"
 log = "0.4"
 parking_lot = "0.12"
-premiere-sys = { path = "../premiere-sys" }
+premiere-sys = "0.3"                               #{ path = "../premiere-sys" }
 serde = { version = "1.0", features = ["derive"] }
