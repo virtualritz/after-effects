@@ -692,7 +692,7 @@ impl RawHandle {
     pub fn as_raw(&self) -> ae_sys::PF_Handle {
         self.handle
     }
-    pub fn lock(&self) -> Result<RawHandleLock, Error> {
+    pub fn lock(&self) -> Result<RawHandleLock<'_>, Error> {
         unsafe {
             let lock = (*self.utils_ptr).host_lock_handle.ok_or(Error::BadCallbackParameter)?;
             let ptr = lock(self.handle);

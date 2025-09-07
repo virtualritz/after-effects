@@ -88,7 +88,7 @@ impl PathDataSuite {
     }
 
     /// Retrieves the location of a point `length` along the given path segment.
-    /// 
+    ///
     /// Returns a tuple containing `(x, y)`
     pub fn path_eval_seg_length(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr, length_prep: &mut PF_PathSegPrepPtr, which_seg: i32, length: f64) -> Result<(f64, f64), Error> {
         call_suite_fn_double!(self, PF_PathEvalSegLength -> PF_FpLong, PF_FpLong, effect_ref.as_ptr(), path, length_prep, which_seg, length)
@@ -96,7 +96,7 @@ impl PathDataSuite {
 
     /// Retrieves the location, and the first derivative, of a point `length` along the given path segment.
     /// If you’re not sure why you’d ever need this, don’t use it. Math is hard.
-    /// 
+    ///
     /// Returns a tuple containing `(x, y, deriv1x, deriv1y)`
     pub fn path_eval_seg_length_deriv1(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr, length_prep: &mut PF_PathSegPrepPtr, which_seg: i32, length: f64) -> Result<(f64, f64, f64, f64), Error> {
         let mut x = 0.0;
@@ -218,7 +218,7 @@ impl PathOutline {
     /// This fairly counter-intuitive function informs After Effects that you’re going to ask for the
     /// length of a segment (using [`PathSegPrep::length`]), and it’d better get ready. `frequency`
     /// indicates how many times you’d like us to sample the length; our internal effects use 100.
-    pub fn prepare_seg_length(&self, which_seg: i32, frequency: i32) -> Result<PathSegPrep, Error> {
+    pub fn prepare_seg_length(&self, which_seg: i32, frequency: i32) -> Result<PathSegPrep<'_>, Error> {
         Ok(PathSegPrep {
             path: self,
             which_seg,
@@ -265,7 +265,7 @@ impl<'a> PathSegPrep<'a> {
     }
 
     /// Retrieves the location of a point `length` along the segment.
-    /// 
+    ///
     /// Returns a tuple containing `(x, y)`
     pub fn eval(&mut self, length: f64) -> Result<(f64, f64), Error> {
         self.path.suite.path_eval_seg_length(self.path.effect_ref, self.path.path, &mut self.length_prep, self.which_seg, length)
@@ -273,7 +273,7 @@ impl<'a> PathSegPrep<'a> {
 
     /// Retrieves the location, and the first derivative, of a point `length` along the segment.
     /// If you’re not sure why you’d ever need this, don’t use it. Math is hard.
-    /// 
+    ///
     /// Returns a tuple containing `(x, y, deriv1x, deriv1y)`
     pub fn eval_deriv1(&mut self, length: f64) -> Result<(f64, f64, f64, f64), Error> {
         self.path.suite.path_eval_seg_length_deriv1(self.path.effect_ref, self.path.path, &mut self.length_prep, self.which_seg, length)

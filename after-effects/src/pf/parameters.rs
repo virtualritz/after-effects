@@ -574,9 +574,9 @@ impl ArbParamsExtra {
                 let mut src_handle = Handle::<T>::from_raw(self.as_ref().u.copy_func_params.src_arbH, false)?;
                 let lock = src_handle.lock()?;
 
-                let serialized = bincode::serialize::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
-                let deserialized = bincode::deserialize::<T>(&serialized).map_err(|_| Error::InternalStructDamaged)?;
-                let new_handle = Handle::<T>::new(deserialized)?;
+                let serialized = bincode::serde::encode_to_vec::<&T, _>(lock.as_ref()?, bincode::config::legacy()).map_err(|_| Error::InternalStructDamaged)?;
+                let deserialized = bincode::serde::decode_from_slice::<T, _>(&serialized, bincode::config::legacy()).map_err(|_| Error::InternalStructDamaged)?;
+                let new_handle = Handle::<T>::new(deserialized.0)?;
 
                 self.as_ref()
                     .u
@@ -591,7 +591,7 @@ impl ArbParamsExtra {
                 let mut handle = Handle::<T>::from_raw(self.as_ref().u.flat_size_func_params.arbH, false)?;
                 let lock = handle.lock()?;
 
-                let serialized = bincode::serialize::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
+                let serialized = bincode::serde::encode_to_vec::<&T, _>(lock.as_ref()?, bincode::config::legacy()).map_err(|_| Error::InternalStructDamaged)?;
 
                 self.as_ref()
                     .u
@@ -607,7 +607,7 @@ impl ArbParamsExtra {
                 let mut handle = Handle::<T>::from_raw(self.as_ref().u.flatten_func_params.arbH, false)?;
                 let lock = handle.lock()?;
 
-                let serialized = bincode::serialize::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
+                let serialized = bincode::serde::encode_to_vec::<&T, _>(lock.as_ref()?, bincode::config::legacy()).map_err(|_| Error::InternalStructDamaged)?;
 
                 assert!(
                     serialized.len() <= self.as_ref().u.flatten_func_params.buf_sizeLu as _
@@ -628,8 +628,8 @@ impl ArbParamsExtra {
                     self.as_ref().u.unflatten_func_params.flat_dataPV as *mut u8,
                     self.as_ref().u.unflatten_func_params.buf_sizeLu as _
                 );
-                let t = bincode::deserialize::<T>(serialized).map_err(|_| Error::InternalStructDamaged)?;
-                let handle = Handle::<T>::new(t)?;
+                let t = bincode::serde::decode_from_slice::<T, _>(serialized, bincode::config::legacy()).map_err(|_| Error::InternalStructDamaged)?;
+                let handle = Handle::<T>::new(t.0)?;
 
                 self.as_ref()
                     .u
@@ -1262,21 +1262,21 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     }
 
     #[inline(always)]
-    pub fn get(&self, type_: P) -> Result<ReadOnlyOwnership<ParamDef<'p>>, Error> {
+    pub fn get(&self, type_: P) -> Result<ReadOnlyOwnership<'_, ParamDef<'p>>, Error> {
         self.get_at(type_, None, None, None)
     }
 
     #[inline(always)]
-    pub fn get_mut(&mut self, type_: P) -> Result<Ownership<ParamDef<'p>>, Error> {
+    pub fn get_mut(&mut self, type_: P) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
         self.get_mut_at(type_, None, None, None)
     }
 
     #[inline(always)]
-    pub fn checkout(&self, type_: P) -> Result<Ownership<ParamDef<'p>>, Error> {
+    pub fn checkout(&self, type_: P) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
         self.checkout_at(type_, None, None, None)
     }
 
-    pub fn get_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<ReadOnlyOwnership<ParamDef<'p>>, Error> {
+    pub fn get_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<ReadOnlyOwnership<'_, ParamDef<'p>>, Error> {
         if self.params.is_empty() || time.is_some() {
             match self.checkout_at(type_, time, time_step, time_scale) {
                 Ok(Ownership::Rust(param)) => Ok(ReadOnlyOwnership::Rust(param)),
@@ -1289,7 +1289,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         }
     }
 
-    pub fn get_mut_at(&mut self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
+    pub fn get_mut_at(&mut self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
         if self.params.is_empty() || time.is_some() {
             self.checkout_at(type_, time, time_step, time_scale)
         } else {
@@ -1298,7 +1298,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         }
     }
 
-    pub fn checkout_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<ParamDef<'p>>, Error> {
+    pub fn checkout_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
         let index = self.index(type_).ok_or(Error::InvalidIndex)?;
         let type_ = self.raw_param_type(type_).ok_or(Error::InvalidIndex)?;
         let in_data = self.in_data();

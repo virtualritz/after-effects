@@ -118,8 +118,8 @@ impl GpuFilterData {
         if let crate::Param::MemoryPtr(ptr) = ptr {
             if !ptr.is_null() {
                 let serialized = unsafe { std::slice::from_raw_parts(ptr as *mut u8, self.memory_manager_suite.ptr_size(ptr) as _) };
-                if let Ok(t) = bincode::deserialize::<T>(serialized) {
-                    return Ok(t);
+                if let Ok(t) = bincode::serde::decode_from_slice::<T, _>(serialized, bincode::config::legacy()) {
+                    return Ok(t.0);
                 }
             }
         }

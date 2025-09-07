@@ -121,7 +121,7 @@ impl<'a, T: 'a> Handle<'a, T> {
         self.suite.unlock_handle(self.handle);
     }
 
-    pub fn lock(&mut self) -> Result<HandleLock<T>, Error> {
+    pub fn lock(&mut self) -> Result<HandleLock<'_, T>, Error> {
         let ptr = self.suite.lock_handle(self.handle) as *mut T;
         if ptr.is_null() {
             Err(Error::InvalidIndex)
