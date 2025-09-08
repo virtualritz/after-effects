@@ -292,12 +292,12 @@ impl AdobePluginInstance for Instance {
                 if mode == (Mode::Basic as i32) {
                     let mut flavor = params_copy.get_mut(Params::Flavor)?;
                     flavor.set_ui_flag(ae::ParamUIFlags::DISABLED, false);
-                    flavor.set_name("Flavor");
+                    flavor.set_name("Flavor")?;
                     flavor.update_param_ui()?;
                 } else if mode == Mode::Advanced as i32 && !params_copy.get(Params::Flavor)?.ui_flags().contains(ae::ParamUIFlags::DISABLED) {
                     let mut flavor = params_copy.get_mut(Params::Flavor)?;
                     flavor.set_ui_flag(ae::ParamUIFlags::DISABLED, true);
-                    flavor.set_name("Flavor (disabled in Basic mode)");
+                    flavor.set_name("Flavor (disabled in Basic mode)")?;
                     flavor.update_param_ui()?;
                 }
 
