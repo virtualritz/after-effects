@@ -342,9 +342,9 @@ macro_rules! define_effect {
                     }
                 }
             } else if std::any::type_name::<S>() == "()" && cmd == RawCommand::GetFlattenedSequenceData {
-                // Even if we don't need the sequence data, AE expects us to return a handle here
+                // Even if we don't need the sequence data, AE expects us to set this pointer explicitly
                 // Otherwise clicking on "Options..." in the Effect Controls panel will crash AE
-                (*out_data_ptr).sequence_data = pf::FlatHandle::into_raw(FlatHandle::new(vec![])?) as *mut _;
+                (*out_data_ptr).sequence_data = std::ptr::null_mut();
             }
             drop(plugin_state);
             drop(params_state);
