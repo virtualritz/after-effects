@@ -1064,53 +1064,49 @@ impl<'p> ParamDef<'p> {
         // Reference: https://ae-plugins.docsforadobe.dev/intro/localization/
         let mut bytes = {
             #[cfg(target_os = "macos")]
-            {
+            unsafe {
                 use objc2_core_foundation::CFString;
                 let cfstr = CFString::from_str(name);
                 let c_string = cfstr.c_string_ptr(CFString::system_encoding());
                 if c_string.is_null() {
-                    return Err(Error::InvalidParms)
-                }
-                unsafe {
+                    Vec::new()
+                } else {
                     std::ffi::CStr::from_ptr(c_string).to_bytes_with_nul().to_vec()
                 }
             }
             #[cfg(target_os = "windows")]
-            {
+            unsafe {
                 use std::ffi::OsStr;
                 use std::os::windows::ffi::OsStrExt;
                 use windows_sys::Win32::Globalization::{WideCharToMultiByte, CP_OEMCP};
-                let wstr: Vec<u16> = OsStr::new(name).encode_wide().collect();
-                if wstr.is_empty() {
-                    Vec::new()
-                } else {
-                    unsafe {
-                        let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut());
+                let mut wstr: Vec<u16> = OsStr::new(name).encode_wide().collect();
+                if !wstr.is_empty() {
+                    wstr.push(0); // Null-terminate
+                    let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut());
+                    if len > 0 {
+                        let mut bytes: Vec<u8> = Vec::with_capacity(len as usize);
+                        let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, bytes.as_mut_ptr() as _, len, std::ptr::null(), std::ptr::null_mut());
                         if len > 0 {
-                            let mut bytes: Vec<u8> = Vec::with_capacity(len as usize);
-                            let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, bytes.as_mut_ptr() as _, len, std::ptr::null(), std::ptr::null_mut());
-                            if len > 0 {
-                                bytes.set_len(len as usize);
-                                if (len as usize) == bytes.len() {
-                                    bytes
-                                } else {
-                                    bytes[0..(len as usize)].to_vec()
-                                }
-                            } else {
-                                return Err(Error::InvalidParms);
-                            }
+                            bytes.set_len(len as usize);
+                            bytes
                         } else {
-                            return Err(Error::InvalidParms);
+                            Vec::new()
                         }
+                    } else {
+                        Vec::new()
                     }
+                } else {
+                    Vec::new()
                 }
             }
         };
 
-        let to_copy = bytes.len().min(MAX_NAME_LEN - 1);
+        let to_copy = bytes.len().min(MAX_NAME_LEN);
         if to_copy > 0 {
             bytes.resize(to_copy, 0);
-            bytes.push(0); // Null-terminate
+            if let Some(last_elem) = bytes.get_mut(MAX_NAME_LEN - 1) {
+                *last_elem = 0;
+            }
             self.param_def.name[0..bytes.len()].copy_from_slice(unsafe { std::mem::transmute(bytes.as_slice()) });
             return Ok(());
         }
