@@ -58,7 +58,7 @@ impl AppSuite {
         let v6 = AppSuite6::new()?;
         let mut lang = [0i8; 16];
         call_suite_fn!(v6, PF_AppGetLanguage, lang.as_mut_ptr())?;
-        Ok(str_from_c(&lang)?)
+        str_from_c(&lang)
     }
 
     /// Retrieves the user's registration information.

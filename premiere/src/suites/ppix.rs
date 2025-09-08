@@ -54,6 +54,7 @@ impl PPixSuite {
     }
     /// This will return the row bytes of the ppix.
     /// * `ppix_handle` - The ppix handle you want to operate on.
+    ///
     /// Returns how many bytes must be added to the pixel buffer address to get to the next line.
     ///
     /// May be negative.

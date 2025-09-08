@@ -3,7 +3,6 @@ use crate::*;
 use ae_sys::*;
 
 define_suite!(
-    ///
     BackgroundFrameSuite,
     PF_BackgroundFrameSuite1,
     kPFBackgroundFrameSuite,

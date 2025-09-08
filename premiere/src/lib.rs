@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
 
 use premiere_sys as pr_sys;
@@ -195,7 +195,7 @@ impl From<Error> for &'static str {
 }
 
 thread_local! {
-    pub(crate) static PICA_BASIC_SUITE: RefCell<*const pr_sys::SPBasicSuite> = RefCell::new(ptr::null_mut());
+    pub(crate) static PICA_BASIC_SUITE: RefCell<*const pr_sys::SPBasicSuite> = const { RefCell::new(ptr::null_mut()) };
 }
 
 #[inline]

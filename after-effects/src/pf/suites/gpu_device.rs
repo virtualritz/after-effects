@@ -17,6 +17,7 @@ impl GPUDeviceSuite {
 
     /// This will return the number of gpu devices the host supports.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
+    ///
     /// Returns the number of available devices.
     pub fn device_count(&self, effect_ref: impl AsPtr<PF_ProgPtr>) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, GetDeviceCount -> A_u_long, effect_ref.as_ptr())? as usize)
@@ -26,6 +27,7 @@ impl GPUDeviceSuite {
     /// needed to dispatch task to the device. Refer PF_GPUDeviceInfo for details.
     /// * `effect_ref`   - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
+    ///
     /// Returns the device info will to be filled.
     pub fn device_info(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize) -> Result<ae_sys::PF_GPUDeviceInfo, Error> {
         call_suite_fn_single!(self, GetDeviceInfo -> ae_sys::PF_GPUDeviceInfo, effect_ref.as_ptr(), device_index as _)
@@ -55,6 +57,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
     /// * `size_bytes` - The size of the memory to allocate.
+    ///
     /// Returns the pointer to the allocated memory.
     pub fn allocate_device_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, size_bytes: usize) -> Result<*mut c_void, Error> {
         call_suite_fn_single!(self, AllocateDeviceMemory -> *mut c_void, effect_ref.as_ptr(), device_index as _, size_bytes)
@@ -72,6 +75,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
     /// * `size_bytes` - The size of the memory to purge.
+    ///
     /// Returns the number of bytes purged.
     pub fn purge_device_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, size_bytes: usize) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, PurgeDeviceMemory -> usize, effect_ref.as_ptr(), device_index as _, size_bytes)?)
@@ -83,6 +87,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
     /// * `size_bytes` - The size of the memory to allocate.
+    ///
     /// Returns the pointer to the allocated memory.
     pub fn allocate_host_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, size_bytes: usize) -> Result<*mut c_void, Error> {
         call_suite_fn_single!(self, AllocateHostMemory -> *mut c_void, effect_ref.as_ptr(), device_index as _, size_bytes)
@@ -100,6 +105,7 @@ impl GPUDeviceSuite {
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `device_index` - The device index for the requested device.
     /// * `bytes_to_purge` - The size of the memory to purge.
+    ///
     /// Returns the number of bytes purged.
     pub fn purge_host_memory(&self, effect_ref: impl AsPtr<PF_ProgPtr>, device_index: usize, bytes_to_purge: usize) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, PurgeHostMemory -> usize, effect_ref.as_ptr(), device_index as _, bytes_to_purge)?)
@@ -114,6 +120,7 @@ impl GPUDeviceSuite {
     /// * `field_type` - The field of the effect world.
     /// * `pixel_format` - The pixel format of the effect world, only gpu formats are accepted.
     /// * `clear_pix` - Pass in 'true' for a transparent black frame.
+    ///
     /// Returns the handle to the effect world to be created.
     pub fn create_gpu_world(&self, in_data: impl AsPtr<*const PF_InData>, device_index: usize, width: i32, height: i32, pixel_aspect_ratio: RationalScale, field_type: Field, pixel_format: pf::PixelFormat, clear_pix: bool) -> Result<Layer, Error> {
         let layer = call_suite_fn_single!(self, CreateGPUWorld -> *mut PF_EffectWorld, (*in_data.as_ptr()).effect_ref, device_index as _, width, height, pixel_aspect_ratio.into(), field_type.into(), pixel_format.into(), clear_pix as _)?;
@@ -134,6 +141,7 @@ impl GPUDeviceSuite {
     /// This will return the gpu buffer address of the given effect world.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
+    ///
     /// Returns the gpu buffer address.
     pub fn gpu_world_data(&self, effect_ref: impl AsPtr<PF_ProgPtr>, mut world: impl AsMutPtr<*mut ae_sys::PF_EffectWorld>) -> Result<*mut std::ffi::c_void, Error> {
         call_suite_fn_single!(self, GetGPUWorldData -> *mut c_void, effect_ref.as_ptr(), world.as_mut_ptr())
@@ -142,6 +150,7 @@ impl GPUDeviceSuite {
     /// This will return the size of the total data in the effect world.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
+    ///
     /// Returns the size of the total data in the effect world.
     pub fn gpu_world_size(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, GetGPUWorldSize -> usize, effect_ref.as_ptr(), world.as_ptr())?)
@@ -150,6 +159,7 @@ impl GPUDeviceSuite {
     /// This will return device index the gpu effect world is associated with.
     /// * `effect_ref` - Effect reference from [`InData`](crate::InData::effect_ref).
     /// * `world` - The effect world you want to operate on, has to be a gpu effect world.
+    ///
     /// Returns the device index of the given effect world.
     pub fn gpu_world_device_index(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: impl AsPtr<*mut ae_sys::PF_EffectWorld>) -> Result<usize, Error> {
         Ok(call_suite_fn_single!(self, GetGPUWorldDeviceIndex -> A_u_long, effect_ref.as_ptr(), world.as_ptr())? as usize)

@@ -138,7 +138,7 @@ impl PersistentDataSuite {
         section_key: &str,
         value_key: &str,
         default: MemHandle<'a, T>,
-    ) -> Result<MemHandle<T>, Error> {
+    ) -> Result<MemHandle<'_, T>, Error> {
         let section_key = CString::new(section_key).map_err(|_| Error::InvalidParms)?;
         let value_key = CString::new(value_key).map_err(|_| Error::InvalidParms)?;
 

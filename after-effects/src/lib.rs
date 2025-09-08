@@ -1,5 +1,5 @@
 // FIXME: make ALL the functions below return Result-wrapped values
-
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
 use after_effects_sys as ae_sys;
 use num_traits::identities::Zero;
@@ -46,9 +46,9 @@ pub use win_dbg_logger;
 #[cfg(target_os = "macos")]
 pub use oslog;
 
-thread_local!(
-    pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> = RefCell::new(ptr::null_mut())
-);
+thread_local! {
+    pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> = const { RefCell::new(ptr::null_mut()) };
+}
 
 #[inline]
 pub(crate) fn borrow_pica_basic_as_ptr() -> *const ae_sys::SPBasicSuite {

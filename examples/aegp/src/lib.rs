@@ -4,8 +4,8 @@ use after_effects::{
         CommandHookStatus, HookPriority, ItemType, MenuOrder,
     },
     define_general_plugin,
-    sys::{AEGP_PluginID, PF_InData, SPBasicSuite},
-    AegpPlugin, Error, Layer, PicaBasicSuite, Time,
+    sys::{AEGP_PluginID, PF_InData},
+    AegpPlugin, Error, Layer, Time,
 };
 
 mod img_proc;

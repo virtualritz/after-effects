@@ -133,12 +133,12 @@ impl GpuFilterData {
 pub trait GpuFilter : Default {
     /// Called once at startup to initialize any global state.
     /// * Note that the instances are created and destroyed many times during the same render,
-    /// so don't rely on `Default` or `Drop` for any global state
+    ///   so don't rely on `Default` or `Drop` for any global state
     fn global_init();
 
     /// Called once at shutdown to clean up any global state.
     /// * Note that the instances are created and destroyed many times during the same render,
-    /// so don't rely on `Default` or `Drop` for any global state
+    ///   so don't rely on `Default` or `Drop` for any global state
     fn global_destroy();
 
     /// Return dependency information about a render, or nothing if only the current frame is required.

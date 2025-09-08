@@ -1161,7 +1161,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
                 Vec::new()
             } else {
                 params
-                    .into_iter()
+                    .iter()
                     .enumerate()
                     .map(|(i, p)| { debug_assert!(!p.is_null()); ParamDef::from_raw(in_data_obj, unsafe { &mut **p }, Some(i as i32)) })
                     .collect::<Vec<_>>()
@@ -1336,10 +1336,10 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
 
     pub fn cloned(&self) -> Parameters<'p, P> {
         Parameters::<'p, P> {
-            in_data: self.in_data.clone(),
+            in_data: self.in_data,
             num_params: self.num_params,
             map: self.map.clone(),
-            params: self.params.iter().cloned().collect(),
+            params: self.params.to_vec(),
         }
     }
 }
