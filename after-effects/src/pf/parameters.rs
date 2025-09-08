@@ -3,6 +3,8 @@ use std::ffi::{ CStr, CString };
 use ae_sys::PF_PathID;
 use serde::{de::DeserializeOwned, Serialize};
 
+const MAX_NAME_LEN: usize = 32;
+
 define_enum! {
     ae_sys::PF_ParamType,
     ParamType {
@@ -1053,11 +1055,66 @@ impl<'p> ParamDef<'p> {
         unsafe { &mut self.param_def.u.ld }
     }
 
-    pub fn set_name(&mut self, name: &str) {
-        let name_cstr = CString::new(name).unwrap();
-        let name_slice = name_cstr.to_bytes_with_nul();
-        assert!(name_slice.len() <= 32);
-        self.param_def.name[0..name_slice.len()].copy_from_slice(unsafe { std::mem::transmute(name_slice) });
+    pub fn set_name(&mut self, name: &str) -> Result<(), Error> {
+        if name.is_empty() {
+            self.param_def.name[0] = 0;
+            return Ok(());
+        }
+        // According to Adobe docs, the encoding expected for the name is the system encoding.
+        // Reference: https://ae-plugins.docsforadobe.dev/intro/localization/
+        let mut bytes = {
+            #[cfg(target_os = "macos")]
+            {
+                use objc2_core_foundation::CFString;
+                let cfstr = CFString::from_str(name);
+                let c_string = cfstr.c_string_ptr(CFString::system_encoding());
+                if c_string.is_null() {
+                    return Err(Error::InvalidParms)
+                }
+                std::ffi::CStr::from_ptr(c_string).to_bytes_with_nul().to_vec()
+            }
+            #[cfg(target_os = "windows")]
+            {
+                use std::ffi::OsStr;
+                use std::os::windows::ffi::OsStrExt;
+                use windows_sys::Win32::Globalization::{WideCharToMultiByte, CP_OEMCP};
+                let wstr: Vec<u16> = OsStr::new(name).encode_wide().collect();
+                if wstr.is_empty() {
+                    Vec::new()
+                } else {
+                    unsafe {
+                        let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut());
+                        if len > 0 {
+                            let mut bytes: Vec<u8> = Vec::with_capacity(len as usize);
+                            let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, bytes.as_mut_ptr() as _, len, std::ptr::null(), std::ptr::null_mut());
+                            if len > 0 {
+                                bytes.set_len(len as usize);
+                                if (len as usize) == bytes.len() {
+                                    bytes
+                                } else {
+                                    bytes[0..(len as usize)].to_vec()
+                                }
+                            } else {
+                                return Err(Error::InvalidParms);
+                            }
+                        } else {
+                            return Err(Error::InvalidParms);
+                        }
+                    }
+                }
+            }
+        };
+
+        let to_copy = bytes.len().min(MAX_NAME_LEN - 1);
+        if to_copy > 0 {
+            bytes.resize(to_copy, 0);
+            bytes.push(0); // Null-terminate
+            self.param_def.name[0..bytes.len()].copy_from_slice(unsafe { std::mem::transmute(bytes.as_slice()) });
+            return Ok(());
+        }
+
+        log::error!("Failed to set the parameter name, \"{name}\" is too long or contains invalid characters for the system encoding.");
+        Err(Error::InvalidParms)
     }
 
     pub fn set_flags       (&mut self, f: ParamFlag)    { self.param_def.flags           = f.bits() as _; }
@@ -1183,7 +1240,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         assert!(!self.in_data.is_null());
 
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
-        param_def.set_name(name);
+        param_def.set_name(name)?;
         param_def.as_mut().param_type = ParamType::GroupStart.into();
         param_def.set_id(Self::param_id(type_start));
         if start_collapsed {
@@ -1210,7 +1267,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         let param = def.into(); // This must outlive the call to .add()
 
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
-        param_def.set_name(name);
+        param_def.set_name(name)?;
         param_def.set_param(&param);
         let param_type = param_def.param_type();
         param_def.set_id(Self::param_id(type_));
@@ -1229,7 +1286,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         let param = def.into(); // This must outlive the call to .add()
 
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
-        param_def.set_name(name);
+        param_def.set_name(name)?;
         param_def.set_param(&param);
         let param_type = param_def.param_type();
         param_def.set_id(Self::param_id(type_));
@@ -1247,7 +1304,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         let param = def.into(); // This must outlive the call to .add()
 
         let mut param_def = ParamDef::new(InData::from_raw(self.in_data));
-        param_def.set_name(name);
+        param_def.set_name(name)?;
         param_def.set_param(&param);
         let param_type = param_def.param_type();
         param_def.set_id(Self::param_id(type_));
