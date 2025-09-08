@@ -8,6 +8,15 @@ pub struct ClipOperator {
     pub node_type: String,
     pub hash: prPluginID,
     pub flags: i32,
+
+    pub effect: Option<EffectDetails>
+}
+
+#[derive(Debug, Clone)]
+pub struct EffectDetails {
+    pub name: Option<String>,
+    pub instance_id: Option<u32>,
+    pub params: Option<PropertyData>
 }
 
 pub type ClipOperatorsMap = HashMap<i32, ClipOperator>;
@@ -35,32 +44,34 @@ impl VideoSequenceParser {
             let (operator_node_type, operator_node_hash, operator_node_flags) =
                 self.segment_suite.node_info(operator_node_id)?;
 
-            log::debug!(
-                "Clip Operator: {:?} {:?} {:?}",
-                operator_node_type,
-                operator_node_hash,
-                operator_node_flags
-            );
-
-            if operator_node_type
-                == String::from_utf8_lossy(kVideoSegment_NodeType_Effect).to_string()
-            {
+            let effect = if operator_node_type == String::from_utf8_lossy(kVideoSegment_NodeType_Effect) {
                 let effect_name = self
                     .segment_suite
                     .node_property(operator_node_id, Property::Effect_FilterMatchName)
                     .unwrap_or_else(|_| PropertyData::String("<Unknown Effect>".to_string()));
-                log::debug!("\tEffect: {:?}", effect_name);
 
                 let effect_instance_id = self
                     .segment_suite
                     .node_property(operator_node_id, Property::Effect_RuntimeInstanceID);
-                log::debug!("\tEffect Instance ID: {:?}", effect_instance_id);
 
                 let filter_params = self
                     .segment_suite
                     .node_property(operator_node_id, Property::Effect_FilterParams);
-                log::debug!("\tEffect Params: {filter_params:?}");
-            }
+
+                Some(EffectDetails {
+                    name: match effect_name {
+                        PropertyData::String(s) => Some(s),
+                        _ => None
+                    },
+                    instance_id: match effect_instance_id {
+                        Ok(PropertyData::UInt32(x)) => Some(x),
+                        _ => None
+                    },
+                    params: filter_params.ok()
+                })
+            } else {
+                None
+            };
 
             operators_map.insert(
                 operator_node_id,
@@ -69,6 +80,8 @@ impl VideoSequenceParser {
                     node_type: operator_node_type,
                     hash: operator_node_hash,
                     flags: operator_node_flags,
+
+                    effect
                 },
             );
             self.segment_suite.release_video_node_id(operator_node_id)?;
