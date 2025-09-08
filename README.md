@@ -1,86 +1,67 @@
-# Rust Bindings for Adobe AfterEffects® & Premiere Pro® SDKs
+# Rust Bindings for Adobe After Effects® & Premiere Pro® SDKs
 
-High level bindings for the Adobe AfterEffects® (Ae) and Adobe Premiere Pro® SDKs.
+High-level, safe Rust bindings for the Adobe After Effects (Ae) and Adobe Premiere Pro (Pr) SDKs.
 
-This wraps many of the API suites in the Ae and Pr SDK and exposes them in _safe_ Rust.
+* Wraps many Ae & Pr API suites in safe Rust.
+* Provides macros to generate all plugin boilerplate.
+* Build and package entirely with **Rust** – no external build tools needed.
 
-It also defines a set of macros that implement all the plugin boilerplate for you, so you can
-focus just on your actual plugin implementation.
+## Quick Start
 
-_Building the plugins is done entirely with Rust – there's no need to use any external programs or
-dependencies._
+1. Install [`just`](https://github.com/casey/just):
 
-Packaging of the final plugin is done using a [`just`](https://github.com/casey/just) script.
-Install with `cargo install just` and download
-[`AdobePlugin.just`](https://raw.githubusercontent.com/virtualritz/after-effects/master/AdobePlugin.just)
-and put it next to your `Cargo.toml`.
+   ```bash
+   cargo install just
+   ```
 
-Adobe plugins contain a special resource describing the plugin called `PiPL`. This repository
-includes a `PiPL` tool written in Rust which generates the needed resource in `build.rs`.
+2. Add dependencies in `Cargo.toml`:
 
-Pre-generated SDK bindings are included, so you can compile the final plugin by just running
-`just release`, and it works on both macOS and Windows.
+   ```bash
+   cargo add after-effects
+   cargo add --dev pipl
+   ```
 
-You can also re-generate the bindings by downloading the SDK headers from Adobe and setting
-`AESDK_ROOT` and/or `PRSDK_ROOT` environment variables.
+3. Define your plugin description in `build.rs` and write your plugin code. Check out [examples/](https://github.com/virtualritz/after-effects/tree/master/examples).
 
-## Using
+4. Download [`AdobePlugin.just`](https://raw.githubusercontent.com/virtualritz/after-effects/master/AdobePlugin.just) into your project root (next to `Cargo.toml`).
 
-Add `after-effects` or `premiere` to your dependencies and `pipl` to your dev-dependencies.
+5. Build your plugin:
 
-```text
-cargo add after-effects
-cargo add --dev pipl
-```
+   ```bash
+   just build   # Debug build (logging and catching panics)
+   just release # Optimized release build
+   ```
 
 > [!NOTE]
-> When using with Premiere and you want to use any of the Premiere's suites, make sure to add `println!("cargo:rustc-cfg=with_premiere");` to your `build.rs` so that the plugin can initialize `premiere`'s basic suite in `EffectMain`
+> If using Premiere SDK features, add to your `build.rs`:
+>
+> ```rust
+> println!("cargo:rustc-cfg=with_premiere");
+> ```
 
-## After Effects vs. Premiere
+## Examples
 
-Adobe plugins are shared between After Effects and Premiere.
+Basic plugin examples: [examples/](https://github.com/virtualritz/after-effects/tree/master/examples).
 
-The main engine is based on After Effects, but Premiere loads most of the Ae plugins.
-While they have many common parts, there are some areas that are separated.
-
-- Premiere is missing all `AEGP` suites.
-
-- Premiere uses only software rendering, even if the Ae plugin supports GPU render and Smart
-  Render.
-
-- Premiere has a separate entry point for GPU rendering, which can be defined using the
-  `premiere::define_gpu_filter!` macro.
-
-- After Effects and Premiere also have some separate areas that are implemented independently.
-
-- You can't write a video filter plugin using only the Premiere SDK, the base engine is using Ae
-  SDK.
-
-## Getting Started
-
-### Examples
-
-A few basic examples are [included in the repository](https://github.com/virtualritz/after-effects/tree/master/examples).
-For more advanced use cases, refer to the C/C++ examples from the SDK.
-
-To build each example simply run the following from inside the desired example directory.
+Build an example:
 
 ```bash
 CARGO_TARGET_DIR=$(pwd)/target
 just build
 ```
 
-The `just` command will package and install the example plugin.
+#### Advanced plugins
+* [Gyroflow plugin](https://github.com/gyroflow/gyroflow-plugins) is an example of pure Rust plugin with efficient zero-copy GPU rendering.
+* For more advanced use cases, refer to the C/C++ examples from the SDK.
 
-To debug the loading process consult the `Plugin Loading.log` or run AfterEffects from the CLI in
-your debugger of choice.
+#### Debugging tips:
 
-The most common causes of plugin loading failure on macOS are lack of signing, and incorrect PkgInfo or Info.plist contents.
+* If the plugin fails to load, check `Plugin Loading.log` or run AfterEffects from the CLI in your debugger of choice.
+* On macOS, common pitfails are signing or an issue with `PkgInfo`/`Info.plist`.
+* On Windows, logs appear in **DbgView**. On macOS, use **Console**.
 
-For a more advanced sample with full GPU rendering you can check out the
-[Gyroflow plugin](https://github.com/gyroflow/gyroflow-plugins)
 
-### Development
+## Development Notes
 
 When developing your plugin it's best to use the debug build - it will catch and display panics
 for you and it will log any messages and stack traces to `DbgView` (on Windows) or `Console` (on
@@ -88,65 +69,54 @@ macOS). This is done by running `just build`.
 
 The release version can be built using `just release`
 
-Some plugins may be slow in debug build, in this case you can add optimizations to the debug build
-by using
+* To enable optimizations in the debug build:
 
-```toml
-[profile.dev]
-opt-level = 3
-```
+  ```toml
+  [profile.dev]
+  opt-level = 3
+  ```
+* To add debug symbols in release builds:
 
-or add debug symbols to your release build by using
+  ```toml
+  [profile.release]
+  debug = true
+  debug-assertions = true
+  ```
+* To enable panic catching in release builds, add this to `build.rs`:
 
-```toml
-[profile.release]
-debug = true
-debug-assertions = true
-```
+  ```rust
+  println!("cargo:rustc-cfg=catch_panics");
+  ```
 
-in your `Cargo.toml` file.
+## After Effects vs Premiere
 
-The release build doesn't catch panics by default to not add any additional overhead. You can
-opt-in for the panic handler by adding `catch_panics` cfg to your `build.rs`:
+* Ae is the main plugin engine; Pr loads most Ae plugins.
+* Pr lacks `AEGP` suites and always uses software rendering.
+* Pr defines a separate GPU entry point via [`premiere::define_gpu_filter!`](https://docs.rs/premiere/latest/premiere/macro.define_gpu_filter.html).
+* You cannot build a Pr-only video filter – Ae SDK is required.
 
-```rust
-println!("cargo:rustc-cfg=catch_panics");
-```
+## Regenerating Bindings
 
-## Help Wanted/To Do
+Pre-generated bindings are included, so building the plugin _just works_.
 
-- If you need a suite that's not yet wrapped, feel free to create a PR wrapping that suite.
+If you want to regenerate the SDK bindings:
 
-- Examples and documentation.
+1. Download the [Adobe After Effects SDK](https://console.adobe.io/downloads/ae).
+2. Set environment variables:
 
-- Better error handling. Possibly using [`color`](https://crates.io/crates/color-eyre)`-`[`eyre`](https://crates.io/crates/eyre)?
+   ```bash
+   export AESDK_ROOT=/path/to/AfterEffectsSDK
+   export PRSDK_ROOT=/path/to/PremiereSDK
+   ```
+3. Run `just build`.
 
-### Using the Adobe SDK C++ Headers
-
-Download the [_Adobe After Effects SDK_](https://console.adobe.io/downloads/ae).
-
-> ⚠️ The SDK published by Adobe is outdated if you are using the 3D
-> Artisan API to write your own 3D renderer plug-in.
-> Also see [Features](#features) below for more information.
->
-> Ignore this if you just want to develop 2D plugins (which still have
-> access to 3D data).
-
-Define the `AESDK_ROOT` environment variable that contains the path to your
-Ae SDK. Typically the directory structure will look like this:
-
-```ignore
-AfterEffectsSDK
-├── After_Effects_SDK_Guide.pdf
-├── Examples
-    ├── AEGP
-    ├── Effect
-    ├── ...
-```
+⚠️ Note: Adobe’s public SDK may be outdated for 3D Artisan API. This mainly affects custom 3D renderer plugins. 2D plugins are unaffected.
 
 ## Wrapped Suites
 
-### After Effects
+Extensive portions of Ae and Pr SDKs are wrapped:
+<details>
+<summary>After Effects suites</summary>
 
 | AEGP                    | PF                                | DRAWBOT     | Other                 |
 | ----------------------- | --------------------------------- | ----------- | --------------------- |
@@ -201,8 +171,10 @@ AfterEffectsSDK
 | ✅ World                |                                   |             |                       |
 
 *The register suite currently excludes the artisan and AEIO registration API
+</details>
 
-### Premiere
+<details>
+<summary>Premiere suites</summary>
 
 | Premiere                  | MediaCore                        | Control Surface                 | Other                    |
 | ------------------------- | -------------------------------- | ------------------------------- | ------------------------ |
@@ -231,7 +203,14 @@ AfterEffectsSDK
 | 🔳 Threaded Work          |                                  |                                 |                          |
 | ✅ Time                   |                                  |                                 |                          |
 | ✅ Window                 |                                  |                                 |                          |
+</details>
+
+## Contributing / Help Wanted
+
+* Wrap missing suites (see tables above).
+* Add more examples & docs.
+* Improve error handling (e.g. [`color-eyre`](https://crates.io/crates/color-eyre)).
 
 ## License
 
-Apache-2.0 OR BSD-3-Clause OR MIT OR Zlib at your option.
+Licensed under **Apache-2.0** or **BSD-3-Clause** or **MIT** or **Zlib**  at your option.
