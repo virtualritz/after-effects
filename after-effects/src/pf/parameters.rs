@@ -1071,7 +1071,9 @@ impl<'p> ParamDef<'p> {
                 if c_string.is_null() {
                     return Err(Error::InvalidParms)
                 }
-                std::ffi::CStr::from_ptr(c_string).to_bytes_with_nul().to_vec()
+                unsafe {
+                    std::ffi::CStr::from_ptr(c_string).to_bytes_with_nul().to_vec()
+                }
             }
             #[cfg(target_os = "windows")]
             {
