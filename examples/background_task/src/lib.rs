@@ -23,8 +23,6 @@ static PLUGIN_ID: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
 ae::define_effect!(Plugin, (), Params);
 
 impl AdobePluginGlobal for Plugin {
-    fn can_load(_host_name: &str, _host_version: &str) -> bool { true }
-
     fn params_setup(
         &self,
         params: &mut ae::Parameters<Params>,

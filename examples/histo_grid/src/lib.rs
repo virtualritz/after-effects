@@ -139,10 +139,6 @@ impl Default for Instance {
 }
 
 impl AdobePluginGlobal for Plugin {
-    fn can_load(_host_name: &str, _host_version: &str) -> bool {
-        true
-    }
-
     fn params_setup(&self, params: &mut ae::Parameters<Params>, in_data: InData, _: OutData) -> Result<(), Error> {
         // EXAMPLE. the NULL is being used to reserve an area in the custom UI for drawing the preview
         // An example of using an ARB for this for storing persistant data is in the ColorGrid example

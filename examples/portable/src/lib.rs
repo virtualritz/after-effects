@@ -81,10 +81,6 @@ fn detect_host(in_data: ae::InData) -> String {
 }
 
 impl AdobePluginGlobal for Plugin {
-    fn can_load(_host_name: &str, _host_version: &str) -> bool {
-        true
-    }
-
     fn params_setup(&self, params: &mut ae::Parameters<Params>, _in_data: InData, _out_data: OutData) -> Result<(), Error> {
         params.add(Params::MixChannels, "Mix channels", ae::FloatSliderDef::setup(|f| {
             f.set_valid_min(0.0);

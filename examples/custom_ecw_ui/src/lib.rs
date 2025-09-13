@@ -32,10 +32,6 @@ impl Default for Plugin {
 }
 
 impl AdobePluginGlobal for Plugin {
-    fn can_load(_host_name: &str, _host_version: &str) -> bool {
-        true
-    }
-
     fn params_setup(&self, params: &mut ae::Parameters<Params>, in_data: InData, _: OutData) -> Result<(), Error> {
         let param_cb = |param: &mut ae::ParamDef| {
             param.set_flags(ae::ParamFlag::SUPERVISE);

@@ -15,8 +15,6 @@ struct Plugin { }
 ae::define_effect!(Plugin, (), Params);
 
 impl AdobePluginGlobal for Plugin {
-    fn can_load(_host_name: &str, _host_version: &str) -> bool { true }
-
     fn params_setup(&self, params: &mut ae::Parameters<Params>, in_data: ae::InData, _: ae::OutData) -> Result<(), Error> {
         params.add(Params::Frame, "Frame offset", ae::SliderDef::setup(|f| {
             f.set_slider_min(CHECK_FRAME_MIN);

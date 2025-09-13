@@ -86,10 +86,6 @@ struct Instance {
 ae::define_effect!(Plugin, Instance, Params);
 
 impl AdobePluginGlobal for Plugin {
-    fn can_load(_host_name: &str, _host_version: &str) -> bool {
-        true
-    }
-
     fn params_setup(&self, params: &mut ae::Parameters<Params>, _in_data: InData, _: OutData) -> Result<(), Error> {
         params.add_with_flags(Params::Mode, "Mode", ae::PopupDef::setup(|f| {
             f.set_options(&["Basic", "Advanced"]);

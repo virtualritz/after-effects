@@ -31,10 +31,6 @@ struct Plugin { }
 ae::define_effect!(Plugin, (), Params);
 
 impl AdobePluginGlobal for Plugin {
-    fn can_load(_host_name: &str, _host_version: &str) -> bool {
-        true
-    }
-
     fn params_setup(&self, params: &mut ae::Parameters<Params>, in_data: InData, _: OutData) -> Result<(), Error> {
         params.add(Params::XRadius, "Horizontal Radius", ae::FloatSliderDef::setup(|f| {
             f.set_valid_min(CCU_RADIUS_MIN);

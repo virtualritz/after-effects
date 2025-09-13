@@ -18,10 +18,6 @@ ae::define_effect!(Plugin, (), Params);
 #[repr(C)] struct PixelVUYA32f { pr: f32, pb: f32, luma: f32, alpha: f32 }
 
 impl AdobePluginGlobal for Plugin {
-    fn can_load(_host_name: &str, _host_version: &str) -> bool {
-        true
-    }
-
     fn params_setup(&self, params: &mut ae::Parameters<Params>, _in_data: InData, _: OutData) -> Result<(), Error> {
         params.add(Params::Noise, "Noise variation", ae::FloatSliderDef::setup(|f| {
             f.set_slider_min(0.0);

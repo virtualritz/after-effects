@@ -41,8 +41,6 @@ impl Default for GammaTable {
 }
 
 impl AdobePluginGlobal for Plugin {
-    fn can_load(_host_name: &str, _host_version: &str) -> bool { true }
-
     fn params_setup(&self, params: &mut ae::Parameters<Params>, _: InData, _: OutData) -> Result<(), Error> {
         params.add(Params::Gamma, "Gamma", ae::FloatSliderDef::setup(|f| {
             f.set_slider_min(GAMMA_MIN);

@@ -12,8 +12,6 @@
 /// Your global type must implement the `AdobePluginGlobal` trait, which defines the plugin's command selectors.
 /// ```ignore
 /// trait AdobePluginGlobal : Default {
-///     fn can_load(host_name: &str, host_version: &str) -> bool;
-///
 ///     fn params_setup(&self,
 ///         params: &mut Parameters<ParamsType>,
 ///         in_data: InData,
@@ -144,8 +142,6 @@ macro_rules! define_effect {
         }
 
         trait AdobePluginGlobal : Default {
-            fn can_load(host_name: &str, host_version: &str) -> bool;
-
             fn params_setup(&self, params: &mut Parameters<$params_type>, in_data: InData, out_data: OutData) -> Result<(), Error>;
 
             fn handle_command(&mut self, command: Command, in_data: InData, out_data: OutData, params: &mut Parameters<$params_type>) -> Result<(), Error>;
@@ -171,7 +167,7 @@ macro_rules! define_effect {
             fn do_dialog(&mut self, _: &mut PluginState) -> Result<(), ae::Error> { Ok(()) }
         }
 
-        unsafe fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: RawCommand, in_data: &InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
+        fn get_sequence_handle<'a, S: AdobePluginInstance>(cmd: RawCommand, in_data: &InData) -> Result<Option<(pf::Handle::<'a, S>, bool)>, Error> {
             // Sequence data is not available during these commands:
             const EXCLUDES: &[RawCommand] = &[RawCommand::GlobalSetup, RawCommand::GlobalSetdown, RawCommand::GpuDeviceSetup, RawCommand::GpuDeviceSetdown, RawCommand::ArbitraryCallback];
             if EXCLUDES.contains(&cmd) {
@@ -185,10 +181,10 @@ macro_rules! define_effect {
                 Some((pf::Handle::new(S::default())?, true))
             } else if cmd == RawCommand::SequenceResetup {
                 // Restore from flat handle
-                if (*in_data.as_ptr()).sequence_data.is_null() {
+                if unsafe { (*in_data.as_ptr()).sequence_data.is_null() } {
                     Some((pf::Handle::new(S::default())?, true))
                 } else {
-                    let instance = FlatHandle::from_raw((*in_data.as_ptr()).sequence_data as $crate::sys::PF_Handle)?;
+                    let instance = FlatHandle::from_raw(unsafe { (*in_data.as_ptr()).sequence_data as $crate::sys::PF_Handle })?;
                     let bytes = instance.as_slice().ok_or(Error::InvalidIndex)?;
                     if bytes.len() < 2 {
                         return Ok(None);
@@ -198,9 +194,9 @@ macro_rules! define_effect {
                     let handle = pf::Handle::new(S::unflatten(version, &bytes[2..]).map_err(|_| Error::Struct)?)?;
                     Some((handle, true))
                 }
-            } else if (*in_data.as_ptr()).sequence_data.is_null() {
+            } else if unsafe { (*in_data.as_ptr()).sequence_data.is_null() } {
                 // Read-only sequence data available through a suite only
-                let seq_ptr = in_data.effect().const_sequence_data().unwrap_or((*in_data.as_ptr()).sequence_data as *const _);
+                let seq_ptr = in_data.effect().const_sequence_data().unwrap_or(unsafe { (*in_data.as_ptr()).sequence_data as *const _ });
                 if !seq_ptr.is_null() {
                     let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _, false)?;
                     Some((instance_handle, false))
@@ -210,12 +206,12 @@ macro_rules! define_effect {
                 }
             } else {
                 let should_dispose_sequence = cmd == RawCommand::SequenceSetdown || cmd == RawCommand::SequenceFlatten;
-                let instance_handle = pf::Handle::<S>::from_raw((*in_data.as_ptr()).sequence_data, should_dispose_sequence)?;
+                let instance_handle = pf::Handle::<S>::from_raw(unsafe { (*in_data.as_ptr()).sequence_data }, should_dispose_sequence)?;
                 Some((instance_handle, false))
             })
         }
 
-        unsafe fn handle_effect_main<T: AdobePluginGlobal, S: AdobePluginInstance, P>(
+        fn handle_effect_main<T: AdobePluginGlobal, S: AdobePluginInstance, P>(
             cmd: $crate::sys::PF_Cmd,
             in_data_ptr: *mut $crate::sys::PF_InData,
             out_data_ptr: *mut $crate::sys::PF_OutData,
@@ -246,11 +242,11 @@ macro_rules! define_effect {
                     plugin_instance: <$global_type>::default()
                 })?
             } else {
-                if (*in_data_ptr).global_data.is_null() {
+                if unsafe { (*in_data_ptr).global_data.is_null() } {
                     $crate::log::error!("Global data pointer is null in cmd: {:?}!", cmd);
                     return Err(Error::BadCallbackParameter);
                 }
-                pf::Handle::<GlobalData>::from_raw((*in_data_ptr).global_data, cmd == RawCommand::GlobalSetdown)?
+                pf::Handle::<GlobalData>::from_raw(unsafe { (*in_data_ptr).global_data }, cmd == RawCommand::GlobalSetdown)?
             };
 
             // Allocate or restore sequence data pointer
@@ -264,8 +260,10 @@ macro_rules! define_effect {
                 params.set_in_data(in_data_ptr);
                 global_inst.plugin_instance.params_setup(&mut params, InData::from_raw(in_data_ptr), OutData::from_raw(out_data_ptr))?;
                 global_inst.params_num = params.num_params();
-                (*out_data_ptr).num_params = params.num_params() as i32;
-                global_inst.params_map.set((*params.map).clone()).unwrap();
+                unsafe {
+                    (*out_data_ptr).num_params = params.num_params() as i32;
+                    global_inst.params_map.set((*params.map).clone()).unwrap();
+                }
             }
 
             let params_slice = if params.is_null() || global_inst.params_num == 0 {
@@ -308,7 +306,7 @@ macro_rules! define_effect {
                         sequence_err = Some(inst.do_dialog(&mut plugin_state));
                     }
                     RawCommand::Render => {
-                        let in_layer = $crate::Layer::from_raw(&mut (*(*params)).u.ld, in_data, None);
+                        let in_layer = $crate::Layer::from_raw(unsafe { &mut (*(*params)).u.ld }, in_data, None);
                         let mut out_layer = $crate::Layer::from_raw(output, in_data, None);
                         sequence_err = Some(inst.render(&mut plugin_state, &in_layer, &mut out_layer));
                     }
@@ -320,46 +318,50 @@ macro_rules! define_effect {
                     _ => { }
                 }
 
-                match cmd {
-                    RawCommand::SequenceSetup | RawCommand::SequenceResetup => {
-                        drop(lock);
-                        (*out_data_ptr).sequence_data = pf::Handle::into_raw(sequence_handle);
-                    }
-                    RawCommand::SequenceFlatten | RawCommand::GetFlattenedSequenceData => {
-                        let serialized = inst.flatten().map_err(|_| Error::InternalStructDamaged)?;
-                        drop(lock);
-                        drop(sequence_handle);
-                        let mut final_bytes = serialized.0.to_le_bytes().to_vec(); // version
-                        final_bytes.extend(&serialized.1);
-                        (*out_data_ptr).sequence_data = pf::FlatHandle::into_raw(FlatHandle::new(final_bytes)?) as *mut _;
-                    }
-                    RawCommand::SequenceSetdown => {
-                        (*out_data_ptr).sequence_data = std::ptr::null_mut();
-                        // sequence will be dropped and deallocated here
-                    }
-                    _ => {
-                        drop(lock);
+                unsafe {
+                    match cmd {
+                        RawCommand::SequenceSetup | RawCommand::SequenceResetup => {
+                            drop(lock);
+                            (*out_data_ptr).sequence_data = pf::Handle::into_raw(sequence_handle);
+                        }
+                        RawCommand::SequenceFlatten | RawCommand::GetFlattenedSequenceData => {
+                            let serialized = inst.flatten().map_err(|_| Error::InternalStructDamaged)?;
+                            drop(lock);
+                            drop(sequence_handle);
+                            let mut final_bytes = serialized.0.to_le_bytes().to_vec(); // version
+                            final_bytes.extend(&serialized.1);
+                            (*out_data_ptr).sequence_data = pf::FlatHandle::into_raw(FlatHandle::new(final_bytes)?) as *mut _;
+                        }
+                        RawCommand::SequenceSetdown => {
+                            (*out_data_ptr).sequence_data = std::ptr::null_mut();
+                            // sequence will be dropped and deallocated here
+                        }
+                        _ => {
+                            drop(lock);
+                        }
                     }
                 }
             } else if std::any::type_name::<S>() == "()" && cmd == RawCommand::GetFlattenedSequenceData {
                 // Even if we don't need the sequence data, AE expects us to set this pointer explicitly
                 // Otherwise clicking on "Options..." in the Effect Controls panel will crash AE
-                (*out_data_ptr).sequence_data = std::ptr::null_mut();
+                unsafe { (*out_data_ptr).sequence_data = std::ptr::null_mut(); }
             }
             drop(plugin_state);
             drop(params_state);
 
-            match cmd {
-                RawCommand::GlobalSetup => {
-                    drop(global_lock);
-                    (*out_data_ptr).global_data = pf::Handle::into_raw(global_handle);
-                }
-                RawCommand::GlobalSetdown => {
-                    (*out_data_ptr).global_data = std::ptr::null_mut();
-                    // global will be dropped and de-allocated here
-                }
-                _ => {
-                    drop(global_lock);
+            unsafe {
+                match cmd {
+                    RawCommand::GlobalSetup => {
+                        drop(global_lock);
+                        (*out_data_ptr).global_data = pf::Handle::into_raw(global_handle);
+                    }
+                    RawCommand::GlobalSetdown => {
+                        (*out_data_ptr).global_data = std::ptr::null_mut();
+                        // global will be dropped and de-allocated here
+                    }
+                    _ => {
+                        drop(global_lock);
+                    }
                 }
             }
 
@@ -391,26 +393,21 @@ macro_rules! define_effect {
                 return $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err;
             }
 
-            let in_host_name = std::ffi::CStr::from_ptr(in_host_name);
-            let in_host_version = std::ffi::CStr::from_ptr(in_host_version);
-
-            if !<$global_type>::can_load(in_host_name.to_str().unwrap(), in_host_version.to_str().unwrap()) {
-                // Plugin said we don't want to load in this host, so exit here
-                return $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err;
-            }
             if let Some(cb_ptr) = in_plugin_data_callback_ptr {
                 use $crate::cstr_literal::cstr;
-                cb_ptr(in_ptr,
-                    cstr!(env!("PIPL_NAME"))       .as_ptr() as *const u8, // Name
-                    cstr!(env!("PIPL_MATCH_NAME")) .as_ptr() as *const u8, // Match Name
-                    cstr!(env!("PIPL_CATEGORY"))   .as_ptr() as *const u8, // Category
-                    cstr!(env!("PIPL_ENTRYPOINT")) .as_ptr() as *const u8, // Entry point
-                    env!("PIPL_KIND")              .parse().unwrap(),
-                    env!("PIPL_AE_SPEC_VER_MAJOR") .parse().unwrap(),
-                    env!("PIPL_AE_SPEC_VER_MINOR") .parse().unwrap(),
-                    env!("PIPL_AE_RESERVED")       .parse().unwrap(),
-                    cstr!(env!("PIPL_SUPPORT_URL")).as_ptr() as *const u8, // Support url
-                )
+                unsafe {
+                    cb_ptr(in_ptr,
+                        cstr!(env!("PIPL_NAME"))       .as_ptr() as *const u8, // Name
+                        cstr!(env!("PIPL_MATCH_NAME")) .as_ptr() as *const u8, // Match Name
+                        cstr!(env!("PIPL_CATEGORY"))   .as_ptr() as *const u8, // Category
+                        cstr!(env!("PIPL_ENTRYPOINT")) .as_ptr() as *const u8, // Entry point
+                        env!("PIPL_KIND")              .parse().unwrap(),
+                        env!("PIPL_AE_SPEC_VER_MAJOR") .parse().unwrap(),
+                        env!("PIPL_AE_SPEC_VER_MINOR") .parse().unwrap(),
+                        env!("PIPL_AE_RESERVED")       .parse().unwrap(),
+                        cstr!(env!("PIPL_SUPPORT_URL")).as_ptr() as *const u8, // Support url
+                    )
+                }
             } else {
                 $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err
             }
@@ -427,9 +424,11 @@ macro_rules! define_effect {
             extra: *mut std::ffi::c_void) -> $crate::sys::PF_Err
         {
             if cmd == $crate::sys::PF_Cmd_GLOBAL_SETUP as $crate::sys::PF_Cmd {
-                (*out_data_ptr).my_version = env!("PIPL_VERSION")  .parse::<u32>().unwrap();
-                (*out_data_ptr).out_flags  = env!("PIPL_OUTFLAGS") .parse::<i32>().unwrap();
-                (*out_data_ptr).out_flags2 = env!("PIPL_OUTFLAGS2").parse::<i32>().unwrap();
+                unsafe {
+                    (*out_data_ptr).my_version = env!("PIPL_VERSION")  .parse::<u32>().unwrap();
+                    (*out_data_ptr).out_flags  = env!("PIPL_OUTFLAGS") .parse::<i32>().unwrap();
+                    (*out_data_ptr).out_flags2 = env!("PIPL_OUTFLAGS2").parse::<i32>().unwrap();
+                }
 
                 #[cfg(debug_assertions)]
                 {
