@@ -52,6 +52,7 @@ just build
 
 #### Advanced plugins
 * [Gyroflow plugin](https://github.com/gyroflow/gyroflow-plugins) is an example of pure Rust plugin with efficient zero-copy GPU rendering.
+* [ntsc-rs](https://github.com/valadaptive/ntsc-rs) is a video effect which emulates NTSC and VHS video artifacts.
 * For more advanced use cases, refer to the C/C++ examples from the SDK.
 
 #### Debugging tips:
