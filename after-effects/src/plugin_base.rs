@@ -344,7 +344,7 @@ macro_rules! define_effect {
             } else if std::any::type_name::<S>() == "()" && cmd == RawCommand::GetFlattenedSequenceData {
                 // Even if we don't need the sequence data, AE expects us to return a handle here
                 // Otherwise clicking on "Options..." in the Effect Controls panel will crash AE
-                (*out_data_ptr).sequence_data = pf::FlatHandle::into_raw(FlatHandle::new(vec![])?) as *mut _;
+                (*out_data_ptr).sequence_data = pf::FlatHandle::into_raw(FlatHandle::new(vec![0])?) as *mut _;
             }
             drop(plugin_state);
             drop(params_state);
@@ -551,7 +551,9 @@ macro_rules! define_general_plugin {
         // Static Assertion
         const _: () = {
             fn assert_implements_aegp_plugin<T: AegpPlugin>() {}
-            fn call_with_main_type() { assert_implements_aegp_plugin::<$main_type>(); }
+            fn call_with_main_type() {
+                assert_implements_aegp_plugin::<$main_type>();
+            }
         };
 
         unsafe impl $crate::AegpSeal for $main_type {}
