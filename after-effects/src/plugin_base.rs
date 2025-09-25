@@ -551,9 +551,7 @@ macro_rules! define_general_plugin {
         // Static Assertion
         const _: () = {
             fn assert_implements_aegp_plugin<T: AegpPlugin>() {}
-            fn call_with_main_type() {
-                assert_implements_aegp_plugin::<$main_type>();
-            }
+            fn call_with_main_type() { assert_implements_aegp_plugin::<$main_type>(); }
         };
 
         unsafe impl $crate::AegpSeal for $main_type {}
