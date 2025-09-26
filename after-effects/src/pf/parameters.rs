@@ -2,6 +2,8 @@ use super::*;
 use std::ffi::{ CStr, CString };
 use ae_sys::PF_PathID;
 use serde::{de::DeserializeOwned, Serialize};
+#[cfg(target_os = "macos")]
+use objc2_core_foundation::{CFRange, CFString};
 
 const MAX_NAME_LEN: usize = 32;
 
@@ -1065,14 +1067,27 @@ impl<'p> ParamDef<'p> {
         let mut bytes = {
             #[cfg(target_os = "macos")]
             unsafe {
-                use objc2_core_foundation::CFString;
                 let cfstr = CFString::from_str(name);
-                let c_string = cfstr.c_string_ptr(CFString::system_encoding());
-                if c_string.is_null() {
-                    Vec::new()
-                } else {
-                    std::ffi::CStr::from_ptr(c_string).to_bytes_with_nul().to_vec()
-                }
+                let encoding = CFString::system_encoding(); 
+                let length = cfstr.length();
+                let max_size = CFString::maximum_size_for_encoding(length, encoding);
+                
+                let mut buffer = vec![0u8; max_size as usize];
+                let mut used_len = 0;
+                
+                 CFString::bytes(
+                    &cfstr,
+                    CFRange::new(0, length),
+                    encoding,
+                    b'?',  // replacement for unconvertible characters
+                    false,
+                    buffer.as_mut_ptr(),
+                    max_size,
+                    &mut used_len,
+                );
+                
+                buffer.truncate(used_len as usize);
+                buffer
             }
             #[cfg(target_os = "windows")]
             unsafe {
