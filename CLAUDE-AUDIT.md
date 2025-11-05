@@ -17,7 +17,7 @@ All critical bugs and undefined behavior issues have been fixed:
 8. ✅ Non-idiomatic Into/From implementations - [`23f1f86`](https://github.com/virtualritz/after-effects/commit/23f1f86)
 9. ✅ Incorrect Error::source() implementation - [`94f1200`](https://github.com/virtualritz/after-effects/commit/94f1200)
 10. ✅ Outdated FIXME about TryReserve - [`ca8aa58`](https://github.com/virtualritz/after-effects/commit/ca8aa58)
-11. ✅ **Safety comments for unsafe blocks** - [`8f08177`](https://github.com/virtualritz/after-effects/commit/8f08177) + [`29322bd`](https://github.com/virtualritz/after-effects/commit/29322bd) - **110+ comments added**
+11. ✅ **Safety comments for unsafe blocks** - [`8f08177`](https://github.com/virtualritz/after-effects/commit/8f08177) + [`29322bd`](https://github.com/virtualritz/after-effects/commit/29322bd) + [`acf1b3f`](https://github.com/virtualritz/after-effects/commit/acf1b3f) + [`bb95fa9`](https://github.com/virtualritz/after-effects/commit/bb95fa9) - **207 comments added**
 12. ✅ **Documentation warnings enabled** - [`bc5bcb8`](https://github.com/virtualritz/after-effects/commit/bc5bcb8) - Added `#![warn(missing_docs)]`
 13. ✅ **Unit test suite created** - [`a0dbec6`](https://github.com/virtualritz/after-effects/commit/a0dbec6) - **30 tests, 270+ lines**
 
@@ -27,7 +27,7 @@ All critical bugs and undefined behavior issues have been fixed:
 
 ### ✅ PARTIALLY COMPLETED: Add Safety Comments to Unsafe Blocks
 **Priority:** High
-**Status:** 🟡 110+ comments added, ~400 more needed
+**Status:** 🟡 207 comments added, ~250 more needed
 
 **Completed Work:**
 
@@ -41,16 +41,27 @@ All critical bugs and undefined behavior issues have been fixed:
 - ✅ `lib.rs`: 6 comments (core type operations)
 - ✅ `parameters.rs`: 33 comments (arbitrary data, platform-specific encoding)
 
+**Batch 3** - [`acf1b3f`](https://github.com/virtualritz/after-effects/commit/acf1b3f) - 69 comments:
+- ✅ `aegp/suites/register.rs`: 31 comments (plugin global refs, refcon tuples, output pointers)
+- ✅ `pf/suites/channel.rs`: 24 comments (FFI zero-init, row/column pointer offsets)
+- ✅ `aegp/suites/stream.rs`: 14 comments (UTF-16 strings, union field access)
+
+**Batch 4** - [`bb95fa9`](https://github.com/virtualritz/after-effects/commit/bb95fa9) - 28 comments:
+- ✅ `aegp/suites/utility.rs`: 11 comments (color type transmutes, MemHandle slices)
+- ✅ `aegp/suites/render.rs`: 4 comments (FFI callbacks, Box::from_raw)
+- ✅ `aegp/suites/color_settings.rs`: 7 comments (UTF-16 strings, zero-init)
+- ✅ `pf/suites/color_callbacks.rs`: 6 comments (pixel type initialization)
+
 **Each comment documents:**
 - ✅ What invariants are being upheld
 - ✅ Why the operation is safe
 - ✅ What would cause undefined behavior
 
 **Remaining Work:**
-- 🔲 Add safety comments to remaining ~350 unsafe blocks in other files
-- Files needing coverage:
-  - `pf/suites/*.rs` (25 files with unsafe code)
-  - `aegp/suites/*.rs` (30 files with unsafe code)
+- 🔲 Add safety comments to remaining ~250 unsafe blocks in other suite files
+- Files still needing coverage:
+  - `pf/suites/*.rs` (21 files remaining)
+  - `aegp/suites/*.rs` (24 files remaining)
   - Other modules
 
 ---
@@ -416,7 +427,7 @@ Document Linux support limitations:
 
 ### Key Achievements
 ✅ **100% of critical bugs fixed** (10 bugs)
-✅ **110+ safety comments added** (53 in batch 1 + 57 in batch 2)
+✅ **207 safety comments added** (53 + 57 + 69 + 28 across 4 batches)
 ✅ **100% of testable core types tested** (30 tests)
 ✅ **0 undefined behavior remaining** in audited code
 ✅ **0 race conditions remaining** in audited code
@@ -424,15 +435,18 @@ Document Linux support limitations:
 ### Files Modified
 - Core library: 3 files (lib.rs, macros.rs, cross_thread_type.rs)
 - Critical modules: 4 files (handles.rs, layer.rs, parameters.rs, plugin_base.rs)
+- AEGP suites: 5 files (register.rs, stream.rs, utility.rs, render.rs, color_settings.rs)
+- PF suites: 2 files (channel.rs, color_callbacks.rs)
 - Tests: 1 file (tests.rs - new)
 - Documentation: 2 files (AUDIT_REPORT.md, CLAUDE-AUDIT.md)
+- **Total code files modified: 15**
 
 ### Lines Changed
 - Code fixes: ~100 lines
-- Safety comments: ~750 lines (batch 1: ~420, batch 2: ~330)
+- Safety comments: ~1,128 lines (batch 1: ~420, batch 2: ~330, batch 3: 255, batch 4: 123)
 - Tests: ~270 lines
 - Documentation: ~1,200 lines
-- **Total:** ~2,320 lines added/modified
+- **Total:** ~2,698 lines added/modified
 
 ---
 
