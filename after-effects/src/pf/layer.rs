@@ -140,7 +140,7 @@ impl Layer {
     }
     pub fn fill16(&mut self, color: Option<Pixel16>, mut rect: Option<Rect>) -> Result<(), Error> {
         self.clamp_rect(&mut rect);
-        if self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
+        if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
                 return fill_suite.fill16(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
             }
