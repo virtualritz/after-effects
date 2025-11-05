@@ -94,6 +94,12 @@ impl PicaBasicSuite {
     #[inline]
     pub fn from_pr_in_data_raw(in_data_ptr: *const ae_sys::PR_InData) -> Self {
         Self {
+            // SAFETY: The caller must guarantee that `in_data_ptr` is a valid, properly aligned,
+            // non-null pointer to an initialized `PR_InData` struct that lives for the duration
+            // of this access. The `PR_InData` struct is provided by After Effects during plugin
+            // callbacks and remains valid for the callback's lifetime. Dereferencing violates
+            // Rust's aliasing rules if the pointer is invalid, null, misaligned, or points to
+            // uninitialized memory, resulting in undefined behavior.
             previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_ptr }.pica_basicP),
         }
     }
@@ -102,6 +108,12 @@ impl PicaBasicSuite {
     pub fn from_pr_in_data(in_data_handle: pr::InDataHandle) -> Self {
         Self {
             previous_pica_basic_suite_ptr: PicaBasicSuite::set(
+                // SAFETY: The `InDataHandle` is a wrapper around a pointer provided by After Effects.
+                // We rely on `InDataHandle::as_ptr()` returning a valid, non-null, properly aligned
+                // pointer to an initialized `PR_InData` struct. The handle ensures the data remains
+                // valid for its lifetime. Dereferencing would be undefined behavior if the pointer
+                // returned by `as_ptr()` is invalid, null, misaligned, dangling, or the underlying
+                // data was already freed by After Effects.
                 unsafe { *in_data_handle.as_ptr() }.pica_basicP,
             ),
         }
@@ -110,6 +122,12 @@ impl PicaBasicSuite {
     #[inline]
     pub fn from_pf_in_data_raw(in_data_ptr: *const ae_sys::PF_InData) -> Self {
         Self {
+            // SAFETY: The caller must guarantee that `in_data_ptr` is a valid, properly aligned,
+            // non-null pointer to an initialized `PF_InData` struct that lives for the duration
+            // of this access. The `PF_InData` struct is provided by After Effects during plugin
+            // callbacks and remains valid for the callback's lifetime. Dereferencing violates
+            // Rust's aliasing rules if the pointer is invalid, null, misaligned, or points to
+            // uninitialized memory, resulting in undefined behavior.
             previous_pica_basic_suite_ptr: PicaBasicSuite::set(unsafe { *in_data_ptr }.pica_basicP),
         }
     }
@@ -263,6 +281,13 @@ impl From<ae_sys::A_Matrix4> for Matrix4 {
 impl Matrix4 {
     #[inline]
     pub fn as_slice(&self) -> &[f64] {
+        // SAFETY: `Matrix4` is a `#[repr(C)]` struct containing `[[f64; 4]; 4]`, which is
+        // guaranteed to be laid out as a contiguous array of 16 f64 values in memory.
+        // `self.0.as_ptr()` returns a valid pointer to the start of this array, and we're
+        // creating a slice of exactly 16 elements which matches the actual size. The returned
+        // slice's lifetime is tied to `&self`, ensuring the data remains valid. This would be
+        // undefined behavior if the length (16) exceeded the actual allocated size, if the
+        // pointer was misaligned for f64, or if the data was uninitialized.
         unsafe { std::slice::from_raw_parts(self.0.as_ptr() as _, 16) }
     }
 }
@@ -614,6 +639,13 @@ impl<T> std::ops::Deref for PointerOwnership<T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         match self {
+            // SAFETY: When `PointerOwnership` is constructed with `AfterEffects(*mut T)`, the
+            // caller must guarantee that the pointer is valid, properly aligned, non-null, and
+            // points to a valid initialized `T` that remains valid for the lifetime of this
+            // `PointerOwnership` instance. The returned reference's lifetime is tied to `&self`,
+            // preventing use-after-free. This would be undefined behavior if the pointer is null,
+            // dangling, misaligned, points to uninitialized memory, or if After Effects has
+            // already freed the memory.
             Self::AfterEffects(ptr) => unsafe { &**ptr },
             Self::Rust(ptr) => ptr,
         }
@@ -622,6 +654,14 @@ impl<T> std::ops::Deref for PointerOwnership<T> {
 impl<T> std::ops::DerefMut for PointerOwnership<T> {
     fn deref_mut(&mut self) -> &mut T {
         match self {
+            // SAFETY: When `PointerOwnership` is constructed with `AfterEffects(*mut T)`, the
+            // caller must guarantee that the pointer is valid, properly aligned, non-null, and
+            // points to a valid initialized `T` that remains valid and uniquely owned for the
+            // lifetime of this `PointerOwnership` instance. The mutable reference's lifetime is
+            // tied to `&mut self`, ensuring exclusive access and preventing aliasing violations.
+            // This would be undefined behavior if the pointer is null, dangling, misaligned,
+            // points to uninitialized memory, or if there are other active references to the
+            // same memory (violating Rust's aliasing rules).
             Self::AfterEffects(ptr) => unsafe { &mut **ptr },
             Self::Rust(ptr) => ptr,
         }

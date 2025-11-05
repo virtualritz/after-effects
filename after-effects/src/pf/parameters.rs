@@ -151,6 +151,10 @@ impl AngleDef<'_> {
         if self._in_data.is_null() || self._parent_ptr.is_none() {
             return Err(Error::InvalidParms);
         }
+        // SAFETY: _in_data is checked for null above, ensuring it points to a valid PF_InData.
+        // The pointer is provided by After Effects and remains valid for the lifetime of this function call.
+        // Dereferencing a null pointer would cause UB, but we guard against that with the null check.
+        // Accessing an invalid or dangling pointer would also cause UB.
         Ok(pf::suites::AngleParam::new()?
             .floating_point_value_from_angle_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())?)
     }
@@ -194,6 +198,10 @@ impl<'a> CheckBoxDef<'_> {
         self
     }
     pub fn label(&self) -> &str {
+        // SAFETY: self.def.u.nameptr is set by set_label() to point to a valid CString's pointer.
+        // CStr::from_ptr requires the pointer to be non-null and point to a valid null-terminated C string.
+        // The pointer remains valid because the CString is stored in self.label, keeping it alive.
+        // UB would occur if: nameptr is null, points to invalid memory, or the string is not null-terminated.
         unsafe { CStr::from_ptr(self.def.u.nameptr).to_str().unwrap() }
     }
 }
@@ -212,6 +220,10 @@ impl ColorDef<'_> {
         if self._in_data.is_null() || self._parent_ptr.is_none() {
             return Err(Error::InvalidParms);
         }
+        // SAFETY: _in_data is checked for null above, ensuring it points to a valid PF_InData.
+        // The pointer is provided by After Effects and remains valid for the lifetime of this function call.
+        // Dereferencing a null pointer would cause UB, but we guard against that with the null check.
+        // Accessing an invalid or dangling pointer would also cause UB.
         Ok(pf::suites::ColorParam::new()?
             .floating_point_value_from_color_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())?)
     }
@@ -353,6 +365,10 @@ impl PointDef<'_> {
         if self._in_data.is_null() || self._parent_ptr.is_none() {
             return Err(Error::InvalidParms);
         }
+        // SAFETY: _in_data is checked for null above, ensuring it points to a valid PF_InData.
+        // The pointer is provided by After Effects and remains valid for the lifetime of this function call.
+        // Dereferencing a null pointer would cause UB, but we guard against that with the null check.
+        // Accessing an invalid or dangling pointer would also cause UB.
         Ok(pf::suites::PointParam::new()?
             .floating_point_value_from_point_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())?)
     }
@@ -418,6 +434,10 @@ impl<'a> PopupDef<'a> {
         self.def.num_choices = options.len().try_into().unwrap();
     }
     pub fn options(&self) -> Vec<&str> {
+        // SAFETY: self.def.u.namesptr is set by set_options() to point to a valid CString's pointer.
+        // CStr::from_ptr requires the pointer to be non-null and point to a valid null-terminated C string.
+        // The pointer remains valid because the CString is stored in self.options, keeping it alive.
+        // UB would occur if: namesptr is null, points to invalid memory, or the string is not null-terminated.
         let options = unsafe { CStr::from_ptr(self.def.u.namesptr).to_str().unwrap() };
         options.split('|').collect()
     }
@@ -516,6 +536,10 @@ impl ArbParamsExtra {
     }
 
     pub fn refcon(&self) -> *mut std::ffi::c_void {
+        // SAFETY: Accessing a union field requires unsafe. The u.new_func_params variant is valid
+        // when which_function is PF_Arbitrary_NEW_FUNC as determined by the caller of this method.
+        // The union layout is defined by After Effects API and guaranteed to be properly initialized.
+        // UB would occur if we access the wrong union variant for the current which_function value.
         unsafe { self.as_ref().u.new_func_params.refconPV }
     }
 
@@ -533,6 +557,12 @@ impl ArbParamsExtra {
             return Ok(());
         }
         match self.as_ref().which_function as _ {
+            // SAFETY: For PF_Arbitrary_NEW_FUNC, the union's new_func_params field is the active variant.
+            // We assert that arbPH is non-null to ensure write() won't cause UB.
+            // We're writing a valid Handle pointer returned by Handle::into_raw().
+            // The pointer remains valid because it's now owned by After Effects.
+            // UB would occur if: arbPH is null (caught by assert), accessing wrong union variant,
+            // or writing to invalid memory.
             ae_sys::PF_Arbitrary_NEW_FUNC => unsafe {
                 assert!(!self.as_ref().u.new_func_params.arbPH.is_null());
                 // log::info!("NEW FUNC");
@@ -553,11 +583,25 @@ impl ArbParamsExtra {
                 // Create a new handle from the raw Ae handle. This
                 // disposes then handle when it goes out of scope
                 // and is dropped just after.
+                // SAFETY: For PF_Arbitrary_DISPOSE_FUNC, the union's dispose_func_params field is the active variant.
+                // We check that arbH is non-null before dereferencing to prevent UB.
+                // The arbH pointer is provided by After Effects and points to a valid handle that was
+                // previously created by NEW_FUNC or COPY_FUNC.
+                // UB would occur if: accessing wrong union variant, or arbH points to invalid memory.
                 if unsafe { !self.as_ref().u.dispose_func_params.arbH.is_null() } {
+                    // SAFETY: Same invariants as above. We pass true to from_raw to take ownership
+                    // and properly dispose of the handle when it goes out of scope.
                     Handle::<T>::from_raw(unsafe { self.as_ref().u.dispose_func_params.arbH }, true)?;
                 }
             }
 
+            // SAFETY: For PF_Arbitrary_COPY_FUNC, the union's copy_func_params field is the active variant.
+            // We're accessing src_arbH and dst_arbPH which are provided by After Effects.
+            // src_arbH points to an existing valid handle (or is null, which we check).
+            // dst_arbPH points to valid memory where we should write the new handle pointer.
+            // We pass false to from_raw for src_arbH to avoid taking ownership (we're just copying).
+            // UB would occur if: accessing wrong union variant, src_arbH points to invalid memory,
+            // dst_arbPH is null or points to invalid memory.
             ae_sys::PF_Arbitrary_COPY_FUNC => unsafe {
                 // log::info!("COPY_FUNC");
                 // Create a new handle wraper from the sources,
@@ -589,6 +633,12 @@ impl ArbParamsExtra {
                     .write(Handle::into_raw(new_handle));
             },
 
+            // SAFETY: For PF_Arbitrary_FLAT_SIZE_FUNC, the union's flat_size_func_params field is the active variant.
+            // arbH points to a valid handle provided by After Effects that we need to query for size.
+            // flat_data_sizePLu points to valid memory where we write the serialized size.
+            // We pass false to from_raw to avoid taking ownership (we're just reading).
+            // UB would occur if: accessing wrong union variant, arbH points to invalid memory,
+            // or flat_data_sizePLu is null/invalid.
             ae_sys::PF_Arbitrary_FLAT_SIZE_FUNC => unsafe {
                 // log::info!("FLAT_SIZE_FUNC");
 
@@ -604,6 +654,14 @@ impl ArbParamsExtra {
                     .write(serialized.len() as _);
             },
 
+            // SAFETY: For PF_Arbitrary_FLATTEN_FUNC, the union's flatten_func_params field is the active variant.
+            // arbH points to a valid handle that we need to serialize.
+            // flat_dataPV points to a buffer of size buf_sizeLu provided by After Effects.
+            // We assert flat_dataPV is non-null and that our serialized data fits in the buffer.
+            // copy_nonoverlapping requires src and dst to be valid, non-overlapping, and properly aligned.
+            // We pass false to from_raw to avoid taking ownership (we're just reading).
+            // UB would occur if: accessing wrong union variant, arbH/flat_dataPV point to invalid memory,
+            // serialized.len() > buf_sizeLu, or src/dst overlap.
             ae_sys::PF_Arbitrary_FLATTEN_FUNC => unsafe {
                 // log::info!("FLATTEN_FUNC");
                 assert!(!self.as_ref().u.unflatten_func_params.flat_dataPV.is_null());
@@ -624,6 +682,13 @@ impl ArbParamsExtra {
                 );
             }
 
+            // SAFETY: For PF_Arbitrary_UNFLATTEN_FUNC, the union's unflatten_func_params field is the active variant.
+            // flat_dataPV points to a buffer of serialized data with size buf_sizeLu provided by After Effects.
+            // We assert flat_dataPV is non-null before creating a slice from it.
+            // from_raw_parts requires the pointer to be valid for reads of len bytes and properly aligned.
+            // arbPH points to valid memory where we write the new handle pointer.
+            // UB would occur if: accessing wrong union variant, flat_dataPV is null/invalid,
+            // buf_sizeLu exceeds the actual buffer size, or arbPH is null/invalid.
             ae_sys::PF_Arbitrary_UNFLATTEN_FUNC => unsafe {
                 // log::info!("UNFLATTEN_FUNC");
                 assert!(!self.as_ref().u.unflatten_func_params.flat_dataPV.is_null());
@@ -642,6 +707,12 @@ impl ArbParamsExtra {
                     .write(Handle::into_raw(handle));
             },
 
+            // SAFETY: For PF_Arbitrary_INTERP_FUNC, the union's interp_func_params field is the active variant.
+            // left_arbH and right_arbH point to valid handles provided by After Effects.
+            // interpPH points to valid memory where we write the interpolated result handle.
+            // We pass false to from_raw to avoid taking ownership (we're just reading for interpolation).
+            // UB would occur if: accessing wrong union variant, left_arbH/right_arbH point to invalid memory,
+            // or interpPH is null/invalid.
             ae_sys::PF_Arbitrary_INTERP_FUNC => unsafe {
                 // log::info!("INTERP_FUNC");
 
@@ -665,15 +736,23 @@ impl ArbParamsExtra {
             ae_sys::PF_Arbitrary_COMPARE_FUNC => {
                 // log::info!("COMPARE_FUNC");
 
+                // SAFETY: For PF_Arbitrary_COMPARE_FUNC, the union's compare_func_params field is the active variant.
+                // a_arbH points to a valid handle provided by After Effects.
+                // We pass false to from_raw to avoid taking ownership (we're just reading for comparison).
+                // UB would occur if: accessing wrong union variant, or a_arbH points to invalid memory.
                 let mut handle_a = Handle::<T>::from_raw(unsafe { self.as_ref().u.compare_func_params.a_arbH }, false)?;
                 let handle_a_lock = handle_a.lock()?;
                 let a = handle_a_lock.as_ref()?;
 
+                // SAFETY: Same as above for b_arbH.
                 let mut handle_b = Handle::<T>::from_raw(unsafe { self.as_ref().u.compare_func_params.b_arbH }, false)?;
                 let handle_b_lock = handle_b.lock()?;
                 let b = handle_b_lock.as_ref()?;
 
                 if a < b {
+                    // SAFETY: compareP points to valid memory where we should write the comparison result.
+                    // The union variant is correct as checked at the start of this arm.
+                    // UB would occur if compareP is null or points to invalid memory.
                     unsafe {
                         self.as_ref()
                             .u
@@ -682,6 +761,7 @@ impl ArbParamsExtra {
                             .write(ae_sys::PF_ArbCompare_LESS as _);
                     }
                 } else if a > b {
+                    // SAFETY: Same as above.
                     unsafe {
                         self.as_ref()
                             .u
@@ -690,6 +770,7 @@ impl ArbParamsExtra {
                             .write(ae_sys::PF_ArbCompare_MORE as _);
                     }
                 } else if a == b {
+                    // SAFETY: Same as above.
                     unsafe {
                         self.as_ref()
                             .u
@@ -698,6 +779,7 @@ impl ArbParamsExtra {
                             .write(ae_sys::PF_ArbCompare_EQUAL as _);
                     }
                 } else {
+                    // SAFETY: Same as above.
                     unsafe {
                         self.as_ref()
                             .u
@@ -708,6 +790,12 @@ impl ArbParamsExtra {
                 }
             }
 
+            // SAFETY: For PF_Arbitrary_PRINT_SIZE_FUNC, the union's print_size_func_params field is the active variant.
+            // arbH points to a valid handle provided by After Effects.
+            // print_sizePLu points to valid memory where we write the size needed for the printed representation.
+            // We pass false to from_raw to avoid taking ownership (we're just reading).
+            // UB would occur if: accessing wrong union variant, arbH points to invalid memory,
+            // or print_sizePLu is null/invalid.
             ae_sys::PF_Arbitrary_PRINT_SIZE_FUNC => unsafe {
                 // log::info!("PRINT_SIZE_FUNC");
 
@@ -724,6 +812,14 @@ impl ArbParamsExtra {
 
             // Print arbitrary data into a string as JSON.
             // Note that we could use any text-based serializer here.
+            // SAFETY: For PF_Arbitrary_PRINT_FUNC, the union's print_func_params field is the active variant.
+            // arbH points to a valid handle provided by After Effects.
+            // print_bufferPC points to a buffer of size print_sizeLu provided by After Effects.
+            // We check that our serialized data fits in the buffer before copying.
+            // copy_nonoverlapping requires src and dst to be valid, non-overlapping, and properly aligned.
+            // We pass false to from_raw to avoid taking ownership (we're just reading).
+            // UB would occur if: accessing wrong union variant, arbH/print_bufferPC point to invalid memory,
+            // cstr.len() > print_sizeLu, or src/dst overlap.
             ae_sys::PF_Arbitrary_PRINT_FUNC => unsafe {
                 // log::info!("PRINT_FUNC");
 
@@ -742,6 +838,12 @@ impl ArbParamsExtra {
                     );
                 }
             }
+            // SAFETY: For PF_Arbitrary_SCAN_FUNC, the union's scan_func_params field is the active variant.
+            // bufPC points to a null-terminated C string provided by After Effects containing the JSON representation.
+            // CStr::from_ptr requires the pointer to be non-null and point to a valid null-terminated string.
+            // arbPH points to valid memory where we write the new handle pointer.
+            // UB would occur if: accessing wrong union variant, bufPC is null or not null-terminated,
+            // bufPC points to invalid memory, or arbPH is null/invalid.
             ae_sys::PF_Arbitrary_SCAN_FUNC => unsafe {
                 // log::info!("SCAN_FUNC");
 
@@ -835,6 +937,12 @@ pub struct ParamDef<'p> {
 
 impl<'p> ParamDef<'p> {
     pub fn new(in_data: InData) -> Self {
+        // SAFETY: PF_ParamDef is a C struct from the After Effects SDK.
+        // All-zero bytes is a valid representation for this struct - it's the standard way
+        // to initialize C structs to default values. All fields are either numeric types,
+        // pointers (null is valid), or arrays where zeroed state is acceptable.
+        // UB would occur if PF_ParamDef had fields that require specific non-zero initialization,
+        // but the After Effects API expects zero-initialized structs for parameter definitions.
         Self {
             param_def: Ownership::Rust(unsafe { std::mem::zeroed() }),
             checkin_on_drop: false,
@@ -979,6 +1087,13 @@ impl<'p> ParamDef<'p> {
     pub fn as_param<'a>(&'a self) -> Result<Param<'a>, Error> where 'p: 'a {
         let param_def = &*self.param_def;
         let parent_ptr = param_def as *const _;
+        // SAFETY: We're accessing union fields based on param_type which indicates the active variant.
+        // Each match arm accesses the correct union field for that param_type.
+        // from_ref creates safe wrappers from raw pointers that are valid because they point to
+        // fields within param_def which is borrowed for lifetime 'a.
+        // The parent_ptr points to the param_def itself and remains valid for the wrapper's lifetime.
+        // UB would occur if: param_type doesn't match the active union variant, or if the
+        // in_data/parent_ptr pointers are invalid (but these are validated by the type system).
         unsafe {
             match param_def.param_type {
                 ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_ref(&param_def.u.ad,        self.in_data.as_ptr(), parent_ptr))),
@@ -1005,6 +1120,13 @@ impl<'p> ParamDef<'p> {
     pub fn as_param_mut<'a>(&'a mut self) -> Result<Param<'a>, Error> where 'p: 'a {
         let param_def = &mut *self.param_def;
         let parent_ptr = param_def as *const _;
+        // SAFETY: We're accessing union fields based on param_type which indicates the active variant.
+        // Each match arm accesses the correct union field for that param_type.
+        // from_mut creates safe wrappers from raw pointers that are valid because they point to
+        // fields within param_def which is mutably borrowed for lifetime 'a.
+        // The parent_ptr points to the param_def itself and remains valid for the wrapper's lifetime.
+        // UB would occur if: param_type doesn't match the active union variant, or if the
+        // in_data/parent_ptr pointers are invalid (but these are validated by the type system).
         unsafe {
             match param_def.param_type {
                 ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_mut(&mut param_def.u.ad,        self.in_data.as_ptr(), parent_ptr))),
@@ -1053,7 +1175,14 @@ impl<'p> ParamDef<'p> {
         self.param_def.param_type.into()
     }
 
+    // SAFETY: This function is marked unsafe because the caller must ensure param_type is PF_Param_LAYER.
+    // Accessing the ld union field when the param_type is not LAYER would cause UB.
+    // The returned pointer is valid for the lifetime of self and points to the layer definition
+    // within the param_def union.
     pub unsafe fn layer_def(&mut self) -> *mut ae_sys::PF_LayerDef {
+        // SAFETY: Caller guarantees param_type is PF_Param_LAYER, making u.ld the active union variant.
+        // The pointer remains valid because it points to a field within self.param_def.
+        // UB would occur if param_type doesn't match PF_Param_LAYER.
         unsafe { &mut self.param_def.u.ld }
     }
 
@@ -1066,15 +1195,23 @@ impl<'p> ParamDef<'p> {
         // Reference: https://ae-plugins.docsforadobe.dev/intro/localization/
         let mut bytes = {
             #[cfg(target_os = "macos")]
+            // SAFETY: We're using Core Foundation APIs to convert a UTF-8 string to system encoding.
+            // CFString::from_str creates a valid CFString from the Rust string.
+            // CFString::bytes writes into the buffer we provide, respecting max_size.
+            // buffer.as_mut_ptr() is valid for max_size bytes as allocated by Vec.
+            // used_len receives the actual number of bytes written, which we use to truncate.
+            // UB would occur if: buffer is too small (prevented by using maximum_size_for_encoding),
+            // buffer.as_mut_ptr() is invalid (prevented by Vec allocation), or the Core Foundation
+            // functions receive invalid parameters (prevented by using their safe wrappers).
             unsafe {
                 let cfstr = CFString::from_str(name);
-                let encoding = CFString::system_encoding(); 
+                let encoding = CFString::system_encoding();
                 let length = cfstr.length();
                 let max_size = CFString::maximum_size_for_encoding(length, encoding);
-                
+
                 let mut buffer = vec![0u8; max_size as usize];
                 let mut used_len = 0;
-                
+
                  CFString::bytes(
                     &cfstr,
                     CFRange::new(0, length),
@@ -1085,11 +1222,20 @@ impl<'p> ParamDef<'p> {
                     max_size,
                     &mut used_len,
                 );
-                
+
                 buffer.truncate(used_len as usize);
                 buffer
             }
             #[cfg(target_os = "windows")]
+            // SAFETY: We're using Windows APIs to convert UTF-16 to the OEM code page.
+            // OsStr::encode_wide produces valid UTF-16 encoding.
+            // WideCharToMultiByte is called first with null dest to get required buffer size (safe).
+            // Then we allocate a Vec with sufficient capacity and call it again.
+            // bytes.as_mut_ptr() is valid for len bytes as we set capacity.
+            // set_len is safe because WideCharToMultiByte initialized exactly len bytes.
+            // UB would occur if: wstr doesn't contain valid UTF-16 (prevented by encode_wide),
+            // buffer is too small (prevented by querying required size first), or if
+            // WideCharToMultiByte writes more than len bytes (prevented by Windows API contract).
             unsafe {
                 use std::ffi::OsStr;
                 use std::os::windows::ffi::OsStrExt;
@@ -1122,6 +1268,12 @@ impl<'p> ParamDef<'p> {
             if let Some(last_elem) = bytes.get_mut(MAX_NAME_LEN - 1) {
                 *last_elem = 0;
             }
+            // SAFETY: We're transmuting &[u8] to &[i8] for FFI compatibility with the C API.
+            // Both u8 and i8 have the same size and alignment (1 byte).
+            // The bit patterns are identical; only the interpretation differs (signed vs unsigned).
+            // The slice length is guaranteed to fit in param_def.name by the min() call above.
+            // UB would occur if: the types had different sizes/alignments (they don't), or if
+            // bytes.len() > param_def.name.len() (prevented by min(MAX_NAME_LEN)).
             self.param_def.name[0..bytes.len()].copy_from_slice(unsafe { std::mem::transmute(bytes.as_slice()) });
             return Ok(());
         }
@@ -1139,6 +1291,12 @@ impl<'p> ParamDef<'p> {
     pub fn set_ui_flag    (&mut self, f: ParamUIFlags, set: bool) { let mut v = self.ui_flags();     v.set(f, set); self.set_ui_flags(v);     }
 
     pub fn flags       (&self) -> ParamFlag    {    ParamFlag::from_bits_truncate(self.param_def.flags) }
+    // SAFETY: Accessing union field uu.change_flags. The uu union has two fields: change_flags and id.
+    // In the After Effects SDK, which field is "active" depends on the context:
+    // - During parameter setup (PF_Cmd_PARAM_SETUP), uu.id is used
+    // - During parameter value changes, uu.change_flags is used
+    // This function is used in contexts where change_flags is the expected field.
+    // UB would occur if we read the wrong variant, but the API design ensures proper usage.
     pub fn change_flags(&self) -> ChangeFlag   {   ChangeFlag::from_bits_truncate(unsafe { self.param_def.uu.change_flags }) }
     pub fn ui_flags    (&self) -> ParamUIFlags { ParamUIFlags::from_bits_truncate(self.param_def.ui_flags) }
 
@@ -1233,6 +1391,12 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
                 params
                     .iter()
                     .enumerate()
+                    // SAFETY: We dereference raw pointers *mut PF_ParamDef provided by After Effects.
+                    // The debug_assert checks that p is not null before dereferencing.
+                    // These pointers are provided by After Effects and point to valid PF_ParamDef structs
+                    // that remain valid for the lifetime 'p. We create mutable references with &mut **p.
+                    // UB would occur if: p is null (checked by assert), p points to invalid memory, or
+                    // the pointed-to memory is not valid for lifetime 'p (guaranteed by caller contract).
                     .map(|(i, p)| { debug_assert!(!p.is_null()); ParamDef::from_raw(in_data_obj, unsafe { &mut **p }, Some(i as i32)) })
                     .collect::<Vec<_>>()
             },

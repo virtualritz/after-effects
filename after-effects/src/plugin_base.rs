@@ -181,9 +181,23 @@ macro_rules! define_effect {
                 Some((pf::Handle::new(S::default())?, true))
             } else if cmd == RawCommand::SequenceResetup {
                 // Restore from flat handle
+                // SAFETY: in_data.as_ptr() returns a valid non-null pointer to PF_InData that is
+                // guaranteed to be valid for the lifetime of this command. The pointer is provided
+                // by After Effects and we're only reading the sequence_data field, not mutating it.
+                // This upholds the invariant that the InData pointer remains valid throughout the
+                // command execution. Undefined behavior would occur if: (1) in_data.as_ptr() returned
+                // null, (2) the pointer became invalid during execution, or (3) we accessed fields
+                // beyond the struct bounds.
                 if unsafe { (*in_data.as_ptr()).sequence_data.is_null() } {
                     Some((pf::Handle::new(S::default())?, true))
                 } else {
+                    // SAFETY: We just verified that sequence_data is not null in the previous check.
+                    // The sequence_data pointer is owned by After Effects and is valid for the duration
+                    // of the SequenceResetup command. We're converting it to a PF_Handle type for
+                    // processing. This is safe because: (1) the pointer is non-null (checked above),
+                    // (2) it points to valid flat handle data, and (3) we're only reading from it.
+                    // Undefined behavior would occur if the pointer became invalid between the null
+                    // check and the cast.
                     let instance = FlatHandle::from_raw(unsafe { (*in_data.as_ptr()).sequence_data as $crate::sys::PF_Handle })?;
                     let bytes = instance.as_slice().ok_or(Error::InvalidIndex)?;
                     if bytes.len() < 2 {
@@ -194,8 +208,20 @@ macro_rules! define_effect {
                     let handle = pf::Handle::new(S::unflatten(version, &bytes[2..]).map_err(|_| Error::Struct)?)?;
                     Some((handle, true))
                 }
+            // SAFETY: in_data.as_ptr() returns a valid non-null pointer to PF_InData provided by
+            // After Effects for this command's lifetime. We're only dereferencing to read the
+            // sequence_data field to check if it's null. This is safe because: (1) the pointer
+            // is guaranteed valid by the AE SDK contract, (2) we're only reading a pointer field,
+            // not modifying memory. Undefined behavior would occur if in_data.as_ptr() returned
+            // an invalid pointer or if PF_InData's memory layout changed unexpectedly.
             } else if unsafe { (*in_data.as_ptr()).sequence_data.is_null() } {
                 // Read-only sequence data available through a suite only
+                // SAFETY: This accesses sequence_data in the same manner as the if condition above.
+                // The pointer is valid and we're performing a read-only cast from a mutable pointer
+                // to a const pointer. This is safe because: (1) in_data.as_ptr() is valid (guaranteed
+                // by AE SDK), (2) sequence_data points to valid memory or is null (handled by the
+                // suite fallback), (3) we're only performing a type cast, not dereferencing yet.
+                // Undefined behavior would occur if the pointer was dangling or unaligned.
                 let seq_ptr = in_data.effect().const_sequence_data().unwrap_or(unsafe { (*in_data.as_ptr()).sequence_data as *const _ });
                 if !seq_ptr.is_null() {
                     let instance_handle = pf::Handle::<S>::from_raw(seq_ptr as *mut _, false)?;
@@ -206,6 +232,13 @@ macro_rules! define_effect {
                 }
             } else {
                 let should_dispose_sequence = cmd == RawCommand::SequenceSetdown || cmd == RawCommand::SequenceFlatten;
+                // SAFETY: We've reached this else branch which means: (1) sequence_data is not null
+                // (checked in previous conditions), (2) in_data.as_ptr() is a valid pointer to
+                // PF_InData guaranteed by AE SDK, (3) sequence_data points to valid allocated memory
+                // owned by After Effects. We're reading this pointer to pass it to Handle::from_raw
+                // which will properly manage its lifetime. Undefined behavior would occur if: (1)
+                // sequence_data was deallocated before this access, (2) the pointer was invalid or
+                // misaligned, or (3) the memory didn't actually contain a valid handle structure.
                 let instance_handle = pf::Handle::<S>::from_raw(unsafe { (*in_data.as_ptr()).sequence_data }, should_dispose_sequence)?;
                 Some((instance_handle, false))
             })
@@ -242,10 +275,24 @@ macro_rules! define_effect {
                     plugin_instance: <$global_type>::default()
                 })?
             } else {
+                // SAFETY: in_data_ptr is a valid non-null pointer to PF_InData provided by After
+                // Effects as a parameter to this entry point. We're dereferencing it to read the
+                // global_data field and check if it's null. This is safe because: (1) the pointer
+                // is guaranteed valid by the AE SDK contract for the lifetime of this function,
+                // (2) we're only reading a single pointer field without mutation, (3) the memory
+                // layout of PF_InData is fixed by the AE SDK. Undefined behavior would occur if
+                // in_data_ptr was null, dangling, or pointed to incorrectly aligned memory.
                 if unsafe { (*in_data_ptr).global_data.is_null() } {
                     $crate::log::error!("Global data pointer is null in cmd: {:?}!", cmd);
                     return Err(Error::BadCallbackParameter);
                 }
+                // SAFETY: We just verified global_data is non-null in the check above. The
+                // global_data pointer was set by us in a previous GlobalSetup call and has been
+                // preserved by After Effects. We're reading this pointer to restore our global
+                // state. This is safe because: (1) the pointer is non-null (checked above),
+                // (2) it points to a valid GlobalData structure we allocated, (3) After Effects
+                // guarantees this pointer remains valid until GlobalSetdown. Undefined behavior
+                // would occur if the pointer was corrupted or deallocated by external code.
                 pf::Handle::<GlobalData>::from_raw(unsafe { (*in_data_ptr).global_data }, cmd == RawCommand::GlobalSetdown)?
             };
 
@@ -260,6 +307,13 @@ macro_rules! define_effect {
                 params.set_in_data(in_data_ptr);
                 global_inst.plugin_instance.params_setup(&mut params, InData::from_raw(in_data_ptr), OutData::from_raw(out_data_ptr))?;
                 global_inst.params_num = params.num_params();
+                // SAFETY: out_data_ptr is a valid non-null pointer to PF_OutData provided by After
+                // Effects as a parameter to this entry point. We're writing to the num_params field
+                // to communicate the parameter count back to AE. This is safe because: (1) out_data_ptr
+                // is guaranteed valid by the AE SDK for this function's lifetime, (2) we're writing
+                // to a properly aligned i32 field that AE expects us to modify, (3) params.map is a
+                // valid Rc that we're cloning (not moving). Undefined behavior would occur if
+                // out_data_ptr was null/invalid, or if we wrote to the wrong field/offset.
                 unsafe {
                     (*out_data_ptr).num_params = params.num_params() as i32;
                     global_inst.params_map.set((*params.map).clone()).unwrap();
@@ -269,6 +323,14 @@ macro_rules! define_effect {
             let params_slice = if params.is_null() || global_inst.params_num == 0 {
                 &[]
             } else {
+                // SAFETY: We've verified that params is not null and params_num > 0. The params
+                // pointer is provided by After Effects and points to an array of PF_ParamDef pointers.
+                // This upholds the invariants required by from_raw_parts: (1) params is non-null
+                // (checked above), (2) it's properly aligned (guaranteed by AE SDK), (3) it points
+                // to params_num valid, initialized elements, (4) the total size doesn't exceed isize::MAX,
+                // (5) the memory remains valid for the lifetime of this function. Undefined behavior
+                // would occur if: params was dangling, misaligned, or params_num exceeded the actual
+                // array length.
                 unsafe { std::slice::from_raw_parts(params, global_inst.params_num) }
             };
 
@@ -306,6 +368,15 @@ macro_rules! define_effect {
                         sequence_err = Some(inst.do_dialog(&mut plugin_state));
                     }
                     RawCommand::Render => {
+                        // SAFETY: During a Render command, params points to a valid array of PF_ParamDef
+                        // pointers (guaranteed by AE SDK). The first element (*params) is the input layer
+                        // parameter, and we're accessing its union field 'u.ld' which contains the layer
+                        // definition. This is safe because: (1) params is non-null during Render,
+                        // (2) dereferencing *params gives us the first parameter which is always the input
+                        // layer, (3) accessing u.ld is valid because the union is initialized as a layer
+                        // def for the input parameter, (4) we create a mutable reference with a lifetime
+                        // tied to this scope. Undefined behavior would occur if params was null or if the
+                        // union field was accessed incorrectly.
                         let in_layer = $crate::Layer::from_raw(unsafe { &mut (*(*params)).u.ld }, in_data, None);
                         let mut out_layer = $crate::Layer::from_raw(output, in_data, None);
                         sequence_err = Some(inst.render(&mut plugin_state, &in_layer, &mut out_layer));
@@ -318,6 +389,19 @@ macro_rules! define_effect {
                     _ => { }
                 }
 
+                // SAFETY: This entire block manages the lifecycle of sequence data through the FFI
+                // boundary with After Effects. The operations are safe because:
+                // 1. out_data_ptr is guaranteed valid by AE SDK for this function's lifetime
+                // 2. We properly manage ownership transfer through Handle::into_raw/from_raw
+                // 3. Each command follows the AE SDK's contract for sequence data management:
+                //    - Setup/Resetup: Transfer ownership of live handle to AE
+                //    - Flatten/GetFlattenedSequenceData: Serialize and return flat data
+                //    - Setdown: Signal deallocation completion by nulling the pointer
+                //    - Other: Keep handle alive without transferring ownership
+                // 4. Memory layout of PF_OutData.sequence_data matches void* expectations
+                // Undefined behavior would occur if: (1) out_data_ptr was invalid, (2) we violated
+                // the ownership contract (double-free or use-after-free), (3) sequence_data pointer
+                // was not properly aligned, or (4) the serialized data format was incompatible.
                 unsafe {
                     match cmd {
                         RawCommand::SequenceSetup | RawCommand::SequenceResetup => {
@@ -344,11 +428,31 @@ macro_rules! define_effect {
             } else if std::any::type_name::<S>() == "()" && cmd == RawCommand::GetFlattenedSequenceData {
                 // Even if we don't need the sequence data, AE expects us to set this pointer explicitly
                 // Otherwise clicking on "Options..." in the Effect Controls panel will crash AE
+                // SAFETY: out_data_ptr is a valid pointer to PF_OutData guaranteed by AE SDK. We're
+                // writing null to sequence_data to explicitly signal to After Effects that there is
+                // no sequence data for this plugin (when using unit type). This is safe because:
+                // (1) out_data_ptr is valid for this function's lifetime, (2) sequence_data is a
+                // pointer field that expects null as a valid value, (3) this satisfies AE's contract
+                // for GetFlattenedSequenceData when no data exists. Undefined behavior would occur
+                // if out_data_ptr was invalid or if we wrote to the wrong offset.
                 unsafe { (*out_data_ptr).sequence_data = std::ptr::null_mut(); }
             }
             drop(plugin_state);
             drop(params_state);
 
+            // SAFETY: This block manages the lifecycle of global plugin data through the FFI boundary.
+            // The operations are safe because:
+            // 1. out_data_ptr is guaranteed valid by AE SDK for this function's lifetime
+            // 2. We properly manage ownership transfer of global_handle through Handle::into_raw
+            // 3. Each command follows the AE SDK's contract for global data management:
+            //    - GlobalSetup: Transfer ownership of newly created global handle to AE
+            //    - GlobalSetdown: Signal deallocation by nulling pointer; global_handle drops here
+            //    - Other commands: Keep global handle alive without transferring ownership
+            // 4. The global_data pointer is preserved by AE between calls and passed back to us
+            // 5. Memory layout of PF_OutData.global_data matches void* expectations
+            // Undefined behavior would occur if: (1) out_data_ptr was invalid, (2) we violated
+            // ownership semantics (double-free or use-after-free), (3) the pointer was misaligned,
+            // or (4) AE corrupted/deallocated the global_data pointer between calls.
             unsafe {
                 match cmd {
                     RawCommand::GlobalSetup => {
@@ -395,6 +499,18 @@ macro_rules! define_effect {
 
             if let Some(cb_ptr) = in_plugin_data_callback_ptr {
                 use $crate::cstr_literal::cstr;
+                // SAFETY: This function is marked unsafe and is an FFI boundary called by After Effects
+                // during plugin registration. We're calling the callback function provided by AE to
+                // register our plugin metadata. This is safe because:
+                // 1. cb_ptr is a valid function pointer (checked by the Option unwrap above)
+                // 2. in_ptr was provided by AE and is valid for this call's lifetime
+                // 3. All string pointers come from cstr! macro which creates valid null-terminated
+                //    C strings with static lifetime
+                // 4. All numeric values are parsed from environment variables at compile time
+                // 5. The callback signature matches PF_PluginDataCB2 exactly
+                // Undefined behavior would occur if: (1) cb_ptr was invalid despite being Some,
+                // (2) in_ptr was invalid, (3) any string pointer was not null-terminated, or
+                // (4) the callback had incorrect signature/calling convention.
                 unsafe {
                     cb_ptr(in_ptr,
                         cstr!(env!("PIPL_NAME"))       .as_ptr() as *const u8, // Name
@@ -424,6 +540,17 @@ macro_rules! define_effect {
             extra: *mut std::ffi::c_void) -> $crate::sys::PF_Err
         {
             if cmd == $crate::sys::PF_Cmd_GLOBAL_SETUP as $crate::sys::PF_Cmd {
+                // SAFETY: During GlobalSetup, we initialize the plugin's version and capability flags.
+                // out_data_ptr is a valid non-null pointer to PF_OutData provided by After Effects.
+                // This is safe because:
+                // 1. out_data_ptr is guaranteed valid by the AE SDK for this call's lifetime
+                // 2. We're writing to properly aligned i32/u32 fields that AE expects us to set
+                // 3. All values come from compile-time environment variables, so they're always valid
+                // 4. These fields define the plugin's capabilities and must be set during GlobalSetup
+                // 5. The PF_OutData struct layout is fixed by the AE SDK
+                // Undefined behavior would occur if: (1) out_data_ptr was null/invalid, (2) we wrote
+                // to wrong offsets, (3) the memory was not properly aligned, or (4) PF_OutData layout
+                // changed unexpectedly.
                 unsafe {
                     (*out_data_ptr).my_version = env!("PIPL_VERSION")  .parse::<u32>().unwrap();
                     (*out_data_ptr).out_flags  = env!("PIPL_OUTFLAGS") .parse::<i32>().unwrap();
@@ -555,6 +682,16 @@ macro_rules! define_general_plugin {
 
         unsafe impl $crate::AegpSeal for $main_type {}
 
+        // SAFETY: This entire function is an FFI entry point called by After Effects for AEGP plugin
+        // initialization. It's marked unsafe because it's an extern "C" function that interfaces with
+        // C code. The function is safe to call from AE because:
+        // 1. All parameters are provided by AE and follow the AEGP plugin contract
+        // 2. pica_basic points to a valid SPBasicSuite structure with static lifetime
+        // 3. global_refcon is a valid mutable pointer where we store our plugin instance
+        // 4. We properly manage memory by boxing the plugin instance and transferring ownership
+        //    through the raw pointer
+        // 5. On error, we explicitly null the refcon to signal initialization failure
+        // The #[unsafe(no_mangle)] attribute is required to prevent name mangling for C interop.
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn EntryPointFunc(
             pica_basic: *const $crate::sys::SPBasicSuite,
@@ -590,11 +727,24 @@ macro_rules! define_general_plugin {
             match result {
                 Ok(t) => {
                     let boxed_instance = Box::new(t);
+                    // SAFETY: global_refcon is a valid mutable pointer provided by AE where we must
+                    // store our plugin instance pointer. We're writing a pointer obtained from
+                    // Box::into_raw, transferring ownership to AE. This is safe because: (1) global_refcon
+                    // is guaranteed valid by the AEGP contract, (2) Box::into_raw produces a valid
+                    // non-null pointer to heap memory, (3) the cast to *mut _ preserves pointer validity,
+                    // (4) AE will preserve this pointer and pass it back to us in callbacks. Undefined
+                    // behavior would occur if global_refcon was null or invalid.
                     *global_refcon = Box::into_raw(boxed_instance) as *mut _;
                     $crate::log::debug!("AEGP setup successful for {}.", env!("PIPL_NAME"));
                     Error::None
                 }
                 Err(e) => {
+                    // SAFETY: global_refcon is a valid mutable pointer provided by AE. We're writing
+                    // null to signal that initialization failed and no instance was created. This is
+                    // safe because: (1) global_refcon is guaranteed valid by AEGP contract, (2) null
+                    // is a valid value for this pointer field, (3) this signals to AE that the plugin
+                    // failed to initialize. Undefined behavior would occur only if global_refcon itself
+                    // was an invalid pointer.
                     *global_refcon = std::ptr::null_mut();
                     $crate::log::error!("Error while setting up {}.", env!("PIPL_NAME"));
                     $crate::log::error!("{:?}", e.clone());
