@@ -1,7 +1,6 @@
 // FIXME: make ALL the functions below return Result-wrapped values
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![warn(missing_docs)]
-#![warn(missing_safety_doc)]
 #![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
 use after_effects_sys as ae_sys;
 use num_traits::identities::Zero;
@@ -32,6 +31,9 @@ pub mod drawbot;
 pub mod pf;
 pub use pf::*;
 pub mod pr;
+
+#[cfg(test)]
+mod tests;
 pub mod pr_string;
 use pr_string::*;
 

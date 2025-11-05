@@ -511,7 +511,10 @@ macro_rules! define_param_wrapper {
                 }
                 let cstr = CString::new(v).map_err(|_| Error::Parameter)?;
                 let slice = cstr.as_bytes_with_nul();
-                self.def.$name[0..slice.len()].copy_from_slice(slice);
+                // SAFETY: Transmuting [u8] to [i8] is safe because they have the same layout
+                // and After Effects expects i8 for C char arrays
+                let i8_slice: &[i8] = unsafe { std::mem::transmute(slice) };
+                self.def.$name[0..slice.len()].copy_from_slice(i8_slice);
                 Ok(self)
             }
         }
