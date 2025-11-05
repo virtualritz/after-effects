@@ -359,12 +359,14 @@ macro_rules! define_param_wrapper {
     };
     (impl ShortString, $name:ident) => {
         paste::item! {
-            pub fn [<set_ $name>](&mut self, v: &str) -> &mut Self {
-                assert!(v.len() < 32);
-                let cstr = CString::new(v).unwrap();
-                let slice = cstr.to_bytes_with_nul();
-                self.def.$name[0..slice.len()].copy_from_slice(unsafe { std::mem::transmute(slice) });
-                self
+            pub fn [<set_ $name>](&mut self, v: &str) -> Result<&mut Self, Error> {
+                if v.len() >= 32 {
+                    return Err(Error::Parameter);
+                }
+                let cstr = CString::new(v).map_err(|_| Error::Parameter)?;
+                let slice = cstr.as_bytes_with_nul();
+                self.def.$name[0..slice.len()].copy_from_slice(slice);
+                Ok(self)
             }
         }
         pub fn $name(&self) -> &str {
