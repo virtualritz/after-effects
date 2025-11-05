@@ -109,16 +109,19 @@ impl<'a, T: 'a> Handle<'a, T> {
         }
     }
 
-    pub fn set(&mut self, value: T) {
+    pub fn set(&mut self, value: T) -> Result<(), Error> {
         let ptr = self.suite.lock_handle(self.handle) as *mut T;
-        if !ptr.is_null() {
+        if ptr.is_null() {
+            Err(Error::InvalidIndex)
+        } else {
             unsafe {
                 // Run destructors, if any.
-                ptr.read()
-            };
+                ptr.read();
+                ptr.write(value);
+            }
+            self.suite.unlock_handle(self.handle);
+            Ok(())
         }
-        unsafe { ptr.write(value) };
-        self.suite.unlock_handle(self.handle);
     }
 
     pub fn lock(&mut self) -> Result<HandleLock<'_, T>, Error> {
