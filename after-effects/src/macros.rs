@@ -3,7 +3,13 @@ macro_rules! ae_acquire_suite_ptr {
         unsafe {
             let mut suite_ptr = std::mem::MaybeUninit::<*const after_effects_sys::$type>::uninit();
 
-            let aquire_suite_func = (*($pica)).AcquireSuite.unwrap_or_else(|| unreachable!());
+            let aquire_suite_func = match (*($pica)).AcquireSuite {
+                Some(func) => func,
+                None => {
+                    log::error!("AcquireSuite function pointer is null for suite: {}", stringify!($type));
+                    return Err($crate::Error::MissingSuite);
+                }
+            };
             match aquire_suite_func(
                 after_effects_sys::$name.as_ptr() as *const i8,
                 after_effects_sys::$version as i32,
@@ -23,11 +29,14 @@ macro_rules! ae_acquire_suite_ptr {
 macro_rules! ae_release_suite_ptr {
     ($pica:expr, $name:ident, $version:ident) => {{
         unsafe {
-            let release_suite_func = (*($pica)).ReleaseSuite.unwrap_or_else(|| unreachable!());
-            release_suite_func(
-                after_effects_sys::$name.as_ptr() as *const i8,
-                after_effects_sys::$version as i32,
-            );
+            if let Some(release_suite_func) = (*($pica)).ReleaseSuite {
+                release_suite_func(
+                    after_effects_sys::$name.as_ptr() as *const i8,
+                    after_effects_sys::$version as i32,
+                );
+            } else {
+                log::error!("ReleaseSuite function pointer is null for suite: {}", stringify!($name));
+            }
         }
     }};
 }
@@ -35,7 +44,13 @@ macro_rules! ae_release_suite_ptr {
 macro_rules! ae_get_suite_fn {
     ($suite_ptr:expr, $function:ident ) => {{
         // Return an invocable function
-        (*($suite_ptr)).$function.unwrap_or_else(|| unreachable!())
+        match (*($suite_ptr)).$function {
+            Some(func) => func,
+            None => {
+                log::error!("Suite function pointer is null: {}", stringify!($function));
+                panic!("Suite function {} is not available", stringify!($function));
+            }
+        }
     }};
 }
 
