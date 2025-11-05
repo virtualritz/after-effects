@@ -34,6 +34,11 @@ impl Debug for Layer {
 
 impl Layer {
     pub fn from_aegp_world(in_data: impl AsPtr<*const ae_sys::PF_InData>, world_handle: impl AsPtr<ae_sys::AEGP_WorldH>) -> Result<Self, crate::Error> {
+        // SAFETY: PF_LayerDef is a C struct from After Effects that is safe to zero-initialize.
+        // All its fields are either integers, pointers, or C structs that are valid when zeroed.
+        // The zeroed value is immediately overwritten by fill_out_pf_effect_world below.
+        // UB would occur if: the struct contained non-nullable references, Rust enums with
+        // invalid discriminants, or types that require specific initialization patterns.
         let mut layer: PF_LayerDef = unsafe { std::mem::zeroed() };
 
         aegp::suites::World::new()?
@@ -83,6 +88,18 @@ impl Layer {
         } else {
             0
         };
+        // SAFETY: This function creates a byte slice from the layer's pixel data buffer.
+        // Invariants upheld:
+        // 1. self.layer.data is non-null (verified by assertion) and points to a valid buffer
+        //    allocated by After Effects with lifetime at least as long as this Layer instance.
+        // 2. The offset calculation handles negative strides (bottom-up buffers) by computing
+        //    the topmost scanline address, ensuring we point to the actual buffer start.
+        // 3. The length calculation (height * abs(row_bytes)) produces the total buffer size,
+        //    which is guaranteed to be valid memory allocated by the After Effects host.
+        // 4. The resulting slice lifetime is tied to &self, preventing use-after-free.
+        // 5. No mutable aliases exist since this takes &self immutably.
+        // UB would occur if: self.layer.data is a dangling pointer, the buffer size calculation
+        // overflows, or the computed memory region extends beyond the allocated buffer bounds.
         unsafe {
             assert!(self.row_bytes().abs() > 0);
             assert!(!self.layer.data.is_null());
@@ -99,6 +116,19 @@ impl Layer {
         } else {
             0
         };
+        // SAFETY: This function creates a mutable byte slice from the layer's pixel data buffer.
+        // Invariants upheld:
+        // 1. self.layer.data is non-null (verified by assertion) and points to a valid buffer
+        //    allocated by After Effects with lifetime at least as long as this Layer instance.
+        // 2. The offset calculation handles negative strides (bottom-up buffers) by computing
+        //    the topmost scanline address, ensuring we point to the actual buffer start.
+        // 3. The length calculation (height * abs(row_bytes)) produces the total buffer size,
+        //    which is guaranteed to be valid memory allocated by the After Effects host.
+        // 4. The resulting slice lifetime is tied to &mut self, preventing aliasing.
+        // 5. Exclusive mutable access is guaranteed by Rust's borrow checker (&mut self).
+        // UB would occur if: self.layer.data is a dangling pointer, the buffer size calculation
+        // overflows, the computed memory region extends beyond allocated bounds, or another
+        // mutable reference to this buffer exists simultaneously.
         unsafe {
             assert!(self.row_bytes().abs() > 0);
             assert!(!self.layer.data.is_null());
@@ -131,7 +161,23 @@ impl Layer {
         if self.bit_depth() == 16 {
             return self.fill16(color.map(pixel8_to_16), rect);
         }
+        // SAFETY: Dereferencing self.in_data_ptr to access After Effects InData structure.
+        // Invariants upheld:
+        // 1. Pointer validity is checked (non-null) before dereferencing.
+        // 2. in_data_ptr is provided by After Effects host and remains valid for the plugin's lifetime.
+        // 3. PF_InData.appl_id is a plain integer field, safe to read.
+        // 4. The comparison checks if we're running in Premiere Pro (which has different fill behavior).
+        // UB would occur if: in_data_ptr points to freed/invalid memory, or if After Effects
+        // invalidates InData while the plugin is still executing (violates AE API contract).
         if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
+            // SAFETY: Dereferencing self.in_data_ptr to access effect_ref field.
+            // Invariants upheld:
+            // 1. We've already verified the pointer is non-null and valid in the condition above.
+            // 2. effect_ref is an opaque handle provided by After Effects that remains valid
+            //    for the duration of the effect call.
+            // 3. The handle is passed to After Effects suite functions which expect this type.
+            // UB would occur if: the InData structure becomes invalid between the check above
+            // and this access (not possible in single-threaded AE plugin execution model).
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
                 return fill_suite.fill(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
             }
@@ -140,7 +186,23 @@ impl Layer {
     }
     pub fn fill16(&mut self, color: Option<Pixel16>, mut rect: Option<Rect>) -> Result<(), Error> {
         self.clamp_rect(&mut rect);
+        // SAFETY: Dereferencing self.in_data_ptr to access After Effects InData structure.
+        // Invariants upheld:
+        // 1. Pointer validity is checked (non-null) before dereferencing.
+        // 2. in_data_ptr is provided by After Effects host and remains valid for the plugin's lifetime.
+        // 3. PF_InData.appl_id is a plain integer field, safe to read.
+        // 4. The comparison checks if we're running in Premiere Pro (which has different fill behavior).
+        // UB would occur if: in_data_ptr points to freed/invalid memory, or if After Effects
+        // invalidates InData while the plugin is still executing (violates AE API contract).
         if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
+            // SAFETY: Dereferencing self.in_data_ptr to access effect_ref field.
+            // Invariants upheld:
+            // 1. We've already verified the pointer is non-null and valid in the condition above.
+            // 2. effect_ref is an opaque handle provided by After Effects that remains valid
+            //    for the duration of the effect call.
+            // 3. The handle is passed to After Effects suite functions which expect this type.
+            // UB would occur if: the InData structure becomes invalid between the check above
+            // and this access (not possible in single-threaded AE plugin execution model).
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
                 return fill_suite.fill16(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
             }
@@ -194,10 +256,30 @@ impl Layer {
         }
     }
 
+    /// Returns a raw pointer to the pixel data buffer.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure:
+    /// 1. The pointer is not dereferenced if the buffer has been freed or invalidated.
+    /// 2. The pointer remains valid only for the lifetime of this Layer instance.
+    /// 3. Any memory access through this pointer stays within the buffer bounds.
+    /// 4. Proper alignment is maintained for the pixel format being accessed.
     pub unsafe fn data_ptr(&self) -> *const u8 {
         self.layer.data as *const u8
     }
 
+    /// Returns a mutable raw pointer to the pixel data buffer.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure:
+    /// 1. The pointer is not dereferenced if the buffer has been freed or invalidated.
+    /// 2. The pointer remains valid only for the lifetime of this Layer instance.
+    /// 3. Any memory access through this pointer stays within the buffer bounds.
+    /// 4. Proper alignment is maintained for the pixel format being accessed.
+    /// 5. No other references (mutable or immutable) to the buffer exist while this
+    ///    pointer is being used for writes, to prevent data races and aliasing violations.
     pub unsafe fn data_ptr_mut(&self) -> *mut u8 {
         self.layer.data as *mut u8
     }
@@ -216,6 +298,18 @@ impl Layer {
 
     pub fn as_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
         debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
+        // SAFETY: This function creates a mutable reference to a specific pixel in the buffer.
+        // Invariants upheld:
+        // 1. Bounds checking via debug_assert ensures x and y are within valid dimensions.
+        // 2. data_ptr_mut() returns the base buffer pointer from After Effects (assumed valid).
+        // 3. Offset arithmetic: y * row_bytes() computes the row start address, handling both
+        //    positive (top-down) and negative (bottom-up) strides correctly.
+        // 4. Additional offset by x positions to the target Pixel8 within the row.
+        // 5. The resulting pointer is aligned for Pixel8 (4-byte ARGB structure).
+        // 6. Lifetime of the returned reference is tied to &self, preventing use-after-free.
+        // UB would occur if: coordinates are out of bounds (only checked in debug builds),
+        // the buffer pointer is invalid, offset calculation overflows, resulting pointer is
+        // misaligned, or multiple mutable references to the same pixel exist concurrently.
         unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel8).offset(x as isize) }
     }
 
@@ -225,6 +319,18 @@ impl Layer {
 
     pub fn as_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
         debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
+        // SAFETY: This function creates a mutable reference to a specific 16-bit pixel in the buffer.
+        // Invariants upheld:
+        // 1. Bounds checking via debug_assert ensures x and y are within valid dimensions.
+        // 2. data_ptr_mut() returns the base buffer pointer from After Effects (assumed valid).
+        // 3. Offset arithmetic: y * row_bytes() computes the row start address, handling both
+        //    positive (top-down) and negative (bottom-up) strides correctly.
+        // 4. Additional offset by x positions to the target Pixel16 within the row.
+        // 5. The resulting pointer is aligned for Pixel16 (8-byte structure with 16-bit channels).
+        // 6. Lifetime of the returned reference is tied to &self, preventing use-after-free.
+        // UB would occur if: coordinates are out of bounds (only checked in debug builds),
+        // the buffer pointer is invalid, offset calculation overflows, resulting pointer is
+        // misaligned for Pixel16, or multiple mutable references to the same pixel exist concurrently.
         unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel16).offset(x as isize) }
     }
 
@@ -234,6 +340,19 @@ impl Layer {
 
     pub fn as_pixel32_mut(&self, x: usize, y: usize) -> &mut PixelF32 {
         debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
+        // SAFETY: This function creates a mutable reference to a specific 32-bit float pixel.
+        // Invariants upheld:
+        // 1. Bounds checking via debug_assert ensures x and y are within valid dimensions.
+        // 2. data_ptr_mut() returns the base buffer pointer from After Effects (assumed valid).
+        // 3. Offset arithmetic: y * row_bytes() computes the row start address, handling both
+        //    positive (top-down) and negative (bottom-up) strides correctly.
+        // 4. Additional add(x) positions to the target PixelF32 within the row (add is used
+        //    instead of offset as it multiplies by size_of::<PixelF32>()).
+        // 5. The resulting pointer is aligned for PixelF32 (16-byte structure with f32 channels).
+        // 6. Lifetime of the returned reference is tied to &self, preventing use-after-free.
+        // UB would occur if: coordinates are out of bounds (only checked in debug builds),
+        // the buffer pointer is invalid, offset calculation overflows, resulting pointer is
+        // misaligned for PixelF32, or multiple mutable references to the same pixel exist concurrently.
         unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut PixelF32).add(x) }
     }
 

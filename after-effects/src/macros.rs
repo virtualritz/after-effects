@@ -1,5 +1,18 @@
 macro_rules! ae_acquire_suite_ptr {
     ($pica:expr, $type:ident, $name:ident, $version:ident) => {{
+        // SAFETY: This unsafe block contains multiple FFI operations that are safe under these conditions:
+        // 1. $pica must be a valid pointer to SPBasicSuite provided by After Effects at plugin initialization
+        // 2. The pointer is dereferenced to access AcquireSuite function pointer - valid because After Effects
+        //    guarantees the SPBasicSuite pointer remains valid for the plugin's lifetime
+        // 3. MaybeUninit is used correctly: suite_ptr is only assumed_init() after AcquireSuite returns
+        //    kSPNoError, which guarantees it has been fully initialized by the FFI call
+        // 4. The AcquireSuite function is called through a validated function pointer (checked for Some)
+        // 5. Raw pointer casts are safe because After Effects expects these exact pointer types
+        //
+        // UNDEFINED BEHAVIOR would occur if:
+        // - $pica is null, dangling, or points to invalid memory
+        // - assume_init() is called when AcquireSuite returns an error (prevented by match check)
+        // - The suite name/version constants are malformed (prevented by type system)
         unsafe {
             let mut suite_ptr = std::mem::MaybeUninit::<*const after_effects_sys::$type>::uninit();
 
@@ -28,6 +41,17 @@ macro_rules! ae_acquire_suite_ptr {
 
 macro_rules! ae_release_suite_ptr {
     ($pica:expr, $name:ident, $version:ident) => {{
+        // SAFETY: Dereferencing $pica pointer to access ReleaseSuite function pointer.
+        // This is safe because:
+        // 1. $pica is the same SPBasicSuite pointer used in ae_acquire_suite_ptr
+        // 2. After Effects guarantees this pointer remains valid throughout plugin lifetime
+        // 3. ReleaseSuite is an optional function pointer that's validated before calling
+        // 4. The suite name/version passed to ReleaseSuite match those from AcquireSuite
+        //
+        // UNDEFINED BEHAVIOR would occur if:
+        // - $pica is null, dangling, or invalid (caller's responsibility to maintain validity)
+        // - ReleaseSuite is called with a suite that wasn't successfully acquired
+        // - This is called after the plugin has been unloaded
         unsafe {
             if let Some(release_suite_func) = (*($pica)).ReleaseSuite {
                 release_suite_func(
@@ -56,6 +80,17 @@ macro_rules! ae_get_suite_fn {
 
 macro_rules! call_suite_fn {
     ($self:expr, $function:ident, $($arg:tt)* ) => {{
+        // SAFETY: Calling an After Effects suite function through a validated function pointer.
+        // This is safe because:
+        // 1. $self.suite_ptr was successfully acquired via ae_acquire_suite_ptr (checked at creation)
+        // 2. ae_get_suite_fn validates the function pointer is Some before returning it
+        // 3. The suite pointer remains valid because it's held by the suite struct until Drop
+        // 4. Arguments passed must match the C function signature (caller's responsibility)
+        //
+        // UNDEFINED BEHAVIOR would occur if:
+        // - $self.suite_ptr is null or invalid (prevented by suite acquisition checks)
+        // - Arguments don't match expected C function signature
+        // - The suite was released but the wrapper is still being used
         let err = unsafe { ae_get_suite_fn!(($self.suite_ptr), $function)($($arg)*) };
 
         match err {
@@ -66,7 +101,19 @@ macro_rules! call_suite_fn {
 }
 macro_rules! call_suite_fn_single {
     ($self:expr,  $function:ident -> $typ:ty, $($arg:tt)* ) => {{
+        // SAFETY: Initializing a value with zeroed memory for FFI out-parameter pattern.
+        // This is safe because:
+        // 1. $typ must be a type where all-zero bytes represent a valid state (FFI types like integers, pointers)
+        // 2. The value is immediately passed as a mutable reference to the FFI function which will initialize it
+        // 3. The value is only returned when err == 0, ensuring it was properly initialized by After Effects
+        //
+        // UNDEFINED BEHAVIOR would occur if:
+        // - $typ is not a valid type for zeroed() (e.g., non-nullable references, bools not 0 or 1)
+        // - The FFI function fails (err != 0) but val is used anyway (prevented by match)
+        // - Caller uses this macro with invalid FFI types
         let mut val: $typ = unsafe { std::mem::zeroed() };
+        // SAFETY: Calling suite function - see call_suite_fn safety documentation.
+        // Additionally, &mut val is passed as an out-parameter which the FFI function will initialize.
         let err = unsafe { ae_get_suite_fn!($self.suite_ptr, $function)($($arg)*, &mut val) };
 
         match err {
@@ -75,7 +122,19 @@ macro_rules! call_suite_fn_single {
         }
     }};
     ($self:expr,  $function:ident -> $typ:ty) => {{
+        // SAFETY: Initializing a value with zeroed memory for FFI out-parameter pattern.
+        // This is safe because:
+        // 1. $typ must be a type where all-zero bytes represent a valid state (FFI types like integers, pointers)
+        // 2. The value is immediately passed as a mutable reference to the FFI function which will initialize it
+        // 3. The value is only returned when err == 0, ensuring it was properly initialized by After Effects
+        //
+        // UNDEFINED BEHAVIOR would occur if:
+        // - $typ is not a valid type for zeroed() (e.g., non-nullable references, bools not 0 or 1)
+        // - The FFI function fails (err != 0) but val is used anyway (prevented by match)
+        // - Caller uses this macro with invalid FFI types
         let mut val: $typ = unsafe { std::mem::zeroed() };
+        // SAFETY: Calling suite function - see call_suite_fn safety documentation.
+        // Additionally, &mut val is passed as an out-parameter which the FFI function will initialize.
         let err = unsafe { ae_get_suite_fn!($self.suite_ptr, $function)(&mut val) };
 
         match err {
@@ -86,8 +145,19 @@ macro_rules! call_suite_fn_single {
 }
 macro_rules! call_suite_fn_double {
     ($self:expr,  $function:ident -> $typ1:ty, $typ2:ty, $($arg:tt)* ) => {{
+        // SAFETY: Initializing two values with zeroed memory for FFI out-parameter pattern.
+        // This is safe because:
+        // 1. Both $typ1 and $typ2 must be types where all-zero bytes represent valid states
+        // 2. The values are immediately passed as mutable references to the FFI function
+        // 3. The values are only returned when err == 0, ensuring proper initialization
+        //
+        // UNDEFINED BEHAVIOR would occur if:
+        // - $typ1 or $typ2 are not valid types for zeroed()
+        // - The FFI function fails but values are used anyway (prevented by match)
         let mut v1: $typ1 = unsafe { std::mem::zeroed() };
         let mut v2: $typ2 = unsafe { std::mem::zeroed() };
+        // SAFETY: Calling suite function - see call_suite_fn safety documentation.
+        // Both v1 and v2 are passed as out-parameters which the FFI function will initialize.
         let err = unsafe { ae_get_suite_fn!($self.suite_ptr, $function)($($arg)*, &mut v1, &mut v2) };
 
         match err {
@@ -96,8 +166,19 @@ macro_rules! call_suite_fn_double {
         }
     }};
     ($self:expr,  $function:ident -> $typ1:ty, $typ2:ty) => {{
+        // SAFETY: Initializing two values with zeroed memory for FFI out-parameter pattern.
+        // This is safe because:
+        // 1. Both $typ1 and $typ2 must be types where all-zero bytes represent valid states
+        // 2. The values are immediately passed as mutable references to the FFI function
+        // 3. The values are only returned when err == 0, ensuring proper initialization
+        //
+        // UNDEFINED BEHAVIOR would occur if:
+        // - $typ1 or $typ2 are not valid types for zeroed()
+        // - The FFI function fails but values are used anyway (prevented by match)
         let mut v1: $typ1 = unsafe { std::mem::zeroed() };
         let mut v2: $typ2 = unsafe { std::mem::zeroed() };
+        // SAFETY: Calling suite function - see call_suite_fn safety documentation.
+        // Both v1 and v2 are passed as out-parameters which the FFI function will initialize.
         let err = unsafe { ae_get_suite_fn!($self.suite_ptr, $function)(&mut v1, &mut v2) };
 
         match err {
@@ -113,6 +194,17 @@ macro_rules! call_suite_fn_double {
 // AEGP_*BufferElementSize() ones.
 macro_rules! call_suite_fn_no_err {
     ($self:expr, $function:ident, $($arg:tt)* ) => {{
+        // SAFETY: Calling suite function that returns a value directly instead of an error code.
+        // This is safe because:
+        // 1. $self.suite_ptr was successfully acquired and remains valid (held by suite struct)
+        // 2. ae_get_suite_fn validates the function pointer exists before returning it
+        // 3. These functions don't use the error-code pattern and return values directly
+        // 4. The function signature and arguments must be correct (caller's responsibility)
+        //
+        // UNDEFINED BEHAVIOR would occur if:
+        // - $self.suite_ptr is null or invalid (prevented by suite acquisition)
+        // - Arguments don't match the expected C function signature
+        // - The function pointer has been invalidated (prevented by lifetime management)
         unsafe {
             ae_get_suite_fn!(($self.suite_ptr), $function)($($arg)*)
         }
@@ -202,11 +294,33 @@ macro_rules! define_struct_wrapper {
         }
         impl AsRef<after_effects_sys::$data_type> for $wrapper_pretty_name {
             fn as_ref(&self) -> &after_effects_sys::$data_type {
+                // SAFETY: Dereferencing the raw pointer to create a shared reference.
+                // This is safe because:
+                // 1. from_raw() enforces non-null via assert before storing the pointer
+                // 2. The pointer originates from After Effects and points to valid data
+                // 3. The returned reference lifetime is tied to &self, preventing use-after-free
+                // 4. AsRef only provides shared access, so no aliasing violations
+                //
+                // UNDEFINED BEHAVIOR would occur if:
+                // - The pointer was invalidated after from_raw() (caller must ensure validity)
+                // - The underlying data was freed while references exist (caller's responsibility)
+                // - Multiple mutable references exist simultaneously (prevented by borrow checker)
                 unsafe { &*self.0 }
             }
         }
         impl AsMut<after_effects_sys::$data_type> for $wrapper_pretty_name {
             fn as_mut(&mut self) -> &mut after_effects_sys::$data_type {
+                // SAFETY: Dereferencing the raw pointer to create a mutable reference.
+                // This is safe because:
+                // 1. from_raw() enforces non-null via assert before storing the pointer
+                // 2. The pointer originates from After Effects and points to valid, mutable data
+                // 3. The returned reference lifetime is tied to &mut self, preventing aliasing
+                // 4. The &mut self requirement ensures exclusive access (no other references exist)
+                //
+                // UNDEFINED BEHAVIOR would occur if:
+                // - The pointer was invalidated after from_raw() (caller must ensure validity)
+                // - The underlying data was freed while the mutable reference exists
+                // - The data is accessed through other references while this mutable reference exists
                 unsafe { &mut *self.0 }
             }
         }
@@ -289,6 +403,16 @@ macro_rules! define_param_wrapper {
             pub fn new() -> Self {
                 #[allow(unused_mut)]
                 let mut param = Self {
+                    // SAFETY: Zero-initializing an After Effects parameter definition struct.
+                    // This is safe because:
+                    // 1. After Effects C structs ($sys_type) are POD types designed for FFI
+                    // 2. All-zero bytes represent a valid initial state for these FFI structs
+                    // 3. The init_fn (if present) will further initialize required fields
+                    // 4. This follows After Effects SDK conventions for param initialization
+                    //
+                    // UNDEFINED BEHAVIOR would occur if:
+                    // - $sys_type contains non-nullable references (not the case for C FFI structs)
+                    // - The struct has required fields that must be non-zero (handled by init_fn)
                     def: Ownership::Rust(unsafe { std::mem::zeroed() }),
                     _in_data: std::ptr::null(),
                     _parent_ptr: None,
@@ -329,6 +453,17 @@ macro_rules! define_param_wrapper {
             pub fn set_value_changed(&mut self) {
                 if let Some(parent_ptr) = self._parent_ptr {
                     let parent_ptr = parent_ptr as *mut ae_sys::PF_ParamDef;
+                    // SAFETY: Creating a mutable reference to the parent parameter definition.
+                    // This is safe because:
+                    // 1. parent_ptr originates from from_mut/from_ref which receive valid pointers from After Effects
+                    // 2. The pointer lifetime is tied to 'parent lifetime, ensuring it remains valid
+                    // 3. The &mut Self requirement ensures we have exclusive access
+                    // 4. After Effects guarantees parent parameter remains valid during parameter callbacks
+                    //
+                    // UNDEFINED BEHAVIOR would occur if:
+                    // - parent_ptr was invalidated after storing (prevented by lifetime management)
+                    // - Multiple mutable references to the same parent exist (prevented by &mut self)
+                    // - This is called outside of After Effects parameter callback context
                     let parent = unsafe { &mut *parent_ptr };
                     if (parent.ui_flags & (ae_sys::PF_PUI_STD_CONTROL_ONLY as ae_sys::PF_ParamUIFlags)) == 0 {
                         parent.uu.change_flags = ChangeFlag::CHANGED_VALUE.bits();
@@ -354,6 +489,17 @@ macro_rules! define_param_wrapper {
             }
         }
         pub fn $name(&self) -> &str {
+            // SAFETY: Creating a CStr from a raw C string pointer.
+            // This is safe because:
+            // 1. self.def.u.namesptr points to a valid C string (null-terminated)
+            // 2. The pointer was set by set_$name which stores a valid CString
+            // 3. The CString is stored in self.$name, keeping it alive
+            // 4. The returned &str lifetime is tied to &self, ensuring validity
+            //
+            // UNDEFINED BEHAVIOR would occur if:
+            // - namesptr is null (prevented by set_$name always initializing it)
+            // - namesptr points to invalid memory or non-null-terminated data
+            // - The underlying CString was freed (prevented by storing in self.$name)
             unsafe { CStr::from_ptr(self.def.u.namesptr).to_str().unwrap() }
         }
     };
@@ -371,6 +517,18 @@ macro_rules! define_param_wrapper {
         }
         pub fn $name(&self) -> &str {
             let ptr = self.def.$name;
+            // SAFETY: Creating a byte slice from a fixed-size C string array.
+            // This is safe because:
+            // 1. ptr is a fixed-size array (typically [i8; 32]) embedded in the struct
+            // 2. ptr.as_ptr() returns a valid pointer to the start of this array
+            // 3. ptr.len() returns the compile-time known array length
+            // 4. The array is part of self, so it's valid for the lifetime of &self
+            // 5. set_$name ensures the array contains a valid null-terminated C string
+            //
+            // UNDEFINED BEHAVIOR would occur if:
+            // - ptr.as_ptr() returned a null or invalid pointer (impossible for array field)
+            // - ptr.len() exceeded the actual array size (prevented by type system)
+            // - The array doesn't contain a null terminator (prevented by set_$name validation)
             let u8_slice: &[u8] = unsafe { std::slice::from_raw_parts(ptr.as_ptr() as *const u8, ptr.len()) };
             CStr::from_bytes_until_nul(u8_slice).unwrap().to_str().unwrap()
         }
