@@ -212,7 +212,7 @@ impl error::Error for Error {
     }
 }
 
-//FIXME uncomment this once TryReserve() becomes stable in nightly
+// TryReserve has been stable since Rust 1.57 (2021-12-02)
 impl From<std::collections::TryReserveError> for Error {
     fn from(_: std::collections::TryReserveError) -> Self {
         Error::OutOfMemory
