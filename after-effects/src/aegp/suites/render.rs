@@ -31,6 +31,13 @@ impl RenderSuite {
     /// Optionally, the AEGP can pass a function to be called by After Effects if the user cancels the current render.
     pub fn render_and_checkout_frame<F: Fn() -> bool>(&self, options: impl AsPtr<AEGP_RenderOptionsH>, cancel_function: Option<F>) -> Result<AEGP_FrameReceiptH, Error> {
         unsafe extern "C" fn cancel_fn(refcon: *mut std::ffi::c_void, cancel: *mut ae_sys::A_Boolean) -> A_Err {
+            // SAFETY: Reconstructing boxed callback from raw pointer and writing to SDK-provided output parameter.
+            // Detailed explanation: (1) `refcon` is guaranteed to be the raw pointer created via `Box::into_raw` on line 55,
+            // (2) the pointer is valid for the lifetime of the callback as the SDK holds ownership until this function is called,
+            // (3) `cancel` pointer is guaranteed valid by the Adobe SDK calling convention for this callback,
+            // (4) the Box is immediately reconstructed and dropped, preventing double-free.
+            // Would be UB if: `refcon` were not the original pointer from `Box::into_raw`, if `cancel` were null or invalid,
+            // if this callback were called multiple times with the same `refcon`, or if the pointer were already freed.
             unsafe {
                 let cb = Box::<Box<dyn Fn() -> bool + Send + Sync + 'static>>::from_raw(refcon as *mut _);
                 *cancel = cb() as _;
@@ -66,6 +73,13 @@ impl RenderSuite {
     /// Optionally, the AEGP can pass a function to be called by After Effects if the user cancels the current render.
     pub fn render_and_checkout_layer_frame<F: FnMut() -> bool>(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, cancel_function: Option<F>) -> Result<AEGP_FrameReceiptH, Error> {
         unsafe extern "C" fn cancel_fn(refcon: *mut std::ffi::c_void, cancel: *mut ae_sys::A_Boolean) -> A_Err {
+            // SAFETY: Reconstructing boxed callback from raw pointer and writing to SDK-provided output parameter.
+            // Detailed explanation: (1) `refcon` is guaranteed to be the raw pointer created via `Box::into_raw` on line 97,
+            // (2) the pointer is valid for the lifetime of the callback as the SDK holds ownership until this function is called,
+            // (3) `cancel` pointer is guaranteed valid by the Adobe SDK calling convention for this callback,
+            // (4) the Box is immediately reconstructed and dropped, preventing double-free.
+            // Would be UB if: `refcon` were not the original pointer from `Box::into_raw`, if `cancel` were null or invalid,
+            // if this callback were called multiple times with the same `refcon`, or if the pointer were already freed.
             unsafe {
                 let cb = Box::<Box<dyn Fn() -> bool + Send + Sync + 'static>>::from_raw(refcon as *mut _);
                 *cancel = cb() as _;
@@ -86,6 +100,13 @@ impl RenderSuite {
 
     pub fn render_and_checkout_layer_frame_async<R: FnMut(AEGP_AsyncRequestId, bool, Error, AEGP_FrameReceiptH)>(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, callback: R) -> Result<AEGP_AsyncRequestId, Error> {
         unsafe extern "C" fn frame_ready_cb(request_id: AEGP_AsyncRequestId, was_canceled: A_Boolean, error: A_Err, receipt: AEGP_FrameReceiptH, refcon: AEGP_AsyncFrameRequestRefcon) -> A_Err {
+            // SAFETY: Reconstructing boxed callback from raw pointer passed by the Adobe SDK.
+            // Detailed explanation: (1) `refcon` is guaranteed to be the raw pointer created via `Box::into_raw` on line 122,
+            // (2) the pointer remains valid until this callback is invoked by the SDK to signal completion,
+            // (3) the Adobe SDK guarantees this callback is called exactly once per async request,
+            // (4) the Box is reconstructed and dropped after invoking the callback, transferring ownership back to Rust.
+            // Would be UB if: `refcon` were not the original pointer from `Box::into_raw`, if the callback were called
+            // multiple times for the same request, or if the pointer were already freed.
             let cb = unsafe { Box::<Box<dyn Fn(AEGP_AsyncRequestId, bool, Error, AEGP_FrameReceiptH)>>::from_raw(refcon as *mut _) };
             cb(request_id, was_canceled != 0, Error::from(error), receipt);
             ae_sys::PF_Err_NONE as ae_sys::PF_Err
@@ -133,6 +154,13 @@ impl RenderSuite {
     /// unlike the version published here in [`aegp::suites::Render`].
     pub fn render_new_item_sound_data<F: FnMut() -> bool>(&self, item: impl AsPtr<AEGP_ItemH>, start_time: Time, duration: Time, sound_format: &AEGP_SoundDataFormat, cancel_function: Option<F>) -> Result<aegp::SoundDataHandle, Error> {
         unsafe extern "C" fn cancel_fn(refcon: *mut std::ffi::c_void, cancel: *mut ae_sys::A_Boolean) -> A_Err {
+            // SAFETY: Reconstructing boxed callback from raw pointer and writing to SDK-provided output parameter.
+            // Detailed explanation: (1) `refcon` is guaranteed to be the raw pointer created via `Box::into_raw` on line 180,
+            // (2) the pointer is valid for the lifetime of the callback as the SDK holds ownership until this function is called,
+            // (3) `cancel` pointer is guaranteed valid by the Adobe SDK calling convention for this callback,
+            // (4) the Box is immediately reconstructed and dropped, preventing double-free.
+            // Would be UB if: `refcon` were not the original pointer from `Box::into_raw`, if `cancel` were null or invalid,
+            // if this callback were called multiple times with the same `refcon`, or if the pointer were already freed.
             unsafe {
                 let cb = Box::<Box<dyn Fn() -> bool + Send + Sync + 'static>>::from_raw(refcon as *mut _);
                 *cancel = cb() as _;

@@ -26,6 +26,9 @@ impl ColorCallbacksSuite {
 
     /// Given an HLS pixel, returns an RGB pixel.
     pub fn hls_to_rgb(&self, effect_ref: impl AsPtr<PF_ProgPtr>, hls: &HLSPixel) -> Result<Pixel8, Error> {
+        // SAFETY: Zero-initializing Pixel8 (PF_Pixel) FFI type for use as an out-parameter.
+        // Detailed explanation: (1) Pixel8 is a repr(C) FFI struct from Adobe After Effects SDK where all-zero bytes represent a valid state, (2) the zeroed value is immediately passed as a mutable reference to the HLStoRGB FFI function which fully initializes it before we use it, (3) the value is only returned when the FFI call succeeds (no error), ensuring proper initialization.
+        // Would be UB if: Pixel8 contained types with invalid zero-bit patterns (like non-nullable references or bool with values other than 0/1), or if we used the value before the FFI call initialized it, or if the FFI call failed but we used the value anyway.
         let mut rgb = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, HLStoRGB, effect_ref.as_ptr(), hls as *const _ as *mut _, &mut rgb)?;
         Ok(rgb)
@@ -41,6 +44,9 @@ impl ColorCallbacksSuite {
 
     /// Given a YIQ pixel, returns an RGB pixel.
     pub fn yiq_to_rgb(&self, effect_ref: impl AsPtr<PF_ProgPtr>, yiq: &YIQPixel) -> Result<Pixel8, Error> {
+        // SAFETY: Zero-initializing Pixel8 (PF_Pixel) FFI type for use as an out-parameter.
+        // Detailed explanation: (1) Pixel8 is a repr(C) FFI struct from Adobe After Effects SDK where all-zero bytes represent a valid state, (2) the zeroed value is immediately passed as a mutable reference to the YIQtoRGB FFI function which fully initializes it before we use it, (3) the value is only returned when the FFI call succeeds (no error), ensuring proper initialization.
+        // Would be UB if: Pixel8 contained types with invalid zero-bit patterns (like non-nullable references or bool with values other than 0/1), or if we used the value before the FFI call initialized it, or if the FFI call failed but we used the value anyway.
         let mut rgb = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, YIQtoRGB, effect_ref.as_ptr(), yiq as *const _ as *mut _, &mut rgb)?;
         Ok(rgb)
@@ -91,6 +97,9 @@ impl ColorCallbacks16Suite {
 
     /// Given an HLS pixel, returns an RGB pixel.
     pub fn hls_to_rgb(&self, effect_ref: impl AsPtr<PF_ProgPtr>, hls: &HLSPixel) -> Result<Pixel16, Error> {
+        // SAFETY: Zero-initializing Pixel16 (PF_Pixel16) FFI type for use as an out-parameter.
+        // Detailed explanation: (1) Pixel16 is a repr(C) FFI struct from Adobe After Effects SDK where all-zero bytes represent a valid state, (2) the zeroed value is immediately passed as a mutable reference to the HLStoRGB FFI function which fully initializes it before we use it, (3) the value is only returned when the FFI call succeeds (no error), ensuring proper initialization.
+        // Would be UB if: Pixel16 contained types with invalid zero-bit patterns (like non-nullable references or bool with values other than 0/1), or if we used the value before the FFI call initialized it, or if the FFI call failed but we used the value anyway.
         let mut rgb = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, HLStoRGB, effect_ref.as_ptr(), hls as *const _ as *mut _, &mut rgb)?;
         Ok(rgb)
@@ -106,6 +115,9 @@ impl ColorCallbacks16Suite {
 
     /// Given a YIQ pixel, returns an RGB pixel.
     pub fn yiq_to_rgb(&self, effect_ref: impl AsPtr<PF_ProgPtr>, yiq: &YIQPixel) -> Result<Pixel16, Error> {
+        // SAFETY: Zero-initializing Pixel16 (PF_Pixel16) FFI type for use as an out-parameter.
+        // Detailed explanation: (1) Pixel16 is a repr(C) FFI struct from Adobe After Effects SDK where all-zero bytes represent a valid state, (2) the zeroed value is immediately passed as a mutable reference to the YIQtoRGB FFI function which fully initializes it before we use it, (3) the value is only returned when the FFI call succeeds (no error), ensuring proper initialization.
+        // Would be UB if: Pixel16 contained types with invalid zero-bit patterns (like non-nullable references or bool with values other than 0/1), or if we used the value before the FFI call initialized it, or if the FFI call failed but we used the value anyway.
         let mut rgb = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, YIQtoRGB, effect_ref.as_ptr(), yiq as *const _ as *mut _, &mut rgb)?;
         Ok(rgb)
@@ -156,6 +168,9 @@ impl ColorCallbacksFloatSuite {
 
     /// Given an HLS pixel, returns an RGB pixel.
     pub fn hls_to_rgb(&self, effect_ref: impl AsPtr<PF_ProgPtr>, hls: &HLSPixel) -> Result<PixelF32, Error> {
+        // SAFETY: Zero-initializing PixelF32 (PF_Pixel32) FFI type for use as an out-parameter.
+        // Detailed explanation: (1) PixelF32 is a repr(C) FFI struct from Adobe After Effects SDK containing f32 fields where all-zero bytes represent valid 0.0 float values, (2) the zeroed value is immediately passed as a mutable reference to the HLStoRGB FFI function which fully initializes it before we use it, (3) the value is only returned when the FFI call succeeds (no error), ensuring proper initialization.
+        // Would be UB if: PixelF32 contained types with invalid zero-bit patterns (like non-nullable references or bool with values other than 0/1), or if we used the value before the FFI call initialized it, or if the FFI call failed but we used the value anyway.
         let mut rgb = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, HLStoRGB, effect_ref.as_ptr(), hls as *const _ as *mut _, &mut rgb)?;
         Ok(rgb)
@@ -171,6 +186,9 @@ impl ColorCallbacksFloatSuite {
 
     /// Given a YIQ pixel, returns an RGB pixel.
     pub fn yiq_to_rgb(&self, effect_ref: impl AsPtr<PF_ProgPtr>, yiq: &YIQPixel) -> Result<PixelF32, Error> {
+        // SAFETY: Zero-initializing PixelF32 (PF_Pixel32) FFI type for use as an out-parameter.
+        // Detailed explanation: (1) PixelF32 is a repr(C) FFI struct from Adobe After Effects SDK containing f32 fields where all-zero bytes represent valid 0.0 float values, (2) the zeroed value is immediately passed as a mutable reference to the YIQtoRGB FFI function which fully initializes it before we use it, (3) the value is only returned when the FFI call succeeds (no error), ensuring proper initialization.
+        // Would be UB if: PixelF32 contained types with invalid zero-bit patterns (like non-nullable references or bool with values other than 0/1), or if we used the value before the FFI call initialized it, or if the FFI call failed but we used the value anyway.
         let mut rgb = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, YIQtoRGB, effect_ref.as_ptr(), yiq as *const _ as *mut _, &mut rgb)?;
         Ok(rgb)

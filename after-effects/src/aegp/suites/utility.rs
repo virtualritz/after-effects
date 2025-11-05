@@ -96,23 +96,43 @@ impl UtilitySuite {
     /// Retrieves the foreground color from the paint palette.
     pub fn paint_palette_foreground_color(&self) -> Result<pf::PixelF64, Error> {
         let color = call_suite_fn_single!(self, AEGP_PaintPalGetForeColor -> ae_sys::AEGP_ColorVal)?;
+        // SAFETY: Transmuting AEGP_ColorVal to PixelF64.
+        // Detailed explanation: (1) Both types are #[repr(C)] structs with four f64 fields (alpha, red, green, blue),
+        // (2) The memory layout is identical as they represent the same color data structure from the AE SDK,
+        // (3) Both types have the same size and alignment requirements.
+        // Would be UB if: The source and destination types had different sizes, alignments, or validity requirements.
         Ok(unsafe { std::mem::transmute(color) })
     }
 
     /// Retrieves the background color from the paint palette.
     pub fn paint_palette_background_color(&self) -> Result<pf::PixelF64, Error> {
         let color = call_suite_fn_single!(self, AEGP_PaintPalGetBackColor -> ae_sys::AEGP_ColorVal)?;
+        // SAFETY: Transmuting AEGP_ColorVal to PixelF64.
+        // Detailed explanation: (1) Both types are #[repr(C)] structs with four f64 fields (alpha, red, green, blue),
+        // (2) The memory layout is identical as they represent the same color data structure from the AE SDK,
+        // (3) Both types have the same size and alignment requirements.
+        // Would be UB if: The source and destination types had different sizes, alignments, or validity requirements.
         Ok(unsafe { std::mem::transmute(color) })
     }
 
     /// Sets the foreground color in the paint palette.
     pub fn paint_palette_set_foreground_color(&self, color: pf::PixelF64) -> Result<(), Error> {
+        // SAFETY: Transmuting PixelF64 to AEGP_ColorVal.
+        // Detailed explanation: (1) Both types are #[repr(C)] structs with four f64 fields (alpha, red, green, blue),
+        // (2) The memory layout is identical as they represent the same color data structure from the AE SDK,
+        // (3) Both types have the same size and alignment requirements.
+        // Would be UB if: The source and destination types had different sizes, alignments, or validity requirements.
         let color = unsafe { std::mem::transmute(color) };
         call_suite_fn!(self, AEGP_PaintPalSetForeColor, &color as *const _)
     }
 
     /// Sets the background color in the paint palette.
     pub fn paint_palette_set_background_color(&self, color: pf::PixelF64) -> Result<(), Error> {
+        // SAFETY: Transmuting PixelF64 to AEGP_ColorVal.
+        // Detailed explanation: (1) Both types are #[repr(C)] structs with four f64 fields (alpha, red, green, blue),
+        // (2) The memory layout is identical as they represent the same color data structure from the AE SDK,
+        // (3) Both types have the same size and alignment requirements.
+        // Would be UB if: The source and destination types had different sizes, alignments, or validity requirements.
         let color = unsafe { std::mem::transmute(color) };
         call_suite_fn!(self, AEGP_PaintPalSetBackColor, &color as *const _)
     }
@@ -122,6 +142,11 @@ impl UtilitySuite {
     /// Returns tuple containing (is_defined, color)
     pub fn character_palette_fill_color(&self) -> Result<(bool, pf::PixelF64), Error> {
         let (is_defined, color) = call_suite_fn_double!(self, AEGP_CharPalGetFillColor -> ae_sys::A_Boolean, ae_sys::AEGP_ColorVal)?;
+        // SAFETY: Transmuting AEGP_ColorVal to PixelF64.
+        // Detailed explanation: (1) Both types are #[repr(C)] structs with four f64 fields (alpha, red, green, blue),
+        // (2) The memory layout is identical as they represent the same color data structure from the AE SDK,
+        // (3) Both types have the same size and alignment requirements.
+        // Would be UB if: The source and destination types had different sizes, alignments, or validity requirements.
         Ok((is_defined != 0, unsafe { std::mem::transmute(color) }))
     }
 
@@ -130,17 +155,32 @@ impl UtilitySuite {
     /// Returns tuple containing (is_defined, color)
     pub fn character_palette_stroke_color(&self) -> Result<(bool, pf::PixelF64), Error> {
         let (is_defined, color) = call_suite_fn_double!(self, AEGP_CharPalGetStrokeColor -> ae_sys::A_Boolean, ae_sys::AEGP_ColorVal)?;
+        // SAFETY: Transmuting AEGP_ColorVal to PixelF64.
+        // Detailed explanation: (1) Both types are #[repr(C)] structs with four f64 fields (alpha, red, green, blue),
+        // (2) The memory layout is identical as they represent the same color data structure from the AE SDK,
+        // (3) Both types have the same size and alignment requirements.
+        // Would be UB if: The source and destination types had different sizes, alignments, or validity requirements.
         Ok((is_defined != 0, unsafe { std::mem::transmute(color) }))
     }
 
     /// Sets the fill color in the character palette.
     pub fn character_palette_set_fill_color(&self, color: pf::PixelF64) -> Result<(), Error> {
+        // SAFETY: Transmuting PixelF64 to AEGP_ColorVal.
+        // Detailed explanation: (1) Both types are #[repr(C)] structs with four f64 fields (alpha, red, green, blue),
+        // (2) The memory layout is identical as they represent the same color data structure from the AE SDK,
+        // (3) Both types have the same size and alignment requirements.
+        // Would be UB if: The source and destination types had different sizes, alignments, or validity requirements.
         let color = unsafe { std::mem::transmute(color) };
         call_suite_fn!(self, AEGP_CharPalSetFillColor, &color as *const _)
     }
 
     /// Sets the stroke color in the character palette.
     pub fn character_palette_set_stroke_color(&self, color: pf::PixelF64) -> Result<(), Error> {
+        // SAFETY: Transmuting PixelF64 to AEGP_ColorVal.
+        // Detailed explanation: (1) Both types are #[repr(C)] structs with four f64 fields (alpha, red, green, blue),
+        // (2) The memory layout is identical as they represent the same color data structure from the AE SDK,
+        // (3) Both types have the same size and alignment requirements.
+        // Would be UB if: The source and destination types had different sizes, alignments, or validity requirements.
         let color = unsafe { std::mem::transmute(color) };
         call_suite_fn!(self, AEGP_CharPalSetStrokeColor, &color as *const _)
     }
@@ -218,7 +258,17 @@ impl UtilitySuite {
         let error_string = MemHandle::<u8>::from_raw(error_string)?;
         let result_len       = result.len()?;
         let error_string_len = error_string.len()?;
+        // SAFETY: Creating immutable slice from locked MemHandle pointer.
+        // Detailed explanation: (1) The pointer is obtained from MemHandle::lock() which guarantees validity for the lock's lifetime,
+        // (2) The length is obtained from MemHandle::len() which returns the actual allocated size from the AE SDK,
+        // (3) The MemHandle lock prevents mutation and ensures the memory remains valid.
+        // Would be UB if: The MemHandle was unlocked while the slice is in use, the length was incorrect, or the pointer was null/dangling.
         let result       = unsafe { std::slice::from_raw_parts(result      .lock()?.as_ptr(), result_len) };
+        // SAFETY: Creating immutable slice from locked MemHandle pointer.
+        // Detailed explanation: (1) The pointer is obtained from MemHandle::lock() which guarantees validity for the lock's lifetime,
+        // (2) The length is obtained from MemHandle::len() which returns the actual allocated size from the AE SDK,
+        // (3) The MemHandle lock prevents mutation and ensures the memory remains valid.
+        // Would be UB if: The MemHandle was unlocked while the slice is in use, the length was incorrect, or the pointer was null/dangling.
         let error_string = unsafe { std::slice::from_raw_parts(error_string.lock()?.as_ptr(), error_string_len) };
 
         Ok((
@@ -255,6 +305,12 @@ impl UtilitySuite {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetPluginPaths -> ae_sys::AEGP_MemHandle, plugin_id, path_type.into())?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
+        // SAFETY: Creating U16CString from locked MemHandle pointer to UTF-16 string.
+        // Detailed explanation: (1) The pointer is obtained from a locked MemHandle which guarantees validity during the lock's lifetime,
+        // (2) The AE SDK guarantees the returned memory contains a valid null-terminated UTF-16 string,
+        // (3) U16CString::from_ptr_str will scan for the null terminator and create a safe owned copy,
+        // (4) The MemHandle lock is held until the U16CString is constructed and copied.
+        // Would be UB if: The pointer was not a valid null-terminated UTF-16 string, the MemHandle was unlocked during construction, or the pointer was null/dangling.
         Ok(unsafe {
             U16CString::from_ptr_str(
                 MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr(),
