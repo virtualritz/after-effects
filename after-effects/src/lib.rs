@@ -1,5 +1,7 @@
 // FIXME: make ALL the functions below return Result-wrapped values
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+#![warn(missing_docs)]
+#![warn(missing_safety_doc)]
 #![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
 use after_effects_sys as ae_sys;
 use num_traits::identities::Zero;
