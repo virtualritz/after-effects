@@ -181,7 +181,7 @@ impl From<Error> for &'static str {
             Error::OutOfMemory              => "Out of memory.",
             Error::WrongThread              => "Call made from wrong thread.",
             Error::ConstProjectModification => "Project changes must originate in the UI/Main thread.",
-            Error::MissingSuite             => "Could no aquire suite.",
+            Error::MissingSuite             => "Could not acquire suite.",
             Error::InternalStructDamaged    => "Internal struct is damaged.",
             Error::InvalidIndex             => "Out of range, or action not allowed on this index.",
             Error::UnrecogizedParameterType => "Unrecognized parameter type",
