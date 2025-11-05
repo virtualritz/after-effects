@@ -87,12 +87,17 @@ macro_rules! define_cross_thread_type {
 
                         fn visit_seq<V>(self, mut seq: V) -> Result<[<CrossThread $type_name>], V::Error> where V: $crate::serde::de::SeqAccess<'de> {
                             let id: u64 = seq.next_element()?.ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+
+                            // Check if already exists
                             if [<CrossThread $type_name>]::map().read().contains_key(&id) {
                                 return Ok([<CrossThread $type_name>] { id });
                             }
 
                             let data: $type_name = seq.next_element()?.ok_or_else(|| $crate::serde::de::Error::invalid_length(1, &self))?;
-                            [<CrossThread $type_name>]::map().write().insert(id, std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
+
+                            // Use write lock and re-check to avoid race condition
+                            let mut map = [<CrossThread $type_name>]::map().write();
+                            map.entry(id).or_insert_with(|| std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
 
                             Ok([<CrossThread $type_name>] { id })
                         }
@@ -103,11 +108,7 @@ macro_rules! define_cross_thread_type {
                             while let Some(key) = map.next_key()? {
                                 match key {
                                     Field::Id => {
-                                        let _id = map.next_value()?;
-                                        if [<CrossThread $type_name>]::map().read().contains_key(&_id) {
-                                            return Ok([<CrossThread $type_name>] { id: _id });
-                                        }
-                                        id = Some(_id);
+                                        id = Some(map.next_value()?);
                                     }
                                     Field::Data => {
                                         data = Some(map.next_value()?);
@@ -115,8 +116,18 @@ macro_rules! define_cross_thread_type {
                                 }
                             }
                             let id: u64 = id.ok_or_else(|| $crate::serde::de::Error::missing_field("id"))?;
+
+                            // Check if already exists
+                            if [<CrossThread $type_name>]::map().read().contains_key(&id) {
+                                return Ok([<CrossThread $type_name>] { id });
+                            }
+
                             let data: $type_name = data.ok_or_else(|| $crate::serde::de::Error::missing_field("data"))?;
-                            [<CrossThread $type_name>]::map().write().insert(id, std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
+
+                            // Use write lock and entry API to avoid race condition
+                            let mut write_map = [<CrossThread $type_name>]::map().write();
+                            write_map.entry(id).or_insert_with(|| std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
+
                             Ok([<CrossThread $type_name>] { id })
                         }
                     }
