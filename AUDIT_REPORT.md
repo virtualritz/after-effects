@@ -59,14 +59,15 @@ pub fn set(&mut self, value: T) {
 pub fn set(&mut self, value: T) -> Result<(), Error> {
     let ptr = self.suite.lock_handle(self.handle) as *mut T;
     if ptr.is_null() {
-        return Err(Error::InvalidIndex);
+        Err(Error::InvalidIndex)
+    } else {
+        unsafe {
+            ptr.read(); // Run destructors
+            ptr.write(value);
+        }
+        self.suite.unlock_handle(self.handle);
+        Ok(())
     }
-    unsafe {
-        ptr.read(); // Run destructors
-        ptr.write(value);
-    }
-    self.suite.unlock_handle(self.handle);
-    Ok(())
 }
 ```
 
@@ -524,16 +525,7 @@ Many parameter types have `setup()` methods, but inconsistently applied. Conside
 
 ---
 
-### 8.2 No Async Support
-
-All operations are synchronous. Consider:
-- Async rendering for long operations
-- Async suite acquisition
-- Integration with `tokio`/`async-std`
-
----
-
-### 8.3 Limited Error Context
+### 8.2 Limited Error Context
 
 Errors lack context about where they occurred. Consider:
 - Adding `std::backtrace::Backtrace` capture
@@ -542,7 +534,7 @@ Errors lack context about where they occurred. Consider:
 
 ---
 
-### 8.4 No Logging Facade
+### 8.3 No Logging Facade
 
 Debug logging uses platform-specific backends. Consider:
 - Abstracting with `tracing` or `log` facade (already using `log`, but not consistently)
@@ -550,7 +542,7 @@ Debug logging uses platform-specific backends. Consider:
 
 ---
 
-### 8.5 Missing Serialization Traits
+### 8.4 Missing Serialization Traits
 
 Only some types derive `Serialize`/`Deserialize`. Consider adding for:
 - `Error` enum
@@ -749,12 +741,11 @@ Including pre-generated bindings (965KB+) is good for ergonomics but:
 ### Low Priority (Consider for 1.0)
 
 1. Investigate removing thread-local `PICA_BASIC_SUITE`
-2. Add async support where appropriate
-3. Complete remaining suite wrappers
-4. Add fuzzing infrastructure
-5. Performance profiling and optimization
-6. Improve error messages with more context
-7. Consider builder pattern standardization
+2. Complete remaining suite wrappers
+3. Add fuzzing infrastructure
+4. Performance profiling and optimization
+5. Improve error messages with more context
+6. Consider builder pattern standardization
 
 ---
 
