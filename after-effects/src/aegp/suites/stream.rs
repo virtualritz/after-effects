@@ -81,6 +81,9 @@ impl StreamSuite {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetStreamName -> ae_sys::AEGP_MemHandle, plugin_id, stream_ref.as_ptr(), force_english as _)?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
+        // SAFETY: Converting UTF-16 string from After Effects SDK to Rust string.
+        // Detailed explanation: (1) mem_handle is a valid AEGP_MemHandle returned by AEGP_GetStreamName, (2) MemHandle::from_raw takes ownership and ensures proper cleanup, (3) lock() provides exclusive access and returns a valid pointer to UTF-16 data, (4) U16CString::from_ptr_str expects a null-terminated UTF-16 string which the SDK guarantees.
+        // Would be UB if: mem_handle were null/invalid, the memory were not properly null-terminated UTF-16, or the pointer were accessed after the MemHandle is dropped.
         Ok(unsafe {
             U16CString::from_ptr_str(
                 MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr(),
@@ -92,6 +95,9 @@ impl StreamSuite {
     pub fn stream_units_text(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>, force_english: bool) -> Result<String, Error> {
         let mut name = [0i8; ae_sys::AEGP_MAX_STREAM_NAME_SIZE as usize + 1];
         call_suite_fn!(self, AEGP_GetStreamUnitsText, stream_ref.as_ptr(), force_english as _, name.as_mut_ptr() as _)?;
+        // SAFETY: Creating CStr from SDK-populated buffer.
+        // Detailed explanation: (1) name is a valid buffer of size AEGP_MAX_STREAM_NAME_SIZE + 1, (2) AEGP_GetStreamUnitsText writes a null-terminated C string into it, (3) CStr::from_ptr reads from the buffer which is valid for the lifetime of this function, (4) the SDK guarantees the string is properly null-terminated within the buffer size.
+        // Would be UB if: AEGP_GetStreamUnitsText did not null-terminate the string, or if it wrote past the buffer bounds.
         Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }.to_string_lossy().into_owned())
     }
 
@@ -180,6 +186,9 @@ impl StreamSuite {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetExpression -> ae_sys::AEGP_MemHandle, plugin_id, stream_ref.as_ptr())?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
+        // SAFETY: Converting UTF-16 expression string from After Effects SDK to Rust string.
+        // Detailed explanation: (1) mem_handle is a valid AEGP_MemHandle returned by AEGP_GetExpression, (2) MemHandle::from_raw takes ownership and ensures proper cleanup, (3) lock() provides exclusive access and returns a valid pointer to UTF-16 data, (4) U16CString::from_ptr_str expects a null-terminated UTF-16 string which the SDK guarantees.
+        // Would be UB if: mem_handle were null/invalid, the memory were not properly null-terminated UTF-16, or the pointer were accessed after the MemHandle is dropped.
         Ok(unsafe {
             U16CString::from_ptr_str(
                 MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr(),
@@ -666,6 +675,9 @@ impl StreamValue {
             StreamType::NoData => {
                 Self::None
             },
+            // SAFETY: Accessing three_d union field based on type tag.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) ThreeDSpatial type indicates three_d field was initialized by the SDK, (3) accessing the correct union variant based on the discriminant is safe.
+            // Would be UB if: type_ does not match the actual initialized union field, or if val was not properly initialized by the SDK.
             StreamType::ThreeDSpatial => unsafe {
                 Self::ThreeDSpatial {
                     x: val.three_d.x,
@@ -673,6 +685,9 @@ impl StreamValue {
                     z: val.three_d.z,
                 }
             },
+            // SAFETY: Accessing three_d union field based on type tag.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) ThreeD type indicates three_d field was initialized by the SDK, (3) accessing the correct union variant based on the discriminant is safe.
+            // Would be UB if: type_ does not match the actual initialized union field, or if val was not properly initialized by the SDK.
             StreamType::ThreeD => unsafe {
                 Self::ThreeD {
                     x: val.three_d.x,
@@ -680,21 +695,33 @@ impl StreamValue {
                     z: val.three_d.z,
                 }
             },
+            // SAFETY: Accessing two_d union field based on type tag.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) TwoDSpatial type indicates two_d field was initialized by the SDK, (3) accessing the correct union variant based on the discriminant is safe.
+            // Would be UB if: type_ does not match the actual initialized union field, or if val was not properly initialized by the SDK.
             StreamType::TwoDSpatial => unsafe {
                 Self::TwoDSpatial {
                     x: val.two_d.x,
                     y: val.two_d.y,
                 }
             },
+            // SAFETY: Accessing two_d union field based on type tag.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) TwoD type indicates two_d field was initialized by the SDK, (3) accessing the correct union variant based on the discriminant is safe.
+            // Would be UB if: type_ does not match the actual initialized union field, or if val was not properly initialized by the SDK.
             StreamType::TwoD => unsafe {
                 Self::TwoD {
                     x: val.two_d.x,
                     y: val.two_d.y,
                 }
             },
+            // SAFETY: Accessing one_d union field based on type tag.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) OneD type indicates one_d field was initialized by the SDK, (3) accessing the correct union variant based on the discriminant is safe.
+            // Would be UB if: type_ does not match the actual initialized union field, or if val was not properly initialized by the SDK.
             StreamType::OneD => unsafe {
                 Self::OneD(val.one_d)
             },
+            // SAFETY: Accessing color union field based on type tag.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) Color type indicates color field was initialized by the SDK, (3) accessing the correct union variant based on the discriminant is safe.
+            // Would be UB if: type_ does not match the actual initialized union field, or if val was not properly initialized by the SDK.
             StreamType::Color => unsafe {
                 Self::Color {
                     alpha: val.color.alphaF,
@@ -705,15 +732,27 @@ impl StreamValue {
             },
             // StreamType::ArbBlock => unsafe {},
             // StreamType::Marker => unsafe {},
+            // SAFETY: Accessing layer_id union field based on type tag.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) LayerId type indicates layer_id field was initialized by the SDK, (3) accessing the correct union variant based on the discriminant is safe.
+            // Would be UB if: type_ does not match the actual initialized union field, or if val was not properly initialized by the SDK.
             StreamType::LayerId => unsafe {
                 Self::LayerId(val.layer_id)
             },
+            // SAFETY: Accessing mask_id union field based on type tag.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) MaskId type indicates mask_id field was initialized by the SDK, (3) accessing the correct union variant based on the discriminant is safe.
+            // Would be UB if: type_ does not match the actual initialized union field, or if val was not properly initialized by the SDK.
             StreamType::MaskId => unsafe {
                 Self::MaskId(val.mask_id)
             },
+            // SAFETY: Accessing mask union field based on type tag and creating handle from raw pointer.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) Mask type indicates mask field was initialized by the SDK with a valid AEGP_MaskOutlineValH, (3) from_raw wraps the pointer without taking ownership, (4) the SDK guarantees the pointer is valid for the appropriate lifetime.
+            // Would be UB if: type_ does not match the actual initialized union field, val.mask is null/invalid, or the pointer is used after its SDK-managed lifetime expires.
             StreamType::Mask => unsafe {
                 Self::Mask(MaskOutlineHandle::from_raw(val.mask))
             },
+            // SAFETY: Accessing text_documentH union field based on type tag and creating handle from raw pointer.
+            // Detailed explanation: (1) type_ parameter guarantees which union field is valid, (2) TextDocument type indicates text_documentH field was initialized by the SDK with a valid AEGP_TextDocumentH, (3) from_raw wraps the pointer without taking ownership, (4) the SDK guarantees the pointer is valid for the appropriate lifetime.
+            // Would be UB if: type_ does not match the actual initialized union field, val.text_documentH is null/invalid, or the pointer is used after its SDK-managed lifetime expires.
             StreamType::TextDocument => unsafe {
                 Self::TextDocument(TextDocumentHandle::from_raw(val.text_documentH))
             },
@@ -724,6 +763,9 @@ impl StreamValue {
     pub fn to_sys(&self) -> ae_sys::AEGP_StreamVal2 {
         use ae_sys::AEGP_StreamVal2;
         match self {
+            // SAFETY: Creating zeroed AEGP_StreamVal2 for NoData stream type.
+            // Detailed explanation: (1) AEGP_StreamVal2 is a C union that can be safely zeroed, (2) for NoData streams the union contents are not read by the SDK, (3) all-zero bytes is a valid representation for this union when unused.
+            // Would be UB if: AEGP_StreamVal2 required specific initialization or had non-zero validity invariants, but unions of primitive types and pointers can be safely zeroed.
             Self::None => unsafe { std::mem::zeroed() },
             Self::FourD(x, y, z, w) => AEGP_StreamVal2 {
                 four_d:  [*x, *y, *z, *w]

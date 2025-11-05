@@ -95,9 +95,15 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
+                // SAFETY: Cast plugin_refcon to mutable reference to Global type.
+                // Detailed explanation: (1) plugin_refcon is non-null as checked above, (2) pointer was originally created from valid P instance by AE SDK, (3) lifetime is bounded by this callback invocation which AE guarantees doesn't outlive the plugin.
+                // Would be UB if: plugin_refcon pointed to freed memory, was misaligned, or was accessed concurrently from another thread.
                 Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_command_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid CommandHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original RefCon type.
             let Some((callback, refcon)) = (unsafe { (refcon as *mut (CommandHook<P, T>, T)).as_mut() }) else {
                 return Error::Generic.into();
             };
@@ -116,14 +122,23 @@ impl RegisterSuite {
 
             match res {
                 Ok(CommandHookStatus::Handled) => {
+                    // SAFETY: Write handled status to AE output pointer.
+                    // Detailed explanation: (1) handled_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for writes as provided by AE caller, (3) writing boolean value (1) is valid for A_Boolean type.
+                    // Would be UB if: handled_p was null, pointed to read-only memory, or was already freed.
                     unsafe { *handled_p = 1; }
                     Error::None
                 }
                 Ok(CommandHookStatus::Unhandled) => {
+                    // SAFETY: Write unhandled status to AE output pointer.
+                    // Detailed explanation: (1) handled_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for writes as provided by AE caller, (3) writing boolean value (0) is valid for A_Boolean type.
+                    // Would be UB if: handled_p was null, pointed to read-only memory, or was already freed.
                     unsafe { *handled_p = 0; }
                     Error::None
                 }
                 Err(e) => {
+                    // SAFETY: Write error status to AE output pointer.
+                    // Detailed explanation: (1) handled_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for writes as provided by AE caller, (3) writing boolean value (0) is valid for A_Boolean type.
+                    // Would be UB if: handled_p was null, pointed to read-only memory, or was already freed.
                     unsafe { *handled_p = 0; }
                     e
                 }
@@ -159,9 +174,15 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
+                // SAFETY: Cast plugin_refcon to mutable reference to Global type.
+                // Detailed explanation: (1) plugin_refcon is non-null as checked above, (2) pointer was originally created from valid P instance by AE SDK, (3) lifetime is bounded by this callback invocation which AE guarantees doesn't outlive the plugin.
+                // Would be UB if: plugin_refcon pointed to freed memory, was misaligned, or was accessed concurrently from another thread.
                 Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_update_menu_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid UpdateMenuHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original UpdateMenuRefCon type.
             let Some((callback, refcon)) = (unsafe { (refcon as *mut (UpdateMenuHook<P, T>, T)).as_mut() })
             else {
                 return Error::Generic.into();
@@ -199,9 +220,15 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
+                // SAFETY: Cast plugin_refcon to mutable reference to Global type.
+                // Detailed explanation: (1) plugin_refcon is non-null as checked above, (2) pointer was originally created from valid P instance by AE SDK, (3) lifetime is bounded by this callback invocation which AE guarantees doesn't outlive the plugin.
+                // Would be UB if: plugin_refcon pointed to freed memory, was misaligned, or was accessed concurrently from another thread.
                 Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_death_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid DeathHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original DeathRefcon type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (DeathHook<P, T>, T)) };
             match cb(global, refcon) {
                 Ok(_) => Error::None,
@@ -238,10 +265,19 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
+                // SAFETY: Cast plugin_refcon to mutable reference to Global type.
+                // Detailed explanation: (1) plugin_refcon is non-null as checked above, (2) pointer was originally created from valid P instance by AE SDK, (3) lifetime is bounded by this callback invocation which AE guarantees doesn't outlive the plugin.
+                // Would be UB if: plugin_refcon pointed to freed memory, was misaligned, or was accessed concurrently from another thread.
                 Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_version_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid VersionHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original VersionRefCon type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (VersionHook<P, T>, T)) };
+            // SAFETY: Dereference and cast pf_version_p to mutable reference to u32.
+            // Detailed explanation: (1) pf_version_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for reads/writes as provided by AE caller, (3) A_u_long and u32 have compatible representations on target platforms.
+            // Would be UB if: pf_version_p was null, pointed to invalid memory, or A_u_long size differs from u32 on the platform.
             let pf_version = unsafe { &mut (*pf_version_p as u32) };
 
             match cb(global, refcon, pf_version) {
@@ -283,9 +319,15 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
+                // SAFETY: Cast plugin_refcon to mutable reference to Global type.
+                // Detailed explanation: (1) plugin_refcon is non-null as checked above, (2) pointer was originally created from valid P instance by AE SDK, (3) lifetime is bounded by this callback invocation which AE guarantees doesn't outlive the plugin.
+                // Would be UB if: plugin_refcon pointed to freed memory, was misaligned, or was accessed concurrently from another thread.
                 Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_about_string_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid AboutStringHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original AboutString type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (AboutStringHook<P, T>, T)) };
 
             match cb(global, refcon, &mut []) {
@@ -322,9 +364,15 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
+                // SAFETY: Cast plugin_refcon to mutable reference to Global type.
+                // Detailed explanation: (1) plugin_refcon is non-null as checked above, (2) pointer was originally created from valid P instance by AE SDK, (3) lifetime is bounded by this callback invocation which AE guarantees doesn't outlive the plugin.
+                // Would be UB if: plugin_refcon pointed to freed memory, was misaligned, or was accessed concurrently from another thread.
                 Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_about_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid AboutHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original About type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (AboutHook<P, T>, T)) };
 
             match cb(global, refcon) {
@@ -362,10 +410,19 @@ impl RegisterSuite {
             let global = if plugin_refcon.is_null() {
                 None
             } else {
+                // SAFETY: Cast plugin_refcon to mutable reference to Global type.
+                // Detailed explanation: (1) plugin_refcon is non-null as checked above, (2) pointer was originally created from valid P instance by AE SDK, (3) lifetime is bounded by this callback invocation which AE guarantees doesn't outlive the plugin.
+                // Would be UB if: plugin_refcon pointed to freed memory, was misaligned, or was accessed concurrently from another thread.
                 Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_idle_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid IdleHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original IdleRefCon type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (IdleHook<P, T>, T)) };
+            // SAFETY: Dereference max_sleep_p to mutable reference to A_long.
+            // Detailed explanation: (1) max_sleep_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for reads/writes as provided by AE caller, (3) lifetime is bounded by this callback invocation.
+            // Would be UB if: max_sleep_p was null, pointed to invalid memory, or was already freed.
             let max_sleep = unsafe { &mut (*max_sleep_p) };
 
             match cb(global, refcon, max_sleep) {
@@ -451,6 +508,9 @@ impl RegisterNonAegpSuite {
             already_handled: ae_sys::A_Boolean,
             handled_p: *mut ae_sys::A_Boolean,
         ) -> ae_sys::A_Err {
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_command_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid NonAegpCommandHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original RefCon type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpCommandHook<T>, T)) };
             let already_handled_bool = already_handled != 0;
 
@@ -460,14 +520,23 @@ impl RegisterNonAegpSuite {
 
             match res {
                 Ok(CommandHookStatus::Handled) => {
+                    // SAFETY: Write handled status to AE output pointer.
+                    // Detailed explanation: (1) handled_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for writes as provided by AE caller, (3) writing boolean value (1) is valid for A_Boolean type.
+                    // Would be UB if: handled_p was null, pointed to read-only memory, or was already freed.
                     unsafe { *handled_p = 1; }
                     Error::None
                 }
                 Ok(CommandHookStatus::Unhandled) => {
+                    // SAFETY: Write unhandled status to AE output pointer.
+                    // Detailed explanation: (1) handled_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for writes as provided by AE caller, (3) writing boolean value (0) is valid for A_Boolean type.
+                    // Would be UB if: handled_p was null, pointed to read-only memory, or was already freed.
                     unsafe { *handled_p = 0; }
                     Error::None
                 }
                 Err(e) => {
+                    // SAFETY: Write error status to AE output pointer.
+                    // Detailed explanation: (1) handled_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for writes as provided by AE caller, (3) writing boolean value (0) is valid for A_Boolean type.
+                    // Would be UB if: handled_p was null, pointed to read-only memory, or was already freed.
                     unsafe { *handled_p = 0; }
                     e
                 }
@@ -500,6 +569,9 @@ impl RegisterNonAegpSuite {
             refcon: AEGP_UpdateMenuRefcon,
             window_type: ae_sys::AEGP_WindowType,
         ) -> sys::PF_Err {
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_update_menu_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid NonAegpUpdateMenuHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original UpdateMenuRefCon type.
             let (callback, refcon) = unsafe { &mut *(refcon as *mut (NonAegpUpdateMenuHook<T>, T)) };
 
             match callback(refcon, window_type.into()) {
@@ -531,6 +603,9 @@ impl RegisterNonAegpSuite {
             _: AEGP_GlobalRefcon,
             refcon: AEGP_DeathRefcon,
         ) -> sys::PF_Err {
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_death_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid NonAegpDeathHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original DeathRefcon type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpDeathHook<T>, T)) };
             match cb(refcon) {
                 Ok(_) => Error::None,
@@ -565,7 +640,13 @@ impl RegisterNonAegpSuite {
                 "The after effects documentation said version hook should never be called!"
             );
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_version_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid NonAegpVersionHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original VersionRefCon type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpVersionHook<T>, T)) };
+            // SAFETY: Dereference and cast pf_version_p to mutable reference to u32.
+            // Detailed explanation: (1) pf_version_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for reads/writes as provided by AE caller, (3) A_u_long and u32 have compatible representations on target platforms.
+            // Would be UB if: pf_version_p was null, pointed to invalid memory, or A_u_long size differs from u32 on the platform.
             let pf_version = unsafe { &mut (*pf_version_p as u32) };
 
             match cb(refcon, pf_version) {
@@ -605,6 +686,9 @@ impl RegisterNonAegpSuite {
                 "The after effects documentation said about string hook should never be called!"
             );
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_about_string_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid NonAegpAboutStringHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original AboutString type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpAboutStringHook<T>, T)) };
 
             match cb(refcon, &mut []) {
@@ -639,6 +723,9 @@ impl RegisterNonAegpSuite {
         ) -> ae_sys::A_Err {
             log::error!("The after effects documentation said about hook should never be called!");
 
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_about_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid NonAegpAboutHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original About type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpAboutHook<T>, T)) };
 
             match cb(refcon) {
@@ -673,7 +760,13 @@ impl RegisterNonAegpSuite {
             refcon: ae_sys::AEGP_IdleRefcon,
             max_sleep_p: *mut ae_sys::A_long,
         ) -> ae_sys::A_Err {
+            // SAFETY: Cast refcon to mutable reference to tuple containing callback and user data.
+            // Detailed explanation: (1) refcon was created via Box::into_raw in register_idle_hook, (2) pointer ownership is transferred to AE which passes it back unmodified, (3) tuple contains valid NonAegpIdleHook and RefCon types.
+            // Would be UB if: refcon was null, pointed to freed/invalid memory, or type T didn't match the original IdleRefCon type.
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpIdleHook<T>, T)) };
+            // SAFETY: Dereference max_sleep_p to mutable reference to A_long.
+            // Detailed explanation: (1) max_sleep_p is guaranteed non-null by AE SDK contract, (2) pointer is valid for reads/writes as provided by AE caller, (3) lifetime is bounded by this callback invocation.
+            // Would be UB if: max_sleep_p was null, pointed to invalid memory, or was already freed.
             let max_sleep = unsafe { &mut (*max_sleep_p) };
 
             match cb(refcon, max_sleep) {

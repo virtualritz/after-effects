@@ -29,7 +29,17 @@ impl ChannelSuite {
     /// You will use the channelRef in all subsequent calls
     pub fn layer_channel_indexed_ref_and_desc(&self, effect_ref: impl AsPtr<PF_ProgPtr>, param_index: i32, channel_index: i32) -> Result<Option<(PF_ChannelRef, PF_ChannelDesc)>, Error> {
         let mut found: PF_Boolean  = 0;
+        // SAFETY: Zero-initializing PF_ChannelRef for FFI call.
+        // Detailed explanation: (1) PF_ChannelRef is an opaque FFI type from the Adobe SDK that is valid when zero-initialized,
+        // (2) the value will be fully initialized by the subsequent FFI call to PF_GetLayerChannelIndexedRefAndDesc before use,
+        // (3) this is a standard pattern for out-parameters in the Adobe After Effects SDK.
+        // Would be UB if: PF_ChannelRef required non-zero bit patterns for validity, but as an opaque handle type it does not.
         let mut channel_ref = unsafe { std::mem::zeroed() };
+        // SAFETY: Zero-initializing PF_ChannelDesc for FFI call.
+        // Detailed explanation: (1) PF_ChannelDesc is a C-compatible struct from the Adobe SDK,
+        // (2) the struct contains only primitive types and pointers that are valid when zero-initialized,
+        // (3) the value will be fully initialized by the subsequent FFI call before being returned to the caller.
+        // Would be UB if: PF_ChannelDesc contained types with validity invariants that exclude all-zeros (e.g., NonNull, bool with invalid bit pattern), but it contains only C-compatible primitives.
         let mut channel_desc = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, PF_GetLayerChannelIndexedRefAndDesc, effect_ref.as_ptr(), param_index, channel_index, &mut found, &mut channel_ref, &mut channel_desc)?;
         if found == 1 {
@@ -42,7 +52,17 @@ impl ChannelSuite {
     /// Retrieves an auxiliary channel by type.
     pub fn layer_channel_typed_ref_and_desc(&self, effect_ref: impl AsPtr<PF_ProgPtr>, param_index: i32, channel_type: ChannelType) -> Result<Option<(PF_ChannelRef, PF_ChannelDesc)>, Error> {
         let mut found: PF_Boolean  = 0;
+        // SAFETY: Zero-initializing PF_ChannelRef for FFI call.
+        // Detailed explanation: (1) PF_ChannelRef is an opaque FFI type from the Adobe SDK that is valid when zero-initialized,
+        // (2) the value will be fully initialized by the subsequent FFI call to PF_GetLayerChannelTypedRefAndDesc before use,
+        // (3) this is a standard pattern for out-parameters in the Adobe After Effects SDK.
+        // Would be UB if: PF_ChannelRef required non-zero bit patterns for validity, but as an opaque handle type it does not.
         let mut channel_ref = unsafe { std::mem::zeroed() };
+        // SAFETY: Zero-initializing PF_ChannelDesc for FFI call.
+        // Detailed explanation: (1) PF_ChannelDesc is a C-compatible struct from the Adobe SDK,
+        // (2) the struct contains only primitive types and pointers that are valid when zero-initialized,
+        // (3) the value will be fully initialized by the subsequent FFI call before being returned to the caller.
+        // Would be UB if: PF_ChannelDesc contained types with validity invariants that exclude all-zeros (e.g., NonNull, bool with invalid bit pattern), but it contains only C-compatible primitives.
         let mut channel_desc = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, PF_GetLayerChannelTypedRefAndDesc, effect_ref.as_ptr(), param_index, channel_type.into(), &mut found, &mut channel_ref, &mut channel_desc)?;
         if found == 1 {
@@ -191,15 +211,65 @@ impl ChannelChunk {
         }
         let offset = row as isize * self.0.row_bytesL as isize;
         match self.0.data_type {
+            // SAFETY: Computing byte offset into channel data buffer for f32 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_FLOAT         => ChannelDataType::Float(      unsafe { (self.0.dataPV as *mut f32).byte_offset(offset) }),
+            // SAFETY: Computing byte offset into channel data buffer for f64 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_DOUBLE        => ChannelDataType::Double(     unsafe { (self.0.dataPV as *mut f64).byte_offset(offset) }),
+            // SAFETY: Computing byte offset into channel data buffer for i32 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_LONG          => ChannelDataType::Long(       unsafe { (self.0.dataPV as *mut i32).byte_offset(offset) }),
+            // SAFETY: Computing byte offset into channel data buffer for i16 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_SHORT         => ChannelDataType::Short(      unsafe { (self.0.dataPV as *mut i16).byte_offset(offset) }),
+            // SAFETY: Computing byte offset into channel data buffer for fixed-point i32 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_FIXED_16_16   => ChannelDataType::Fixed16_16( unsafe { (self.0.dataPV as *mut i32).byte_offset(offset) }),
+            // SAFETY: Computing byte offset into channel data buffer for i8 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_CHAR          => ChannelDataType::Char(       unsafe { (self.0.dataPV as *mut i8 ).byte_offset(offset) }),
+            // SAFETY: Computing byte offset into channel data buffer for u8 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_U_BYTE        => ChannelDataType::UByte(      unsafe { (self.0.dataPV as *mut u8 ).byte_offset(offset) }),
+            // SAFETY: Computing byte offset into channel data buffer for u16 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_U_SHORT       => ChannelDataType::UShort(     unsafe { (self.0.dataPV as *mut u16).byte_offset(offset) }),
+            // SAFETY: Computing byte offset into channel data buffer for fixed-point u32 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_U_FIXED_16_16 => ChannelDataType::UFixed16_16(unsafe { (self.0.dataPV as *mut u32).byte_offset(offset) }),
+            // SAFETY: Computing byte offset into channel data buffer for RGB u8 type.
+            // Detailed explanation: (1) row bounds are validated above (0 <= row < heightL),
+            // (2) offset is computed using row_bytesL which defines the stride per scanline provided by Adobe SDK,
+            // (3) dataPV is guaranteed valid by the SDK after successful checkout via PF_CheckoutLayerChannel.
+            // Would be UB if: row validation was skipped, row_bytesL was incorrect, or dataPV was not properly initialized by the SDK.
             PF_DATATYPE_RGB           => ChannelDataType::Rgb(        unsafe { (self.0.dataPV as *mut u8 ).byte_offset(offset) }),
             _ => unreachable!(),
         }
@@ -215,15 +285,65 @@ impl ChannelChunk {
         let row_offset = row as isize * self.0.row_bytesL as isize;
         let col_offset = col as isize * self.0.dimensionL as isize;
         match self.0.data_type {
+            // SAFETY: Computing row and column offset into channel data buffer for f32 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_FLOAT         => ChannelDataType::Float(      unsafe { (self.0.dataPV as *mut f32).byte_offset(row_offset).offset(col_offset) }),
+            // SAFETY: Computing row and column offset into channel data buffer for f64 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_DOUBLE        => ChannelDataType::Double(     unsafe { (self.0.dataPV as *mut f64).byte_offset(row_offset).offset(col_offset) }),
+            // SAFETY: Computing row and column offset into channel data buffer for i32 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_LONG          => ChannelDataType::Long(       unsafe { (self.0.dataPV as *mut i32).byte_offset(row_offset).offset(col_offset) }),
+            // SAFETY: Computing row and column offset into channel data buffer for i16 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_SHORT         => ChannelDataType::Short(      unsafe { (self.0.dataPV as *mut i16).byte_offset(row_offset).offset(col_offset) }),
+            // SAFETY: Computing row and column offset into channel data buffer for fixed-point i32 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_FIXED_16_16   => ChannelDataType::Fixed16_16( unsafe { (self.0.dataPV as *mut i32).byte_offset(row_offset).offset(col_offset) }),
+            // SAFETY: Computing row and column offset into channel data buffer for i8 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_CHAR          => ChannelDataType::Char(       unsafe { (self.0.dataPV as *mut i8 ).byte_offset(row_offset).offset(col_offset) }),
+            // SAFETY: Computing row and column offset into channel data buffer for u8 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_U_BYTE        => ChannelDataType::UByte(      unsafe { (self.0.dataPV as *mut u8 ).byte_offset(row_offset).offset(col_offset) }),
+            // SAFETY: Computing row and column offset into channel data buffer for u16 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_U_SHORT       => ChannelDataType::UShort(     unsafe { (self.0.dataPV as *mut u16).byte_offset(row_offset).offset(col_offset) }),
+            // SAFETY: Computing row and column offset into channel data buffer for fixed-point u32 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_U_FIXED_16_16 => ChannelDataType::UFixed16_16(unsafe { (self.0.dataPV as *mut u32).byte_offset(row_offset).offset(col_offset) }),
+            // SAFETY: Computing row and column offset into channel data buffer for RGB u8 type.
+            // Detailed explanation: (1) row bounds validated above (0 <= row < heightL) and col bounds (0 <= col < widthL),
+            // (2) row_offset computed using row_bytesL stride per scanline, col_offset using dimensionL (planes per pixel),
+            // (3) dataPV guaranteed valid by Adobe SDK after successful PF_CheckoutLayerChannel call.
+            // Would be UB if: bounds validation was skipped, row_bytesL/dimensionL were incorrect, or the combined offset exceeded allocated buffer size.
             PF_DATATYPE_RGB           => ChannelDataType::Rgb(        unsafe { (self.0.dataPV as *mut u8 ).byte_offset(row_offset).offset(col_offset) }),
             _ => unreachable!(),
         }
