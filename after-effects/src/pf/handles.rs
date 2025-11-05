@@ -22,7 +22,7 @@ impl<'a, T> HandleLock<'a, T> {
         }
     }
 
-    pub fn as_ref_mut(&self) -> Result<&'a mut T, Error> {
+    pub fn as_ref_mut(&mut self) -> Result<&mut T, Error> {
         if self.ptr.is_null() {
             Err(Error::InvalidIndex)
         } else {
