@@ -20,9 +20,10 @@ The crate is functional and demonstrates good design patterns, but has significa
 
 ## 1. Critical Issues 🔴
 
-### 1.1 Typo in Error Message (lib.rs:184)
+### 1.1 Typo in Error Message (lib.rs:184) ✅ FIXED
 **Severity:** Low
 **File:** `after-effects/src/lib.rs:184`
+**Fixed in:** [`0bcc815`](https://github.com/virtualritz/after-effects/commit/0bcc815)
 
 ```rust
 Error::MissingSuite => "Could no aquire suite.",
@@ -32,11 +33,14 @@ Error::MissingSuite => "Could no aquire suite.",
 
 **Impact:** User-facing error message quality
 
+**Resolution:** Changed to "Could not acquire suite."
+
 ---
 
-### 1.2 Potential Null Pointer Dereference in `Handle::set()` (pf/handles.rs:112-122)
+### 1.2 Potential Null Pointer Dereference in `Handle::set()` (pf/handles.rs:112-122) ✅ FIXED
 **Severity:** Medium
 **File:** `after-effects/src/pf/handles.rs:112-122`
+**Fixed in:** [`3da59ad`](https://github.com/virtualritz/after-effects/commit/3da59ad)
 
 ```rust
 pub fn set(&mut self, value: T) {
@@ -73,9 +77,10 @@ pub fn set(&mut self, value: T) -> Result<(), Error> {
 
 ---
 
-### 1.3 Inconsistent Null Checks in `Layer::fill()` and `fill16()` (pf/layer.rs:134-149)
+### 1.3 Inconsistent Null Checks in `Layer::fill()` and `fill16()` (pf/layer.rs:134-149) ✅ FIXED
 **Severity:** Medium
 **File:** `after-effects/src/pf/layer.rs:134-149`
+**Fixed in:** [`4d946cc`](https://github.com/virtualritz/after-effects/commit/4d946cc)
 
 ```rust
 // line 134
@@ -95,9 +100,10 @@ if self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != ... } {
 
 ---
 
-### 1.4 Missing Lifetime Safety in `HandleLock::as_ref_mut()` (pf/handles.rs:25-31)
+### 1.4 Missing Lifetime Safety in `HandleLock::as_ref_mut()` (pf/handles.rs:25-31) ✅ FIXED
 **Severity:** High
 **File:** `after-effects/src/pf/handles.rs:25-31`
+**Fixed in:** [`0d1a711`](https://github.com/virtualritz/after-effects/commit/0d1a711)
 
 ```rust
 pub fn as_ref_mut(&self) -> Result<&'a mut T, Error> {
@@ -124,9 +130,10 @@ pub fn as_ref_mut(&mut self) -> Result<&mut T, Error> {
 
 ---
 
-### 1.5 Race Condition in Cross-Thread Type (cross_thread_type.rs)
+### 1.5 Race Condition in Cross-Thread Type (cross_thread_type.rs) ✅ FIXED
 **Severity:** Medium
 **File:** `after-effects/src/cross_thread_type.rs:105-109`
+**Fixed in:** [`5786096`](https://github.com/virtualritz/after-effects/commit/5786096)
 
 ```rust
 Field::Id => {
@@ -146,9 +153,10 @@ Field::Id => {
 
 ## 2. Memory Safety & Unsafe Code Issues ⚠️
 
-### 2.1 Extensive Use of `unreachable!()` with `unwrap_or_else`
+### 2.1 Extensive Use of `unreachable!()` with `unwrap_or_else` ✅ FIXED
 
 **Files:** `macros.rs:6`, `macros.rs:26`, `macros.rs:38`
+**Fixed in:** [`d49b316`](https://github.com/virtualritz/after-effects/commit/d49b316)
 
 ```rust
 let aquire_suite_func = (*($pica)).AcquireSuite.unwrap_or_else(|| unreachable!());
@@ -220,9 +228,10 @@ impl<'a, T: 'a> Drop for Handle<'a, T> {
 
 ---
 
-### 3.2 Non-Idiomatic `Into<T>` implementations
+### 3.2 Non-Idiomatic `Into<T>` implementations ✅ FIXED
 
 **File:** `macros.rs:585-589`
+**Fixed in:** [`23f1f86`](https://github.com/virtualritz/after-effects/commit/23f1f86)
 
 ```rust
 impl Into<$name> for $handle_type {
@@ -278,7 +287,7 @@ Found **11 FIXME comments** that need addressing:
 
 1. **lib.rs:1** - "make ALL the functions below return Result-wrapped values"
 2. **lib.rs:73** - "Is this really necessary? Check if the pointer is always the same"
-3. **lib.rs:215** - "uncomment this once TryReserve() becomes stable" (NOTE: This is already stable since Rust 1.57!)
+3. **lib.rs:215** - ✅ FIXED [`ca8aa58`](https://github.com/virtualritz/after-effects/commit/ca8aa58) - "uncomment this once TryReserve() becomes stable" (NOTE: This is already stable since Rust 1.57!)
 4. **lib.rs:409** - "is it worth going the lossless route at all???"
 5. **pr.rs:30** - "do we own this memory???!"
 6. **pr.rs:47** - "wrap this nicely"
@@ -622,9 +631,10 @@ impl Clone for $suite_pretty_name {
 
 ## 11. Security Considerations 🔒
 
-### 11.1 Unchecked String Copies
+### 11.1 Unchecked String Copies ✅ FIXED
 
 **File:** `macros.rs:350-352`
+**Fixed in:** [`664f4b7`](https://github.com/virtualritz/after-effects/commit/664f4b7)
 
 ```rust
 pub fn [<set_ $name>](&mut self, v: &str) -> &mut Self {
@@ -720,23 +730,23 @@ Including pre-generated bindings (965KB+) is good for ergonomics but:
 
 ### High Priority (Fix for 0.4.0)
 
-1. ✅ Fix null pointer dereference in `Handle::set()` (pf/handles.rs:112)
-2. ✅ Fix inconsistent null check in `Layer::fill16()` (pf/layer.rs:143)
-3. ✅ Fix lifetime safety issue in `HandleLock::as_ref_mut()` (pf/handles.rs:25)
-4. ✅ Replace `unreachable!()` with proper error handling
-5. ✅ Add safety comments to all `unsafe` blocks
-6. ✅ Fix race condition in cross-thread type deserialization
-7. ✅ Add basic test suite (at least 50% coverage of core types)
+1. ✅ **COMPLETED** Fix null pointer dereference in `Handle::set()` (pf/handles.rs:112) - [`3da59ad`](https://github.com/virtualritz/after-effects/commit/3da59ad)
+2. ✅ **COMPLETED** Fix inconsistent null check in `Layer::fill16()` (pf/layer.rs:143) - [`4d946cc`](https://github.com/virtualritz/after-effects/commit/4d946cc)
+3. ✅ **COMPLETED** Fix lifetime safety issue in `HandleLock::as_ref_mut()` (pf/handles.rs:25) - [`0d1a711`](https://github.com/virtualritz/after-effects/commit/0d1a711)
+4. ✅ **COMPLETED** Replace `unreachable!()` with proper error handling - [`d49b316`](https://github.com/virtualritz/after-effects/commit/d49b316)
+5. 🔲 **TODO** Add safety comments to all `unsafe` blocks (455 blocks need documentation)
+6. ✅ **COMPLETED** Fix race condition in cross-thread type deserialization - [`5786096`](https://github.com/virtualritz/after-effects/commit/5786096)
+7. 🔲 **TODO** Add basic test suite (at least 50% coverage of core types)
 
 ### Medium Priority (Fix for 0.5.0)
 
-1. Resolve all FIXME comments or document decisions
-2. Add comprehensive documentation to public APIs
-3. Implement `From` instead of `Into` for conversions
-4. Fix `Error::source()` implementation
-5. Add CI/CD with clippy, fmt, and tests
-6. Audit and reduce `as _` casts
-7. Add error context (consider `anyhow`/`color-eyre`)
+1. 🔲 **TODO** Resolve remaining FIXME comments or document decisions (10 remaining)
+2. 🔲 **TODO** Add comprehensive documentation to public APIs
+3. ✅ **COMPLETED** Implement `From` instead of `Into` for conversions - [`23f1f86`](https://github.com/virtualritz/after-effects/commit/23f1f86)
+4. ✅ **COMPLETED** Fix `Error::source()` implementation - [`94f1200`](https://github.com/virtualritz/after-effects/commit/94f1200)
+5. 🔲 **TODO** Add CI/CD with clippy, fmt, and tests
+6. 🔲 **TODO** Audit and reduce `as _` casts
+7. 🔲 **TODO** Add error context (consider `anyhow`/`color-eyre`)
 
 ### Low Priority (Consider for 1.0)
 
