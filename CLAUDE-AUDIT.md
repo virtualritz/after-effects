@@ -17,7 +17,7 @@ All critical bugs and undefined behavior issues have been fixed:
 8. ✅ Non-idiomatic Into/From implementations - [`23f1f86`](https://github.com/virtualritz/after-effects/commit/23f1f86)
 9. ✅ Incorrect Error::source() implementation - [`94f1200`](https://github.com/virtualritz/after-effects/commit/94f1200)
 10. ✅ Outdated FIXME about TryReserve - [`ca8aa58`](https://github.com/virtualritz/after-effects/commit/ca8aa58)
-11. ✅ **Safety comments for unsafe blocks** - [`8f08177`](https://github.com/virtualritz/after-effects/commit/8f08177) - **53 comments added**
+11. ✅ **Safety comments for unsafe blocks** - [`8f08177`](https://github.com/virtualritz/after-effects/commit/8f08177) + [`29322bd`](https://github.com/virtualritz/after-effects/commit/29322bd) - **110+ comments added**
 12. ✅ **Documentation warnings enabled** - [`bc5bcb8`](https://github.com/virtualritz/after-effects/commit/bc5bcb8) - Added `#![warn(missing_docs)]`
 13. ✅ **Unit test suite created** - [`a0dbec6`](https://github.com/virtualritz/after-effects/commit/a0dbec6) - **30 tests, 270+ lines**
 
@@ -25,15 +25,21 @@ All critical bugs and undefined behavior issues have been fixed:
 
 ## 🔲 High Priority Remaining (1 item)
 
-### ✅ COMPLETED: Add Safety Comments to Unsafe Blocks - [`8f08177`](https://github.com/virtualritz/after-effects/commit/8f08177)
+### ✅ PARTIALLY COMPLETED: Add Safety Comments to Unsafe Blocks
 **Priority:** High
-**Status:** ✅ COMPLETED
+**Status:** 🟡 110+ comments added, ~400 more needed
 
 **Completed Work:**
-- ✅ Added 53 comprehensive safety comments across 3 critical files:
-  - `handles.rs`: 23 comments (Handle, FlatHandle, HandleLock)
-  - `layer.rs`: 12 comments (buffer access, pixel operations)
-  - `macros.rs`: 18 comments (FFI suite operations)
+
+**Batch 1** - [`8f08177`](https://github.com/virtualritz/after-effects/commit/8f08177) - 53 comments:
+- ✅ `handles.rs`: 23 comments (Handle, FlatHandle, HandleLock)
+- ✅ `layer.rs`: 12 comments (buffer access, pixel operations)
+- ✅ `macros.rs`: 18 comments (FFI suite operations)
+
+**Batch 2** - [`29322bd`](https://github.com/virtualritz/after-effects/commit/29322bd) - 57 comments:
+- ✅ `plugin_base.rs`: 18 comments (FFI entry points, lifecycle management)
+- ✅ `lib.rs`: 6 comments (core type operations)
+- ✅ `parameters.rs`: 33 comments (arbitrary data, platform-specific encoding)
 
 **Each comment documents:**
 - ✅ What invariants are being upheld
@@ -41,11 +47,10 @@ All critical bugs and undefined behavior issues have been fixed:
 - ✅ What would cause undefined behavior
 
 **Remaining Work:**
-- 🔲 Add safety comments to remaining ~400 unsafe blocks in other files
+- 🔲 Add safety comments to remaining ~350 unsafe blocks in other files
 - Files needing coverage:
   - `pf/suites/*.rs` (25 files with unsafe code)
   - `aegp/suites/*.rs` (30 files with unsafe code)
-  - `plugin_base.rs`
   - Other modules
 
 ---
@@ -411,23 +416,23 @@ Document Linux support limitations:
 
 ### Key Achievements
 ✅ **100% of critical bugs fixed** (10 bugs)
-✅ **100% of high-priority safety documentation** (53 comments in critical files)
+✅ **110+ safety comments added** (53 in batch 1 + 57 in batch 2)
 ✅ **100% of testable core types tested** (30 tests)
 ✅ **0 undefined behavior remaining** in audited code
 ✅ **0 race conditions remaining** in audited code
 
 ### Files Modified
 - Core library: 3 files (lib.rs, macros.rs, cross_thread_type.rs)
-- Critical modules: 3 files (handles.rs, layer.rs, parameters.rs)
+- Critical modules: 4 files (handles.rs, layer.rs, parameters.rs, plugin_base.rs)
 - Tests: 1 file (tests.rs - new)
 - Documentation: 2 files (AUDIT_REPORT.md, CLAUDE-AUDIT.md)
 
 ### Lines Changed
 - Code fixes: ~100 lines
-- Safety comments: ~420 lines
+- Safety comments: ~750 lines (batch 1: ~420, batch 2: ~330)
 - Tests: ~270 lines
 - Documentation: ~1,200 lines
-- **Total:** ~2,000 lines added/modified
+- **Total:** ~2,320 lines added/modified
 
 ---
 
