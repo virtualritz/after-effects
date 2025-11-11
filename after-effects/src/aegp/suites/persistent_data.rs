@@ -480,6 +480,12 @@ impl PersistentDataSuite {
             AEGP_GetPrefsDirectory -> AEGP_MemHandle
         )?;
 
+        // SAFETY: Creating UTF-16 string from After Effects memory handle.
+        // Detailed explanation: (1) wide_path is a valid AEGP_MemHandle returned by AEGP_GetPrefsDirectory containing a null-terminated UTF-16 string,
+        // (2) MemHandle::from_raw wraps the handle and lock() ensures exclusive access to the memory,
+        // (3) U16CString::from_ptr_str safely constructs a UTF-16 string by reading until null terminator,
+        // (4) the locked MemHandle keeps the memory valid during string construction and automatically unlocks/frees on drop.
+        // Would be UB if: the memory handle was invalid, the string wasn't null-terminated, or the pointer was accessed after MemHandle drop, but After Effects guarantees valid null-terminated UTF-16 strings and MemHandle manages lifetime correctly.
         Ok(unsafe {
             U16CString::from_ptr_str(MemHandle::<u16>::from_raw(wide_path)?.lock()?.as_ptr())
                 .to_string_lossy()

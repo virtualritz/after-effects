@@ -60,11 +60,18 @@ impl FootageSuite {
 
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
+        // SAFETY: Creating UTF-16 string from After Effects memory handle containing file path.
+        // Detailed explanation: (1) mem_handle is a valid AEGP_MemHandle returned by AEGP_GetFootagePath containing a null-terminated UTF-16 path string,
+        // (2) MemHandle::from_raw takes ownership of the handle and lock() provides exclusive access to prevent data races,
+        // (3) U16CString::from_ptr_str safely reads the UTF-16 string by iterating until the null terminator,
+        // (4) MemHandle's Drop implementation ensures the memory is returned to After Effects when it goes out of scope.
+        // Would be UB if: the handle was invalid, the path wasn't null-terminated, or memory was accessed after handle disposal, but After Effects guarantees valid null-terminated UTF-16 paths and MemHandle manages the lifecycle.
         Ok(unsafe {
             U16CString::from_ptr_str(
                 MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr(),
             ).to_string_lossy()
         })
+
     }
 
     /// Retrieves the footage signature of specified footage.

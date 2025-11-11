@@ -126,8 +126,14 @@ impl GPUDeviceSuite {
         let layer = call_suite_fn_single!(self, CreateGPUWorld -> *mut PF_EffectWorld, (*in_data.as_ptr()).effect_ref, device_index as _, width, height, pixel_aspect_ratio.into(), field_type.into(), pixel_format.into(), clear_pix as _)?;
 
         Ok(Layer::from_raw(layer, in_data, Some(|self_layer| {
+            // SAFETY: Dereferencing in_data_ptr to access effect_ref for GPU world disposal.
+            // Detailed explanation: (1) in_data_ptr is stored in Layer during construction and guaranteed valid for Layer's lifetime,
+            // (2) PF_InData is provided by After Effects and remains valid during effect processing,
+            // (3) effect_ref is initialized by After Effects before any plugin callbacks and required for GPU resource cleanup.
+            // Would be UB if: in_data_ptr was null or dangling, but Layer::from_raw captures and validates the pointer's lifetime.
             GPUDeviceSuite::new().unwrap().dispose_gpu_world(unsafe { (*self_layer.in_data_ptr).effect_ref }, self_layer.as_mut_ptr()).unwrap();
         })))
+
     }
 
     /// This will free this effect world. The effect world is no longer valid after this function is called.

@@ -61,6 +61,11 @@ impl PFInterfaceSuite {
     ///
     /// Returns a tuple containing: (matrix, dist_to_image_plane, image_plane_width, image_plane_height)
     pub fn effect_camera_matrix(&self, effect_ref: impl AsPtr<PF_ProgPtr>, time: Time) -> Result<(Matrix4, f64, i16, i16), Error> {
+        // SAFETY: Zero-initializing A_Matrix4 for Adobe SDK FFI out parameter.
+        // Detailed explanation: (1) A_Matrix4 is a plain-old-data struct containing f64 fields representing a 4x4 matrix,
+        // (2) zero-initialization produces a valid zero matrix that can be safely overwritten by AEGP_GetEffectCameraMatrix,
+        // (3) the Adobe SDK expects zero-initialized or uninitialized memory for out parameters which it will fully populate.
+        // Would be UB if: A_Matrix4 had non-trivial types or validity invariants, but it's a simple array of f64 values.
         let mut matrix: ae_sys::A_Matrix4 = unsafe { std::mem::zeroed() };
         let mut dist_to_image_plane: f64 = 0.0;
         let mut image_plane_width = 0;

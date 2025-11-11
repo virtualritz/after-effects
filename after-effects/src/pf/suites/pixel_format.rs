@@ -27,8 +27,14 @@ impl PixelFormatSuite {
     pub fn new_world_of_pixel_format(&self, in_data: impl AsPtr<*const PF_InData>, width: u32, height: u32, flags: pf::NewWorldFlags, pixel_format: pr::PixelFormat) -> Result<Layer, Error> {
         let layer = call_suite_fn_single!(self, NewWorldOfPixelFormat -> ae_sys::PF_EffectWorld, (*in_data.as_ptr()).effect_ref, width, height, flags.bits(), pixel_format.into())?;
         Ok(Layer::from_owned(layer, in_data, |self_layer| {
+            // SAFETY: Dereferencing in_data_ptr to access effect_ref for world disposal.
+            // Detailed explanation: (1) in_data_ptr is guaranteed valid for the Layer's lifetime as it's captured during Layer construction,
+            // (2) PF_InData is provided by Premiere and remains valid throughout the effect's execution context,
+            // (3) effect_ref is a required non-null field initialized by Premiere before invoking plugin code.
+            // Would be UB if: in_data_ptr was null or dangling, but Layer::from_owned ensures the pointer remains valid.
             PixelFormatSuite::new().unwrap().dispose_world(unsafe { (*self_layer.in_data_ptr).effect_ref }, self_layer.as_mut_ptr()).unwrap();
         }))
+
     }
 
     pub fn dispose_world(&self, effect_ref: impl AsPtr<PF_ProgPtr>, world: *mut ae_sys::PF_EffectWorld) -> Result<(), Error> {

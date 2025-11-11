@@ -259,15 +259,30 @@ impl Command {
             RawCommand::SequenceSetdown => Command::SequenceSetdown,
             RawCommand::DoDialog => Command::DoDialog,
             RawCommand::FrameSetup => Command::FrameSetup {
+                // SAFETY: Dereferencing params pointer and accessing union field for layer data.
+                // Detailed explanation: (1) params is a valid non-null pointer provided by AE SDK for FrameSetup command,
+                // (2) double dereference (*(*params)) is safe because AE SDK guarantees params points to a valid PF_ParamDef pointer,
+                // (3) union field u.ld is valid for FrameSetup selector per AE SDK specification which passes layer data in param[0].
+                // Would be UB if: params is null, points to invalid memory, or the union's active variant is not ld for this command.
                 in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, in_data_ptr, None) },
                 out_layer: Layer::from_raw(output, in_data_ptr, None),
             },
             RawCommand::Render => Command::Render {
+                // SAFETY: Dereferencing params pointer and accessing union field for layer data.
+                // Detailed explanation: (1) params is a valid non-null pointer provided by AE SDK for Render command,
+                // (2) double dereference (*(*params)) is safe because AE SDK guarantees params points to a valid PF_ParamDef pointer,
+                // (3) union field u.ld is valid for Render selector per AE SDK specification which passes input layer in param[0].
+                // Would be UB if: params is null, points to invalid memory, or the union's active variant is not ld for this command.
                 in_layer: unsafe { Layer::from_raw(&mut (*(*params)).u.ld, in_data_ptr, None) },
                 out_layer: Layer::from_raw(output, in_data_ptr, None),
             },
             RawCommand::FrameSetdown => Command::FrameSetdown,
             RawCommand::UserChangedParam => Command::UserChangedParam {
+                // SAFETY: Casting extra to specific struct type and dereferencing to extract param_index.
+                // Detailed explanation: (1) extra is a valid non-null c_void pointer provided by AE SDK for UserChangedParam command,
+                // (2) the cast to PF_UserChangedParamExtra is correct per AE SDK specification which passes this specific struct type for this selector,
+                // (3) dereferencing and accessing param_index field is safe as the struct layout matches the SDK definition.
+                // Would be UB if: extra is null, points to invalid memory, or points to a different struct type than PF_UserChangedParamExtra.
                 param_index: unsafe {
                     (*(extra as *mut ae_sys::PF_UserChangedParamExtra)).param_index as usize
                 },

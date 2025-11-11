@@ -127,6 +127,11 @@ impl PathDataSuite {
     pub fn path_get_name(&self, effect_ref: impl AsPtr<PF_ProgPtr>, unique_id: PF_PathID) -> Result<String, Error> {
         let mut name = [0; PF_MAX_PATH_NAME_LEN as usize + 1];
         call_suite_fn!(self, PF_PathGetName, effect_ref.as_ptr(), unique_id, name.as_mut_ptr())?;
+        // SAFETY: Creating CStr from null-terminated buffer filled by After Effects.
+        // Detailed explanation: (1) name buffer is properly sized (PF_MAX_PATH_NAME_LEN + 1) to hold the path name plus null terminator,
+        // (2) PF_PathGetName is guaranteed by Adobe SDK to write a null-terminated string into the buffer,
+        // (3) the buffer pointer is valid as it points to stack-allocated array that remains in scope.
+        // Would be UB if: PF_PathGetName failed to null-terminate the string or wrote beyond buffer bounds, but Adobe SDK guarantees proper null-termination.
         Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }.to_string_lossy().into_owned())
     }
 }

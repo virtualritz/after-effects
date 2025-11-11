@@ -80,11 +80,21 @@ impl MaskSuite {
     /// Retrieves the color of the specified mask.
     pub fn mask_color(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<pf::PixelF64, Error> {
         let color_val = call_suite_fn_single!(self, AEGP_GetMaskColor -> ae_sys::AEGP_ColorVal, mask.as_ptr())?;
+        // SAFETY: Transmuting AEGP_ColorVal to pf::PixelF64.
+        // Detailed explanation: (1) AEGP_ColorVal and pf::PixelF64 are both 4-field structs containing f64 values (alpha, red, green, blue),
+        // (2) both types have identical memory layouts with the same field order and alignment,
+        // (3) transmuting between these types preserves the semantic meaning of color components.
+        // Would be UB if: the types had different sizes, layouts, or alignment, but both are repr(C) structs with four f64 fields.
         Ok(unsafe { std::mem::transmute(color_val) })
     }
 
     /// Sets the color of the specified mask.
     pub fn set_mask_color(&self, mask: impl AsPtr<AEGP_MaskRefH>, color: pf::PixelF64) -> Result<(), Error> {
+        // SAFETY: Transmuting reference to pf::PixelF64 into reference to AEGP_ColorVal.
+        // Detailed explanation: (1) pf::PixelF64 and AEGP_ColorVal have identical memory layouts as both are repr(C) structs with four f64 fields,
+        // (2) transmuting a reference preserves the lifetime and validity of the underlying data,
+        // (3) the Adobe SDK expects a pointer to AEGP_ColorVal which is ABI-compatible with pf::PixelF64.
+        // Would be UB if: the memory layouts differed or if the reference was invalid, but both types are layout-compatible and the reference is valid for the function call duration.
         call_suite_fn!(self, AEGP_SetMaskColor, mask.as_ptr(), std::mem::transmute(&color))
     }
 

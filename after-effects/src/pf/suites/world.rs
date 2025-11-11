@@ -20,8 +20,14 @@ impl WorldSuite {
     pub fn new_world(&self, in_data: impl AsPtr<*const ae_sys::PF_InData>, width: i32, height: i32, clear_pix: bool, pixel_format: PixelFormat) -> Result<Layer, Error> {
         let layer = call_suite_fn_single!(self, PF_NewWorld -> ae_sys::PF_EffectWorld, (*in_data.as_ptr()).effect_ref, width, height, clear_pix as _, pixel_format.into())?;
         Ok(Layer::from_owned(layer, in_data, |self_layer| {
+            // SAFETY: Dereferencing in_data_ptr to access effect_ref for disposal.
+            // Detailed explanation: (1) in_data_ptr is guaranteed valid for the lifetime of the Layer as it's stored during Layer creation,
+            // (2) PF_InData is provided by After Effects and remains valid throughout the effect's lifetime,
+            // (3) effect_ref is a required field that After Effects always initializes before passing PF_InData to plugins.
+            // Would be UB if: in_data_ptr was null, dangling, or pointed to uninitialized memory, but Layer construction ensures validity.
             WorldSuite::new().unwrap().dispose_world(unsafe { (*self_layer.in_data_ptr).effect_ref }, self_layer.as_mut_ptr()).unwrap();
         }))
+
     }
 
     /// Dispose of an [`Layer`].

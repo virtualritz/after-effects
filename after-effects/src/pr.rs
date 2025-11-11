@@ -19,17 +19,33 @@ impl InDataHandle {
 
     #[inline]
     pub fn pica_basic_handle(self) -> crate::PicaBasicSuiteHandle {
+        // SAFETY: Dereferencing in_data_ptr to access pica_basicP suite pointer.
+        // Detailed explanation: (1) in_data_ptr is guaranteed valid when InDataHandle is constructed via from_raw,
+        // (2) the pointer lifetime is tied to the plugin call context managed by the AE SDK,
+        // (3) pica_basicP field is always initialized by AE SDK before plugin entry point is called.
+        // Would be UB if: in_data_ptr is null, points to deallocated memory, or used after the SDK context is invalidated.
         crate::PicaBasicSuiteHandle::from_raw(unsafe { (*self.in_data_ptr).pica_basicP })
     }
 
     #[inline]
     pub fn plugin_id(self) -> i32 {
+        // SAFETY: Dereferencing in_data_ptr to access aegp_plug_id field.
+        // Detailed explanation: (1) in_data_ptr is guaranteed valid when InDataHandle is constructed via from_raw,
+        // (2) the pointer lifetime is tied to the plugin call context managed by the AE SDK,
+        // (3) aegp_plug_id is a simple i32 field always initialized by AE SDK for plugin identification.
+        // Would be UB if: in_data_ptr is null, points to deallocated memory, or used after the SDK context is invalidated.
         unsafe { (*self.in_data_ptr).aegp_plug_id }
     }
 
     // Fixme: do we own this memory???!
     #[inline]
     pub fn reference_context_ptr(self) -> Box<std::os::raw::c_void> {
+        // SAFETY: Creating Box from raw pointer, claiming ownership of aegp_refconPV.
+        // Detailed explanation: (1) in_data_ptr is guaranteed valid when InDataHandle is constructed via from_raw,
+        // (2) dereferencing in_data_ptr to access aegp_refconPV field is safe within SDK context,
+        // (3) Box::from_raw assumes sole ownership and will deallocate on drop.
+        // Would be UB if: aegp_refconPV is null, already deallocated, not heap-allocated, or still owned/referenced by AE SDK.
+        // WARNING: The FIXME above indicates uncertainty about ownership semantics - this may cause double-free or use-after-free!
         unsafe { Box::<std::os::raw::c_void>::from_raw((*self.in_data_ptr).aegp_refconPV) }
     }
 }

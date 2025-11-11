@@ -15,11 +15,23 @@ pub struct OutData {
 
 impl AsRef<ae_sys::PF_OutData> for OutData {
     fn as_ref(&self) -> &ae_sys::PF_OutData {
+        // SAFETY: Dereferencing the raw pointer to create an immutable reference to PF_OutData.
+        // Detailed explanation: (1) self.ptr is guaranteed non-null by OutData::from_raw which asserts on construction,
+        // (2) the pointer is valid for the lifetime of the OutData wrapper as it's owned by After Effects and remains
+        // valid for the duration of the plugin callback, (3) no mutable aliasing occurs as this only creates shared references.
+        // Would be UB if: the pointer became null (prevented by constructor), the pointer was dangling (prevented by AE ownership),
+        // or if mutable references existed simultaneously (prevented by Rust's borrowing rules).
         unsafe { &*self.ptr }
     }
 }
 impl AsMut<ae_sys::PF_OutData> for OutData {
     fn as_mut(&mut self) -> &mut ae_sys::PF_OutData {
+        // SAFETY: Dereferencing the raw pointer to create a mutable reference to PF_OutData.
+        // Detailed explanation: (1) self.ptr is guaranteed non-null by OutData::from_raw which asserts on construction,
+        // (2) the pointer is valid and properly aligned for the lifetime of the OutData wrapper as it's owned by After Effects,
+        // (3) exclusive access is guaranteed by &mut self requirement, ensuring no other references exist.
+        // Would be UB if: the pointer became null (prevented by constructor), the pointer was dangling (prevented by AE ownership),
+        // or if other references (mutable or immutable) existed simultaneously (prevented by Rust's &mut borrow).
         unsafe { &mut *self.ptr }
     }
 }
@@ -70,6 +82,12 @@ impl OutData {
         //self.return_msg[0..buf.len()].copy_from_slice(unsafe { std::mem::transmute(buf.as_slice()) });
         let msg = msg.as_bytes();
         assert!(msg.len() < 256);
+        // SAFETY: Transmuting &[u8] to &[A_char] for FFI compatibility with After Effects SDK.
+        // Detailed explanation: (1) the transmute converts between byte slices where A_char is typically i8 or u8,
+        // (2) both types have the same size and alignment (single byte primitives), (3) the assert ensures the
+        // message fits within the 256-byte return_msg buffer defined by the AE SDK, (4) the slice length is preserved.
+        // Would be UB if: A_char and u8 had different sizes (impossible for char types), the buffer was too small
+        // (prevented by assert), or if the memory layout was incompatible (prevented by both being single-byte types).
         self.as_mut().return_msg[..msg.len()].copy_from_slice(unsafe { std::mem::transmute(msg) });
     }
 

@@ -37,6 +37,11 @@ impl PrStringSuite {
     /// * `Error::StringNotFound` - this string has not been allocated, or may have already been disposed
     /// * `Error::InvalidParms` - one of the params is invalid
     pub fn allocate_from_utf8(&self, string: &str) -> Result<PrSDKString, Error> {
+        // SAFETY: Zero-initializing PrSDKString for Adobe SDK FFI call.
+        // Detailed explanation: (1) PrSDKString is an opaque Adobe SDK type that is safe to zero-initialize as it's a handle/pointer type,
+        // (2) the zeroed value is immediately passed to AllocateFromUTF8 which will properly initialize it,
+        // (3) the Adobe SDK guarantees that zero-initialized handles are valid for use as out parameters.
+        // Would be UB if: PrSDKString had a non-zero invariant or required specific bit patterns, but Adobe SDK types are designed for zero-initialization.
         let mut out_sdk_string = unsafe { std::mem::zeroed() };
         let in_string = CString::new(string).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, AllocateFromUTF8, in_string.as_bytes_with_nul().as_ptr(), &mut out_sdk_string)?;
