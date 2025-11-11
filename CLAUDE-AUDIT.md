@@ -17,7 +17,7 @@ All critical bugs and undefined behavior issues have been fixed:
 8. ✅ Non-idiomatic Into/From implementations - [`23f1f86`](https://github.com/virtualritz/after-effects/commit/23f1f86)
 9. ✅ Incorrect Error::source() implementation - [`94f1200`](https://github.com/virtualritz/after-effects/commit/94f1200)
 10. ✅ Outdated FIXME about TryReserve - [`ca8aa58`](https://github.com/virtualritz/after-effects/commit/ca8aa58)
-11. ✅ **Safety comments for unsafe blocks** - [`8f08177`](https://github.com/virtualritz/after-effects/commit/8f08177) + [`29322bd`](https://github.com/virtualritz/after-effects/commit/29322bd) + [`acf1b3f`](https://github.com/virtualritz/after-effects/commit/acf1b3f) + [`bb95fa9`](https://github.com/virtualritz/after-effects/commit/bb95fa9) + [`1fdbb3e`](https://github.com/virtualritz/after-effects/commit/1fdbb3e) - **230 comments added**
+11. ✅ **Safety comments for unsafe blocks** - [`8f08177`](https://github.com/virtualritz/after-effects/commit/8f08177) + [`29322bd`](https://github.com/virtualritz/after-effects/commit/29322bd) + [`acf1b3f`](https://github.com/virtualritz/after-effects/commit/acf1b3f) + [`bb95fa9`](https://github.com/virtualritz/after-effects/commit/bb95fa9) + [`1fdbb3e`](https://github.com/virtualritz/after-effects/commit/1fdbb3e) + [`c858f32`](https://github.com/virtualritz/after-effects/commit/c858f32) - **333 comments added**
 12. ✅ **Documentation warnings enabled** - [`bc5bcb8`](https://github.com/virtualritz/after-effects/commit/bc5bcb8) - Added `#![warn(missing_docs)]`
 13. ✅ **Unit test suite created** - [`a0dbec6`](https://github.com/virtualritz/after-effects/commit/a0dbec6) - **30 tests, 270+ lines**
 
@@ -27,7 +27,7 @@ All critical bugs and undefined behavior issues have been fixed:
 
 ### ✅ PARTIALLY COMPLETED: Add Safety Comments to Unsafe Blocks
 **Priority:** High
-**Status:** 🟡 230 comments added, ~227 more needed
+**Status:** 🟡 333 comments added, ~124 more needed
 
 **Completed Work:**
 
@@ -62,17 +62,24 @@ All critical bugs and undefined behavior issues have been fixed:
 - ✅ `pf/suites/utility.rs`: 2 comments (zero-init for FFI out-parameters)
 - ✅ `pf/suites/app.rs`: 2 comments (type reinterpretation, zero-initialization)
 
+**Batch 6** - [`c858f32`](https://github.com/virtualritz/after-effects/commit/c858f32) - 103 comments:
+- ✅ `pf/util_callbacks.rs`: 31 comments (FFI utility callbacks, iterator patterns, memory handles)
+- ✅ `pf/in_data.rs`: 32 comments (field reads, enum/struct conversions, Box::from_raw frame data)
+- ✅ `pf/events.rs`: 27 comments (union field access with discriminants, FFI callbacks, matrix transmutes)
+- ✅ `pf/interact_callbacks.rs`: 13 comments (pointer derefs, FFI callbacks, checkout/checkin params)
+
 **Each comment documents:**
 - ✅ What invariants are being upheld
 - ✅ Why the operation is safe
 - ✅ What would cause undefined behavior
 
 **Remaining Work:**
-- 🔲 Add safety comments to remaining ~227 unsafe blocks in other suite files
+- 🔲 Add safety comments to remaining ~124 unsafe blocks in other files
 - Files still needing coverage:
-  - `pf/suites/*.rs` (17 files remaining)
-  - `aegp/suites/*.rs` (19 files remaining)
-  - Other modules
+  - `pf/*.rs`: gpu.rs (10), out_data.rs (4), external_dependencies.rs (3), command.rs (3)
+  - `pf/suites/*.rs`: world.rs (1), pixel_format.rs (1), path.rs (1), gpu_device.rs (1)
+  - `aegp/suites/*.rs`: pf_interface.rs (1), persistent_data.rs (1), mask.rs (1), footage.rs (1)
+  - Other modules: pr.rs (3), pr_string.rs (1)
 
 ---
 
@@ -437,7 +444,8 @@ Document Linux support limitations:
 
 ### Key Achievements
 ✅ **100% of critical bugs fixed** (10 bugs)
-✅ **230 safety comments added** (53 + 57 + 69 + 28 + 23 across 5 batches)
+✅ **333 safety comments added** (53 + 57 + 69 + 28 + 23 + 103 across 6 batches)
+✅ **73% of all unsafe blocks documented** (333 of ~457 total)
 ✅ **100% of testable core types tested** (30 tests)
 ✅ **0 undefined behavior remaining** in audited code
 ✅ **0 race conditions remaining** in audited code
@@ -445,18 +453,19 @@ Document Linux support limitations:
 ### Files Modified
 - Core library: 3 files (lib.rs, macros.rs, cross_thread_type.rs)
 - Critical modules: 4 files (handles.rs, layer.rs, parameters.rs, plugin_base.rs)
+- PF core: 4 files (util_callbacks.rs, in_data.rs, events.rs, interact_callbacks.rs)
 - AEGP suites: 10 files (register.rs, stream.rs, utility.rs, render.rs, color_settings.rs, memory.rs, effect.rs, item.rs, io_in.rs, project.rs)
 - PF suites: 5 files (channel.rs, color_callbacks.rs, custom_ui.rs, utility.rs, app.rs)
 - Tests: 1 file (tests.rs - new)
 - Documentation: 2 files (AUDIT_REPORT.md, CLAUDE-AUDIT.md)
-- **Total code files modified: 23**
+- **Total code files modified: 27**
 
 ### Lines Changed
 - Code fixes: ~100 lines
-- Safety comments: ~1,303 lines (batch 1: ~420, batch 2: ~330, batch 3: 255, batch 4: 123, batch 5: 175)
+- Safety comments: ~1,875 lines (batch 1: ~420, batch 2: ~330, batch 3: 255, batch 4: 123, batch 5: 175, batch 6: 572)
 - Tests: ~270 lines
 - Documentation: ~1,200 lines
-- **Total:** ~2,873 lines added/modified
+- **Total:** ~3,445 lines added/modified
 
 ---
 
