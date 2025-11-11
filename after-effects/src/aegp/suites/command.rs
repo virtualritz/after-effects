@@ -59,8 +59,14 @@ impl CommandSuite {
     /// Obtain a unique command identifier. Use the Register Suite to register a handler for the command.
     ///
     /// Note: On occasion After Effects will send command 0 (zero), so don't use that as part of your command handling logic.
-    pub fn get_unique_command(&self) -> Result<AEGP_Command, Error> {
+    pub fn unique_command(&self) -> Result<AEGP_Command, Error> {
         call_suite_fn_single!(self, AEGP_GetUniqueCommand -> ae_sys::AEGP_Command)
+    }
+
+    /// Deprecated: Use `unique_command()` instead.
+    #[deprecated(since = "0.4.0", note = "Use `unique_command()` instead")]
+    pub fn get_unique_command(&self) -> Result<AEGP_Command, Error> {
+        self.unique_command()
     }
 
     /// Set menu name of a command.

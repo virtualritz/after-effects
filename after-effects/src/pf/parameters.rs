@@ -1496,13 +1496,13 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     }
 
     #[inline(always)]
-    pub fn get(&self, type_: P) -> Result<ReadOnlyOwnership<'_, ParamDef<'p>>, Error> {
-        self.get_at(type_, None, None, None)
+    pub fn param(&self, type_: P) -> Result<ReadOnlyOwnership<'_, ParamDef<'p>>, Error> {
+        self.param_at(type_, None, None, None)
     }
 
     #[inline(always)]
-    pub fn get_mut(&mut self, type_: P) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
-        self.get_mut_at(type_, None, None, None)
+    pub fn param_mut(&mut self, type_: P) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
+        self.param_mut_at(type_, None, None, None)
     }
 
     #[inline(always)]
@@ -1510,7 +1510,7 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         self.checkout_at(type_, None, None, None)
     }
 
-    pub fn get_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<ReadOnlyOwnership<'_, ParamDef<'p>>, Error> {
+    pub fn param_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<ReadOnlyOwnership<'_, ParamDef<'p>>, Error> {
         if self.params.is_empty() || time.is_some() {
             match self.checkout_at(type_, time, time_step, time_scale) {
                 Ok(Ownership::Rust(param)) => Ok(ReadOnlyOwnership::Rust(param)),
@@ -1523,13 +1523,36 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
         }
     }
 
-    pub fn get_mut_at(&mut self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
+    pub fn param_mut_at(&mut self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
         if self.params.is_empty() || time.is_some() {
             self.checkout_at(type_, time, time_step, time_scale)
         } else {
             let index = self.index(type_).ok_or(Error::InvalidIndex)?;
             Ok(Ownership::AfterEffectsMut(self.params.get_mut(index).ok_or(Error::InvalidIndex)?))
         }
+    }
+
+    // Deprecated methods - kept for backward compatibility
+    #[deprecated(since = "0.4.0", note = "Use `param()` instead")]
+    #[inline(always)]
+    pub fn get(&self, type_: P) -> Result<ReadOnlyOwnership<'_, ParamDef<'p>>, Error> {
+        self.param(type_)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use `param_mut()` instead")]
+    #[inline(always)]
+    pub fn get_mut(&mut self, type_: P) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
+        self.param_mut(type_)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use `param_at()` instead")]
+    pub fn get_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<ReadOnlyOwnership<'_, ParamDef<'p>>, Error> {
+        self.param_at(type_, time, time_step, time_scale)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use `param_mut_at()` instead")]
+    pub fn get_mut_at(&mut self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<'_, ParamDef<'p>>, Error> {
+        self.param_mut_at(type_, time, time_step, time_scale)
     }
 
     pub fn checkout_at(&self, type_: P, time: Option<i32>, time_step: Option<i32>, time_scale: Option<u32>) -> Result<Ownership<'_, ParamDef<'p>>, Error> {

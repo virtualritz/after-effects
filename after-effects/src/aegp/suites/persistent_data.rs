@@ -131,7 +131,7 @@ impl PersistentDataSuite {
         buffer_to_string(out_data)
     }
 
-    pub fn get_data_handle<'a, T>(
+    pub fn data_handle<'a, T>(
         &self,
         plugin_id: PluginId,
         blob_handle: PersistentBlobHandle,
@@ -153,7 +153,7 @@ impl PersistentDataSuite {
     }
 
     /// Obtains the data located at a given section's value.
-    pub fn get_data(
+    pub fn data(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -184,7 +184,7 @@ impl PersistentDataSuite {
     ///
     /// Note: This interperets all stored strings as UTF-8. This is safe if you are retrieving
     /// strings stored from rust, which must be UTF-8.
-    pub fn get_string(
+    pub fn string(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -215,7 +215,7 @@ impl PersistentDataSuite {
         buffer_to_string(out_data)
     }
 
-    pub fn get_long(
+    pub fn long(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -235,7 +235,7 @@ impl PersistentDataSuite {
         )
     }
 
-    pub fn get_fp_long(
+    pub fn fp_long(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -255,7 +255,7 @@ impl PersistentDataSuite {
         )
     }
 
-    pub fn get_time(
+    pub fn time(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -281,7 +281,7 @@ impl PersistentDataSuite {
         .map(|t| t.into())
     }
 
-    pub fn get_argb(
+    pub fn argb(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -490,6 +490,87 @@ impl PersistentDataSuite {
             U16CString::from_ptr_str(MemHandle::<u16>::from_raw(wide_path)?.lock()?.as_ptr())
                 .to_string_lossy()
         })
+    }
+
+    // Deprecated methods - kept for backward compatibility
+    #[deprecated(since = "0.4.0", note = "Use `data_handle()` instead")]
+    pub fn get_data_handle<'a, T>(
+        &self,
+        plugin_id: PluginId,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: MemHandle<'a, T>,
+    ) -> Result<MemHandle<'_, T>, Error> {
+        self.data_handle(plugin_id, blob_handle, section_key, value_key, default)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use `data()` instead")]
+    pub fn get_data(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        data_size: u32,
+        default: *const c_void,
+    ) -> Result<*mut c_void, Error> {
+        self.data(blob_handle, section_key, value_key, data_size, default)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use `string()` instead")]
+    pub fn get_string(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: &str,
+        max_result_length: usize,
+    ) -> Result<String, Error> {
+        self.string(blob_handle, section_key, value_key, default, max_result_length)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use `long()` instead")]
+    pub fn get_long(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: i32,
+    ) -> Result<i32, Error> {
+        self.long(blob_handle, section_key, value_key, default)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use `fp_long()` instead")]
+    pub fn get_fp_long(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: f64,
+    ) -> Result<f64, Error> {
+        self.fp_long(blob_handle, section_key, value_key, default)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use `time()` instead")]
+    pub fn get_time(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: Time,
+    ) -> Result<Time, Error> {
+        self.time(blob_handle, section_key, value_key, default)
+    }
+
+    #[deprecated(since = "0.4.0", note = "Use `argb()` instead")]
+    pub fn get_argb(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: PF_PixelFloat,
+    ) -> Result<PF_PixelFloat, Error> {
+        self.argb(blob_handle, section_key, value_key, default)
     }
 }
 
