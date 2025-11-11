@@ -4,6 +4,14 @@ use ae_sys::{ PF_ProgPtr, PF_EffectWorld, _PF_UtilCallbacks, PF_Pixel, PF_Pixel1
 
 macro_rules! call_fn {
     ($self:ident, $fn:ident, $($args:expr),*) => {
+        // SAFETY: Dereferences PF_InData pointer from Adobe AE SDK and calls utility callback function.
+        // Detailed explanation: (1) $self.0 is a non-null pointer verified at UtilCallbacks construction,
+        // (2) in_data lifetime is valid for the duration of the plugin callback from AE, (3) utils and
+        // effect_ref pointers are validated as non-null before dereferencing, (4) the function pointer
+        // $fn is validated via ok_or before being called, (5) all arguments are passed through FFI
+        // boundary with compatible types.
+        // Would be UB if: The PF_InData pointer became invalid during the callback, or if AE provides
+        // null function pointers in the utils table, or if arguments don't match C FFI expectations.
         unsafe {
             let in_data = &(*$self.0.as_ptr());
             if in_data.utils.is_null() || in_data.effect_ref.is_null() {
@@ -42,6 +50,15 @@ macro_rules! define_iterate {
                 if refcon.is_null() || out_p.is_null() {
                     return ae_sys::PF_Err_BAD_CALLBACK_PARAM as ae_sys::PF_Err;
                 }
+                // SAFETY: Transmutes refcon back to Rust closure and dereferences pixel pointers from AE.
+                // Detailed explanation: (1) refcon was created from a valid Box reference in the outer
+                // function and remains alive for the duration of the AE callback, (2) out_p is validated
+                // as non-null before dereferencing, (3) in_p is either valid or replaced with out_p if
+                // null, (4) the pixel pointers are provided by AE and point to valid pixel data within
+                // the source/dest worlds, (5) the lifetime of pixel references is scoped to this callback.
+                // Would be UB if: AE provides invalid pixel pointers, or if refcon doesn't point to the
+                // closure created in the outer scope, or if the callback is invoked after the outer
+                // function returns.
                 unsafe {
                     let cb = &*(refcon as *const Box<Box<dyn Fn(i32, i32, &$pixel, &mut $pixel) -> Result<(), Error>>>);
 
@@ -54,6 +71,15 @@ macro_rules! define_iterate {
                     }
                 }
             }
+            // SAFETY: Calls AE iterate FFI function with callback and validates all pointers.
+            // Detailed explanation: (1) ptr is obtained from valid PF_InData.utils and validated non-null,
+            // (2) dst is validated non-null before dereferencing, (3) iterate_fn function pointer is
+            // validated via ok_or, (4) callback Box is kept alive on stack for duration of iterate_fn
+            // call, (5) refcon pointer points to valid stack-allocated callback, (6) src/area/additional
+            // are optional and converted to null if None, (7) iterate_c_fn is a valid C function pointer
+            // with correct signature, (8) AE will synchronously call iterate_c_fn before returning.
+            // Would be UB if: AE stores the callback pointer and calls it after this function returns,
+            // or if ptr is dangling, or if AE calls the callback with invalid pixel pointers.
             unsafe {
                 let _in_data_ptr = self.get_in_data();
                 $(
@@ -95,6 +121,14 @@ macro_rules! define_iterate_lut_and_generic {
         /// If no LUT is passed, an identity LUT is used.
         pub fn iterate_lut(&self $(, $in_data: $in_data_ty)?, src: *mut PF_EffectWorld, dst: *mut PF_EffectWorld, progress_base: i32, progress_final: i32, area: Option<Rect>, a_lut: Option<&[u8]>, r_lut: Option<&[u8]>, g_lut: Option<&[u8]>, b_lut: Option<&[u8]>) -> Result<(), Error> {
             if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
+            // SAFETY: Calls AE iterate_lut FFI function with optional LUT arrays.
+            // Detailed explanation: (1) ptr is obtained from valid PF_InData.utils and validated non-null,
+            // (2) src and dst are validated non-null, (3) iterate_fn function pointer is validated via ok_or,
+            // (4) LUT slices are converted to raw pointers via as_ptr() which is valid for the duration of
+            // the call, (5) LUT pointers are either valid slice data or null if None, (6) area is optional
+            // and null if None, (7) AE will read but not modify the LUT data during the call.
+            // Would be UB if: AE stores LUT pointers and accesses them after this function returns, or if
+            // ptr is dangling, or if AE writes to the LUT arrays.
             unsafe {
                 let _in_data_ptr = self.get_in_data();
                 $(
@@ -138,12 +172,27 @@ macro_rules! define_iterate_lut_and_generic {
             F: Fn(i32, i32, i32) -> Result<(), Error>,
         {
             unsafe extern "C" fn iterate_c_fn(refcon: *mut c_void, thread_index: ae_sys::A_long, i: ae_sys::A_long, iterations: ae_sys::A_long) -> ae_sys::PF_Err {
+                // SAFETY: Transmutes refcon back to Rust closure for generic iteration callback.
+                // Detailed explanation: (1) refcon was created from a valid Box reference in the outer
+                // function and remains alive for the duration of the AE callback, (2) the cast from
+                // *mut c_void to closure pointer is valid because it's the same pointer we passed to AE,
+                // (3) AE guarantees this callback is only invoked while iterate_generic is running.
+                // Would be UB if: refcon doesn't point to the closure created in the outer scope, or if
+                // AE calls this callback after iterate_generic returns.
                 let cb = unsafe { &*(refcon as *const Box<Box<dyn Fn(i32, i32, i32) -> Result<(), Error>>>) };
                 match cb(thread_index, i, iterations) {
                     Ok(_)  => ae_sys::PF_Err_NONE as _,
                     Err(e) => e.into(),
                 }
             }
+            // SAFETY: Calls AE iterate_generic FFI function with callback for multi-threaded iteration.
+            // Detailed explanation: (1) ptr is obtained from valid PF_InData.utils and validated non-null,
+            // (2) iterate_generic function pointer is validated via ok_or, (3) callback Box is kept alive
+            // on stack for duration of the call, (4) refcon pointer points to valid stack-allocated
+            // callback, (5) iterate_c_fn is a valid C function pointer with correct signature, (6) AE
+            // will synchronously invoke callbacks before returning, even from multiple threads.
+            // Would be UB if: AE stores the callback pointer and calls it after this function returns,
+            // or if ptr is dangling.
             unsafe {
                 let ptr = self.get_funcs_ptr();
                 if ptr.is_null() {
@@ -261,6 +310,12 @@ impl UtilCallbacks {
     /// Depending on platform, this routine could start up the DSP chip, compute an index table to each scanline
     /// of the buffer, or whatever might be needed to speed up image resampling.
     pub fn begin_sampling(&self, quality: Quality, mode_flags: ModeFlags) -> Result<Sampling, Error> {
+        // SAFETY: Zeroed PF_SampPB struct is valid initial state for AE sampling parameters.
+        // Detailed explanation: (1) PF_SampPB is a C struct with all POD fields, (2) zeroed state
+        // is explicitly allowed as initial state before begin_sampling populates it, (3) AE's
+        // begin_sampling will initialize all fields to valid values before use.
+        // Would be UB if: PF_SampPB had non-nullable pointer fields or required specific initialization,
+        // but AE SDK documentation confirms zero initialization is valid.
         let mut params = Sampling {
             in_data_ptr: self.0.as_ptr(),
             params: unsafe { std::mem::zeroed() },
@@ -299,6 +354,11 @@ impl UtilCallbacks {
 
     // Helpers for the define_iterate macros
     #[inline(always)] fn get_in_data(&self) -> *const ae_sys::PF_InData { self.0.as_ptr() }
+    // SAFETY: Dereferences PF_InData pointer to access utils field.
+    // Detailed explanation: (1) self.0 is a non-null pointer verified at UtilCallbacks construction,
+    // (2) PF_InData pointer remains valid for the plugin callback duration, (3) accessing the utils
+    // field is safe as PF_InData is a valid struct.
+    // Would be UB if: The PF_InData pointer became invalid during the callback.
     #[inline(always)] fn get_funcs_ptr(&self) -> *mut ae_sys::_PF_UtilCallbacks { unsafe { (*self.0.as_ptr()).utils } }
 
     define_iterate!(iterate,                       Pixel8,  PF_Pixel);
@@ -310,6 +370,15 @@ impl UtilCallbacks {
     define_iterate_lut_and_generic!();
 
     pub fn host_new_handle(&self, size: usize) -> Result<RawHandle, Error> {
+        // SAFETY: Calls AE memory allocation functions to create a new handle.
+        // Detailed explanation: (1) self.0 is a valid non-null PF_InData pointer, (2) in_data.utils
+        // is validated non-null before dereferencing, (3) function pointers (new, lock, unlock) are
+        // validated via ok_or before calling, (4) the returned handle ptr is validated non-null,
+        // (5) lock/unlock are called to verify the handle is valid, (6) RawHandle takes ownership
+        // and will dispose the handle on drop, (7) utils_ptr lifetime is tied to in_data which
+        // outlives the RawHandle.
+        // Would be UB if: AE returns an invalid handle, or if utils_ptr becomes invalid before
+        // RawHandle is dropped, or if the handle functions have incorrect signatures.
         unsafe {
             let in_data = &(*self.0);
             if size == 0 || in_data.utils.is_null() {
@@ -336,6 +405,12 @@ impl UtilCallbacks {
 
     /// This creates a new [`Layer`] for scratch for you. You must dispose of it. This is quality independent.
     pub fn new_world(&self, width: usize, height: usize, flags: NewWorldFlags) -> Result<Layer, Error> {
+        // SAFETY: Zeroed PF_EffectWorld struct is valid initial state before AE populates it.
+        // Detailed explanation: (1) PF_EffectWorld is a C struct with POD fields and pointers,
+        // (2) zeroed state is the expected initial state before new_world populates it with valid data,
+        // (3) AE's new_world function will initialize all fields including allocating pixel buffers.
+        // Would be UB if: PF_EffectWorld required specific initialization values, but AE SDK requires
+        // zero initialization for output parameters.
         let mut world = unsafe { std::mem::zeroed() };
         call_fn!(self, new_world, width as _, height as _, flags.bits() as _, &mut world)?;
         Ok(Layer::from_owned(world, self.0.clone(), |self_layer| {
@@ -434,6 +509,14 @@ impl UtilCallbacks {
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
     pub fn pixel_data8(&self, world: *mut PF_EffectWorld, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel8, Error> {
         let mut ret = std::ptr::null_mut();
+        // SAFETY: Calls AE get_pixel_data8 FFI function to retrieve pixel pointer.
+        // Detailed explanation: (1) self.0 is a valid non-null PF_InData pointer, (2) in_data.utils
+        // and effect_ref are validated non-null before dereferencing, (3) world pointer is validated
+        // non-null, (4) get_pixel_data8 function pointer is validated via ok_or, (5) the optional
+        // pixels pointer is either valid or null, (6) AE will populate ret with a valid pixel pointer
+        // or return error, (7) returned pixel pointer is valid for the lifetime of the world.
+        // Would be UB if: world is dangling, or if AE returns a pointer to freed memory, or if the
+        // world is not 8-bpc (but this returns error instead).
         unsafe {
             let in_data = &(*self.0.as_ptr());
             if in_data.utils.is_null() || in_data.effect_ref.is_null() || world.is_null() {
@@ -458,6 +541,14 @@ impl UtilCallbacks {
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
     pub fn pixel_data16(&self, world: *mut PF_EffectWorld, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel16, Error> {
         let mut ret = std::ptr::null_mut();
+        // SAFETY: Calls AE get_pixel_data16 FFI function to retrieve 16-bit pixel pointer.
+        // Detailed explanation: (1) self.0 is a valid non-null PF_InData pointer, (2) in_data.utils
+        // and effect_ref are validated non-null before dereferencing, (3) world pointer is validated
+        // non-null, (4) get_pixel_data16 function pointer is validated via ok_or, (5) the optional
+        // pixels pointer is either valid or null, (6) AE will populate ret with a valid 16-bit pixel
+        // pointer or return error, (7) returned pixel pointer is valid for the lifetime of the world.
+        // Would be UB if: world is dangling, or if AE returns a pointer to freed memory, or if the
+        // world is not 16-bpc (but this returns error instead).
         unsafe {
             let in_data = &(*self.0.as_ptr());
             if in_data.utils.is_null() || in_data.effect_ref.is_null() || world.is_null() {
@@ -478,6 +569,13 @@ impl UtilCallbacks {
 
     /// Plug-ins can draw on image processing algorithms written for nearly any color space by using the following callback functions.
     pub fn color(&self) -> ColorCallbacks {
+        // SAFETY: Dereferences PF_InData to create ColorCallbacks with effect_ref and utils pointers.
+        // Detailed explanation: (1) self.0 is a valid non-null PF_InData pointer verified at
+        // construction, (2) PF_InData remains valid for plugin callback duration, (3) utils and
+        // effect_ref are asserted non-null before copying to ColorCallbacks, (4) ColorCallbacks
+        // stores these pointers which remain valid as long as the plugin callback is active.
+        // Would be UB if: PF_InData pointer became invalid, or if utils/effect_ref are null
+        // (prevented by assert), or if ColorCallbacks outlives the plugin callback scope.
         unsafe {
             let in_data = &(*self.0.as_ptr());
             assert!(!in_data.utils.is_null() && !in_data.effect_ref.is_null());
@@ -518,6 +616,13 @@ impl ColorCallbacks {
     /// Given an RGB pixel, returns an HLS (hue, lightness, saturation) pixel. HLS values are scaled from 0 to 1 in fixed point.
     pub fn rgb_to_hls(&self, rgb: &Pixel8) -> Result<HLSPixel, Error> {
         let mut hls = HLSPixel::default();
+        // SAFETY: Calls AE color conversion RGBtoHLS FFI function.
+        // Detailed explanation: (1) self.utils is a valid pointer from PF_InData, (2) RGBtoHLS
+        // function pointer is validated via ok_or, (3) self.effect_ref is valid, (4) rgb reference
+        // is converted to const pointer for reading, (5) hls is a mutable output parameter on stack,
+        // (6) both pointers are cast to *mut _ as required by C API even though rgb is only read.
+        // Would be UB if: utils is dangling, or if effect_ref is invalid, or if the function modifies
+        // rgb (but AE SDK contract is it's read-only).
         unsafe {
             let f = (*self.utils).colorCB.RGBtoHLS.ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut hls as *mut _ as *mut _) {
@@ -529,6 +634,14 @@ impl ColorCallbacks {
 
     /// Given an HLS pixel, returns an RGB pixel.
     pub fn hls_to_rgb(&self, hls: &HLSPixel) -> Result<Pixel8, Error> {
+        // SAFETY: Calls AE color conversion HLStoRGB FFI function with zeroed output pixel.
+        // Detailed explanation: (1) Pixel8 is a POD struct safe to zero-initialize, (2) self.utils
+        // is a valid pointer from PF_InData, (3) HLStoRGB function pointer is validated via ok_or,
+        // (4) self.effect_ref is valid, (5) hls reference is converted to const pointer for reading,
+        // (6) rgb is a mutable output parameter that AE will populate, (7) pointer cast to *mut _
+        // is required by C API signature.
+        // Would be UB if: utils is dangling, or if effect_ref is invalid, or if the function modifies
+        // hls (but AE SDK contract is it's read-only).
         unsafe {
             let mut rgb = std::mem::zeroed();
             let f = (*self.utils).colorCB.HLStoRGB.ok_or(Error::BadCallbackParameter)?;
@@ -543,6 +656,13 @@ impl ColorCallbacks {
     /// Y is 0 to 1 in fixed point, I is -0.5959 to 0.5959 in fixed point, and Q is -0.5227 to 0.5227 in fixed point.
     pub fn rgb_to_yiq(&self, rgb: &Pixel8) -> Result<YIQPixel, Error> {
         let mut yiq = YIQPixel::default();
+        // SAFETY: Calls AE color conversion RGBtoYIQ FFI function.
+        // Detailed explanation: (1) self.utils is a valid pointer from PF_InData, (2) RGBtoYIQ
+        // function pointer is validated via ok_or, (3) self.effect_ref is valid, (4) rgb reference
+        // is converted to const pointer for reading, (5) yiq is a mutable output parameter on stack,
+        // (6) both pointers are cast to *mut _ as required by C API even though rgb is only read.
+        // Would be UB if: utils is dangling, or if effect_ref is invalid, or if the function modifies
+        // rgb (but AE SDK contract is it's read-only).
         unsafe {
             let f = (*self.utils).colorCB.RGBtoYIQ.ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut yiq as *mut _ as *mut _) {
@@ -554,6 +674,14 @@ impl ColorCallbacks {
 
     /// Given a YIQ pixel, returns an RGB pixel.
     pub fn yiq_to_rgb(&self, yiq: &YIQPixel) -> Result<Pixel8, Error> {
+        // SAFETY: Calls AE color conversion YIQtoRGB FFI function with zeroed output pixel.
+        // Detailed explanation: (1) Pixel8 is a POD struct safe to zero-initialize, (2) self.utils
+        // is a valid pointer from PF_InData, (3) YIQtoRGB function pointer is validated via ok_or,
+        // (4) self.effect_ref is valid, (5) yiq reference is converted to const pointer for reading,
+        // (6) rgb is a mutable output parameter that AE will populate, (7) pointer cast to *mut _
+        // is required by C API signature.
+        // Would be UB if: utils is dangling, or if effect_ref is invalid, or if the function modifies
+        // yiq (but AE SDK contract is it's read-only).
         unsafe {
             let mut rgb = std::mem::zeroed();
             let f = (*self.utils).colorCB.YIQtoRGB.ok_or(Error::BadCallbackParameter)?;
@@ -567,6 +695,13 @@ impl ColorCallbacks {
     /// Given an RGB pixel, returns 100 times its luminance value (0 to 25500).
     pub fn luminance(&self, rgb: &Pixel8) -> Result<i32, Error> {
         let mut x = 0;
+        // SAFETY: Calls AE Luminance FFI function to compute luminance from RGB.
+        // Detailed explanation: (1) self.utils is a valid pointer from PF_InData, (2) Luminance
+        // function pointer is validated via ok_or, (3) self.effect_ref is valid, (4) rgb reference
+        // is converted to const pointer for reading, (5) x is a mutable output parameter on stack
+        // that AE will populate, (6) pointer cast to *mut _ is required by C API signature.
+        // Would be UB if: utils is dangling, or if effect_ref is invalid, or if the function modifies
+        // rgb (but AE SDK contract is it's read-only).
         unsafe {
             let f = (*self.utils).colorCB.Luminance.ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut x) {
@@ -579,6 +714,13 @@ impl ColorCallbacks {
     /// Given an RGB pixel, returns its hue angle mapped from 0 to 255, where 0 is 0 degrees and 255 is 360 degrees.
     pub fn hue(&self, rgb: &Pixel8) -> Result<i32, Error> {
         let mut x = 0;
+        // SAFETY: Calls AE Hue FFI function to compute hue from RGB.
+        // Detailed explanation: (1) self.utils is a valid pointer from PF_InData, (2) Hue
+        // function pointer is validated via ok_or, (3) self.effect_ref is valid, (4) rgb reference
+        // is converted to const pointer for reading, (5) x is a mutable output parameter on stack
+        // that AE will populate, (6) pointer cast to *mut _ is required by C API signature.
+        // Would be UB if: utils is dangling, or if effect_ref is invalid, or if the function modifies
+        // rgb (but AE SDK contract is it's read-only).
         unsafe {
             let f = (*self.utils).colorCB.Hue.ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut x) {
@@ -591,6 +733,13 @@ impl ColorCallbacks {
     /// Given an RGB pixel, returns its lightness value (0 to 255).
     pub fn lightness(&self, rgb: &Pixel8) -> Result<i32, Error> {
         let mut x = 0;
+        // SAFETY: Calls AE Lightness FFI function to compute lightness from RGB.
+        // Detailed explanation: (1) self.utils is a valid pointer from PF_InData, (2) Lightness
+        // function pointer is validated via ok_or, (3) self.effect_ref is valid, (4) rgb reference
+        // is converted to const pointer for reading, (5) x is a mutable output parameter on stack
+        // that AE will populate, (6) pointer cast to *mut _ is required by C API signature.
+        // Would be UB if: utils is dangling, or if effect_ref is invalid, or if the function modifies
+        // rgb (but AE SDK contract is it's read-only).
         unsafe {
             let f = (*self.utils).colorCB.Lightness.ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut x) {
@@ -603,6 +752,13 @@ impl ColorCallbacks {
     /// Given an RGB pixel, returns its saturation value (0 to 255).
     pub fn saturation(&self, rgb: &Pixel8) -> Result<i32, Error> {
         let mut x = 0;
+        // SAFETY: Calls AE Saturation FFI function to compute saturation from RGB.
+        // Detailed explanation: (1) self.utils is a valid pointer from PF_InData, (2) Saturation
+        // function pointer is validated via ok_or, (3) self.effect_ref is valid, (4) rgb reference
+        // is converted to const pointer for reading, (5) x is a mutable output parameter on stack
+        // that AE will populate, (6) pointer cast to *mut _ is required by C API signature.
+        // Would be UB if: utils is dangling, or if effect_ref is invalid, or if the function modifies
+        // rgb (but AE SDK contract is it's read-only).
         unsafe {
             let f = (*self.utils).colorCB.Saturation.ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut x) {
@@ -693,6 +849,14 @@ impl RawHandle {
         self.handle
     }
     pub fn lock(&self) -> Result<RawHandleLock<'_>, Error> {
+        // SAFETY: Calls AE host_lock_handle FFI function to lock memory handle.
+        // Detailed explanation: (1) self.utils_ptr is a valid pointer from PF_InData stored at
+        // RawHandle creation, (2) host_lock_handle function pointer is validated via ok_or,
+        // (3) self.handle is a valid handle created by host_new_handle, (4) lock returns a pointer
+        // to the locked memory or null on error, (5) the returned pointer is validated non-null,
+        // (6) RawHandleLock will unlock on drop maintaining lock/unlock pairing.
+        // Would be UB if: utils_ptr is dangling, or if handle has been disposed, or if AE returns
+        // an invalid pointer.
         unsafe {
             let lock = (*self.utils_ptr).host_lock_handle.ok_or(Error::BadCallbackParameter)?;
             let ptr = lock(self.handle);
@@ -706,6 +870,11 @@ impl RawHandle {
         }
     }
     pub fn size(&self) -> Result<usize, Error> {
+        // SAFETY: Calls AE host_get_handle_size FFI function to query handle size.
+        // Detailed explanation: (1) self.utils_ptr is a valid pointer from PF_InData, (2)
+        // host_get_handle_size function pointer is validated via ok_or, (3) self.handle is a valid
+        // handle created by host_new_handle, (4) get_size returns the size of the handle's memory.
+        // Would be UB if: utils_ptr is dangling, or if handle has been disposed.
         unsafe {
             let get_size = (*self.utils_ptr).host_get_handle_size.ok_or(Error::BadCallbackParameter)?;
             let size = get_size(self.handle);
@@ -713,6 +882,13 @@ impl RawHandle {
         }
     }
     pub fn resize(&mut self, new_size: usize) -> Result<(), Error> {
+        // SAFETY: Calls AE host_resize_handle FFI function to resize memory handle.
+        // Detailed explanation: (1) self.utils_ptr is a valid pointer from PF_InData, (2)
+        // host_resize_handle function pointer is validated via ok_or, (3) self.handle is a valid
+        // handle, (4) resize may modify self.handle to point to a new handle if reallocation occurs,
+        // (5) the handle reference is passed as mutable to allow AE to update it.
+        // Would be UB if: utils_ptr is dangling, or if handle has been disposed, or if the handle
+        // is locked during resize.
         unsafe {
             let resize = (*self.utils_ptr).host_resize_handle.ok_or(Error::BadCallbackParameter)?;
             match resize(new_size as _, &mut self.handle) {
@@ -724,6 +900,14 @@ impl RawHandle {
 }
 impl Drop for RawHandle {
     fn drop(&mut self) {
+        // SAFETY: Calls AE host_dispose_handle FFI function to free memory handle.
+        // Detailed explanation: (1) self.utils_ptr is a valid pointer that outlives RawHandle,
+        // (2) host_dispose_handle is unwrapped because it must exist if host_new_handle succeeded,
+        // (3) self.handle is a valid handle created by host_new_handle, (4) dispose deallocates
+        // the handle and after this call the handle is invalid, (5) this is called exactly once
+        // due to Drop semantics.
+        // Would be UB if: utils_ptr is dangling, or if handle was already disposed, or if handle
+        // is still locked.
         unsafe {
             let dispose = (*self.utils_ptr).host_dispose_handle.unwrap();
             dispose(self.handle);
@@ -741,6 +925,14 @@ impl<'a> RawHandleLock<'a> {
 }
 impl<'a> Drop for RawHandleLock<'a> {
     fn drop(&mut self) {
+        // SAFETY: Calls AE host_unlock_handle FFI function to unlock memory handle.
+        // Detailed explanation: (1) self.handle.utils_ptr is a valid pointer from the parent
+        // RawHandle, (2) host_unlock_handle is unwrapped because it must exist if lock succeeded,
+        // (3) self.handle.handle is the valid handle that was locked, (4) unlock balances the
+        // lock call that created this RawHandleLock, (5) this is called exactly once due to Drop
+        // semantics, (6) the lifetime 'a ensures RawHandle outlives RawHandleLock.
+        // Would be UB if: utils_ptr is dangling, or if handle is not currently locked, or if
+        // handle was disposed while locked.
         unsafe {
             let unlock = (*self.handle.utils_ptr).host_unlock_handle.unwrap();
             unlock(self.handle.handle);
@@ -758,6 +950,15 @@ impl Sampling {
     /// Use this to interpolate the appropriate alpha weighted mix of colors at a non-integral point in a source image, in high quality.
     /// Nearest neighbor sample is used in low quality.
     pub fn subpixel_sample(&self, x: f32, y: f32) -> Result<Pixel8, Error> {
+        // SAFETY: Calls AE subpixel_sample FFI function with sampling parameters and zeroed output.
+        // Detailed explanation: (1) Pixel8 is a POD struct safe to zero-initialize, (2) in_data_ptr
+        // is valid for the lifetime of Sampling, (3) in_data_ptr.utils is dereferenced to get
+        // subpixel_sample function pointer which is validated via ok_or, (4) effect_ref is accessed
+        // from valid in_data_ptr, (5) x,y coordinates are converted to Fixed point format, (6)
+        // self.params contains valid sampling parameters from begin_sampling, (7) pixel is mutable
+        // output that AE will populate.
+        // Would be UB if: in_data_ptr is dangling, or if params was not initialized by begin_sampling,
+        // or if Sampling was used after end_sampling (prevented by Drop).
         unsafe {
             let mut pixel = std::mem::zeroed();
             let f = (*(*self.in_data_ptr).utils).subpixel_sample.ok_or(Error::BadCallbackParameter)?;
@@ -771,6 +972,15 @@ impl Sampling {
     /// Use this to interpolate the appropriate alpha weighted mix of colors at a non-integral point in a source image, in high quality.
     /// Nearest neighbor sample is used in low quality.
     pub fn subpixel_sample16(&self, x: f32, y: f32) -> Result<Pixel16, Error> {
+        // SAFETY: Calls AE subpixel_sample16 FFI function for 16-bit sampling with zeroed output.
+        // Detailed explanation: (1) Pixel16 is a POD struct safe to zero-initialize, (2) in_data_ptr
+        // is valid for the lifetime of Sampling, (3) in_data_ptr.utils is dereferenced to get
+        // subpixel_sample16 function pointer which is validated via ok_or, (4) effect_ref is accessed
+        // from valid in_data_ptr, (5) x,y coordinates are converted to Fixed point format, (6)
+        // self.params contains valid sampling parameters from begin_sampling, (7) pixel is mutable
+        // output that AE will populate.
+        // Would be UB if: in_data_ptr is dangling, or if params was not initialized by begin_sampling,
+        // or if Sampling was used after end_sampling (prevented by Drop).
         unsafe {
             let mut pixel = std::mem::zeroed();
             let f = (*(*self.in_data_ptr).utils).subpixel_sample16.ok_or(Error::BadCallbackParameter)?;
@@ -786,6 +996,15 @@ impl Sampling {
     /// Nearest neighbor in low quality.
     /// Because of overflow issues, this can only average a maximum of a 256 pixel by 256 pixel area (ie. x and y range < 128 pixels).
     pub fn area_sample(&self, x: f32, y: f32) -> Result<Pixel8, Error> {
+        // SAFETY: Calls AE area_sample FFI function for area-based sampling with zeroed output.
+        // Detailed explanation: (1) Pixel8 is a POD struct safe to zero-initialize, (2) in_data_ptr
+        // is valid for the lifetime of Sampling, (3) in_data_ptr.utils is dereferenced to get
+        // area_sample function pointer which is validated via ok_or, (4) effect_ref is accessed
+        // from valid in_data_ptr, (5) x,y coordinates are converted to Fixed point format, (6)
+        // self.params contains valid sampling parameters from begin_sampling, (7) pixel is mutable
+        // output that AE will populate.
+        // Would be UB if: in_data_ptr is dangling, or if params was not initialized by begin_sampling,
+        // or if Sampling was used after end_sampling (prevented by Drop).
         unsafe {
             let mut pixel = std::mem::zeroed();
             let f = (*(*self.in_data_ptr).utils).area_sample.ok_or(Error::BadCallbackParameter)?;
@@ -800,6 +1019,15 @@ impl Sampling {
     /// Nearest neighbor in low quality.
     /// Because of overflow issues, this can only average a maximum of a 256 pixel by 256 pixel area (ie. x and y range < 128 pixels).
     pub fn area_sample16(&self, x: f32, y: f32) -> Result<Pixel16, Error> {
+        // SAFETY: Calls AE area_sample16 FFI function for 16-bit area sampling with zeroed output.
+        // Detailed explanation: (1) Pixel16 is a POD struct safe to zero-initialize, (2) in_data_ptr
+        // is valid for the lifetime of Sampling, (3) in_data_ptr.utils is dereferenced to get
+        // area_sample16 function pointer which is validated via ok_or, (4) effect_ref is accessed
+        // from valid in_data_ptr, (5) x,y coordinates are converted to Fixed point format, (6)
+        // self.params contains valid sampling parameters from begin_sampling, (7) pixel is mutable
+        // output that AE will populate.
+        // Would be UB if: in_data_ptr is dangling, or if params was not initialized by begin_sampling,
+        // or if Sampling was used after end_sampling (prevented by Drop).
         unsafe {
             let mut pixel = std::mem::zeroed();
             let f = (*(*self.in_data_ptr).utils).area_sample16.ok_or(Error::BadCallbackParameter)?;
@@ -812,6 +1040,15 @@ impl Sampling {
 }
 impl Drop for Sampling {
     fn drop(&mut self) {
+        // SAFETY: Calls AE end_sampling FFI function to clean up sampling resources.
+        // Detailed explanation: (1) self.in_data_ptr is valid for the lifetime of Sampling,
+        // (2) in_data is dereferenced and utils/effect_ref are checked for null before use,
+        // (3) end_sampling is unwrapped because it must exist if begin_sampling succeeded,
+        // (4) end_sampling is called with the same quality and mode_flags used in begin_sampling,
+        // (5) params reference is mutable to allow AE to clean up internal state, (6) this is
+        // called exactly once due to Drop semantics, (7) balances the begin_sampling call.
+        // Would be UB if: in_data_ptr is dangling, or if end_sampling was already called, or if
+        // params was corrupted.
         unsafe {
             let in_data = &(*self.in_data_ptr);
             if in_data.utils.is_null() || in_data.effect_ref.is_null() {

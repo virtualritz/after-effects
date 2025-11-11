@@ -129,21 +129,48 @@ impl EventExtra {
             ae_sys::PF_Event_NEW_CONTEXT => Event::NewContext,
             ae_sys::PF_Event_ACTIVATE => Event::Activate,
             ae_sys::PF_Event_DO_CLICK => {
+                // SAFETY: Accessing union field do_click based on discriminant e_type.
+                // Detailed explanation: (1) e_type == PF_Event_DO_CLICK guarantees do_click variant is active,
+                // (2) self.as_ref() returns valid reference to PF_EventExtra owned by AE SDK,
+                // (3) creating mutable pointer from const reference is safe as from_raw only reads the pointer.
+                // Would be UB if: e_type discriminant doesn't match the active union variant.
                 Event::Click(ClickEventInfo::from_raw(unsafe { &self.as_ref().u.do_click as *const _ as *mut _ }))
             }
             ae_sys::PF_Event_DRAG => {
+                // SAFETY: Accessing union field do_click based on discriminant e_type.
+                // Detailed explanation: (1) e_type == PF_Event_DRAG guarantees do_click variant is active (shared with DO_CLICK),
+                // (2) self.as_ref() returns valid reference to PF_EventExtra owned by AE SDK,
+                // (3) creating mutable pointer from const reference is safe as from_raw only reads the pointer.
+                // Would be UB if: e_type discriminant doesn't match the active union variant.
                 Event::Drag(ClickEventInfo::from_raw(unsafe { &self.as_ref().u.do_click as *const _ as *mut _ }))
             }
-            ae_sys::PF_Event_DRAW => Event::Draw(DrawEventInfo::from_raw(unsafe { &self.as_ref().u.draw as *const _ as *mut _ })),
+            ae_sys::PF_Event_DRAW => {
+                // SAFETY: Accessing union field draw based on discriminant e_type.
+                // Detailed explanation: (1) e_type == PF_Event_DRAW guarantees draw variant is active,
+                // (2) self.as_ref() returns valid reference to PF_EventExtra owned by AE SDK,
+                // (3) creating mutable pointer from const reference is safe as from_raw only reads the pointer.
+                // Would be UB if: e_type discriminant doesn't match the active union variant.
+                Event::Draw(DrawEventInfo::from_raw(unsafe { &self.as_ref().u.draw as *const _ as *mut _ }))
+            }
             ae_sys::PF_Event_DEACTIVATE => Event::Deactivate,
             ae_sys::PF_Event_CLOSE_CONTEXT => Event::CloseContext,
             ae_sys::PF_Event_IDLE => Event::Idle,
             ae_sys::PF_Event_ADJUST_CURSOR => {
+                // SAFETY: Accessing union field adjust_cursor based on discriminant e_type.
+                // Detailed explanation: (1) e_type == PF_Event_ADJUST_CURSOR guarantees adjust_cursor variant is active,
+                // (2) self.as_ref() returns valid reference to PF_EventExtra owned by AE SDK,
+                // (3) creating mutable pointer from const reference is safe as from_raw only reads the pointer.
+                // Would be UB if: e_type discriminant doesn't match the active union variant.
                 Event::AdjustCursor(AdjustCursorEventInfo::from_raw(unsafe {
                     &self.as_ref().u.adjust_cursor as *const _ as *mut _
                 }))
             }
             ae_sys::PF_Event_KEYDOWN => {
+                // SAFETY: Accessing union field key_down based on discriminant e_type.
+                // Detailed explanation: (1) e_type == PF_Event_KEYDOWN guarantees key_down variant is active,
+                // (2) self.as_ref() returns valid reference to PF_EventExtra owned by AE SDK,
+                // (3) creating mutable pointer from const reference is safe as from_raw only reads the pointer.
+                // Would be UB if: e_type discriminant doesn't match the active union variant.
                 Event::Keydown(KeyDownEventInfo::from_raw(unsafe { &self.as_ref().u.key_down as *const _ as *mut _ }))
             }
             ae_sys::PF_Event_MOUSE_EXITED => Event::MouseExited,
@@ -156,6 +183,11 @@ impl EventExtra {
     }
 
     pub fn window_type(&self) -> WindowType {
+        // SAFETY: Double pointer dereference of AE SDK context handle.
+        // Detailed explanation: (1) contextH is a valid PF_ContextH pointer provided by AE SDK,
+        // (2) the first dereference yields a valid pointer to PF_Context,
+        // (3) the second dereference accesses the PF_Context structure which remains valid for the lifetime of the event.
+        // Would be UB if: contextH is null or points to freed/invalid memory, or if PF_Context has been deallocated.
         unsafe { **self.as_ref().contextH }.w_type.into()
     }
 
@@ -189,9 +221,19 @@ impl EventExtra {
             "The modifiers() method is only valid if event() is Click, Drag or AdjustCursor."
         );
         if self.as_ref().e_type == ae_sys::PF_Event_ADJUST_CURSOR {
+            // SAFETY: Accessing union field adjust_cursor based on discriminant e_type.
+            // Detailed explanation: (1) e_type == PF_Event_ADJUST_CURSOR guarantees adjust_cursor variant is active,
+            // (2) self.as_ref() returns valid reference to PF_EventExtra,
+            // (3) reading modifiers field directly from the active union variant.
+            // Would be UB if: e_type discriminant doesn't match the active union variant.
             return unsafe { Modifiers::from_bits_truncate(self.as_ref().u.adjust_cursor.modifiers as _) }
         }
 
+        // SAFETY: Accessing union field do_click based on debug_assert check.
+        // Detailed explanation: (1) debug_assert verifies e_type is DO_CLICK or DRAG (both use do_click variant),
+        // (2) ADJUST_CURSOR case already handled above,
+        // (3) reading modifiers field directly from the active union variant.
+        // Would be UB if: e_type is not DO_CLICK, DRAG, or ADJUST_CURSOR, or if debug assertions are disabled and invariant is violated.
         unsafe { Modifiers::from_bits_truncate(self.as_ref().u.do_click.modifiers as _) }
     }
 
@@ -201,6 +243,11 @@ impl EventExtra {
             "The continue_refcon() method is only valid if event() is Click or Drag."
         );
         debug_assert!(index < 4);
+        // SAFETY: Accessing and mutating union field do_click array element.
+        // Detailed explanation: (1) debug_assert verifies e_type is DO_CLICK or DRAG (both use do_click variant),
+        // (2) debug_assert verifies index < 4 ensuring bounds safety for continue_refcon array,
+        // (3) self.as_mut() returns valid mutable reference to PF_EventExtra.
+        // Would be UB if: e_type is not DO_CLICK or DRAG, or if index >= 4 and bounds check is disabled.
         unsafe {
             self.as_mut().u.do_click.continue_refcon[index] = value;
         }
@@ -212,6 +259,11 @@ impl EventExtra {
             "The get_continue_refcon() method is only valid if event() is Click or Drag."
         );
         debug_assert!(index < 4);
+        // SAFETY: Accessing union field do_click array element.
+        // Detailed explanation: (1) debug_assert verifies e_type is DO_CLICK or DRAG (both use do_click variant),
+        // (2) debug_assert verifies index < 4 ensuring bounds safety for continue_refcon array,
+        // (3) self.as_ref() returns valid reference to PF_EventExtra.
+        // Would be UB if: e_type is not DO_CLICK or DRAG, or if index >= 4 and bounds check is disabled.
         unsafe { self.as_ref().u.do_click.continue_refcon[index] }
     }
 
@@ -220,6 +272,11 @@ impl EventExtra {
             [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
             "The send_drag() method is only valid if event() is Click or Drag."
         );
+        // SAFETY: Accessing union field do_click for reading send_drag.
+        // Detailed explanation: (1) debug_assert verifies e_type is DO_CLICK or DRAG (both use do_click variant),
+        // (2) self.as_mut() returns valid mutable reference to PF_EventExtra (mutability for method signature consistency),
+        // (3) reading send_drag field directly from the active union variant.
+        // Would be UB if: e_type is not DO_CLICK or DRAG and debug assertions are disabled.
         unsafe { self.as_mut().u.do_click.send_drag != 0 }
     }
 
@@ -236,18 +293,38 @@ impl EventExtra {
             [ae_sys::PF_Event_DO_CLICK, ae_sys::PF_Event_DRAG].contains(&self.as_ref().e_type),
             "The last_time() method is only valid if event() is Click or Drag."
         );
+        // SAFETY: Accessing union field do_click for reading last_time.
+        // Detailed explanation: (1) debug_assert verifies e_type is DO_CLICK or DRAG (both use do_click variant),
+        // (2) self.as_ref() returns valid reference to PF_EventExtra,
+        // (3) reading last_time field directly from the active union variant.
+        // Would be UB if: e_type is not DO_CLICK or DRAG and debug assertions are disabled.
         unsafe { self.as_ref().u.do_click.last_time != 0 }
     }
 
     pub fn screen_point(&self) -> Point {
         match self.as_ref().e_type {
             ae_sys::PF_Event_DO_CLICK | ae_sys::PF_Event_DRAG => {
+                // SAFETY: Accessing union field do_click based on discriminant e_type.
+                // Detailed explanation: (1) e_type is DO_CLICK or DRAG (both use do_click variant),
+                // (2) self.as_ref() returns valid reference to PF_EventExtra,
+                // (3) reading screen_point field directly from the active union variant.
+                // Would be UB if: e_type discriminant doesn't match the active union variant.
                 unsafe { self.as_ref().u.do_click.screen_point.into() }
             }
             ae_sys::PF_Event_ADJUST_CURSOR => {
+                // SAFETY: Accessing union field adjust_cursor based on discriminant e_type.
+                // Detailed explanation: (1) e_type == PF_Event_ADJUST_CURSOR guarantees adjust_cursor variant is active,
+                // (2) self.as_ref() returns valid reference to PF_EventExtra,
+                // (3) reading screen_point field directly from the active union variant.
+                // Would be UB if: e_type discriminant doesn't match the active union variant.
                 unsafe { self.as_ref().u.adjust_cursor.screen_point.into() }
             }
             ae_sys::PF_Event_KEYDOWN => {
+                // SAFETY: Accessing union field key_down based on discriminant e_type.
+                // Detailed explanation: (1) e_type == PF_Event_KEYDOWN guarantees key_down variant is active,
+                // (2) self.as_ref() returns valid reference to PF_EventExtra,
+                // (3) reading screen_point field directly from the active union variant.
+                // Would be UB if: e_type discriminant doesn't match the active union variant.
                 unsafe { self.as_ref().u.key_down.screen_point.into() }
             }
             _ => {
@@ -275,6 +352,12 @@ pub struct EventCallbacks<'a> {
 
 impl<'a> EventCallbacks<'a> {
     pub fn layer_to_comp(&self, curr_time: i32, time_scale: u32, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
+        // SAFETY: FFI call to AE SDK callback function.
+        // Detailed explanation: (1) self.ptr is a valid reference to PF_EventCallbacks from AE SDK,
+        // (2) dereferencing self.ptr to access layer_to_comp function pointer which is guaranteed non-null by unwrap(),
+        // (3) calling through function pointer with valid refcon, context handle, and mutable point reference,
+        // (4) all parameters have correct types per AE SDK contract.
+        // Would be UB if: self.ptr is invalid, layer_to_comp is null, ctx is invalid, or pt points to invalid memory.
         let ret = unsafe {
             ((*self.ptr).layer_to_comp.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, pt)
         };
@@ -285,6 +368,12 @@ impl<'a> EventCallbacks<'a> {
     }
 
     pub fn comp_to_layer(&self, curr_time: i32, time_scale: u32, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
+        // SAFETY: FFI call to AE SDK callback function.
+        // Detailed explanation: (1) self.ptr is a valid reference to PF_EventCallbacks from AE SDK,
+        // (2) dereferencing self.ptr to access comp_to_layer function pointer which is guaranteed non-null by unwrap(),
+        // (3) calling through function pointer with valid refcon, context handle, and mutable point reference,
+        // (4) all parameters have correct types per AE SDK contract.
+        // Would be UB if: self.ptr is invalid, comp_to_layer is null, ctx is invalid, or pt points to invalid memory.
         let ret = unsafe {
             ((*self.ptr).comp_to_layer.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, pt)
         };
@@ -295,6 +384,12 @@ impl<'a> EventCallbacks<'a> {
     }
 
     pub fn source_to_frame(&self, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
+        // SAFETY: FFI call to AE SDK callback function.
+        // Detailed explanation: (1) self.ptr is a valid reference to PF_EventCallbacks from AE SDK,
+        // (2) dereferencing self.ptr to access source_to_frame function pointer which is guaranteed non-null by unwrap(),
+        // (3) calling through function pointer with valid refcon, context handle, and mutable point reference,
+        // (4) all parameters have correct types per AE SDK contract.
+        // Would be UB if: self.ptr is invalid, source_to_frame is null, ctx is invalid, or pt points to invalid memory.
         let ret = unsafe {
             ((*self.ptr).source_to_frame.unwrap())((*self.ptr).refcon, self.ctx, pt)
         };
@@ -305,6 +400,12 @@ impl<'a> EventCallbacks<'a> {
     }
 
     pub fn frame_to_source(&self, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
+        // SAFETY: FFI call to AE SDK callback function.
+        // Detailed explanation: (1) self.ptr is a valid reference to PF_EventCallbacks from AE SDK,
+        // (2) dereferencing self.ptr to access frame_to_source function pointer which is guaranteed non-null by unwrap(),
+        // (3) calling through function pointer with valid refcon, context handle, and mutable point reference,
+        // (4) all parameters have correct types per AE SDK contract.
+        // Would be UB if: self.ptr is invalid, frame_to_source is null, ctx is invalid, or pt points to invalid memory.
         let ret = unsafe {
             ((*self.ptr).frame_to_source.unwrap())((*self.ptr).refcon, self.ctx, pt)
         };
@@ -316,28 +417,66 @@ impl<'a> EventCallbacks<'a> {
 
     pub fn comp2layer_xform(&self, curr_time: i32, time_scale: u32) -> Result<Option<Matrix3>, Error> {
         let mut exists: ae_sys::A_long = 0;
+        // SAFETY: Zero-initializing PF_FloatMatrix structure.
+        // Detailed explanation: (1) PF_FloatMatrix is a POD (Plain Old Data) struct of floats,
+        // (2) zeroed float values (0.0) are valid and represent a zero matrix,
+        // (3) the matrix will be properly initialized by the subsequent AE SDK callback.
+        // Would be UB if: PF_FloatMatrix contained non-POD types or had validity constraints on zero values.
         let mut matrix: ae_sys::PF_FloatMatrix = unsafe { std::mem::zeroed() };
+        // SAFETY: FFI call to AE SDK callback function.
+        // Detailed explanation: (1) self.ptr is a valid reference to PF_EventCallbacks from AE SDK,
+        // (2) dereferencing self.ptr to access get_comp2layer_xform function pointer which is guaranteed non-null by unwrap(),
+        // (3) calling through function pointer with valid refcon, context handle, and mutable references to exists and matrix,
+        // (4) all parameters have correct types per AE SDK contract.
+        // Would be UB if: self.ptr is invalid, get_comp2layer_xform is null, ctx is invalid, or exists/matrix point to invalid memory.
         let ret = unsafe {
             ((*self.ptr).get_comp2layer_xform.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, &mut exists, &mut matrix)
         };
         match ret {
+            // SAFETY: Transmuting PF_FloatMatrix to Matrix3.
+            // Detailed explanation: (1) both types have identical memory layout (3x3 float arrays),
+            // (2) Matrix3 is a repr(C) or transparent wrapper around the same data structure,
+            // (3) AE SDK has successfully populated the matrix with valid float values.
+            // Would be UB if: PF_FloatMatrix and Matrix3 have different memory layouts or alignment requirements.
             0 => Ok(if exists == 1 { Some(unsafe { std::mem::transmute(matrix) }) } else { None }),
             e => Err(Error::from(e))
         }
     }
 
     pub fn layer2comp_xform(&self, curr_time: i32, time_scale: u32) -> Result<Matrix3, Error> {
+        // SAFETY: Zero-initializing PF_FloatMatrix structure.
+        // Detailed explanation: (1) PF_FloatMatrix is a POD (Plain Old Data) struct of floats,
+        // (2) zeroed float values (0.0) are valid and represent a zero matrix,
+        // (3) the matrix will be properly initialized by the subsequent AE SDK callback.
+        // Would be UB if: PF_FloatMatrix contained non-POD types or had validity constraints on zero values.
         let mut matrix: ae_sys::PF_FloatMatrix = unsafe { std::mem::zeroed() };
+        // SAFETY: FFI call to AE SDK callback function.
+        // Detailed explanation: (1) self.ptr is a valid reference to PF_EventCallbacks from AE SDK,
+        // (2) dereferencing self.ptr to access get_layer2comp_xform function pointer which is guaranteed non-null by unwrap(),
+        // (3) calling through function pointer with valid refcon, context handle, and mutable reference to matrix,
+        // (4) all parameters have correct types per AE SDK contract.
+        // Would be UB if: self.ptr is invalid, get_layer2comp_xform is null, ctx is invalid, or matrix points to invalid memory.
         let ret = unsafe {
             ((*self.ptr).get_layer2comp_xform.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, &mut matrix)
         };
         match ret {
+            // SAFETY: Transmuting PF_FloatMatrix to Matrix3.
+            // Detailed explanation: (1) both types have identical memory layout (3x3 float arrays),
+            // (2) Matrix3 is a repr(C) or transparent wrapper around the same data structure,
+            // (3) AE SDK has successfully populated the matrix with valid float values.
+            // Would be UB if: PF_FloatMatrix and Matrix3 have different memory layouts or alignment requirements.
             0 => Ok(unsafe { std::mem::transmute(matrix) }),
             e => Err(Error::from(e))
         }
     }
 
     pub fn info_draw_color(&self, color: Pixel8) -> Result<(), Error> {
+        // SAFETY: FFI call to AE SDK callback function.
+        // Detailed explanation: (1) self.ptr is a valid reference to PF_EventCallbacks from AE SDK,
+        // (2) dereferencing self.ptr to access info_draw_color function pointer which is guaranteed non-null by unwrap(),
+        // (3) calling through function pointer with valid refcon and color value,
+        // (4) Pixel8 is passed by value and has a valid representation per AE SDK contract.
+        // Would be UB if: self.ptr is invalid, info_draw_color is null, or refcon is invalid.
         let ret = unsafe {
             ((*self.ptr).info_draw_color.unwrap())((*self.ptr).refcon, color)
         };
@@ -350,6 +489,12 @@ impl<'a> EventCallbacks<'a> {
     pub fn info_draw_text(&self, text1: &str, text2: &str) -> Result<(), Error> {
         let text1 = std::ffi::CString::new(text1).unwrap();
         let text2 = std::ffi::CString::new(text2).unwrap();
+        // SAFETY: FFI call to AE SDK callback function with C string pointers.
+        // Detailed explanation: (1) self.ptr is a valid reference to PF_EventCallbacks from AE SDK,
+        // (2) dereferencing self.ptr to access info_draw_text function pointer which is guaranteed non-null by unwrap(),
+        // (3) calling through function pointer with valid refcon and null-terminated C string pointers,
+        // (4) CString::as_ptr() returns valid pointers to null-terminated strings that remain alive for the call duration.
+        // Would be UB if: self.ptr is invalid, info_draw_text is null, refcon is invalid, or the C strings are deallocated during the call.
         let ret = unsafe {
             ((*self.ptr).info_draw_text.unwrap())((*self.ptr).refcon, text1.as_ptr(), text2.as_ptr())
         };

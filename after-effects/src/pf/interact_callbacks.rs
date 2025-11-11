@@ -29,9 +29,18 @@ impl InteractCallbacks {
     /// a frame with black pixels to avoid render requests and possible deadlock.
     /// In other selectors the actual render will be triggered as it did before.
     pub fn checkout_param(&self, index: i32, what_time: i32, time_step: i32, time_scale: u32) -> Result<ae_sys::PF_ParamDef, Error> {
+        // SAFETY: Dereferencing InData pointer to access PF_InData structure.
+        // Detailed explanation: (1) self.0.as_ptr() returns a non-null pointer guaranteed by InData::from_raw which asserts non-null, (2) the pointer points to a valid PF_InData structure owned by the Adobe After Effects SDK for the duration of the plugin callback, (3) the reference is only used within this function scope and doesn't outlive the SDK-managed data.
+        // Would be UB if: the InData pointer was null (prevented by assertion in from_raw), dangling, or if the PF_InData structure was deallocated during this function call.
         let in_data = unsafe { &(*self.0.as_ptr()) };
+        // SAFETY: Zero-initializing PF_ParamDef FFI type for use as an out-parameter.
+        // Detailed explanation: (1) PF_ParamDef is a repr(C) FFI struct from Adobe After Effects SDK where all-zero bytes represent a valid initial state, (2) we immediately set param_type to PF_Param_RESERVED before passing to FFI, (3) the zeroed value is then passed as a mutable reference to the checkout_param FFI function which fully initializes it before we read from it, (4) the value is only returned when the FFI call succeeds (no error).
+        // Would be UB if: PF_ParamDef contained types with invalid zero-bit patterns (like non-nullable references), or if we read from uninitialized fields before the FFI call completes, or if the FFI call failed but we used the value anyway.
         let mut param: ae_sys::PF_ParamDef = unsafe { std::mem::zeroed() };
         param.param_type = ae_sys::PF_Param_RESERVED;
+        // SAFETY: Calling Adobe After Effects SDK checkout_param FFI callback through function pointer.
+        // Detailed explanation: (1) in_data.inter.checkout_param is guaranteed to be a valid function pointer provided by the Adobe SDK during plugin initialization, (2) unwrap() is safe because the SDK always initializes these function pointers before invoking plugin callbacks, (3) all arguments are valid: effect_ref is SDK-provided, index/time parameters are primitive types, and param is a valid mutable reference, (4) the function follows the Adobe SDK's callback convention of returning 0 on success or an error code.
+        // Would be UB if: the function pointer was null (prevented by unwrap), the function pointer was invalid or pointed to freed code, effect_ref was invalid, or param pointer was dangling.
         match unsafe { in_data.inter.checkout_param.unwrap()(in_data.effect_ref, index as _, what_time as _, time_step as _, time_scale as _, &mut param) } {
             0 => Ok(param),
             e => Err(Error::from(e)),
@@ -42,7 +51,13 @@ impl InteractCallbacks {
     /// This is very important for smooth functioning and also to save memory where possible.
     /// Once checked in, the fields in the `PF_ParamDef` will no longer be valid.
     pub fn checkin_param(&self, param: &ae_sys::PF_ParamDef) -> Result<(), Error> {
+        // SAFETY: Dereferencing InData pointer to access PF_InData structure.
+        // Detailed explanation: (1) self.0.as_ptr() returns a non-null pointer guaranteed by InData::from_raw which asserts non-null, (2) the pointer points to a valid PF_InData structure owned by the Adobe After Effects SDK for the duration of the plugin callback, (3) the reference is only used within this function scope and doesn't outlive the SDK-managed data.
+        // Would be UB if: the InData pointer was null (prevented by assertion in from_raw), dangling, or if the PF_InData structure was deallocated during this function call.
         let in_data = unsafe { &(*self.0.as_ptr()) };
+        // SAFETY: Calling Adobe After Effects SDK checkin_param FFI callback through function pointer with const-to-mut cast.
+        // Detailed explanation: (1) in_data.inter.checkin_param is guaranteed to be a valid function pointer provided by the Adobe SDK during plugin initialization, (2) unwrap() is safe because the SDK always initializes these function pointers before invoking plugin callbacks, (3) effect_ref is SDK-provided and valid, (4) param is a valid reference to a PF_ParamDef that was previously checked out, (5) the const-to-mut cast is safe because the Adobe SDK's checkin_param function doesn't actually modify the param data despite the signature (it's a legacy C API quirk), (6) the function follows the Adobe SDK's callback convention of returning 0 on success or an error code.
+        // Would be UB if: the function pointer was null (prevented by unwrap), the function pointer was invalid, effect_ref was invalid, param pointer was dangling, or if the param was not previously checked out.
         match unsafe { in_data.inter.checkin_param.unwrap()(in_data.effect_ref, param as *const _ as *mut _) } {
             0 => Ok(()),
             e => Err(Error::from(e)),
@@ -53,7 +68,13 @@ impl InteractCallbacks {
     /// to define the interface that the After Effects user will see. See the `PF_ParamDefs` defined above.
     /// Currently you can only add params at the end, and only at [`Command::ParamsSetup`] time.
     pub fn add_param(&self, index: i32, def: &ae_sys::PF_ParamDef) -> Result<(), Error> {
+        // SAFETY: Dereferencing InData pointer to access PF_InData structure.
+        // Detailed explanation: (1) self.0.as_ptr() returns a non-null pointer guaranteed by InData::from_raw which asserts non-null, (2) the pointer points to a valid PF_InData structure owned by the Adobe After Effects SDK for the duration of the plugin callback, (3) the reference is only used within this function scope and doesn't outlive the SDK-managed data.
+        // Would be UB if: the InData pointer was null (prevented by assertion in from_raw), dangling, or if the PF_InData structure was deallocated during this function call.
         let in_data = unsafe { &(*self.0.as_ptr()) };
+        // SAFETY: Calling Adobe After Effects SDK add_param FFI callback through function pointer with const-to-mut cast.
+        // Detailed explanation: (1) in_data.inter.add_param is guaranteed to be a valid function pointer provided by the Adobe SDK during plugin initialization, (2) unwrap() is safe because the SDK always initializes these function pointers before invoking plugin callbacks, (3) effect_ref is SDK-provided and valid, (4) index is a primitive type parameter, (5) def is a valid reference to a properly initialized PF_ParamDef, (6) the const-to-mut cast is required by the Adobe SDK's C API signature though the function may internally copy the param definition, (7) the function follows the Adobe SDK's callback convention of returning 0 on success or an error code.
+        // Would be UB if: the function pointer was null (prevented by unwrap), the function pointer was invalid, effect_ref was invalid, or def pointer was dangling.
         match unsafe { in_data.inter.add_param.unwrap()(in_data.effect_ref, index as _, def as *const _ as *mut _) } {
             0 => Ok(()),
             e => Err(Error::from(e)),
@@ -65,7 +86,13 @@ impl InteractCallbacks {
     /// If you call this routine and it returns a value other than zero, you should return that value when your effect returns.
     /// That will let us know if the effect completed rendering or not.
     pub fn abort(&self) -> Result<(), Error> {
+        // SAFETY: Dereferencing InData pointer to access PF_InData structure.
+        // Detailed explanation: (1) self.0.as_ptr() returns a non-null pointer guaranteed by InData::from_raw which asserts non-null, (2) the pointer points to a valid PF_InData structure owned by the Adobe After Effects SDK for the duration of the plugin callback, (3) the reference is only used within this function scope and doesn't outlive the SDK-managed data.
+        // Would be UB if: the InData pointer was null (prevented by assertion in from_raw), dangling, or if the PF_InData structure was deallocated during this function call.
         let in_data = unsafe { &(*self.0.as_ptr()) };
+        // SAFETY: Calling Adobe After Effects SDK abort FFI callback through function pointer.
+        // Detailed explanation: (1) in_data.inter.abort is guaranteed to be a valid function pointer provided by the Adobe SDK during plugin initialization, (2) unwrap() is safe because the SDK always initializes these function pointers before invoking plugin callbacks, (3) effect_ref is SDK-provided and valid, identifying the current effect instance, (4) the function checks for user interrupt and follows the Adobe SDK's callback convention of returning 0 if no interrupt or an error code if user requested abort.
+        // Would be UB if: the function pointer was null (prevented by unwrap), the function pointer was invalid or pointed to freed code, or effect_ref was invalid.
         match unsafe { in_data.inter.abort.unwrap()(in_data.effect_ref) } {
             0 => Ok(()),
             e => Err(Error::from(e)),
@@ -82,7 +109,13 @@ impl InteractCallbacks {
     /// You should probably try not to call this too frequently (e.g. at every pixel).
     /// It is better to call it, say, once per scanline, unless your filter is really really slow.
     pub fn progress(&self, current: i32, total: i32) -> Result<(), Error> {
+        // SAFETY: Dereferencing InData pointer to access PF_InData structure.
+        // Detailed explanation: (1) self.0.as_ptr() returns a non-null pointer guaranteed by InData::from_raw which asserts non-null, (2) the pointer points to a valid PF_InData structure owned by the Adobe After Effects SDK for the duration of the plugin callback, (3) the reference is only used within this function scope and doesn't outlive the SDK-managed data.
+        // Would be UB if: the InData pointer was null (prevented by assertion in from_raw), dangling, or if the PF_InData structure was deallocated during this function call.
         let in_data = unsafe { &(*self.0.as_ptr()) };
+        // SAFETY: Calling Adobe After Effects SDK progress FFI callback through function pointer.
+        // Detailed explanation: (1) in_data.inter.progress is guaranteed to be a valid function pointer provided by the Adobe SDK during plugin initialization, (2) unwrap() is safe because the SDK always initializes these function pointers before invoking plugin callbacks, (3) effect_ref is SDK-provided and valid, (4) current and total are primitive integer parameters representing the progress fraction, (5) the function displays a progress bar and checks for user interrupt, following the Adobe SDK's callback convention of returning 0 if no interrupt or an error code if user requested abort.
+        // Would be UB if: the function pointer was null (prevented by unwrap), the function pointer was invalid or pointed to freed code, or effect_ref was invalid.
         match unsafe { in_data.inter.progress.unwrap()(in_data.effect_ref, current as _, total as _) } {
             0 => Ok(()),
             e => Err(Error::from(e)),
@@ -91,7 +124,13 @@ impl InteractCallbacks {
 
     /// Register a custom user interface element. See [Effect UI and events](https://ae-plugins.docsforadobe.dev/effect-ui-events/effect-ui-events.html). Note: The `PF_UIAlignment` flags are not honored.
     pub fn register_ui(&self, custom_ui_info: CustomUIInfo) -> Result<(), Error> {
+        // SAFETY: Dereferencing InData pointer to access PF_InData structure.
+        // Detailed explanation: (1) self.0.as_ptr() returns a non-null pointer guaranteed by InData::from_raw which asserts non-null, (2) the pointer points to a valid PF_InData structure owned by the Adobe After Effects SDK for the duration of the plugin callback, (3) the reference is only used within this function scope and doesn't outlive the SDK-managed data.
+        // Would be UB if: the InData pointer was null (prevented by assertion in from_raw), dangling, or if the PF_InData structure was deallocated during this function call.
         let in_data = unsafe { &(*self.0.as_ptr()) };
+        // SAFETY: Calling Adobe After Effects SDK register_ui FFI callback through function pointer.
+        // Detailed explanation: (1) in_data.inter.register_ui is guaranteed to be a valid function pointer provided by the Adobe SDK during plugin initialization, (2) unwrap() is safe because the SDK always initializes these function pointers before invoking plugin callbacks, (3) effect_ref is SDK-provided and valid, (4) custom_ui_info.as_ptr() returns a valid pointer to a properly initialized CustomUIInfo structure, (5) the function registers a custom UI element and follows the Adobe SDK's callback convention of returning 0 on success or an error code on failure.
+        // Would be UB if: the function pointer was null (prevented by unwrap), the function pointer was invalid or pointed to freed code, effect_ref was invalid, or custom_ui_info pointer was dangling.
         match unsafe { in_data.inter.register_ui.unwrap()(in_data.effect_ref, custom_ui_info.as_ptr() as _) } {
             0 => Ok(()),
             e => Err(Error::from(e)),
