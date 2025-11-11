@@ -136,6 +136,15 @@ impl UtilitySuite {
 
     /// Retrieves the clip name used by the specific layer parameter.
     pub fn source_track_clip_name2(&self, effect_ref: impl AsPtr<PF_ProgPtr>, layer_param_index: u32, get_master_clip_name: bool, sequence_time: PrTime) -> Result<String, Error> {
+        // SAFETY: Zero-initializing PrSDKString for Adobe SDK FFI out-parameter pattern.
+        // Detailed explanation: (1) PrSDKString is a C POD type from the Adobe Premiere SDK that is
+        // valid when zero-initialized, (2) the Adobe SDK GetSourceTrackClipName2 function expects an
+        // uninitialized/zeroed out-parameter that it will fully populate, (3) the value is not read
+        // before being passed to the C function which writes to it, (4) the lifetime is valid for the
+        // duration of the FFI call.
+        // Would be UB if: PrSDKString required non-zero initialization, or if we read the value before
+        // the C function populates it, or if PrSDKString contained types with validity requirements
+        // (like references or non-null pointers that cannot be null).
         let mut val: PrSDKString = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, GetSourceTrackClipName2, effect_ref.as_ptr(), layer_param_index, get_master_clip_name as _, &mut val, sequence_time)?;
 
@@ -144,6 +153,15 @@ impl UtilitySuite {
 
     /// Retrieves the clip name in use by the specified layer parameter.
     pub fn source_track_file_name2(&self, effect_ref: impl AsPtr<PF_ProgPtr>, layer_param_index: u32, sequence_time: PrTime) -> Result<String, Error> {
+        // SAFETY: Zero-initializing PrSDKString for Adobe SDK FFI out-parameter pattern.
+        // Detailed explanation: (1) PrSDKString is a C POD type from the Adobe Premiere SDK that is
+        // valid when zero-initialized, (2) the Adobe SDK GetSourceTrackFileName2 function expects an
+        // uninitialized/zeroed out-parameter that it will fully populate, (3) the value is not read
+        // before being passed to the C function which writes to it, (4) the lifetime is valid for the
+        // duration of the FFI call.
+        // Would be UB if: PrSDKString required non-zero initialization, or if we read the value before
+        // the C function populates it, or if PrSDKString contained types with validity requirements
+        // (like references or non-null pointers that cannot be null).
         let mut val: PrSDKString = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, GetSourceTrackFileName2, effect_ref.as_ptr(), layer_param_index, &mut val, sequence_time)?;
 

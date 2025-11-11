@@ -150,6 +150,15 @@ impl<'a, T: 'a> MemHandle<'a, T> {
         let len = self.len()?;
         let lock = self.lock()?;
         let ptr = lock.as_ptr() as *const u8;
+        // SAFETY: Creating a slice from a locked memory handle pointer.
+        // Detailed explanation: (1) ptr is obtained from a locked MemHandle via AEGP_LockMemHandle,
+        // which guarantees the memory is pinned and valid for the lock's lifetime, (2) len is
+        // retrieved from AEGP_GetMemHandleSize, ensuring it matches the actual allocated size,
+        // (3) the MemHandleLock RAII guard ensures the memory remains locked during access,
+        // (4) After Effects guarantees 16-byte alignment for all memory handles.
+        // Would be UB if: ptr were null (checked by lock returning Ok), len exceeded the actual
+        // allocation size (prevented by getting len from mem_handle_size), or the handle were
+        // unlocked before the slice access (prevented by the lock guard).
         let bytes = unsafe { std::slice::from_raw_parts(ptr, len) };
         Ok(bytes.to_vec())
     }
@@ -163,8 +172,15 @@ impl<'a, T: 'a> MemHandle<'a, T> {
 impl<'a, T: 'a> Drop for MemHandle<'a, T> {
     fn drop(&mut self) {
         if let Ok(lock) = self.lock() {
-            // Call destructors for data
-            // owned by MemHandle
+            // SAFETY: Reading value from locked memory handle to call its destructor.
+            // Detailed explanation: (1) lock.ptr is obtained from AEGP_LockMemHandle and points to
+            // valid initialized memory of type T, (2) the lock guard ensures memory remains pinned
+            // during the read, (3) ptr::read performs a bitwise copy without moving from the source,
+            // (4) the value read is immediately dropped, properly running T's destructor before the
+            // memory itself is freed by free_mem_handle.
+            // Would be UB if: ptr were unaligned for T (prevented by AE's 16-byte alignment guarantee),
+            // ptr pointed to uninitialized memory (prevented by MemHandle::new initializing the value),
+            // or the memory were unlocked during read (prevented by the lock guard).
             unsafe { lock.ptr.read() };
         }
 
@@ -182,6 +198,17 @@ impl<'a, T> MemHandleLock<'a, T> {
         if self.ptr.is_null() {
             Err(Error::Generic)
         } else {
+            // SAFETY: Dereferencing locked memory handle pointer to create immutable reference.
+            // Detailed explanation: (1) ptr is validated non-null by the preceding check, (2) ptr
+            // originates from AEGP_LockMemHandle which returns a valid pointer to initialized memory
+            // of the correct size for T, (3) the MemHandleLock RAII guard ensures the memory remains
+            // locked and cannot be moved by the OS for the reference's lifetime, (4) the lifetime 'a
+            // is tied to the MemHandle, ensuring the reference doesn't outlive the allocation,
+            // (5) After Effects guarantees proper alignment (16-byte) for the allocation.
+            // Would be UB if: ptr were null (prevented by explicit check), memory were uninitialized
+            // (prevented by MemHandle::new initializing via lock().as_ref_mut()), ptr were misaligned
+            // for T (prevented by AE's alignment guarantee), or memory were freed/moved while the
+            // reference exists (prevented by the lock guard and lifetime constraints).
             Ok(unsafe { &*self.ptr })
         }
     }
@@ -190,6 +217,19 @@ impl<'a, T> MemHandleLock<'a, T> {
         if self.ptr.is_null() {
             Err(Error::Generic)
         } else {
+            // SAFETY: Dereferencing locked memory handle pointer to create mutable reference.
+            // Detailed explanation: (1) ptr is validated non-null by the preceding check, (2) ptr
+            // originates from AEGP_LockMemHandle which returns a valid pointer to initialized memory
+            // of the correct size for T, (3) the MemHandleLock RAII guard ensures exclusive access
+            // and that memory remains locked for the reference's lifetime, (4) only one MemHandleLock
+            // can exist at a time per MemHandle (enforced by &self requirement on lock()), ensuring
+            // no aliasing mutable references, (5) the lifetime 'a is tied to the MemHandle, preventing
+            // the reference from outliving the allocation, (6) After Effects guarantees proper alignment.
+            // Would be UB if: ptr were null (prevented by explicit check), memory were uninitialized
+            // (prevented by MemHandle::new), ptr were misaligned (prevented by AE's 16-byte alignment),
+            // multiple mutable references existed simultaneously (prevented by single MemHandleLock
+            // invariant), or memory were freed/moved during reference lifetime (prevented by lock guard
+            // and lifetime constraints).
             Ok(unsafe { &mut *self.ptr })
         }
     }

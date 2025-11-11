@@ -73,6 +73,11 @@ impl ItemSuite {
     pub fn type_name(&self, item_type: ItemType) -> Result<String, Error> {
         let mut buffer = [0i8; ae_sys::AEGP_MAX_TYPE_NAME_SIZE as _];
         call_suite_fn!(self, AEGP_GetTypeName, item_type.into(), buffer.as_mut_ptr() as *mut _)?;
+        // SAFETY: Creating CStr from stack buffer filled by AEGP_GetTypeName.
+        // Detailed explanation: (1) buffer is a valid stack-allocated array of size AEGP_MAX_TYPE_NAME_SIZE,
+        // (2) AEGP_GetTypeName guarantees to write a null-terminated C string into the buffer,
+        // (3) buffer.as_ptr() provides a valid pointer with lifetime tied to the stack frame.
+        // Would be UB if: AEGP_GetTypeName failed to null-terminate the string or wrote beyond buffer bounds.
         Ok(unsafe { std::ffi::CStr::from_ptr(buffer.as_ptr()) }.to_string_lossy().into_owned())
     }
 
@@ -81,6 +86,13 @@ impl ItemSuite {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetItemName -> ae_sys::AEGP_MemHandle, plugin_id, item_handle.as_ptr())?;
         // Create a mem handle each and lock it.
         // When the lock goes out of scope it unlocks and when the handle goes out of scope it gives the memory back to Ae.
+        // SAFETY: Reading UTF-16 string from AE-allocated memory via locked MemHandle.
+        // Detailed explanation: (1) mem_handle is a valid AEGP_MemHandle returned by AEGP_GetItemName,
+        // (2) MemHandle::from_raw wraps it in RAII for proper cleanup, (3) lock() ensures the memory
+        // is accessible and prevents AE from modifying it, (4) AEGP_GetItemName guarantees the memory
+        // contains a null-terminated UTF-16 string, (5) as_ptr() provides a valid pointer to locked memory.
+        // Would be UB if: the memory wasn't properly null-terminated, the pointer outlived the lock,
+        // or AEGP_GetItemName returned an invalid memory handle.
         Ok(unsafe {
             U16CString::from_ptr_str(
                 MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr(),
@@ -180,6 +192,13 @@ impl ItemSuite {
     /// Retrieves the [`ItemHandle`]'s comment.
     pub fn item_comment(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetItemComment -> ae_sys::AEGP_MemHandle, item_handle.as_ptr())?;
+        // SAFETY: Reading UTF-16 string from AE-allocated memory via locked MemHandle.
+        // Detailed explanation: (1) mem_handle is a valid AEGP_MemHandle returned by AEGP_GetItemComment,
+        // (2) MemHandle::from_raw wraps it in RAII for proper cleanup, (3) lock() ensures the memory
+        // is accessible and prevents AE from modifying it, (4) AEGP_GetItemComment guarantees the memory
+        // contains a null-terminated UTF-16 string, (5) as_ptr() provides a valid pointer to locked memory.
+        // Would be UB if: the memory wasn't properly null-terminated, the pointer outlived the lock,
+        // or AEGP_GetItemComment returned an invalid memory handle.
         Ok(unsafe {
             U16CString::from_ptr_str(
                 MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr(),

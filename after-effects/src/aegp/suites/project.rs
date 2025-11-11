@@ -48,13 +48,24 @@ impl ProjectSuite {
 
         let mut buffer = [0i8; (ae_sys::AEGP_MAX_PROJ_NAME_SIZE + 1) as _];
         call_suite_fn!(self, AEGP_GetProjectName, proj_handle.into(), buffer.as_mut_ptr() as *mut _)?;
+        // SAFETY: Creating CStr from buffer filled by AEGP_GetProjectName.
+        // Detailed explanation: (1) buffer is a valid stack-allocated array with proper size (AEGP_MAX_PROJ_NAME_SIZE + 1),
+        // (2) AEGP_GetProjectName writes a null-terminated C string into the buffer per Adobe SDK contract,
+        // (3) buffer pointer is valid for the lifetime of this function and points to initialized memory.
+        // Would be UB if: AEGP_GetProjectName failed to null-terminate the string or wrote beyond buffer bounds.
         Ok(unsafe { std::ffi::CStr::from_ptr(buffer.as_ptr()) }.to_string_lossy().into_owned())
     }
 
-    /// Get the path of the project (empty string the project hasn’t been saved yet). The path is a handle to a NULL-terminated A_UTF16Char string,
+    /// Get the path of the project (empty string the project hasn't been saved yet). The path is a handle to a NULL-terminated A_UTF16Char string,
     pub fn project_path(&self, proj_handle: ProjectHandle) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetProjectPath -> ae_sys::AEGP_MemHandle, proj_handle.into())?;
 
+        // SAFETY: Creating U16CString from memory handle pointer returned by AEGP_GetProjectPath.
+        // Detailed explanation: (1) mem_handle is a valid AEGP_MemHandle returned by the Adobe SDK,
+        // (2) MemHandle::from_raw validates and wraps the handle, lock() ensures exclusive access to the memory,
+        // (3) AEGP_GetProjectPath guarantees the memory contains a null-terminated UTF-16 string per Adobe SDK contract,
+        // (4) the pointer remains valid while the MemHandle lock is held within this expression.
+        // Would be UB if: AEGP_GetProjectPath returned an invalid handle, the memory was not null-terminated UTF-16, or the pointer was accessed after the lock was released.
         Ok(unsafe {
             U16CString::from_ptr_str(MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr()).to_string_lossy()
         })

@@ -40,6 +40,11 @@ impl IOInSuite {
     /// Retrieves the file path for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
     pub fn in_spec_file_path(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetInSpecFilePath -> ae_sys::AEGP_MemHandle, in_spec_handle.as_ptr())?;
+        // SAFETY: Creating a UTF-16 string from a pointer obtained from Adobe AE SDK memory handle.
+        // Detailed explanation: (1) The pointer is obtained from a locked MemHandle<u16> which guarantees valid memory access during the lock lifetime,
+        // (2) AEGP_GetInSpecFilePath returns a valid AEGP_MemHandle containing a null-terminated UTF-16 string as per AE SDK specification,
+        // (3) U16CString::from_ptr_str safely handles the null-terminated UTF-16 data and the resulting string is immediately converted.
+        // Would be UB if: The AE SDK returned an invalid handle, the handle contained non-UTF-16 data, or the string was not null-terminated.
         Ok(unsafe {
             U16CString::from_ptr_str(
                 aegp::MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr(),
@@ -128,9 +133,19 @@ impl IOInSuite {
 
     /// Retrieves the width, height, bounding rect, and scaling factor applied to an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
     pub fn in_spec_rational_dimensions(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<(ae_sys::AEIO_RationalScale, i32, i32, Rect), Error> {
+        // SAFETY: Zero-initializing AEIO_RationalScale struct as an out-parameter for FFI call.
+        // Detailed explanation: (1) AEIO_RationalScale is a C struct from the AE SDK that is valid when zero-initialized,
+        // (2) The struct will be fully written by AEGP_InSpecGetRationalDimensions before being read,
+        // (3) Zero-initialization is safe for C structs containing only primitive numeric types.
+        // Would be UB if: The struct contained non-zero-safe types like references, non-null pointers, or had validity invariants requiring non-zero values.
         let mut rs: ae_sys::AEIO_RationalScale = unsafe { std::mem::zeroed() };
         let mut width = 0;
         let mut height = 0;
+        // SAFETY: Zero-initializing A_Rect struct as an out-parameter for FFI call.
+        // Detailed explanation: (1) A_Rect is a C struct from the AE SDK representing a rectangle with integer coordinates,
+        // (2) The struct will be fully written by AEGP_InSpecGetRationalDimensions before being read,
+        // (3) Zero-initialization is safe for C structs containing only primitive integer types.
+        // Would be UB if: The struct contained non-zero-safe types like references, non-null pointers, or had validity invariants requiring non-zero values.
         let mut rect: ae_sys::A_Rect = unsafe { std::mem::zeroed() };
         call_suite_fn!(self, AEGP_InSpecGetRationalDimensions, in_spec_handle.as_ptr(), &mut rs, &mut width, &mut height, &mut rect)?;
         Ok((rs, width, height, rect.into()))

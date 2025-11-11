@@ -56,6 +56,14 @@ impl EffectSuite {
     pub fn effect_param_union_by_index(&self, effect_ref: impl AsPtr<AEGP_EffectRefH>, plugin_id: PluginId, param_index: i32) -> Result<pf::Param<'_>, Error> {
         let (param_type, u) = call_suite_fn_double!(self, AEGP_GetEffectParamUnionByIndex -> ae_sys::PF_ParamType, ae_sys::PF_ParamDefUnion, plugin_id, effect_ref.as_ptr(), param_index)?;
 
+        // SAFETY: Accessing union fields based on discriminant from After Effects SDK.
+        // Detailed explanation: (1) The param_type discriminant is returned by the Adobe SDK's AEGP_GetEffectParamUnionByIndex function,
+        // which guarantees that it correctly identifies which union variant is active. (2) Each union field access matches the corresponding
+        // param_type discriminant, ensuring we only read the active field. (3) The union PF_ParamDefUnion is a C union from the Adobe SDK
+        // where the active variant is determined by the PF_ParamType discriminant. (4) All unrecognized param_type values are handled by
+        // returning Error::InvalidParms, preventing access to invalid union states.
+        // Would be UB if: the Adobe SDK returned an incorrect param_type discriminant that doesn't match the active union field,
+        // or if we accessed a union field that doesn't correspond to the param_type value.
         unsafe {
             match param_type {
                 ae_sys::PF_Param_ANGLE          => Ok(Param::Angle      (AngleDef      ::from_owned(u.ad))),
@@ -95,9 +103,15 @@ impl EffectSuite {
     ///
     /// Pass [`Command::CompletelyGeneral`](crate::Command::CompletelyGeneral) for `command` to get the old behaviour.
     pub fn effect_call_generic<T: Sized>(&self, effect_ref: impl AsPtr<AEGP_EffectRefH>, plugin_id: PluginId, time: Time, command: &pf::Command, extra_payload: Option<&T>) -> Result<(), Error> {
-        // T is Sized so it can never be a fat pointer which means we are safe to transmute here.
-        // Alternatively we could write extra_payload.map(|p| p as *const _).unwrap_or(core::ptr::null())
-        call_suite_fn!(self, AEGP_EffectCallGeneric, plugin_id, effect_ref.as_ptr(), &time.into() as *const _, command.as_raw(), std::mem::transmute(extra_payload))
+        // SAFETY: Transmuting Option<&T> to *const c_void for FFI call.
+        // Detailed explanation: (1) T is constrained by the Sized trait bound, guaranteeing it's not a fat pointer (DST) and has a known size at compile time.
+        // (2) Option<&T> where T: Sized has the null pointer optimization, so None transmutes to null pointer and Some(&t) transmutes to the pointer value.
+        // (3) The transmute converts Option<&T> to *const c_void which the Adobe SDK expects as an optional payload pointer.
+        // (4) The SDK function AEGP_EffectCallGeneric treats null as "no payload" and non-null as a pointer to caller-provided data.
+        // (5) The lifetime of the reference is valid for the duration of the FFI call since the reference is borrowed for this function call.
+        // Would be UB if: T were not Sized (making it a fat pointer with incompatible representation), or if the Adobe SDK stored the pointer
+        // beyond the function call duration, but AEGP_EffectCallGeneric is documented to use the pointer only during the call.
+        call_suite_fn!(self, AEGP_EffectCallGeneric, plugin_id, effect_ref.as_ptr(), &time.into() as *const _, command.as_raw(), unsafe { std::mem::transmute(extra_payload) })
     }
 
     /// Disposes of an [`EffectRefHandle`]. Use this to dispose of any [`EffectRefHandle`] returned by After Effects.
@@ -135,6 +149,14 @@ impl EffectSuite {
     pub fn effect_name(&self, installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
         let mut name = [0i8; ae_sys::AEGP_MAX_EFFECT_NAME_SIZE as usize + 1];
         call_suite_fn!(self, AEGP_GetEffectName, installed_effect_key.into(), name.as_mut_ptr() as _)?;
+        // SAFETY: Creating a CStr from a pointer to a null-terminated string buffer.
+        // Detailed explanation: (1) The name buffer is a properly sized array (AEGP_MAX_EFFECT_NAME_SIZE + 1) initialized to all zeros,
+        // ensuring null-termination even if the SDK fills the entire buffer. (2) AEGP_GetEffectName is documented to write a null-terminated
+        // C string into the provided buffer, respecting the buffer size. (3) The pointer name.as_ptr() points to valid memory on the stack
+        // that remains valid for the duration of the CStr::from_ptr call. (4) The buffer is guaranteed to contain at least one null byte
+        // (either from initialization or from the SDK).
+        // Would be UB if: the Adobe SDK failed to write a null-terminated string, wrote beyond the buffer bounds, or the buffer contained
+        // invalid UTF-8 sequences at interior positions (though to_string_lossy handles invalid UTF-8 gracefully).
         Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }.to_string_lossy().into_owned())
     }
 
@@ -145,6 +167,14 @@ impl EffectSuite {
     pub fn effect_match_name(&self, installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
         let mut name = [0i8; ae_sys::AEGP_MAX_EFFECT_MATCH_NAME_SIZE as usize + 1];
         call_suite_fn!(self, AEGP_GetEffectMatchName, installed_effect_key.into(), name.as_mut_ptr() as _)?;
+        // SAFETY: Creating a CStr from a pointer to a null-terminated string buffer.
+        // Detailed explanation: (1) The name buffer is a properly sized array (AEGP_MAX_EFFECT_MATCH_NAME_SIZE + 1) initialized to all zeros,
+        // ensuring null-termination even if the SDK fills the entire buffer. (2) AEGP_GetEffectMatchName is documented to write a null-terminated
+        // C string (7-bit ASCII) into the provided buffer. (3) The pointer name.as_ptr() points to valid stack memory that remains valid for
+        // the duration of the CStr::from_ptr call. (4) Match names are documented to be 7-bit ASCII, which is a valid UTF-8 subset.
+        // (5) to_string_lossy() safely handles any non-UTF-8 bytes if present.
+        // Would be UB if: the Adobe SDK failed to write a null-terminated string or wrote beyond the buffer bounds. The TODO comment indicates
+        // the encoding might not always be UTF-8, but to_string_lossy handles this safely.
         // TODO: It's not UTF-8
         Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }.to_string_lossy().into_owned())
     }
@@ -153,6 +183,14 @@ impl EffectSuite {
     pub fn effect_category(&self, installed_effect_key: InstalledEffectKey) -> Result<String, Error> {
         let mut name = [0i8; ae_sys::AEGP_MAX_EFFECT_CATEGORY_NAME_SIZE as usize + 1];
         call_suite_fn!(self, AEGP_GetEffectCategory, installed_effect_key.into(), name.as_mut_ptr() as _)?;
+        // SAFETY: Creating a CStr from a pointer to a null-terminated string buffer.
+        // Detailed explanation: (1) The name buffer is a properly sized array (AEGP_MAX_EFFECT_CATEGORY_NAME_SIZE + 1) initialized to all zeros,
+        // ensuring null-termination even if the SDK fills the entire buffer. (2) AEGP_GetEffectCategory is documented to write a null-terminated
+        // C string into the provided buffer, respecting the buffer size. (3) The pointer name.as_ptr() points to valid stack memory that remains
+        // valid for the duration of the CStr::from_ptr call. (4) The buffer is guaranteed to contain at least one null byte (either from
+        // initialization or from the SDK). (5) to_string_lossy() safely handles any non-UTF-8 bytes that may be present in the category name.
+        // Would be UB if: the Adobe SDK failed to write a null-terminated string or wrote beyond the buffer bounds, violating the documented
+        // contract of AEGP_GetEffectCategory.
         Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }.to_string_lossy().into_owned())
     }
 

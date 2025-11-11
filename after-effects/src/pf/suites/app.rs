@@ -21,6 +21,12 @@ define_suite!(
 );
 
 fn str_from_c(slice: &[i8]) -> Result<String, Error> {
+    // SAFETY: Reinterpret i8 array as u8 array for C string processing.
+    // Detailed explanation: (1) The source slice is a valid i8 slice with known length from AE SDK,
+    // (2) i8 and u8 have identical memory layout and size, making the cast safe,
+    // (3) The pointer is derived from a valid reference with the same lifetime and length.
+    // Would be UB if: The source slice pointer was null or the length was incorrect (both impossible
+    // since we derive from a valid &[i8] reference).
     let slice: &[u8] = unsafe { std::slice::from_raw_parts(slice.as_ptr() as *const u8, slice.len()) };
     Ok(CStr::from_bytes_until_nul(slice).map_err(|_| Error::InvalidParms)?.to_string_lossy().into_owned())
 }
@@ -77,6 +83,12 @@ impl AppSuite {
     ///
     /// Returns a tuple containing: (font name, font number, size, style),
     pub fn font_style_sheet(&self, sheet: FontStyleSheet) -> Result<(String, i16, i16, i16), Error> {
+        // SAFETY: Zero-initialize PF_FontName struct for output parameter.
+        // Detailed explanation: (1) PF_FontName contains only i8 arrays which are valid at any bit pattern,
+        // (2) All-zero is a valid representation for C-style character arrays (empty null-terminated strings),
+        // (3) The struct is immediately passed to AE SDK which will fully initialize it before we read from it.
+        // Would be UB if: PF_FontName contained non-zero-safe types like references or non-nullable pointers
+        // (it does not - it only contains primitive i8 arrays).
         let mut font_name: ae_sys::PF_FontName = unsafe { std::mem::zeroed() };
         let mut font_num = 0;
         let mut size = 0;

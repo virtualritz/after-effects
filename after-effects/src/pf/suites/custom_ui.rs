@@ -120,8 +120,18 @@ impl ContextHandle {
 
     pub fn window_type(&self) -> WindowType {
         assert!(!self.as_ptr().is_null());
+        // SAFETY: Dereferencing outer handle pointer to obtain inner pointer.
+        // Detailed explanation: (1) self.as_ptr() is guaranteed non-null by the preceding assert,
+        // (2) PF_ContextH is an opaque handle provided by the Adobe SDK that remains valid for
+        // the lifetime of the ContextHandle wrapper, (3) dereferencing reads a single pointer value.
+        // Would be UB if: the outer handle pointer was null (checked), dangling, or unaligned.
         let inner = unsafe { *self.as_ptr() };
         assert!(!inner.is_null());
+        // SAFETY: Accessing w_type field from the inner context structure.
+        // Detailed explanation: (1) inner pointer is guaranteed non-null by the preceding assert,
+        // (2) inner points to a valid PF_Context structure managed by After Effects that outlives
+        // this ContextHandle, (3) w_type is a plain data field (integer enum) safe to read directly.
+        // Would be UB if: inner pointer was null (checked), dangling, or pointing to invalid memory.
         unsafe { (*inner).w_type }.into()
     }
 }
@@ -132,6 +142,12 @@ pub struct CustomUIInfo(ae_sys::PF_CustomUIInfo);
 
 impl CustomUIInfo {
     pub fn new() -> Self {
+        // SAFETY: Zero-initializing PF_CustomUIInfo structure.
+        // Detailed explanation: (1) PF_CustomUIInfo is a C FFI struct containing only plain data
+        // types (integers and similar primitives), (2) all-zero bit pattern is a valid representation
+        // for this struct as defined by the Adobe After Effects SDK, (3) no references, pointers
+        // requiring validity, or types with safety invariants that zero would violate.
+        // Would be UB if: the struct contained types where zero is not a valid bit pattern (references, NonZero types, etc.).
         Self(unsafe { std::mem::zeroed() })
     }
 
