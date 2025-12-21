@@ -14,6 +14,8 @@ pub const PF_Vers_VERS_SHIFT: u32 = 19;
 pub const PF_Vers_VERS_HIGH_BITS: u32 = 15;
 pub const PF_Vers_VERS_HIGH_SHIFT: u32 = 26;
 pub const PF_Vers_VERS_LOW_SHIFT: u32 = 3;
+pub const PF_AE235_PLUG_IN_VERSION: u32 = 13;
+pub const PF_AE235_PLUG_IN_SUBVERS: u32 = 29;
 pub const PF_AE234_PLUG_IN_VERSION: u32 = 13;
 pub const PF_AE234_PLUG_IN_SUBVERS: u32 = 28;
 pub const PF_AE220_PLUG_IN_VERSION: u32 = 13;
@@ -84,7 +86,7 @@ pub const PF_AE31_PLUG_IN_VERSION: u32 = 11;
 pub const PF_AE31_PLUG_IN_SUBVERS: u32 = 6;
 pub const PF_AE31_PLUG_IN_SUBVERS_STRICTIFY: u32 = 8;
 pub const PF_AE_PLUG_IN_VERSION: u32 = 13;
-pub const PF_AE_PLUG_IN_SUBVERS: u32 = 28;
+pub const PF_AE_PLUG_IN_SUBVERS: u32 = 29;
 pub const PF_MAX_EFFECT_NAME_LEN: u32 = 31;
 pub const PF_MAX_EFFECT_CATEGORY_NAME_LEN: u32 = 31;
 pub const PF_MAX_EFFECT_PARAM_NAME_LEN: u32 = 31;
@@ -196,7 +198,7 @@ pub const kPFWorldTransformSuite: &[u8; 25] = b"PF World Transform Suite\0";
 pub const kPFWorldTransformSuiteVersion1: u32 = 1;
 pub const kPFFillMatteSuite: &[u8; 20] = b"PF Fill Matte Suite\0";
 pub const kPFFillMatteSuiteVersion2: u32 = 2;
-pub const PF_CUDAVersion: u32 = 11080;
+pub const PF_CUDAVersion: u32 = 12080;
 pub const kPFGPUDeviceSuite: &[u8; 20] = b"PF GPU Device Suite\0";
 pub const kPFGPUDeviceSuiteVersion1: u32 = 1;
 pub const kPFPathQuerySuite: &[u8; 20] = b"PF Path Query Suite\0";
@@ -241,7 +243,7 @@ pub const kPFHelperSuite2Version1: u32 = 1;
 pub const kPFHelperSuite2Version2: u32 = 2;
 pub const kPFHelperSuite2Version: u32 = 2;
 pub const PF_PLUG_IN_VERSION: u32 = 13;
-pub const PF_PLUG_IN_SUBVERS: u32 = 28;
+pub const PF_PLUG_IN_SUBVERS: u32 = 29;
 pub const FIEL_Label_VERSION: u32 = 1;
 pub const FIEL_ResID: u32 = 128;
 pub const PR_ARTISAN_EXTENSION: &[u8; 5] = b".aex\0";
@@ -387,9 +389,9 @@ pub const kAEGPIterateSuiteVersion2: u32 = 2;
 pub const kAEGPPFInterfaceSuite: &[u8; 24] = b"AEGP PF Interface Suite\0";
 pub const kAEGPPFInterfaceSuiteVersion1: u32 = 1;
 pub const kAEGPIOInSuite: &[u8; 17] = b"AEGP IO In Suite\0";
-pub const kAEGPIOInSuiteVersion6: u32 = 7;
+pub const kAEGPIOInSuiteVersion7: u32 = 8;
 pub const kAEGPIOOutSuite: &[u8; 18] = b"AEGP IO Out Suite\0";
-pub const kAEGPIOOutSuiteVersion5: u32 = 8;
+pub const kAEGPIOOutSuiteVersion6: u32 = 9;
 pub const kAEGPFIMSuite: &[u8; 31] = b"AEGP File Import Manager Suite\0";
 pub const kAEGPFIMSuiteVersion4: u32 = 4;
 pub const kAEGPPersistentDataSuite: &[u8; 27] = b"AEGP Persistent Data Suite\0";
@@ -502,10 +504,16 @@ pub const kAEGPMarkerSuiteVersion2: u32 = 2;
 pub const kAEGPProjSuiteVersion5: u32 = 8;
 pub const kAEGPPersistentDataSuiteVersion3: u32 = 3;
 pub const kAEGPIterateSuiteVersion1: u32 = 1;
+pub const kAEGPIOInSuiteVersion6: u32 = 7;
 pub const kAEGPIOInSuiteVersion5: u32 = 6;
 pub const kAEGPIOInSuiteVersion4: u32 = 5;
+pub const kAEGPIOOutSuiteVersion5: u32 = 8;
 pub const kAEGPIOOutSuiteVersion4: u32 = 7;
 pub const kAEGPFIMSuiteVersion3: u32 = 3;
+pub const kAEGPComputeCacheSuite: &[u8; 19] = b"AEGP Compute Cache\0";
+pub const kAEGPComputeCacheSuiteVersion1: u32 = 1;
+pub const kAEGPHashSuite: &[u8; 16] = b"AEGP Hash Suite\0";
+pub const kAEGPHashSuiteVersion1: u32 = 1;
 pub const kPFPixelFormatSuiteVersion1: u32 = 1;
 pub const kPFPixelFormatSuiteVersion: u32 = 1;
 pub const kPFBackgroundFrameSuite: &[u8; 26] = b"PF Background Frame Suite\0";
@@ -743,153 +751,164 @@ pub const PF_Param_RESERVED3: _bindgen_ty_12 = 17;
 pub const PF_Param_POINT_3D: _bindgen_ty_12 = 18;
 pub type _bindgen_ty_12 = ::std::os::raw::c_int;
 pub type PF_ParamType = A_long;
-pub const PF_ParamFlag_RESERVED1: _bindgen_ty_13 = 1;
-pub const PF_ParamFlag_CANNOT_TIME_VARY: _bindgen_ty_13 = 2;
-pub const PF_ParamFlag_CANNOT_INTERP: _bindgen_ty_13 = 4;
-pub const PF_ParamFlag_RESERVED2: _bindgen_ty_13 = 8;
-pub const PF_ParamFlag_RESERVED3: _bindgen_ty_13 = 16;
-pub const PF_ParamFlag_COLLAPSE_TWIRLY: _bindgen_ty_13 = 32;
-pub const PF_ParamFlag_SUPERVISE: _bindgen_ty_13 = 64;
-pub const PF_ParamFlag_START_COLLAPSED: _bindgen_ty_13 = 32;
-pub const PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS: _bindgen_ty_13 = 128;
-pub const PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE: _bindgen_ty_13 = 128;
-pub const PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED: _bindgen_ty_13 = 256;
-pub const PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN: _bindgen_ty_13 = 512;
+pub const PF_Precision_INTEGER: _bindgen_ty_13 = 0;
+pub const PF_Precision_TENTHS: _bindgen_ty_13 = 1;
+pub const PF_Precision_HUNDREDTHS: _bindgen_ty_13 = 2;
+pub const PF_Precision_THOUSANDTHS: _bindgen_ty_13 = 3;
+pub const PF_Precision_TEN_THOUSANDTHS: _bindgen_ty_13 = 4;
 pub type _bindgen_ty_13 = ::std::os::raw::c_uint;
-pub type PF_ParamFlags = A_long;
-pub const PF_Err_NONE: _bindgen_ty_14 = 0;
-pub const PF_Err_OUT_OF_MEMORY: _bindgen_ty_14 = 4;
-pub const PF_Err_INTERNAL_STRUCT_DAMAGED: _bindgen_ty_14 = 512;
-pub const PF_Err_INVALID_INDEX: _bindgen_ty_14 = 513;
-pub const PF_Err_UNRECOGNIZED_PARAM_TYPE: _bindgen_ty_14 = 514;
-pub const PF_Err_INVALID_CALLBACK: _bindgen_ty_14 = 515;
-pub const PF_Err_BAD_CALLBACK_PARAM: _bindgen_ty_14 = 516;
-pub const PF_Interrupt_CANCEL: _bindgen_ty_14 = 517;
-pub const PF_Err_CANNOT_PARSE_KEYFRAME_TEXT: _bindgen_ty_14 = 518;
+pub type PF_Precision = A_short;
+pub const PF_ParamFlag_NONE: _bindgen_ty_14 = 0;
+pub const PF_ParamFlag_RESERVED1: _bindgen_ty_14 = 1;
+pub const PF_ParamFlag_CANNOT_TIME_VARY: _bindgen_ty_14 = 2;
+pub const PF_ParamFlag_CANNOT_INTERP: _bindgen_ty_14 = 4;
+pub const PF_ParamFlag_RESERVED2: _bindgen_ty_14 = 8;
+pub const PF_ParamFlag_RESERVED3: _bindgen_ty_14 = 16;
+pub const PF_ParamFlag_COLLAPSE_TWIRLY: _bindgen_ty_14 = 32;
+pub const PF_ParamFlag_SUPERVISE: _bindgen_ty_14 = 64;
+pub const PF_ParamFlag_START_COLLAPSED: _bindgen_ty_14 = 32;
+pub const PF_ParamFlag_USE_VALUE_FOR_OLD_PROJECTS: _bindgen_ty_14 = 128;
+pub const PF_ParamFlag_LAYER_PARAM_IS_TRACKMATTE: _bindgen_ty_14 = 128;
+pub const PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED: _bindgen_ty_14 = 256;
+pub const PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN: _bindgen_ty_14 = 512;
+pub const PF_ParamFlag_unused1: _bindgen_ty_14 = 1024;
+pub const PF_ParamFlag_RESERVED4: _bindgen_ty_14 = 2048;
+pub const PF_ParamFlags_ALL: _bindgen_ty_14 = 4294967295;
 pub type _bindgen_ty_14 = ::std::os::raw::c_uint;
-pub type PF_Err = A_long;
-pub const PF_WorldFlag_DEEP: _bindgen_ty_15 = 1;
-pub const PF_WorldFlag_WRITEABLE: _bindgen_ty_15 = 2;
-pub const PF_WorldFlag_RESERVED0: _bindgen_ty_15 = 16777216;
-pub const PF_WorldFlag_RESERVED1: _bindgen_ty_15 = 33554432;
-pub const PF_WorldFlag_RESERVED2: _bindgen_ty_15 = 67108864;
-pub const PF_WorldFlag_RESERVED3: _bindgen_ty_15 = 134217728;
-pub const PF_WorldFlag_RESERVED4: _bindgen_ty_15 = 268435456;
-pub const PF_WorldFlag_RESERVED5: _bindgen_ty_15 = 536870912;
-pub const PF_WorldFlag_RESERVED6: _bindgen_ty_15 = 1073741824;
-pub const PF_WorldFlag_RESERVED: _bindgen_ty_15 = 2147483648;
+pub type PF_ParamFlags = A_long;
+pub const PF_Err_NONE: _bindgen_ty_15 = 0;
+pub const PF_Err_OUT_OF_MEMORY: _bindgen_ty_15 = 4;
+pub const PF_Err_INTERNAL_STRUCT_DAMAGED: _bindgen_ty_15 = 512;
+pub const PF_Err_INVALID_INDEX: _bindgen_ty_15 = 513;
+pub const PF_Err_UNRECOGNIZED_PARAM_TYPE: _bindgen_ty_15 = 514;
+pub const PF_Err_INVALID_CALLBACK: _bindgen_ty_15 = 515;
+pub const PF_Err_BAD_CALLBACK_PARAM: _bindgen_ty_15 = 516;
+pub const PF_Interrupt_CANCEL: _bindgen_ty_15 = 517;
+pub const PF_Err_CANNOT_PARSE_KEYFRAME_TEXT: _bindgen_ty_15 = 518;
 pub type _bindgen_ty_15 = ::std::os::raw::c_uint;
-pub type PF_WorldFlags = A_long;
-pub const PF_OutFlag_NONE: _bindgen_ty_16 = 0;
-pub const PF_OutFlag_KEEP_RESOURCE_OPEN: _bindgen_ty_16 = 1;
-pub const PF_OutFlag_WIDE_TIME_INPUT: _bindgen_ty_16 = 2;
-pub const PF_OutFlag_NON_PARAM_VARY: _bindgen_ty_16 = 4;
-pub const PF_OutFlag_RESERVED6: _bindgen_ty_16 = 8;
-pub const PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING: _bindgen_ty_16 = 16;
-pub const PF_OutFlag_I_DO_DIALOG: _bindgen_ty_16 = 32;
-pub const PF_OutFlag_USE_OUTPUT_EXTENT: _bindgen_ty_16 = 64;
-pub const PF_OutFlag_SEND_DO_DIALOG: _bindgen_ty_16 = 128;
-pub const PF_OutFlag_DISPLAY_ERROR_MESSAGE: _bindgen_ty_16 = 256;
-pub const PF_OutFlag_I_EXPAND_BUFFER: _bindgen_ty_16 = 512;
-pub const PF_OutFlag_PIX_INDEPENDENT: _bindgen_ty_16 = 1024;
-pub const PF_OutFlag_I_WRITE_INPUT_BUFFER: _bindgen_ty_16 = 2048;
-pub const PF_OutFlag_I_SHRINK_BUFFER: _bindgen_ty_16 = 4096;
-pub const PF_OutFlag_WORKS_IN_PLACE: _bindgen_ty_16 = 8192;
-pub const PF_OutFlag_RESERVED8: _bindgen_ty_16 = 16384;
-pub const PF_OutFlag_CUSTOM_UI: _bindgen_ty_16 = 32768;
-pub const PF_OutFlag_RESERVED7: _bindgen_ty_16 = 65536;
-pub const PF_OutFlag_REFRESH_UI: _bindgen_ty_16 = 131072;
-pub const PF_OutFlag_NOP_RENDER: _bindgen_ty_16 = 262144;
-pub const PF_OutFlag_I_USE_SHUTTER_ANGLE: _bindgen_ty_16 = 524288;
-pub const PF_OutFlag_I_USE_AUDIO: _bindgen_ty_16 = 1048576;
-pub const PF_OutFlag_I_AM_OBSOLETE: _bindgen_ty_16 = 2097152;
-pub const PF_OutFlag_FORCE_RERENDER: _bindgen_ty_16 = 4194304;
-pub const PF_OutFlag_PiPL_OVERRIDES_OUTDATA_OUTFLAGS: _bindgen_ty_16 = 8388608;
-pub const PF_OutFlag_I_HAVE_EXTERNAL_DEPENDENCIES: _bindgen_ty_16 = 16777216;
-pub const PF_OutFlag_DEEP_COLOR_AWARE: _bindgen_ty_16 = 33554432;
-pub const PF_OutFlag_SEND_UPDATE_PARAMS_UI: _bindgen_ty_16 = 67108864;
-pub const PF_OutFlag_AUDIO_FLOAT_ONLY: _bindgen_ty_16 = 134217728;
-pub const PF_OutFlag_AUDIO_IIR: _bindgen_ty_16 = 268435456;
-pub const PF_OutFlag_I_SYNTHESIZE_AUDIO: _bindgen_ty_16 = 536870912;
-pub const PF_OutFlag_AUDIO_EFFECT_TOO: _bindgen_ty_16 = 1073741824;
-pub const PF_OutFlag_AUDIO_EFFECT_ONLY: _bindgen_ty_16 = 2147483648;
-#[doc = " -------------------- Output Flags --------------------\n\nThe out_flags field of the OutData can be set to an OR-ed\ncombination of these flags to communicate various things to\nthe driver program.  The flags are described here:\n\nPF_OutFlag_NONE\nThis is the \"empty\" setting -- no outflags.\n\nPF_OutFlag_WIDE_TIME_INPUT\nSet this flag if the effect calls get_param to inquire a\nparameter at a time besides the current one (e.g. to get\nthe previous video frame). This should be sent, if it is\ngoing to be sent, at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nAs of AE10, this flag is no longer recommended. It still works the\nsame way and is safe to set, but there's a more efficient option.\nSee PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT.\n\nPF_OutFlag_NON_PARAM_VARY\nSet this if the effect uses information other than the parameters\nin the param list to generate its output at the current time.\nFor instance, if the effect uses the current time of the frame\nor some random value to decide the output, set this flag.  This\nflag should be sent at PF_Cmd_GLOBAL_SETUP.  If the effect\nproduces changing frames when applied to a still image and\nall parameters are constant, that's a sure sign that this bit\nshould be set (e.g. Wave Warp).\tCan be over-ridden dynamically\nduring PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING\nWhen you allocate a sequence data handle, the app\nmay write the handle out to disk and reuse it\nlater. Pass this flag if the handle is not \"flat\"\n(i.e. has pointers or handles hanging off of it).\nBasically, this gives you a chance to alter the\nhandle contents before it is written out to disk,\nso  you won't get invalid handles or pointers. Once\nyou have flattened a handle, you will get an\nopportunity to un-flatten it before the effect\nneeds to continue. For sequence data, you will be\ninvoked with a PF_Cmd_SEQUENCE_RESETUP call. You\nshould store a boolean at a common  offset in your\nunflattened and flattened data that says whether\nthe data is flat or not. If you get a\nPF_Cmd_SEQUENCE_RESETUP and the boolean indicated\nthe data is flattened, you should  unflatten the\ndata, free the flattened data handle, and set the\nsequence_data handle in the  PF_OutData. If you\never set the data to NULL when you flatten it, you\nwill NOT get the sequence  resetup call to\nunflatten it. Instead, you may just get a RENDER\ncall with NULL data. Forewarned is  forearmed. This\nflag, indicating if the data will need to be\nflattened, should be set at  PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_I_DO_DIALOG\nSet this is the effect responds to a PF_Cmd_DO_DIALOG, i.e. Does this\neffect bring up an options dialog box.  PF_Cmd_DO_DIALOG is generated\nwhen the user presses the Options button on the Effect floater.\nThis flag should be set at PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_USE_OUTPUT_EXTENT\nThe output layer is passed with an \"extent rect\" indicating\nthe area of the layer that actually contains visible image data.  If\nthe effect changes its behavior based on the extent rect (for instance,\nby not iterating over the entire image), set this flag, so the\napplication will know whether having the extent\tchange should cause\nthe frame to re-render.  Specify this flag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_SEND_DO_DIALOG\nSome filters need their options dialog box to be brought up at least\nonce to be valid.  You can set this flag, and the driver app will\nautomatically send a PF_Cmd_DO_DIALOG to the effect when it is applied.\nThe DO_DIALOG will be sent after PF_Cmd_SEQUENCE_SETUP.  This flag\nshould be set in PF_Cmd_SEQUENCE_SETUP if it is going to be set.\n\nPF_OutFlag_DISPLAY_ERROR_MESSAGE\nWhenever the return_msg field in the PF_OutData is set to a string,\nAfter Effects will bring up a simple dialog box containing that\nstring.  If you set this flag, the dialog box will be made to look\nlike an error message dialog box.  If you don't set this flag, it\nwill be an undecorated dialog box.  Using this flag, an effects module\ncan have and display its own error messages and not worry about the\ncode for dialog boxes -- the program will do it for you.\nThis flag can be sent after any command.\n\nPF_OutFlag_I_EXPAND_BUFFER\nStarting with After Effects 2.0, effects will be able to expand their buffers\nbeyond the current layer's dimensions. This has always been part of the\nPF specification, but as an extra precaution (and hint to the AE rendering\nengine) set this flag at PF_Cmd_GLOBAL_SETUP if you plan to expand your\nbuffer.\n\nPF_OutFlag_I_SHRINK_BUFFER\nSet this flag if you can shrink your buffer based on the extent-rects passed\nto you in order to be more memory efficient.\n\nPF_OutFlag_PIX_INDEPENDENT\nSet this flag if the output at a given pixel is not dependent on the values\nof the pixels around it. If this is set, the pixels After Effects does not\ncare about (because of field rendering, for example) could be filled with garbage\ncolors.  Please set this flag at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_WRITE_INPUT_BUFFER\nSet this flag if your effect would like to write into the input buffer. This\ncan be useful if you need an scratch buffer, but it also invalidates some speedups\nin the AE rendering pipeline, so use it with some discretion. Please set this\nflag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_KEEP_RESOURCE_OPEN\n\nObsoleted in AE 2015 (does nothing when set).\n\nSet this flag if your effect expects its Macintosh resource fork to be open\nat any time other than global setup.  Note that this does not mean that\nthe resource fork will be kept open at all times, just whenever the\neffect is being executed.\n\nPF_OutFlag_NOP_RENDER\n\nSet this flag in PF_Cmd_GLOBAL_SETUP if the render would never result in changes\nto the source image (or audio?). For example, an expression control would set this.\n\nPF_OutFlag_CUSTOM_UI\n\nThis flag must be set if your effect has a custom UI in the Effect Controls\nWindow, Layer Window or Comp Window.\n\nPF_OutFlag2_CUSTOM_UI_ASYNC_MANAGER\t(new in 13.5)\n\nThis flags enables use of AEGP_CheckoutOrRender_*_AsyncManager() calls\nwhich avoid the need for plugin management of the lifetime of async custom UI renders from the UI thread.\nThe plugin asks for what frames it needs and the manager calls PF_Event_DRAW again when they are available\n(or cancels them as needed automatically).  The plugin responds in PF_Event_DRAW by asking for what it needs\nand drawing what it can from what is available.\n\nDue to separation of Render thread and UI thread in 13.5, frames for custom UI should no longer be\nrendered synchronously (see RenderSuite5 for more details). The manager simplifies this, especially when\nthere are multiple requests needed for DRAW.\n\nWhen enabled, this flag associates a \"PF_AsyncManager\" with the NEW_CONTEXT/CLOSE_CONTEXT and PF_Event_DRAW\nthat will automatically track completion of 1 or more asynch render requests made for drawing custom UI.\nAs requests complete,  PF_Event_DRAW will be called again and the current state of the CUSTOM_UI can be drawn.\nSuch requests may be canceled automatically as the user scrubs the time needle or project changes are made and\nbecome invalid.\n\nThis flag is used in addition to the CUSTOM_UI flag during PF_Cmd_GLOBAL_SETUP\n\nPF_OutFlag_REFRESH_UI\n\nCan be returned from PF_Cmd_EVENT, PF_Cmd_RENDER, and PF_Cmd_DO_DIALOG.\nCauses the effects control window, layer window, and comp window to be re-drawn.\n\nPF_OutFlag_I_USE_SHUTTER_ANGLE\n\nMust be set at PF_Cmd_GLOBAL_SETUP time if the effect uses\nthe shutter_angle or the shutter_phase. Can be over-ridden dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_USE_AUDIO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for a visual effect\nthat calls the audio checkout calls.\n\nPF_OutFlag_I_AM_OBSOLETE\n\nSet at PF_Cmd_GLOBAL_SETUP time for effects that don't\nwant to appear in the AE Effects menu (but will still be invoked\nif you load a project that has an old copy of the effect applied).\n\nPF_OutFlag_FORCE_RERENDER\n\nSet at PF_Cmd_EVENT if the effect modified sequence data,\nor did anything else that requires the effect needs to re-render.\nNote that setting PF_ChangeFlag_CHANGED_VALUE automatically\ncauses a re-render, so don't worry about setting PF_OutFlag_FORCE_RERENDER\nin that case. Also, I_MIX_GUID_DEPENDENCIES can be used to trigger a rerender on\ndependant changes if sequence_data has not been changed.\n\nIMPORTANT: FORCE_RERENDER should be used as a last resort. Long term we should be eliminating the need for this\nbecause it causes forced cache invalidation that doesn't work well with undo.\nOnce we have the full set of APIs in place needed to manage render state, we will be able to deprecate this.\nPrefer using ARB data + CHANGED_VALUE or I_MIX_GUID_DEPENDENCIES when possible instead.\n\nIn 13.5 the split between a UI and render threads means that FORCE_RERENDER will now also have the needed\nside effect of copying sequence_data state to the render project.  This can be expensive if the sequence_data is large.\nSupport GET_FLATTENED_SEQUENCE_DATA to prevent deallocation of your sequence_data, which can help.\nGET_FLATTENED_SEQUENCE_DATA support is required for FORCE_RERENDER use in custom mouse/key events.\n\nPF_OutFlag_PiPL_OVERRIDES_OUTDATA_OUTFLAGS\n\nValid only for setting in your PiPL.  When set out_flags will be\nignored at PF_Cmd_GLOBAL_SETUP time (& thus don't need to match).\n\nPF_OutFlag_I_HAVE_EXTERNAL_DEPENDENCIES\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if the effect has dependencies\nthat the user should know about before transporting their project to a\ndifferent machine.  For example, dependencies on an installed font,\nor on an external file.  If set, the effect will receive a\nPF_Cmd_GET_EXTERNAL_DEPENDENCIES request, where the extra\nparam will be a PF_ExtDependenciesExtra, and the effect should\nreport its information based on the given sequence_data.\n\nPF_OutFlag_SEND_UPDATE_PARAMS_UI\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you want to receive\nPF_Cmd_UPDATE_PARAMS_UI messages.\n\nPF_OutFlag_AUDIO_FLOAT_ONLY\n\nSet this flag if you only want to receive PF_SIGNED_FLOAT data\nwhen processing audio data.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_IIR\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you are an\nInfinite-Impulse-Response audio filter (i.e. your output at a given\ntime depends on your output from previous times).\n\nPF_OutFlag_I_SYNTHESIZE_AUDIO\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you generate\naudio even when handed silence.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_EFFECT_TOO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect that\nwants to filter the audio too (as opposed to just reading the audio).\n\nPF_OutFlag_AUDIO_EFFECT_ONLY\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect\nthat only filters audio (no video).\n\nPF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\n\nSet this during PF_Cmd_GLOBAL_SETUP if the effect handles PF_Cmd_QUERY_DYNAMIC_FLAGS.\nSupporting this command can dramatically improve performance for certain\neffects, because it provides dynamic information to the host about what\ncan be cached (as opposed to PIPL bits which cannot be changed at run-time)\n\nPF_OutFlag2_I_USE_3D_CAMERA\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_USE_3D_LIGHTS\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_PARAM_GROUP_START_COLLAPSED_FLAG\n\nIf you want a parameter group to honor the PF_ParamFlag_COLLAPSE_TWIRLY or\nPF_ParamFlag_START_COLLAPSED flag, set this bit.  Otherwise, all parameter\ngroups will be collapsed by default.\n\nPF_OutFlag2_DOESNT_NEED_EMPTY_PIXELS\n\nAdded for render optimizations; shrinks the input buffer passed to the effect to\nexclude any empty pixels (where empty means \"zero alpha\" unless\nPF_OutFlag2_REVEALS_ZERO_ALPHA is set, in which case RGB must be zero as well.)\nThe origin of the trimmed buffer can be found in in_data->pre_effect_source_origin.\nEffects with both this flag and PF_OutFlag_I_EXPAND_BUFFER set may get called with\na null input buffer if their input is completely empty, and must be able to handle\nthis case without crashing. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_REVEALS_ZERO_ALPHA\n\nThe effect can take pixels with zero alpha and reveal the RGB data in them (like\nour Set Channels effect). This tells After Effects not to trim such pixels when\ndetermining the input for the effect. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_AM_DEPRECATED\nthis effect is still available, and shows up under user-visible \"Obsolete\" category\nin the UI. Setting this flag means \"there's a better way to do this, but this effect\nmay still be useful in some situations\".  distinct from PF_OutFlag_I_AM_OBSOLETE in\nthat these will still show up in the GUI and the user can still apply them to new\nprojects.  The category that is set by the effect is pretty much ignored, as it will\ninstead always go into the \"Obsolete\" category\n\nPF_OutFlag2_I_USE_TIMECODE\nNew in AE 9.0.  The effect depends on the Composition's timecode or a layer's\nsource footage timecode.  If the underlying timecode changes the effects will\nbe asked to rerender.\n\nPF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT\nNew in AE 10. Requires setting of PF_OutFlag_WIDE_TIME_INPUT (which allows you\nto support old hosts), but effectively overrides that flag. When set, all\nparameter checkouts are tracked so over-time dependencies are known by AE. Note\nthat if you use this new flag, and you cache any time-dependent data in your\nsequence data (or anywhere else), you must validate that cache using the\nnew PF_HaveInputsChangedOverTimeSpan() before using it.\n\nThis only works for smart effects (those that set PF_OutFlag2_SUPPORTS_SMART_RENDER). If you haven't\nset that, After Effects will silently treat this as PF_OutFlag_WIDE_TIME_INPUT instead.\n\nTo test that it's working, apply your effect with one parameter keyframed on every frame.\nRAM Preview to fill the cache, then change one of the keyframes. The related frame and\nall dependent frames (e.g. later frames, in the case of a simulation) should lose their\ncache marks and require re-rendering. Simlarly, upstream changes to sources of layer\nparameters should cause time-selective invalidation of the cache.\n\nPF_OutFlag2_DEPENDS_ON_UNREFERENCED_MASKS\nSet this if you are going to look at paths that aren't directly referenced by a path\nparam, e.g. if you are going to draw a stroke on all masks.\n\nPF_OutFlag2_OUTPUT_IS_WATERMARKED\nSet this if your output is going to be watermarked in some way that makes it unsuitable for\nfinal use, probably because the user is using an unlicensed demo version. It is ok to change\nthis state during the course of app session, if e.g. a floating license status changes.\nPlugin authors that actually do have this state changing asynchronously must be careful to\nhave the next render match the last state returned from QUERY_DYNAMIC_FLAGS otherwise race conditions\ncould cause incorrect frames to be cached. (This is a non-issue if you only change this in response\nto DO_DIALOG.)\n\nPF_OutFlag2_I_MIX_GUID_DEPENDENCIES\t(new in 13.5)\nSmart effects only. With this option, FORCE_RERENDER becomes a cache-savvy more efficient MAYBE rerender.\nIf custom UI or DO_DIALOG change sequence data, returning FORCE_RERENDER requests AE to check whether\nrerender needs to occur.  During PreRender, the effect uses the GuidMixInPtr callback to mix\nany additional state that affects the render into our internal GUID for the cached frame.\nAE can then tell whether the frame already exists and if so, no longer needs to render.\nThis also means that DO_DIALOG no longer always blows the cache and that undo works across DO_DIALOG.\nCancelation of DO_DIALOG no longer blows the cache either.\nThis also means that I_USE_* flags are now basically redundant since any dependency could be mixed in.\nJust be sure to mix in everything that can uniquely affect resulting rendered pixels (that is not already\nan AE stream parameter).  But don't mixin things that are disabled and have no render effect  (this\nresults in less cache efficiency).\n\nPF_OutFlag2_SUPPORTS_THREADED_RENDERING\nIndicates the effect supports rendering on multiple threads at the same time. Single or multiple\napplications of this effect on a layer can be called to render at the same time on multiple threads.\n\nUI selectors are still sent on the main thread, however Sequence Setup, Sequence Resetup, Sequence SetDown,\nPreRender, and Render may be sent on multiple threads at the same time as the UI selectors are being handled\nso all of these selectors must be thread safe.\n\nGlobal Setup and Global Setdown selectors are unaffected by this flag.  Regardless whether this flag is set\nor not, they will only be sent on the main thread, and will not be sent at the same time as any other selectors.\n\nIf the effect sets PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING indicating the sequence data needs flattening\nthen it must also set PF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA.\n\nsequence_data is read-only at render time and must be accessed with PF_EffectSequenceDataSuite.\nin_data->sequence_data will be NULL during render. AEGP_ComputeCacheSuite is suggested if writing to\nsequence_data at render time is needed for caching. This suite unifies cache entries so multiple threads do\nnot recompute the same cache value. If neither of these solutions work, see the next flag,\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER.\n\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER\nIndicates the effect needs sequence_data replicated for each render thread, thus allowing each render to have\nsequence_data which can be written to. Note that changes to sequence_data will be discarded regularly, currently\nafter each span of frames is rendered such as single RAM Preview or Render Queue export."]
+pub type PF_Err = A_long;
+pub const PF_WorldFlag_DEEP: _bindgen_ty_16 = 1;
+pub const PF_WorldFlag_WRITEABLE: _bindgen_ty_16 = 2;
+pub const PF_WorldFlag_RESERVED0: _bindgen_ty_16 = 16777216;
+pub const PF_WorldFlag_RESERVED1: _bindgen_ty_16 = 33554432;
+pub const PF_WorldFlag_RESERVED2: _bindgen_ty_16 = 67108864;
+pub const PF_WorldFlag_RESERVED3: _bindgen_ty_16 = 134217728;
+pub const PF_WorldFlag_RESERVED4: _bindgen_ty_16 = 268435456;
+pub const PF_WorldFlag_RESERVED5: _bindgen_ty_16 = 536870912;
+pub const PF_WorldFlag_RESERVED6: _bindgen_ty_16 = 1073741824;
+pub const PF_WorldFlag_RESERVED: _bindgen_ty_16 = 2147483648;
 pub type _bindgen_ty_16 = ::std::os::raw::c_uint;
-pub type PF_OutFlags = A_long;
-pub const PF_OutFlag2_NONE: _bindgen_ty_17 = 0;
-pub const PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS: _bindgen_ty_17 = 1;
-pub const PF_OutFlag2_I_USE_3D_CAMERA: _bindgen_ty_17 = 2;
-pub const PF_OutFlag2_I_USE_3D_LIGHTS: _bindgen_ty_17 = 4;
-pub const PF_OutFlag2_PARAM_GROUP_START_COLLAPSED_FLAG: _bindgen_ty_17 = 8;
-pub const PF_OutFlag2_I_AM_THREADSAFE: _bindgen_ty_17 = 16;
-pub const PF_OutFlag2_CAN_COMBINE_WITH_DESTINATION: _bindgen_ty_17 = 32;
-pub const PF_OutFlag2_DOESNT_NEED_EMPTY_PIXELS: _bindgen_ty_17 = 64;
-pub const PF_OutFlag2_REVEALS_ZERO_ALPHA: _bindgen_ty_17 = 128;
-pub const PF_OutFlag2_PRESERVES_FULLY_OPAQUE_PIXELS: _bindgen_ty_17 = 256;
-pub const PF_OutFlag2_SUPPORTS_SMART_RENDER: _bindgen_ty_17 = 1024;
-pub const PF_OutFlag2_RESERVED9: _bindgen_ty_17 = 2048;
-pub const PF_OutFlag2_FLOAT_COLOR_AWARE: _bindgen_ty_17 = 4096;
-pub const PF_OutFlag2_I_USE_COLORSPACE_ENUMERATION: _bindgen_ty_17 = 8192;
-pub const PF_OutFlag2_I_AM_DEPRECATED: _bindgen_ty_17 = 16384;
-pub const PF_OutFlag2_PPRO_DO_NOT_CLONE_SEQUENCE_DATA_FOR_RENDER: _bindgen_ty_17 = 32768;
-pub const PF_OutFlag2_RESERVED10: _bindgen_ty_17 = 65536;
-pub const PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT: _bindgen_ty_17 = 131072;
-pub const PF_OutFlag2_I_USE_TIMECODE: _bindgen_ty_17 = 262144;
-pub const PF_OutFlag2_DEPENDS_ON_UNREFERENCED_MASKS: _bindgen_ty_17 = 524288;
-pub const PF_OutFlag2_OUTPUT_IS_WATERMARKED: _bindgen_ty_17 = 1048576;
-pub const PF_OutFlag2_I_MIX_GUID_DEPENDENCIES: _bindgen_ty_17 = 2097152;
-pub const PF_OutFlag2_AE13_5_THREADSAFE: _bindgen_ty_17 = 4194304;
-pub const PF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA: _bindgen_ty_17 = 8388608;
-pub const PF_OutFlag2_CUSTOM_UI_ASYNC_MANAGER: _bindgen_ty_17 = 16777216;
-pub const PF_OutFlag2_SUPPORTS_GPU_RENDER_F32: _bindgen_ty_17 = 33554432;
-pub const PF_OutFlag2_RESERVED12: _bindgen_ty_17 = 67108864;
-pub const PF_OutFlag2_SUPPORTS_THREADED_RENDERING: _bindgen_ty_17 = 134217728;
-pub const PF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER: _bindgen_ty_17 = 268435456;
-pub const PF_OutFlag2_SUPPORTS_DIRECTX_RENDERING: _bindgen_ty_17 = 536870912;
+pub type PF_WorldFlags = A_long;
+pub const PF_OutFlag_NONE: _bindgen_ty_17 = 0;
+pub const PF_OutFlag_KEEP_RESOURCE_OPEN: _bindgen_ty_17 = 1;
+pub const PF_OutFlag_WIDE_TIME_INPUT: _bindgen_ty_17 = 2;
+pub const PF_OutFlag_NON_PARAM_VARY: _bindgen_ty_17 = 4;
+pub const PF_OutFlag_RESERVED6: _bindgen_ty_17 = 8;
+pub const PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING: _bindgen_ty_17 = 16;
+pub const PF_OutFlag_I_DO_DIALOG: _bindgen_ty_17 = 32;
+pub const PF_OutFlag_USE_OUTPUT_EXTENT: _bindgen_ty_17 = 64;
+pub const PF_OutFlag_SEND_DO_DIALOG: _bindgen_ty_17 = 128;
+pub const PF_OutFlag_DISPLAY_ERROR_MESSAGE: _bindgen_ty_17 = 256;
+pub const PF_OutFlag_I_EXPAND_BUFFER: _bindgen_ty_17 = 512;
+pub const PF_OutFlag_PIX_INDEPENDENT: _bindgen_ty_17 = 1024;
+pub const PF_OutFlag_I_WRITE_INPUT_BUFFER: _bindgen_ty_17 = 2048;
+pub const PF_OutFlag_I_SHRINK_BUFFER: _bindgen_ty_17 = 4096;
+pub const PF_OutFlag_WORKS_IN_PLACE: _bindgen_ty_17 = 8192;
+pub const PF_OutFlag_RESERVED8: _bindgen_ty_17 = 16384;
+pub const PF_OutFlag_CUSTOM_UI: _bindgen_ty_17 = 32768;
+pub const PF_OutFlag_RESERVED7: _bindgen_ty_17 = 65536;
+pub const PF_OutFlag_REFRESH_UI: _bindgen_ty_17 = 131072;
+pub const PF_OutFlag_NOP_RENDER: _bindgen_ty_17 = 262144;
+pub const PF_OutFlag_I_USE_SHUTTER_ANGLE: _bindgen_ty_17 = 524288;
+pub const PF_OutFlag_I_USE_AUDIO: _bindgen_ty_17 = 1048576;
+pub const PF_OutFlag_I_AM_OBSOLETE: _bindgen_ty_17 = 2097152;
+pub const PF_OutFlag_FORCE_RERENDER: _bindgen_ty_17 = 4194304;
+pub const PF_OutFlag_PiPL_OVERRIDES_OUTDATA_OUTFLAGS: _bindgen_ty_17 = 8388608;
+pub const PF_OutFlag_I_HAVE_EXTERNAL_DEPENDENCIES: _bindgen_ty_17 = 16777216;
+pub const PF_OutFlag_DEEP_COLOR_AWARE: _bindgen_ty_17 = 33554432;
+pub const PF_OutFlag_SEND_UPDATE_PARAMS_UI: _bindgen_ty_17 = 67108864;
+pub const PF_OutFlag_AUDIO_FLOAT_ONLY: _bindgen_ty_17 = 134217728;
+pub const PF_OutFlag_AUDIO_IIR: _bindgen_ty_17 = 268435456;
+pub const PF_OutFlag_I_SYNTHESIZE_AUDIO: _bindgen_ty_17 = 536870912;
+pub const PF_OutFlag_AUDIO_EFFECT_TOO: _bindgen_ty_17 = 1073741824;
+pub const PF_OutFlag_AUDIO_EFFECT_ONLY: _bindgen_ty_17 = 2147483648;
+#[doc = " -------------------- Output Flags --------------------\n\nThe out_flags field of the OutData can be set to an OR-ed\ncombination of these flags to communicate various things to\nthe driver program.  The flags are described here:\n\nPF_OutFlag_NONE\nThis is the \"empty\" setting -- no outflags.\n\nPF_OutFlag_WIDE_TIME_INPUT\nSet this flag if the effect calls get_param to inquire a\nparameter at a time besides the current one (e.g. to get\nthe previous video frame). This should be sent, if it is\ngoing to be sent, at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nAs of AE10, this flag is no longer recommended. It still works the\nsame way and is safe to set, but there's a more efficient option.\nSee PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT.\n\nPF_OutFlag_NON_PARAM_VARY\nSet this if the effect uses information other than the parameters\nin the param list to generate its output at the current time.\nFor instance, if the effect uses the current time of the frame\nor some random value to decide the output, set this flag.  This\nflag should be sent at PF_Cmd_GLOBAL_SETUP.  If the effect\nproduces changing frames when applied to a still image and\nall parameters are constant, that's a sure sign that this bit\nshould be set (e.g. Wave Warp).\tCan be over-ridden dynamically\nduring PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING\nWhen you allocate a sequence data handle, the app\nmay write the handle out to disk and reuse it\nlater. Pass this flag if the handle is not \"flat\"\n(i.e. has pointers or handles hanging off of it).\nBasically, this gives you a chance to alter the\nhandle contents before it is written out to disk,\nso  you won't get invalid handles or pointers. Once\nyou have flattened a handle, you will get an\nopportunity to un-flatten it before the effect\nneeds to continue. For sequence data, you will be\ninvoked with a PF_Cmd_SEQUENCE_RESETUP call. You\nshould store a boolean at a common  offset in your\nunflattened and flattened data that says whether\nthe data is flat or not. If you get a\nPF_Cmd_SEQUENCE_RESETUP and the boolean indicated\nthe data is flattened, you should  unflatten the\ndata, free the flattened data handle, and set the\nsequence_data handle in the  PF_OutData. If you\never set the data to NULL when you flatten it, you\nwill NOT get the sequence  resetup call to\nunflatten it. Instead, you may just get a RENDER\ncall with NULL data. Forewarned is  forearmed. This\nflag, indicating if the data will need to be\nflattened, should be set at  PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_I_DO_DIALOG\nSet this is the effect responds to a PF_Cmd_DO_DIALOG, i.e. Does this\neffect bring up an options dialog box.  PF_Cmd_DO_DIALOG is generated\nwhen the user presses the Options button on the Effect floater.\nThis flag should be set at PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_USE_OUTPUT_EXTENT\nThe output layer is passed with an \"extent rect\" indicating\nthe area of the layer that actually contains visible image data.  If\nthe effect changes its behavior based on the extent rect (for instance,\nby not iterating over the entire image), set this flag, so the\napplication will know whether having the extent\tchange should cause\nthe frame to re-render.  Specify this flag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_SEND_DO_DIALOG\nSome filters need their options dialog box to be brought up at least\nonce to be valid.  You can set this flag, and the driver app will\nautomatically send a PF_Cmd_DO_DIALOG to the effect when it is applied.\nThe DO_DIALOG will be sent after PF_Cmd_SEQUENCE_SETUP.  This flag\nshould be set in PF_Cmd_SEQUENCE_SETUP if it is going to be set.\n\nPF_OutFlag_DISPLAY_ERROR_MESSAGE\nWhenever the return_msg field in the PF_OutData is set to a string,\nAfter Effects will bring up a simple dialog box containing that\nstring.  If you set this flag, the dialog box will be made to look\nlike an error message dialog box.  If you don't set this flag, it\nwill be an undecorated dialog box.  Using this flag, an effects module\ncan have and display its own error messages and not worry about the\ncode for dialog boxes -- the program will do it for you.\nThis flag can be sent after any command.\n\nPF_OutFlag_I_EXPAND_BUFFER\nStarting with After Effects 2.0, effects will be able to expand their buffers\nbeyond the current layer's dimensions. This has always been part of the\nPF specification, but as an extra precaution (and hint to the AE rendering\nengine) set this flag at PF_Cmd_GLOBAL_SETUP if you plan to expand your\nbuffer.\n\nPF_OutFlag_I_SHRINK_BUFFER\nSet this flag if you can shrink your buffer based on the extent-rects passed\nto you in order to be more memory efficient.\n\nPF_OutFlag_PIX_INDEPENDENT\nSet this flag if the output at a given pixel is not dependent on the values\nof the pixels around it. If this is set, the pixels After Effects does not\ncare about (because of field rendering, for example) could be filled with garbage\ncolors.  Please set this flag at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_WRITE_INPUT_BUFFER\nSet this flag if your effect would like to write into the input buffer. This\ncan be useful if you need an scratch buffer, but it also invalidates some speedups\nin the AE rendering pipeline, so use it with some discretion. Please set this\nflag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_KEEP_RESOURCE_OPEN\n\nObsoleted in AE 2015 (does nothing when set).\n\nSet this flag if your effect expects its Macintosh resource fork to be open\nat any time other than global setup.  Note that this does not mean that\nthe resource fork will be kept open at all times, just whenever the\neffect is being executed.\n\nPF_OutFlag_NOP_RENDER\n\nSet this flag in PF_Cmd_GLOBAL_SETUP if the render would never result in changes\nto the source image (or audio?). For example, an expression control would set this.\n\nPF_OutFlag_CUSTOM_UI\n\nThis flag must be set if your effect has a custom UI in the Effect Controls\nWindow, Layer Window or Comp Window.\n\nPF_OutFlag2_CUSTOM_UI_ASYNC_MANAGER\t(new in 13.5)\n\nThis flags enables use of AEGP_CheckoutOrRender_*_AsyncManager() calls\nwhich avoid the need for plugin management of the lifetime of async custom UI renders from the UI thread.\nThe plugin asks for what frames it needs and the manager calls PF_Event_DRAW again when they are available\n(or cancels them as needed automatically).  The plugin responds in PF_Event_DRAW by asking for what it needs\nand drawing what it can from what is available.\n\nDue to separation of Render thread and UI thread in 13.5, frames for custom UI should no longer be\nrendered synchronously (see RenderSuite5 for more details). The manager simplifies this, especially when\nthere are multiple requests needed for DRAW.\n\nWhen enabled, this flag associates a \"PF_AsyncManager\" with the NEW_CONTEXT/CLOSE_CONTEXT and PF_Event_DRAW\nthat will automatically track completion of 1 or more asynch render requests made for drawing custom UI.\nAs requests complete,  PF_Event_DRAW will be called again and the current state of the CUSTOM_UI can be drawn.\nSuch requests may be canceled automatically as the user scrubs the time needle or project changes are made and\nbecome invalid.\n\nThis flag is used in addition to the CUSTOM_UI flag during PF_Cmd_GLOBAL_SETUP\n\nPF_OutFlag_REFRESH_UI\n\nCan be returned from PF_Cmd_EVENT, PF_Cmd_RENDER, and PF_Cmd_DO_DIALOG.\nCauses the effects control window, layer window, and comp window to be re-drawn.\n\nPF_OutFlag_I_USE_SHUTTER_ANGLE\n\nMust be set at PF_Cmd_GLOBAL_SETUP time if the effect uses\nthe shutter_angle or the shutter_phase. Can be over-ridden dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_USE_AUDIO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for a visual effect\nthat calls the audio checkout calls.\n\nPF_OutFlag_I_AM_OBSOLETE\n\nSet at PF_Cmd_GLOBAL_SETUP time for effects that don't\nwant to appear in the AE Effects menu (but will still be invoked\nif you load a project that has an old copy of the effect applied).\n\nPF_OutFlag_FORCE_RERENDER\n\nSet at PF_Cmd_EVENT if the effect modified sequence data,\nor did anything else that requires the effect needs to re-render.\nNote that setting PF_ChangeFlag_CHANGED_VALUE automatically\ncauses a re-render, so don't worry about setting PF_OutFlag_FORCE_RERENDER\nin that case. Also, I_MIX_GUID_DEPENDENCIES can be used to trigger a rerender on\ndependant changes if sequence_data has not been changed.\n\nIMPORTANT: FORCE_RERENDER should be used as a last resort. Long term we should be eliminating the need for this\nbecause it causes forced cache invalidation that doesn't work well with undo.\nOnce we have the full set of APIs in place needed to manage render state, we will be able to deprecate this.\nPrefer using ARB data + CHANGED_VALUE or I_MIX_GUID_DEPENDENCIES when possible instead.\n\nIn 13.5 the split between a UI and render threads means that FORCE_RERENDER will now also have the needed\nside effect of copying sequence_data state to the render project.  This can be expensive if the sequence_data is large.\nSupport GET_FLATTENED_SEQUENCE_DATA to prevent deallocation of your sequence_data, which can help.\nGET_FLATTENED_SEQUENCE_DATA support is required for FORCE_RERENDER use in custom mouse/key events.\n\nPF_OutFlag_PiPL_OVERRIDES_OUTDATA_OUTFLAGS\n\nValid only for setting in your PiPL.  When set out_flags will be\nignored at PF_Cmd_GLOBAL_SETUP time (& thus don't need to match).\n\nPF_OutFlag_I_HAVE_EXTERNAL_DEPENDENCIES\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if the effect has dependencies\nthat the user should know about before transporting their project to a\ndifferent machine.  For example, dependencies on an installed font,\nor on an external file.  If set, the effect will receive a\nPF_Cmd_GET_EXTERNAL_DEPENDENCIES request, where the extra\nparam will be a PF_ExtDependenciesExtra, and the effect should\nreport its information based on the given sequence_data.\n\nPF_OutFlag_SEND_UPDATE_PARAMS_UI\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you want to receive\nPF_Cmd_UPDATE_PARAMS_UI messages.\n\nPF_OutFlag_AUDIO_FLOAT_ONLY\n\nSet this flag if you only want to receive PF_SIGNED_FLOAT data\nwhen processing audio data.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_IIR\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you are an\nInfinite-Impulse-Response audio filter (i.e. your output at a given\ntime depends on your output from previous times).\n\nPF_OutFlag_I_SYNTHESIZE_AUDIO\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you generate\naudio even when handed silence.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_EFFECT_TOO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect that\nwants to filter the audio too (as opposed to just reading the audio).\n\nPF_OutFlag_AUDIO_EFFECT_ONLY\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect\nthat only filters audio (no video).\n\nPF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\n\nSet this during PF_Cmd_GLOBAL_SETUP if the effect handles PF_Cmd_QUERY_DYNAMIC_FLAGS.\nSupporting this command can dramatically improve performance for certain\neffects, because it provides dynamic information to the host about what\ncan be cached (as opposed to PIPL bits which cannot be changed at run-time)\n\nPF_OutFlag2_I_USE_3D_CAMERA\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_USE_3D_LIGHTS\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_PARAM_GROUP_START_COLLAPSED_FLAG\n\nIf you want a parameter group to honor the PF_ParamFlag_COLLAPSE_TWIRLY or\nPF_ParamFlag_START_COLLAPSED flag, set this bit.  Otherwise, all parameter\ngroups will be collapsed by default.\n\nPF_OutFlag2_DOESNT_NEED_EMPTY_PIXELS\n\nAdded for render optimizations; shrinks the input buffer passed to the effect to\nexclude any empty pixels (where empty means \"zero alpha\" unless\nPF_OutFlag2_REVEALS_ZERO_ALPHA is set, in which case RGB must be zero as well.)\nThe origin of the trimmed buffer can be found in in_data->pre_effect_source_origin.\nEffects with both this flag and PF_OutFlag_I_EXPAND_BUFFER set may get called with\na null input buffer if their input is completely empty, and must be able to handle\nthis case without crashing. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_REVEALS_ZERO_ALPHA\n\nThe effect can take pixels with zero alpha and reveal the RGB data in them (like\nour Set Channels effect). This tells After Effects not to trim such pixels when\ndetermining the input for the effect. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_AM_DEPRECATED\nthis effect is still available, and shows up under user-visible \"Obsolete\" category\nin the UI. Setting this flag means \"there's a better way to do this, but this effect\nmay still be useful in some situations\".  distinct from PF_OutFlag_I_AM_OBSOLETE in\nthat these will still show up in the GUI and the user can still apply them to new\nprojects.  The category that is set by the effect is pretty much ignored, as it will\ninstead always go into the \"Obsolete\" category\n\nPF_OutFlag2_I_USE_TIMECODE\nNew in AE 9.0.  The effect depends on the Composition's timecode or a layer's\nsource footage timecode.  If the underlying timecode changes the effects will\nbe asked to rerender.\n\nPF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT\nNew in AE 10. Requires setting of PF_OutFlag_WIDE_TIME_INPUT (which allows you\nto support old hosts), but effectively overrides that flag. When set, all\nparameter checkouts are tracked so over-time dependencies are known by AE. Note\nthat if you use this new flag, and you cache any time-dependent data in your\nsequence data (or anywhere else), you must validate that cache using the\nnew PF_HaveInputsChangedOverTimeSpan() before using it.\n\nThis only works for smart effects (those that set PF_OutFlag2_SUPPORTS_SMART_RENDER). If you haven't\nset that, After Effects will silently treat this as PF_OutFlag_WIDE_TIME_INPUT instead.\n\nTo test that it's working, apply your effect with one parameter keyframed on every frame.\nRAM Preview to fill the cache, then change one of the keyframes. The related frame and\nall dependent frames (e.g. later frames, in the case of a simulation) should lose their\ncache marks and require re-rendering. Simlarly, upstream changes to sources of layer\nparameters should cause time-selective invalidation of the cache.\n\nPF_OutFlag2_DEPENDS_ON_UNREFERENCED_MASKS\nSet this if you are going to look at paths that aren't directly referenced by a path\nparam, e.g. if you are going to draw a stroke on all masks.\n\nPF_OutFlag2_OUTPUT_IS_WATERMARKED\nSet this if your output is going to be watermarked in some way that makes it unsuitable for\nfinal use, probably because the user is using an unlicensed demo version. It is ok to change\nthis state during the course of app session, if e.g. a floating license status changes.\nPlugin authors that actually do have this state changing asynchronously must be careful to\nhave the next render match the last state returned from QUERY_DYNAMIC_FLAGS otherwise race conditions\ncould cause incorrect frames to be cached. (This is a non-issue if you only change this in response\nto DO_DIALOG.)\n\nPF_OutFlag2_I_MIX_GUID_DEPENDENCIES\t(new in 13.5)\nSmart effects only. With this option, FORCE_RERENDER becomes a cache-savvy more efficient MAYBE rerender.\nIf custom UI or DO_DIALOG change sequence data, returning FORCE_RERENDER requests AE to check whether\nrerender needs to occur.  During PreRender, the effect uses the GuidMixInPtr callback to mix\nany additional state that affects the render into our internal GUID for the cached frame.\nAE can then tell whether the frame already exists and if so, no longer needs to render.\nThis also means that DO_DIALOG no longer always blows the cache and that undo works across DO_DIALOG.\nCancelation of DO_DIALOG no longer blows the cache either.\nThis also means that I_USE_* flags are now basically redundant since any dependency could be mixed in.\nJust be sure to mix in everything that can uniquely affect resulting rendered pixels (that is not already\nan AE stream parameter).  But don't mixin things that are disabled and have no render effect  (this\nresults in less cache efficiency).\n\nPF_OutFlag2_SUPPORTS_THREADED_RENDERING\nIndicates the effect supports rendering on multiple threads at the same time. Single or multiple\napplications of this effect on a layer can be called to render at the same time on multiple threads.\n\nUI selectors are still sent on the main thread, however Sequence Setup, Sequence Resetup, Sequence SetDown,\nPreRender, and Render may be sent on multiple threads at the same time as the UI selectors are being handled\nso all of these selectors must be thread safe.\n\nGlobal Setup and Global Setdown selectors are unaffected by this flag.  Regardless whether this flag is set\nor not, they will only be sent on the main thread, and will not be sent at the same time as any other selectors.\n\nIf the effect sets PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING indicating the sequence data needs flattening\nthen it must also set PF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA.\n\nsequence_data is read-only at render time and must be accessed with PF_EffectSequenceDataSuite.\nin_data->sequence_data will be NULL during render. AEGP_ComputeCacheSuite is suggested if writing to\nsequence_data at render time is needed for caching. This suite unifies cache entries so multiple threads do\nnot recompute the same cache value. If neither of these solutions work, see the next flag,\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER.\n\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER\nIndicates the effect needs sequence_data replicated for each render thread, thus allowing each render to have\nsequence_data which can be written to. Note that changes to sequence_data will be discarded regularly, currently\nafter each span of frames is rendered such as single RAM Preview or Render Queue export."]
 pub type _bindgen_ty_17 = ::std::os::raw::c_uint;
-pub type PF_OutFlags2 = A_long;
-pub const PF_InFlag_NONE: _bindgen_ty_18 = 0;
-pub const PF_InFlag_PROJECT_IS_RENDER_ONLY: _bindgen_ty_18 = 1;
-#[doc = " -------------------- Input Flags --------------------\n\nThe in_flags field of the InData can be set to an OR-ed\ncombination of these flags to communicate various things from AE to an effect plugin\nThe flags are described here:\n\nPF_InFlag_NONE\nThis is the \"empty\" setting -- no inflags.\n\nPF_InFlag_PROJECT_IS_RENDER_ONLY  (since 13.5)\n\nFor efficiency, if a plugin sets up UI that is not used in render, this flag\ncan be tested to skip that step when an effect is being RESETUP for render only.\nEffect instances with this flag on in RESETUP are in read-only AE projects and will not receive UI related selectors.\n\nThis is an optimization hint.  If you don't make such optimizations in render your plugin should still work.\n\nThis flag should generally not be used to suppress errors in render.  Errors should still be reported as usual via AE standard mechanisms,\nand AE will then handle the differences in context reporting.\n\nIf this is off, UI should be set up normally (and the effect could also be running in an earlier version of\nAE that assumed render and UI on the same effect instance.)"]
+pub type PF_OutFlags = A_long;
+pub const PF_OutFlag2_NONE: _bindgen_ty_18 = 0;
+pub const PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS: _bindgen_ty_18 = 1;
+pub const PF_OutFlag2_I_USE_3D_CAMERA: _bindgen_ty_18 = 2;
+pub const PF_OutFlag2_I_USE_3D_LIGHTS: _bindgen_ty_18 = 4;
+pub const PF_OutFlag2_PARAM_GROUP_START_COLLAPSED_FLAG: _bindgen_ty_18 = 8;
+pub const PF_OutFlag2_I_AM_THREADSAFE: _bindgen_ty_18 = 16;
+pub const PF_OutFlag2_CAN_COMBINE_WITH_DESTINATION: _bindgen_ty_18 = 32;
+pub const PF_OutFlag2_DOESNT_NEED_EMPTY_PIXELS: _bindgen_ty_18 = 64;
+pub const PF_OutFlag2_REVEALS_ZERO_ALPHA: _bindgen_ty_18 = 128;
+pub const PF_OutFlag2_PRESERVES_FULLY_OPAQUE_PIXELS: _bindgen_ty_18 = 256;
+pub const PF_OutFlag2_SUPPORTS_SMART_RENDER: _bindgen_ty_18 = 1024;
+pub const PF_OutFlag2_RESERVED9: _bindgen_ty_18 = 2048;
+pub const PF_OutFlag2_FLOAT_COLOR_AWARE: _bindgen_ty_18 = 4096;
+pub const PF_OutFlag2_I_USE_COLORSPACE_ENUMERATION: _bindgen_ty_18 = 8192;
+pub const PF_OutFlag2_I_AM_DEPRECATED: _bindgen_ty_18 = 16384;
+pub const PF_OutFlag2_PPRO_DO_NOT_CLONE_SEQUENCE_DATA_FOR_RENDER: _bindgen_ty_18 = 32768;
+pub const PF_OutFlag2_RESERVED10: _bindgen_ty_18 = 65536;
+pub const PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT: _bindgen_ty_18 = 131072;
+pub const PF_OutFlag2_I_USE_TIMECODE: _bindgen_ty_18 = 262144;
+pub const PF_OutFlag2_DEPENDS_ON_UNREFERENCED_MASKS: _bindgen_ty_18 = 524288;
+pub const PF_OutFlag2_OUTPUT_IS_WATERMARKED: _bindgen_ty_18 = 1048576;
+pub const PF_OutFlag2_I_MIX_GUID_DEPENDENCIES: _bindgen_ty_18 = 2097152;
+pub const PF_OutFlag2_AE13_5_THREADSAFE: _bindgen_ty_18 = 4194304;
+pub const PF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA: _bindgen_ty_18 = 8388608;
+pub const PF_OutFlag2_CUSTOM_UI_ASYNC_MANAGER: _bindgen_ty_18 = 16777216;
+pub const PF_OutFlag2_SUPPORTS_GPU_RENDER_F32: _bindgen_ty_18 = 33554432;
+pub const PF_OutFlag2_RESERVED12: _bindgen_ty_18 = 67108864;
+pub const PF_OutFlag2_SUPPORTS_THREADED_RENDERING: _bindgen_ty_18 = 134217728;
+pub const PF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER: _bindgen_ty_18 = 268435456;
+pub const PF_OutFlag2_SUPPORTS_DIRECTX_RENDERING: _bindgen_ty_18 = 536870912;
 pub type _bindgen_ty_18 = ::std::os::raw::c_uint;
-pub type PF_InFlags = A_long;
-pub const PF_Cmd_ABOUT: _bindgen_ty_19 = 0;
-pub const PF_Cmd_GLOBAL_SETUP: _bindgen_ty_19 = 1;
-pub const PF_Cmd_UNUSED_0: _bindgen_ty_19 = 2;
-pub const PF_Cmd_GLOBAL_SETDOWN: _bindgen_ty_19 = 3;
-pub const PF_Cmd_PARAMS_SETUP: _bindgen_ty_19 = 4;
-pub const PF_Cmd_SEQUENCE_SETUP: _bindgen_ty_19 = 5;
-pub const PF_Cmd_SEQUENCE_RESETUP: _bindgen_ty_19 = 6;
-pub const PF_Cmd_SEQUENCE_FLATTEN: _bindgen_ty_19 = 7;
-pub const PF_Cmd_SEQUENCE_SETDOWN: _bindgen_ty_19 = 8;
-pub const PF_Cmd_DO_DIALOG: _bindgen_ty_19 = 9;
-pub const PF_Cmd_FRAME_SETUP: _bindgen_ty_19 = 10;
-pub const PF_Cmd_RENDER: _bindgen_ty_19 = 11;
-pub const PF_Cmd_FRAME_SETDOWN: _bindgen_ty_19 = 12;
-pub const PF_Cmd_USER_CHANGED_PARAM: _bindgen_ty_19 = 13;
-pub const PF_Cmd_UPDATE_PARAMS_UI: _bindgen_ty_19 = 14;
-pub const PF_Cmd_EVENT: _bindgen_ty_19 = 15;
-pub const PF_Cmd_GET_EXTERNAL_DEPENDENCIES: _bindgen_ty_19 = 16;
-pub const PF_Cmd_COMPLETELY_GENERAL: _bindgen_ty_19 = 17;
-pub const PF_Cmd_QUERY_DYNAMIC_FLAGS: _bindgen_ty_19 = 18;
-pub const PF_Cmd_AUDIO_RENDER: _bindgen_ty_19 = 19;
-pub const PF_Cmd_AUDIO_SETUP: _bindgen_ty_19 = 20;
-pub const PF_Cmd_AUDIO_SETDOWN: _bindgen_ty_19 = 21;
-pub const PF_Cmd_ARBITRARY_CALLBACK: _bindgen_ty_19 = 22;
-pub const PF_Cmd_SMART_PRE_RENDER: _bindgen_ty_19 = 23;
-pub const PF_Cmd_SMART_RENDER: _bindgen_ty_19 = 24;
-pub const PF_Cmd_RESERVED1: _bindgen_ty_19 = 25;
-pub const PF_Cmd_RESERVED2: _bindgen_ty_19 = 26;
-pub const PF_Cmd_RESERVED3: _bindgen_ty_19 = 27;
-pub const PF_Cmd_GET_FLATTENED_SEQUENCE_DATA: _bindgen_ty_19 = 28;
-pub const PF_Cmd_TRANSLATE_PARAMS_TO_PREFS: _bindgen_ty_19 = 29;
-pub const PF_Cmd_RESERVED4: _bindgen_ty_19 = 30;
-pub const PF_Cmd_SMART_RENDER_GPU: _bindgen_ty_19 = 31;
-pub const PF_Cmd_GPU_DEVICE_SETUP: _bindgen_ty_19 = 32;
-pub const PF_Cmd_GPU_DEVICE_SETDOWN: _bindgen_ty_19 = 33;
-pub const PF_Cmd_NUM_CMDS: _bindgen_ty_19 = 34;
-#[doc = " -------------------- Command Selectors --------------------\n\nThe first parameter to the effect routine is one of t\these command\nselectors.  The commands are described here.\n\nPF_Cmd_ABOUT\nThis command should display an information dialog box about the\neffect module.  The easiest thing to do is PF_SPRINTF the info\ninto the out_data->return_msg field.  After Effects will bring\nup a simple undecorated modal dialog with your text proudly displayed.\nThis command can be sent at _any_ time, so don't count on having\nany global data or anything else set.  (Except, as always, the\ncurrent resource file will be set to your effects module.)\n\nPF_Cmd_GLOBAL_SETUP\nWhen you get this command, you should check the version of the\neffect protocol with which you are being invoked, and set any of\nthe necessary out flags (described above) or out data fields\n(described below).  If your global data was flattened, the flat\ndata will be passed here and you should unflatten it, free the\nflat global data, and set the OutData global_data to the new un-flat\ndata.  Alternatively, the global data may come in NULL and you can\nallocate new global data at this time.\n\nPF_Cmd_GLOBAL_SETDOWN\nYou should free any global data you have allocated when you get\nthis command.\n\nPF_Cmd_PARAMS_SETUP\nHere you should add any params your effect wants using the\nPF_ADD_PARAM callback described below.  This is called after global\nsetup -- see the add_param callback described below.\n\nPF_Cmd_SEQUENCE_SETUP\nThis is called when the effect is first applied to a layer.\nA sequence is a series of images that will usually be all be of the same\nsize and in the same context.  You can allocate sequence data\nat this time -- many more input fields are defined at this time.\nSee the PF_InData description below.\n\nAs of 13.5 this only happens on the UI thread.\nExcept for legacy (no GET_FLATTENED_SEQUENCE_DATA) effects that do I_DO_DIALOG which can still hit this in render.\n\nPF_Cmd_SEQUENCE_RESETUP\nThis call is made to unflatten flattened sequence data.\nThere are at least three cases when this can happen:\n1) after the sequence data is written to disk, 2) after the\nsequence data is read in from disk, 3) after a duplicate\nis made (called on both original and the new sequence).\n\nThis can happen in UI or Render thread (13.5),  the effect must handle\ninitialization of a NULL sequence_data input if needed.  See also PF_InFlag_PROJECT_IS_RENDER_ONLY.\n\nPF_Cmd_SEQUENCE_FLATTEN\nThis call is made to flatten unflat sequence data so it can be\ncached to disk.  After the data is flattened, free the un-flat data\nand set the out_data->sequence_data to the new flat data.\nIf you don't want your sequence handle written to disk, you\ncan set it to NULL (after disposing it) at this time.  Presumably\nyou would then reallocate it at another time.\n\nThis command will be sent when saving and when duplicating\nthe sequence.\n\nPF_Cmd_GET_FLATTENED_SEQUENCE_DATA\t(new in 13.5)\nReturns an independent allocation of the sequence data which can be written\nto disk or used to initialise or update other instances of the effect plug-in.\n\nThe host calls this command to serialize the sequence data without\nhaving to flatten and resetup the UI plug-in as was legacy practice. (However, at present effects\nstill may need flattening in render if the sequence_data is about to be assigned.)\n\nAn effect that implements GET_FLATTENED_SEQUENCE_DATA will only receive SEQUENCE_SETUP on the UI thread.\nSEQUENCE_RESETUP can happen on either thread. Make sure you handle a NULL sequence_data in RESETUP.\n(Without GET_FLATTENED, a legacy effect may still get SEQUENCE_SETUP in render but DO_DIALOG will not be called.)\n\nAlso when enabled, this means that the effect is guaranteed to get a\nSEQUENCE_SETDOWN cmd to dispose the effect's sequence_data  (previously\nit was possible for AE to bypass this if the sequence_data was flat,\nbut that lead to SEQUENCE_SETUP/SETDOWN imbalances for some plugins.\nThe imbalance should not happen when using this flag, but the plugin must\nhandle being called on SETDOWN with possibly flat data. For example,\ntry copy and pasting an effect onto itself.\n\nSupport for this command is indicated by setting\nPF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA\n\nThe ownership of the returned handle is transferred to the host.\n\nPF_Cmd_SEQUENCE_SETDOWN\nYou should free any sequence data you have allocated when you\nget this command.\n\nPF_Cmd_DO_DIALOG\nThis command indicated that the Options button or command has\nbeen selected and the effect should bring up its options dialog.\nThis command will only be sent it the effect has indicated that\nit has an options dialog with PF_OutFlag_I_DO_DIALOG.  This\ncommand will automatically be sent once upon applying the filter\nif PF_OutFlag_SEND_DO_DIALOG is set in SEQUENCE_SETUP.\n\nPF_Cmd_FRAME_SETUP\nThis is called immediately before each frame is invoked.  You\ncan allocate frame data at this time, if you wish, or you can\njust wait for the RENDER which will immediately follow.\n\nPF_Cmd_RENDER\nThis is the call to render the frame.  All fields in the in_data\nwill be valid at this time and you can inquire parameters or\nwhat-have-you.  This should set the output frame with the new\nimage data.  This is the main action command.\n\nPF_Cmd_FRAME_SETDOWN\nIf you allocated data in PF_Cmd_FRAME_SETUP, this is the time\nto free it and clean up after rendering the frame.\n\nPF_Cmd_USER_CHANGED_PARAM\nThis command will be sent if you set the PF_ParamFlag_SUPERVISE\nflag for a param.  This allows you to modify the params array contents to\ncontrol values or make one control affect others, including arbitrary\ndata.  This command will be sent whenever the user interacts with a\nstandard param controller that has PF_ParamFlag_SUPERVISE\nset.\n\nThe \"extra\" field will be a pointer to a PF_UserChangedParamExtra structure\nwhich contains the param_index of the changed parameter.\n\nYou can return PF_ChangeFlag_CHANGED_VALUE and/or call PF_UpdateParamUI()\nfor any param.\n\nPF_Cmd_UPDATE_PARAMS_UI\nThis command will be sent when the Effect Controls Window (ECW)\nneeds to updated (e.g. after opening the ECW or moving the comp to\na new time) if you have set PF_OutFlag_SEND_UPDATE_PARAMS_UI at\nglobal setup time.\n\nThis gives you a chance to call PF_UpdateParamUI() to modify certain\nui fields for the params.  See the doc for PF_UpdateParamUI()\nto see which fields can be modified.\n\nWARNING: When handling PF_Cmd_UPDATE_PARAMS_UI, you can call\nPF_UpdateParamUI() for any param(s), but not PF_ChangeFlag_CHANGED_VALUE --\nonly cosmetic changes can be made in response to this command.\n\nPF_Cmd_QUERY_DYNAMIC_FLAGS\nThis command will be sent at arbitrary times if PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\nis set during global setup. During this call the effect may examine the values\nof its parameters at the current time (except layer parameters) by checking them out,\nand decide whether any of the flags that support PF_Cmd_QUERY_DYNAMIC_FLAGS should be set.\n\nThe appropriate flags must be set in out_data->out_flags and out_data->out_flags2 before\nreturning. The effect must decide what information is necessary to render a frame at\nthe current time, given only the values of parameters at that time. Clearing the\nappropriate bits when possible can result in great performance improvements, but\nincorrectly clearing bits will result in caching bugs, and you won't like that. Nope.\n\n Important Reminder***\nBefore you add a new PF_Cmd, evaluate whether it should allow\nnew Sequence Data allocations! If so, remember to add it to\nCmdCanChangeSequenceData() in FLT_Host.cpp!"]
+pub type PF_OutFlags2 = A_long;
+pub const PF_InFlag_NONE: _bindgen_ty_19 = 0;
+pub const PF_InFlag_PROJECT_IS_RENDER_ONLY: _bindgen_ty_19 = 1;
+#[doc = " -------------------- Input Flags --------------------\n\nThe in_flags field of the InData can be set to an OR-ed\ncombination of these flags to communicate various things from AE to an effect plugin\nThe flags are described here:\n\nPF_InFlag_NONE\nThis is the \"empty\" setting -- no inflags.\n\nPF_InFlag_PROJECT_IS_RENDER_ONLY  (since 13.5)\n\nFor efficiency, if a plugin sets up UI that is not used in render, this flag\ncan be tested to skip that step when an effect is being RESETUP for render only.\nEffect instances with this flag on in RESETUP are in read-only AE projects and will not receive UI related selectors.\n\nThis is an optimization hint.  If you don't make such optimizations in render your plugin should still work.\n\nThis flag should generally not be used to suppress errors in render.  Errors should still be reported as usual via AE standard mechanisms,\nand AE will then handle the differences in context reporting.\n\nIf this is off, UI should be set up normally (and the effect could also be running in an earlier version of\nAE that assumed render and UI on the same effect instance.)"]
 pub type _bindgen_ty_19 = ::std::os::raw::c_uint;
+pub type PF_InFlags = A_long;
+pub const PF_Cmd_ABOUT: _bindgen_ty_20 = 0;
+pub const PF_Cmd_GLOBAL_SETUP: _bindgen_ty_20 = 1;
+pub const PF_Cmd_UNUSED_0: _bindgen_ty_20 = 2;
+pub const PF_Cmd_GLOBAL_SETDOWN: _bindgen_ty_20 = 3;
+pub const PF_Cmd_PARAMS_SETUP: _bindgen_ty_20 = 4;
+pub const PF_Cmd_SEQUENCE_SETUP: _bindgen_ty_20 = 5;
+pub const PF_Cmd_SEQUENCE_RESETUP: _bindgen_ty_20 = 6;
+pub const PF_Cmd_SEQUENCE_FLATTEN: _bindgen_ty_20 = 7;
+pub const PF_Cmd_SEQUENCE_SETDOWN: _bindgen_ty_20 = 8;
+pub const PF_Cmd_DO_DIALOG: _bindgen_ty_20 = 9;
+pub const PF_Cmd_FRAME_SETUP: _bindgen_ty_20 = 10;
+pub const PF_Cmd_RENDER: _bindgen_ty_20 = 11;
+pub const PF_Cmd_FRAME_SETDOWN: _bindgen_ty_20 = 12;
+pub const PF_Cmd_USER_CHANGED_PARAM: _bindgen_ty_20 = 13;
+pub const PF_Cmd_UPDATE_PARAMS_UI: _bindgen_ty_20 = 14;
+pub const PF_Cmd_EVENT: _bindgen_ty_20 = 15;
+pub const PF_Cmd_GET_EXTERNAL_DEPENDENCIES: _bindgen_ty_20 = 16;
+pub const PF_Cmd_COMPLETELY_GENERAL: _bindgen_ty_20 = 17;
+pub const PF_Cmd_QUERY_DYNAMIC_FLAGS: _bindgen_ty_20 = 18;
+pub const PF_Cmd_AUDIO_RENDER: _bindgen_ty_20 = 19;
+pub const PF_Cmd_AUDIO_SETUP: _bindgen_ty_20 = 20;
+pub const PF_Cmd_AUDIO_SETDOWN: _bindgen_ty_20 = 21;
+pub const PF_Cmd_ARBITRARY_CALLBACK: _bindgen_ty_20 = 22;
+pub const PF_Cmd_SMART_PRE_RENDER: _bindgen_ty_20 = 23;
+pub const PF_Cmd_SMART_RENDER: _bindgen_ty_20 = 24;
+pub const PF_Cmd_RESERVED1: _bindgen_ty_20 = 25;
+pub const PF_Cmd_RESERVED2: _bindgen_ty_20 = 26;
+pub const PF_Cmd_RESERVED3: _bindgen_ty_20 = 27;
+pub const PF_Cmd_GET_FLATTENED_SEQUENCE_DATA: _bindgen_ty_20 = 28;
+pub const PF_Cmd_TRANSLATE_PARAMS_TO_PREFS: _bindgen_ty_20 = 29;
+pub const PF_Cmd_RESERVED4: _bindgen_ty_20 = 30;
+pub const PF_Cmd_SMART_RENDER_GPU: _bindgen_ty_20 = 31;
+pub const PF_Cmd_GPU_DEVICE_SETUP: _bindgen_ty_20 = 32;
+pub const PF_Cmd_GPU_DEVICE_SETDOWN: _bindgen_ty_20 = 33;
+pub const PF_Cmd_NUM_CMDS: _bindgen_ty_20 = 34;
+#[doc = " -------------------- Command Selectors --------------------\n\nThe first parameter to the effect routine is one of t\these command\nselectors.  The commands are described here.\n\nPF_Cmd_ABOUT\nThis command should display an information dialog box about the\neffect module.  The easiest thing to do is PF_SPRINTF the info\ninto the out_data->return_msg field.  After Effects will bring\nup a simple undecorated modal dialog with your text proudly displayed.\nThis command can be sent at _any_ time, so don't count on having\nany global data or anything else set.  (Except, as always, the\ncurrent resource file will be set to your effects module.)\n\nPF_Cmd_GLOBAL_SETUP\nWhen you get this command, you should check the version of the\neffect protocol with which you are being invoked, and set any of\nthe necessary out flags (described above) or out data fields\n(described below).  If your global data was flattened, the flat\ndata will be passed here and you should unflatten it, free the\nflat global data, and set the OutData global_data to the new un-flat\ndata.  Alternatively, the global data may come in NULL and you can\nallocate new global data at this time.\n\nPF_Cmd_GLOBAL_SETDOWN\nYou should free any global data you have allocated when you get\nthis command.\n\nPF_Cmd_PARAMS_SETUP\nHere you should add any params your effect wants using the\nPF_ADD_PARAM callback described below.  This is called after global\nsetup -- see the add_param callback described below.\n\nPF_Cmd_SEQUENCE_SETUP\nThis is called when the effect is first applied to a layer.\nA sequence is a series of images that will usually be all be of the same\nsize and in the same context.  You can allocate sequence data\nat this time -- many more input fields are defined at this time.\nSee the PF_InData description below.\n\nAs of 13.5 this only happens on the UI thread.\nExcept for legacy (no GET_FLATTENED_SEQUENCE_DATA) effects that do I_DO_DIALOG which can still hit this in render.\n\nPF_Cmd_SEQUENCE_RESETUP\nThis call is made to unflatten flattened sequence data.\nThere are at least three cases when this can happen:\n1) after the sequence data is written to disk, 2) after the\nsequence data is read in from disk, 3) after a duplicate\nis made (called on both original and the new sequence).\n\nThis can happen in UI or Render thread (13.5),  the effect must handle\ninitialization of a NULL sequence_data input if needed.  See also PF_InFlag_PROJECT_IS_RENDER_ONLY.\n\nPF_Cmd_SEQUENCE_FLATTEN\nThis call is made to flatten unflat sequence data so it can be\ncached to disk.  After the data is flattened, free the un-flat data\nand set the out_data->sequence_data to the new flat data.\nIf you don't want your sequence handle written to disk, you\ncan set it to NULL (after disposing it) at this time.  Presumably\nyou would then reallocate it at another time.\n\nThis command will be sent when saving and when duplicating\nthe sequence.\n\nPF_Cmd_GET_FLATTENED_SEQUENCE_DATA\t(new in 13.5)\nReturns an independent allocation of the sequence data which can be written\nto disk or used to initialise or update other instances of the effect plug-in.\n\nThe host calls this command to serialize the sequence data without\nhaving to flatten and resetup the UI plug-in as was legacy practice. (However, at present effects\nstill may need flattening in render if the sequence_data is about to be assigned.)\n\nAn effect that implements GET_FLATTENED_SEQUENCE_DATA will only receive SEQUENCE_SETUP on the UI thread.\nSEQUENCE_RESETUP can happen on either thread. Make sure you handle a NULL sequence_data in RESETUP.\n(Without GET_FLATTENED, a legacy effect may still get SEQUENCE_SETUP in render but DO_DIALOG will not be called.)\n\nAlso when enabled, this means that the effect is guaranteed to get a\nSEQUENCE_SETDOWN cmd to dispose the effect's sequence_data  (previously\nit was possible for AE to bypass this if the sequence_data was flat,\nbut that lead to SEQUENCE_SETUP/SETDOWN imbalances for some plugins.\nThe imbalance should not happen when using this flag, but the plugin must\nhandle being called on SETDOWN with possibly flat data. For example,\ntry copy and pasting an effect onto itself.\n\nSupport for this command is indicated by setting\nPF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA\n\nThe ownership of the returned handle is transferred to the host.\n\nPF_Cmd_SEQUENCE_SETDOWN\nYou should free any sequence data you have allocated when you\nget this command.\n\nPF_Cmd_DO_DIALOG\nThis command indicated that the Options button or command has\nbeen selected and the effect should bring up its options dialog.\nThis command will only be sent it the effect has indicated that\nit has an options dialog with PF_OutFlag_I_DO_DIALOG.  This\ncommand will automatically be sent once upon applying the filter\nif PF_OutFlag_SEND_DO_DIALOG is set in SEQUENCE_SETUP.\n\nPF_Cmd_FRAME_SETUP\nThis is called immediately before each frame is invoked.  You\ncan allocate frame data at this time, if you wish, or you can\njust wait for the RENDER which will immediately follow.\n\nPF_Cmd_RENDER\nThis is the call to render the frame.  All fields in the in_data\nwill be valid at this time and you can inquire parameters or\nwhat-have-you.  This should set the output frame with the new\nimage data.  This is the main action command.\n\nPF_Cmd_FRAME_SETDOWN\nIf you allocated data in PF_Cmd_FRAME_SETUP, this is the time\nto free it and clean up after rendering the frame.\n\nPF_Cmd_USER_CHANGED_PARAM\nThis command will be sent if you set the PF_ParamFlag_SUPERVISE\nflag for a param.  This allows you to modify the params array contents to\ncontrol values or make one control affect others, including arbitrary\ndata.  This command will be sent whenever the user interacts with a\nstandard param controller that has PF_ParamFlag_SUPERVISE\nset.\n\nThe \"extra\" field will be a pointer to a PF_UserChangedParamExtra structure\nwhich contains the param_index of the changed parameter.\n\nYou can return PF_ChangeFlag_CHANGED_VALUE and/or call PF_UpdateParamUI()\nfor any param.\n\nPF_Cmd_UPDATE_PARAMS_UI\nThis command will be sent when the Effect Controls Window (ECW)\nneeds to updated (e.g. after opening the ECW or moving the comp to\na new time) if you have set PF_OutFlag_SEND_UPDATE_PARAMS_UI at\nglobal setup time.\n\nThis gives you a chance to call PF_UpdateParamUI() to modify certain\nui fields for the params.  See the doc for PF_UpdateParamUI()\nto see which fields can be modified.\n\nWARNING: When handling PF_Cmd_UPDATE_PARAMS_UI, you can call\nPF_UpdateParamUI() for any param(s), but not PF_ChangeFlag_CHANGED_VALUE --\nonly cosmetic changes can be made in response to this command.\n\nPF_Cmd_QUERY_DYNAMIC_FLAGS\nThis command will be sent at arbitrary times if PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\nis set during global setup. During this call the effect may examine the values\nof its parameters at the current time (except layer parameters) by checking them out,\nand decide whether any of the flags that support PF_Cmd_QUERY_DYNAMIC_FLAGS should be set.\n\nThe appropriate flags must be set in out_data->out_flags and out_data->out_flags2 before\nreturning. The effect must decide what information is necessary to render a frame at\nthe current time, given only the values of parameters at that time. Clearing the\nappropriate bits when possible can result in great performance improvements, but\nincorrectly clearing bits will result in caching bugs, and you won't like that. Nope.\n\n Important Reminder***\nBefore you add a new PF_Cmd, evaluate whether it should allow\nnew Sequence Data allocations! If so, remember to add it to\nCmdCanChangeSequenceData() in FLT_Host.cpp!"]
+pub type _bindgen_ty_20 = ::std::os::raw::c_uint;
 pub type PF_Cmd = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -918,9 +937,21 @@ pub type PF_Fixed = Fixed;
 pub type PF_Boolean = Boolean;
 pub type PF_Handle = Handle;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct PF_Point {
     pub h: A_long,
+    pub v: A_long,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union PF_Point__bindgen_ty_1 {
+    pub x: A_long,
+    pub h: A_long,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union PF_Point__bindgen_ty_2 {
+    pub y: A_long,
     pub v: A_long,
 }
 #[repr(C)]
@@ -1047,10 +1078,10 @@ pub struct PF_ChannelChunk {
     pub dataH: PF_Handle,
     pub dataPV: *mut ::std::os::raw::c_void,
 }
-pub const PF_LayerDefault_MYSELF: _bindgen_ty_20 = -1;
-pub const PF_LayerDefault_NONE: _bindgen_ty_20 = 0;
+pub const PF_LayerDefault_MYSELF: _bindgen_ty_21 = -1;
+pub const PF_LayerDefault_NONE: _bindgen_ty_21 = 0;
 #[doc = " -------------------- Effect Parameter Description Structures --------------------\n\nIn general each structure is divided into two parts:\na) description of the parameter\nb) setting of parameter at the current invocation time\n\nA number of these structures end in A_char*, A_char[] unions.  These\nstructures are \"flattened\" between the add_param callback (in which\nthe A_char * should be used) and the read-only values accessible when\nthe effect is later invoked (at which time the A_char [] is used and\nthe string data is concatenated right at the end of the struct)."]
-pub type _bindgen_ty_20 = ::std::os::raw::c_int;
+pub type _bindgen_ty_21 = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PF_LayerDef {
@@ -1073,19 +1104,19 @@ pub struct PF_LayerDef {
     pub dephault: A_long,
 }
 pub type PF_EffectWorld = PF_LayerDef;
-pub const PF_UNSIGNED_PCM: _bindgen_ty_21 = 0;
-pub const PF_SIGNED_PCM: _bindgen_ty_21 = 1;
-pub const PF_SIGNED_FLOAT: _bindgen_ty_21 = 2;
-pub type _bindgen_ty_21 = ::std::os::raw::c_uint;
-pub type PF_SoundFormat = A_short;
-pub const PF_SSS_1: _bindgen_ty_22 = 1;
-pub const PF_SSS_2: _bindgen_ty_22 = 2;
-pub const PF_SSS_4: _bindgen_ty_22 = 4;
+pub const PF_UNSIGNED_PCM: _bindgen_ty_22 = 0;
+pub const PF_SIGNED_PCM: _bindgen_ty_22 = 1;
+pub const PF_SIGNED_FLOAT: _bindgen_ty_22 = 2;
 pub type _bindgen_ty_22 = ::std::os::raw::c_uint;
-pub type PF_SoundSampleSize = A_short;
-pub const PF_Channels_MONO: _bindgen_ty_23 = 1;
-pub const PF_Channels_STEREO: _bindgen_ty_23 = 2;
+pub type PF_SoundFormat = A_short;
+pub const PF_SSS_1: _bindgen_ty_23 = 1;
+pub const PF_SSS_2: _bindgen_ty_23 = 2;
+pub const PF_SSS_4: _bindgen_ty_23 = 4;
 pub type _bindgen_ty_23 = ::std::os::raw::c_uint;
+pub type PF_SoundSampleSize = A_short;
+pub const PF_Channels_MONO: _bindgen_ty_24 = 1;
+pub const PF_Channels_STEREO: _bindgen_ty_24 = 2;
+pub type _bindgen_ty_24 = ::std::os::raw::c_uint;
 pub type PF_SoundChannels = A_short;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1102,12 +1133,12 @@ pub struct PF_SoundWorld {
     pub num_samples: A_long,
     pub dataP: *mut ::std::os::raw::c_void,
 }
-pub const PF_ValueDisplayFlag_NONE: _bindgen_ty_24 = 0;
-pub const PF_ValueDisplayFlag_PERCENT: _bindgen_ty_24 = 1;
-pub const PF_ValueDisplayFlag_PIXEL: _bindgen_ty_24 = 2;
-pub const PF_ValueDisplayFlag_RESERVED1: _bindgen_ty_24 = 4;
-pub const PF_ValueDisplayFlag_REVERSE: _bindgen_ty_24 = 8;
-pub type _bindgen_ty_24 = ::std::os::raw::c_uint;
+pub const PF_ValueDisplayFlag_NONE: _bindgen_ty_25 = 0;
+pub const PF_ValueDisplayFlag_PERCENT: _bindgen_ty_25 = 1;
+pub const PF_ValueDisplayFlag_PIXEL: _bindgen_ty_25 = 2;
+pub const PF_ValueDisplayFlag_RESERVED1: _bindgen_ty_25 = 4;
+pub const PF_ValueDisplayFlag_REVERSE: _bindgen_ty_25 = 8;
+pub type _bindgen_ty_25 = ::std::os::raw::c_uint;
 pub type PF_ValueDisplayFlags = A_short;
 #[doc = " Slider -- PF_Param_SLIDER"]
 #[repr(C)]
@@ -1134,12 +1165,12 @@ pub struct PF_FixedSliderDef {
     pub slider_min: PF_Fixed,
     pub slider_max: PF_Fixed,
     pub dephault: PF_Fixed,
-    pub precision: A_short,
+    pub precision: PF_Precision,
     pub display_flags: PF_ValueDisplayFlags,
 }
-pub const PF_FSliderFlag_NONE: _bindgen_ty_25 = 0;
-pub const PF_FSliderFlag_WANT_PHASE: _bindgen_ty_25 = 1;
-pub type _bindgen_ty_25 = ::std::os::raw::c_uint;
+pub const PF_FSliderFlag_NONE: _bindgen_ty_26 = 0;
+pub const PF_FSliderFlag_WANT_PHASE: _bindgen_ty_26 = 1;
+pub type _bindgen_ty_26 = ::std::os::raw::c_uint;
 pub type PF_FSliderFlags = A_u_long;
 #[doc = " Floating Point Slider -- PF_Param_FLOAT_SLIDER"]
 #[repr(C)]
@@ -1153,7 +1184,7 @@ pub struct PF_FloatSliderDef {
     pub slider_min: PF_FpShort,
     pub slider_max: PF_FpShort,
     pub dephault: PF_FpShort,
-    pub precision: A_short,
+    pub precision: PF_Precision,
     pub display_flags: PF_ValueDisplayFlags,
     pub fs_flags: PF_FSliderFlags,
     pub curve_tolerance: PF_FpShort,
@@ -1240,19 +1271,19 @@ pub struct PF_ButtonDef {
 pub union PF_ButtonDef__bindgen_ty_1 {
     pub namesptr: *const A_char,
 }
-pub const PF_PathID_NONE: _bindgen_ty_26 = 0;
-pub type _bindgen_ty_26 = ::std::os::raw::c_uint;
-pub type PF_PathID = A_u_long;
-pub const PF_MaskMode_NONE: _bindgen_ty_27 = 0;
-pub const PF_MaskMode_ADD: _bindgen_ty_27 = 1;
-pub const PF_MaskMode_SUBTRACT: _bindgen_ty_27 = 2;
-pub const PF_MaskMode_INTERSECT: _bindgen_ty_27 = 3;
-pub const PF_MaskMode_LIGHTEN: _bindgen_ty_27 = 4;
-pub const PF_MaskMode_DARKEN: _bindgen_ty_27 = 5;
-pub const PF_MaskMode_DIFFERENCE: _bindgen_ty_27 = 6;
-pub const PF_MaskMode_ACCUM: _bindgen_ty_27 = 7;
-pub const PF_NUM_MASKMODES: _bindgen_ty_27 = 8;
+pub const PF_PathID_NONE: _bindgen_ty_27 = 0;
 pub type _bindgen_ty_27 = ::std::os::raw::c_uint;
+pub type PF_PathID = A_u_long;
+pub const PF_MaskMode_NONE: _bindgen_ty_28 = 0;
+pub const PF_MaskMode_ADD: _bindgen_ty_28 = 1;
+pub const PF_MaskMode_SUBTRACT: _bindgen_ty_28 = 2;
+pub const PF_MaskMode_INTERSECT: _bindgen_ty_28 = 3;
+pub const PF_MaskMode_LIGHTEN: _bindgen_ty_28 = 4;
+pub const PF_MaskMode_DARKEN: _bindgen_ty_28 = 5;
+pub const PF_MaskMode_DIFFERENCE: _bindgen_ty_28 = 6;
+pub const PF_MaskMode_ACCUM: _bindgen_ty_28 = 7;
+pub const PF_NUM_MASKMODES: _bindgen_ty_28 = 8;
+pub type _bindgen_ty_28 = ::std::os::raw::c_uint;
 pub type PF_MaskMode = A_long;
 #[doc = " Path -- PF_Param_PATH\n\nPath parameters give access to the mask/path/shapes of the layer on which\nthe effect is applied.  For more information\non how to use these paths, see the PF_PathQuerySuite, and the PF_PathDataSuite\nin AE_EffectSuites.h"]
 #[repr(C)]
@@ -1272,28 +1303,28 @@ pub struct PF_ArbitraryDef {
     pub value: PF_ArbitraryH,
     pub refconPV: *mut ::std::os::raw::c_void,
 }
-pub const PF_Arbitrary_NEW_FUNC: _bindgen_ty_28 = 0;
-pub const PF_Arbitrary_DISPOSE_FUNC: _bindgen_ty_28 = 1;
-pub const PF_Arbitrary_COPY_FUNC: _bindgen_ty_28 = 2;
-pub const PF_Arbitrary_FLAT_SIZE_FUNC: _bindgen_ty_28 = 3;
-pub const PF_Arbitrary_FLATTEN_FUNC: _bindgen_ty_28 = 4;
-pub const PF_Arbitrary_UNFLATTEN_FUNC: _bindgen_ty_28 = 5;
-pub const PF_Arbitrary_INTERP_FUNC: _bindgen_ty_28 = 6;
-pub const PF_Arbitrary_COMPARE_FUNC: _bindgen_ty_28 = 7;
-pub const PF_Arbitrary_PRINT_SIZE_FUNC: _bindgen_ty_28 = 8;
-pub const PF_Arbitrary_PRINT_FUNC: _bindgen_ty_28 = 9;
-pub const PF_Arbitrary_SCAN_FUNC: _bindgen_ty_28 = 10;
-pub type _bindgen_ty_28 = ::std::os::raw::c_uint;
-pub type PF_FunctionSelector = A_long;
-pub const PF_ArbCompare_EQUAL: _bindgen_ty_29 = 0;
-pub const PF_ArbCompare_LESS: _bindgen_ty_29 = 1;
-pub const PF_ArbCompare_MORE: _bindgen_ty_29 = 2;
-pub const PF_ArbCompare_NOT_EQUAL: _bindgen_ty_29 = 3;
+pub const PF_Arbitrary_NEW_FUNC: _bindgen_ty_29 = 0;
+pub const PF_Arbitrary_DISPOSE_FUNC: _bindgen_ty_29 = 1;
+pub const PF_Arbitrary_COPY_FUNC: _bindgen_ty_29 = 2;
+pub const PF_Arbitrary_FLAT_SIZE_FUNC: _bindgen_ty_29 = 3;
+pub const PF_Arbitrary_FLATTEN_FUNC: _bindgen_ty_29 = 4;
+pub const PF_Arbitrary_UNFLATTEN_FUNC: _bindgen_ty_29 = 5;
+pub const PF_Arbitrary_INTERP_FUNC: _bindgen_ty_29 = 6;
+pub const PF_Arbitrary_COMPARE_FUNC: _bindgen_ty_29 = 7;
+pub const PF_Arbitrary_PRINT_SIZE_FUNC: _bindgen_ty_29 = 8;
+pub const PF_Arbitrary_PRINT_FUNC: _bindgen_ty_29 = 9;
+pub const PF_Arbitrary_SCAN_FUNC: _bindgen_ty_29 = 10;
 pub type _bindgen_ty_29 = ::std::os::raw::c_uint;
-pub type PF_ArbCompareResult = A_long;
-pub const PF_ArbPrint_NONE: _bindgen_ty_30 = 0;
-pub const PF_ArbPrint_ABBREVIATED: _bindgen_ty_30 = 1;
+pub type PF_FunctionSelector = A_long;
+pub const PF_ArbCompare_EQUAL: _bindgen_ty_30 = 0;
+pub const PF_ArbCompare_LESS: _bindgen_ty_30 = 1;
+pub const PF_ArbCompare_MORE: _bindgen_ty_30 = 2;
+pub const PF_ArbCompare_NOT_EQUAL: _bindgen_ty_30 = 3;
 pub type _bindgen_ty_30 = ::std::os::raw::c_uint;
+pub type PF_ArbCompareResult = A_long;
+pub const PF_ArbPrint_NONE: _bindgen_ty_31 = 0;
+pub const PF_ArbPrint_ABBREVIATED: _bindgen_ty_31 = 1;
+pub type _bindgen_ty_31 = ::std::os::raw::c_uint;
 pub type PF_ArbPrintFlags = A_long;
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1418,10 +1449,10 @@ pub struct PF_TranslateParamsToPrefsExtra {
     pub prefsPC: PF_ImporterPrefsDataPtr,
     pub prefs_sizeLu: A_u_long,
 }
-pub const PF_DepCheckType_NONE: _bindgen_ty_31 = 0;
-pub const PF_DepCheckType_ALL_DEPENDENCIES: _bindgen_ty_31 = 1;
-pub const PF_DepCheckType_MISSING_DEPENDENCIES: _bindgen_ty_31 = 2;
-pub type _bindgen_ty_31 = ::std::os::raw::c_uint;
+pub const PF_DepCheckType_NONE: _bindgen_ty_32 = 0;
+pub const PF_DepCheckType_ALL_DEPENDENCIES: _bindgen_ty_32 = 1;
+pub const PF_DepCheckType_MISSING_DEPENDENCIES: _bindgen_ty_32 = 2;
+pub type _bindgen_ty_32 = ::std::os::raw::c_uint;
 pub type PF_DepCheckType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1446,28 +1477,28 @@ pub union PF_ParamDefUnion {
     pub button_d: PF_ButtonDef,
     pub point3d_d: PF_Point3DDef,
 }
-pub const PF_PUI_NONE: _bindgen_ty_32 = 0;
-pub const PF_PUI_TOPIC: _bindgen_ty_32 = 1;
-pub const PF_PUI_CONTROL: _bindgen_ty_32 = 2;
-pub const PF_PUI_STD_CONTROL_ONLY: _bindgen_ty_32 = 4;
-pub const PF_PUI_NO_ECW_UI: _bindgen_ty_32 = 8;
-pub const PF_PUI_ECW_SEPARATOR: _bindgen_ty_32 = 16;
-pub const PF_PUI_DISABLED: _bindgen_ty_32 = 32;
-pub const PF_PUI_DONT_ERASE_TOPIC: _bindgen_ty_32 = 64;
-pub const PF_PUI_DONT_ERASE_CONTROL: _bindgen_ty_32 = 128;
-pub const PF_PUI_RADIO_BUTTON: _bindgen_ty_32 = 256;
-pub const PF_PUI_INVISIBLE: _bindgen_ty_32 = 512;
-pub const PF_PUI_RESERVED: _bindgen_ty_32 = 1024;
+pub const PF_PUI_NONE: _bindgen_ty_33 = 0;
+pub const PF_PUI_TOPIC: _bindgen_ty_33 = 1;
+pub const PF_PUI_CONTROL: _bindgen_ty_33 = 2;
+pub const PF_PUI_STD_CONTROL_ONLY: _bindgen_ty_33 = 4;
+pub const PF_PUI_NO_ECW_UI: _bindgen_ty_33 = 8;
+pub const PF_PUI_ECW_SEPARATOR: _bindgen_ty_33 = 16;
+pub const PF_PUI_DISABLED: _bindgen_ty_33 = 32;
+pub const PF_PUI_DONT_ERASE_TOPIC: _bindgen_ty_33 = 64;
+pub const PF_PUI_DONT_ERASE_CONTROL: _bindgen_ty_33 = 128;
+pub const PF_PUI_RADIO_BUTTON: _bindgen_ty_33 = 256;
+pub const PF_PUI_INVISIBLE: _bindgen_ty_33 = 512;
+pub const PF_PUI_RESERVED: _bindgen_ty_33 = 1024;
 #[doc = " Param UI Flags\n\nPF_PUI_TOPIC\n\nSet this flag if you handle PF_Cmd_EVENTs for the \"topic\" of\nthe parameter.  The \"topic\" is the portion of the param UI\nin the Effect Controls Window (ECW) that is still visible\nwhen the twirly-arrow is twirled up for that param.\n\nIf you set this flag, you must also set PF_OutFlag_CUSTOM_UI\nat PF_Cmd_GLOBAL_SETUP time.\n\nPF_PUI_CONTROL\n\nSet this flag if you handle PF_Cmd_EVENTs for the control\narea in the ECW.  This is the area that becomes invisible\nwhen you twirl up a parameter's twirly arrow (and is the\nusual place to have your custom UI).\n\nIf you set this flag, you must also set PF_OutFlag_CUSTOM_UI\nat PF_Cmd_GLOBAL_SETUP time.\n\nPF_PUI_STD_CONTROL_ONLY\n\nSet this flag if you want the standard control only -- no\ndata stream will be associated with this parameter, and\nthus no keyframes (nothing appears in the Time Layout window\nfor this type of param).\n\nYou might want to do this to control something in your\nsequence data with a standard control.  Or in your arb\ndata, or custom UI in the comp window, or to group-set multiple\nother controls.\n\n\nThis flag can be used with these param types:\nPF_Param_SLIDER, PF_Param_FIX_SLIDER, PF_Param_ANGLE,\nPF_Param_CHECKBOX, PF_Param_COLOR, PF_Param_POINT,\nPF_Param_POPUP, PF_Param_FLOAT_SLIDER, PF_Param_POINT_3D\n\nbut NOT:\n\nPF_Param_CUSTOM, PF_Param_NO_DATA,\nPF_Param_LAYER, PF_Param_ARBITRARY_DATA, PF_Param_PATH\n\nIf you set this flag, you must also set PF_ParamFlag_SUPERVISE\n(otherwise you would never find out about value changes, and\nthe setting would never be used for anything).  This flag\ndoes not require the setting of PF_OutFlag_CUSTOM_UI.\n\nIf you want a standard control for PF_Param_ARBITRARY_DATA,\njust add one (or more) using PF_PUI_STD_CONTROL_ONLY with\nthe supported param types, and then when handling\nPF_Cmd_USER_CHANGED_PARAM you can modify your arb data.\n\n\nPF_PUI_NO_ECW_UI\n\nSet this flag if you want no UI to appear in the Effect Controls\nWindow.  Presumably, you are setting the value of the parameter\nthrough some other method (e.g. custom UI in the comp window,\nor while handling PF_Cmd_USER_CHANGED_PARAM for a different param with\nPF_ParamFlag_SUPERVISE set). In AE, this doesn't affect keyframe\nvisibility in the timeline. In PPro it does remove the entire row,\nso you won't see keyframes.\n\nPF_PUI_ECW_SEPARATOR\n\nSet this flag if you'd like a thick line above this parameter\nin the effect control window. This is provided so that parameters\ncan be grouped visually, if needed (without adding groups).\nThis flag can be changed at runtime through the PF_UpdateParamUI()\nmethod. Not used by AE.\n\nPF_PUI_INVISIBLE\n\nSet this flag if you'd like the parameter to be initially invisible. This is useful\nif your effect needs hidden data parameters that affect rendering.\n\nPremiere only: The parameter can later be made visible by clearing the flag\nduring the PF_UpdateParamUI() callback."]
-pub type _bindgen_ty_32 = ::std::os::raw::c_uint;
-pub type PF_ParamUIFlags = A_long;
-pub const PF_ChangeFlag_NONE: _bindgen_ty_33 = 0;
-pub const PF_ChangeFlag_CHANGED_VALUE: _bindgen_ty_33 = 1;
-pub const PF_ChangeFlag_RESERVED: _bindgen_ty_33 = 2;
-pub const PF_ChangeFlag_SET_TO_VARY: _bindgen_ty_33 = 4;
-pub const PF_ChangeFlag_SET_TO_CONSTANT: _bindgen_ty_33 = 8;
-#[doc = " PF_ChangeFlags\n\nNew in AE 4.0 (although PF_ChangeFlag_CHANGED_VALUE was implemented\nby setting low bit of old changed field).\n\nPF_ChangeFlag_CHANGED_VALUE\n\nSet this flag for each param whose value you change when handling\na PF_Cmd_USER_CHANGED_PARAM or specific PF_Cmd_EVENT events\n(PF_Event_DO_CLICK, PF_Event_DRAG, & PF_Event_KEYDOWN). If set during\nPF_Cmd_EVENT, but sure to also set PF_EO_HANDLED_EVENT before returning.\nYou can change as many params as you want at once.  These changes are undoable and\nre-doable by the user.  Exception: do not set PF_PUI_STD_CONTROL_ONLY\nparam values with this flag, use PF_UpdateParamUI() instead.\n\nPF_ChangeFlag_SET_TO_VARY\n\nNot yet implemented.  Same restrictions as PF_ChangeFlag_CHANGED_VALUE.\n\nPF_ChangeFlag_SET_TO_CONSTANT\n\nNot yet implemented.  Same restrictions as PF_ChangeFlag_CHANGED_VALUE."]
 pub type _bindgen_ty_33 = ::std::os::raw::c_uint;
+pub type PF_ParamUIFlags = A_long;
+pub const PF_ChangeFlag_NONE: _bindgen_ty_34 = 0;
+pub const PF_ChangeFlag_CHANGED_VALUE: _bindgen_ty_34 = 1;
+pub const PF_ChangeFlag_RESERVED: _bindgen_ty_34 = 2;
+pub const PF_ChangeFlag_SET_TO_VARY: _bindgen_ty_34 = 4;
+pub const PF_ChangeFlag_SET_TO_CONSTANT: _bindgen_ty_34 = 8;
+#[doc = " PF_ChangeFlags\n\nNew in AE 4.0 (although PF_ChangeFlag_CHANGED_VALUE was implemented\nby setting low bit of old changed field).\n\nPF_ChangeFlag_CHANGED_VALUE\n\nSet this flag for each param whose value you change when handling\na PF_Cmd_USER_CHANGED_PARAM or specific PF_Cmd_EVENT events\n(PF_Event_DO_CLICK, PF_Event_DRAG, & PF_Event_KEYDOWN). If set during\nPF_Cmd_EVENT, but sure to also set PF_EO_HANDLED_EVENT before returning.\nYou can change as many params as you want at once.  These changes are undoable and\nre-doable by the user.  Exception: do not set PF_PUI_STD_CONTROL_ONLY\nparam values with this flag, use PF_UpdateParamUI() instead.\n\nPF_ChangeFlag_SET_TO_VARY\n\nNot yet implemented.  Same restrictions as PF_ChangeFlag_CHANGED_VALUE.\n\nPF_ChangeFlag_SET_TO_CONSTANT\n\nNot yet implemented.  Same restrictions as PF_ChangeFlag_CHANGED_VALUE."]
+pub type _bindgen_ty_34 = ::std::os::raw::c_uint;
 pub type PF_ChangeFlags = A_long;
 #[doc = " ParamDef"]
 #[repr(C)]
@@ -1478,7 +1509,7 @@ pub struct PF_ParamDef {
     pub ui_width: A_short,
     pub ui_height: A_short,
     pub param_type: PF_ParamType,
-    pub name: [A_char; 32usize],
+    pub name_do_not_use_directly: [A_char; 32usize],
     pub flags: PF_ParamFlags,
     pub unused: A_long,
     pub u: PF_ParamDefUnion,
@@ -1494,20 +1525,20 @@ pub type PF_ParamDefPtr = *mut PF_ParamDef;
 #[doc = " ParamDef"]
 pub type PF_ParamDefH = *mut *mut PF_ParamDef;
 pub type PF_ParamList = *mut *mut PF_ParamDef;
-pub const PF_ChannelMask_ALPHA: _bindgen_ty_34 = 1;
-pub const PF_ChannelMask_RED: _bindgen_ty_34 = 2;
-pub const PF_ChannelMask_GREEN: _bindgen_ty_34 = 4;
-pub const PF_ChannelMask_BLUE: _bindgen_ty_34 = 8;
-pub const PF_ChannelMask_ARGB: _bindgen_ty_34 = 15;
+pub const PF_ChannelMask_ALPHA: _bindgen_ty_35 = 1;
+pub const PF_ChannelMask_RED: _bindgen_ty_35 = 2;
+pub const PF_ChannelMask_GREEN: _bindgen_ty_35 = 4;
+pub const PF_ChannelMask_BLUE: _bindgen_ty_35 = 8;
+pub const PF_ChannelMask_ARGB: _bindgen_ty_35 = 15;
 #[doc = " -------------------- Smart Render Interface Constants and Structures --------------------\n\nPF_Cmd_SMART_PRE_RENDER gets a PF_PreRenderExtra struct in the extra pointer, and must\nfill out the \"output\" field before returning.\n\nPF_Cmd_SMART_RENDER gets a PF_SmartRenderExtra struct in the extra pointer, if pre-render was invoked.\n"]
-pub type _bindgen_ty_34 = ::std::os::raw::c_uint;
-pub type PF_ChannelMask = A_long;
-pub const PF_GPU_Framework_NONE: _bindgen_ty_35 = 0;
-pub const PF_GPU_Framework_OPENCL: _bindgen_ty_35 = 1;
-pub const PF_GPU_Framework_METAL: _bindgen_ty_35 = 2;
-pub const PF_GPU_Framework_CUDA: _bindgen_ty_35 = 3;
-pub const PF_GPU_Framework_DIRECTX: _bindgen_ty_35 = 4;
 pub type _bindgen_ty_35 = ::std::os::raw::c_uint;
+pub type PF_ChannelMask = A_long;
+pub const PF_GPU_Framework_NONE: _bindgen_ty_36 = 0;
+pub const PF_GPU_Framework_OPENCL: _bindgen_ty_36 = 1;
+pub const PF_GPU_Framework_METAL: _bindgen_ty_36 = 2;
+pub const PF_GPU_Framework_CUDA: _bindgen_ty_36 = 3;
+pub const PF_GPU_Framework_DIRECTX: _bindgen_ty_36 = 4;
+pub type _bindgen_ty_36 = ::std::os::raw::c_uint;
 pub type PF_GPU_Framework = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1530,10 +1561,10 @@ pub struct PF_PreRenderInput {
 }
 pub type PF_DeletePreRenderDataFunc =
     ::std::option::Option<unsafe extern "C" fn(pre_render_data: *mut ::std::os::raw::c_void)>;
-pub const PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS: _bindgen_ty_36 = 1;
-pub const PF_RenderOutputFlag_GPU_RENDER_POSSIBLE: _bindgen_ty_36 = 2;
-pub const PF_RenderOutputFlag_RESERVED1: _bindgen_ty_36 = 4;
-pub type _bindgen_ty_36 = ::std::os::raw::c_uint;
+pub const PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS: _bindgen_ty_37 = 1;
+pub const PF_RenderOutputFlag_GPU_RENDER_POSSIBLE: _bindgen_ty_37 = 2;
+pub const PF_RenderOutputFlag_RESERVED1: _bindgen_ty_37 = 4;
+pub type _bindgen_ty_37 = ::std::os::raw::c_uint;
 pub type PF_RenderOutputFlags = ::std::os::raw::c_short;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1736,6 +1767,7 @@ pub struct PF_OutData {
     pub dest_snd: PF_SoundWorld,
     pub out_flags2: PF_OutFlags2,
 }
+pub type A_AppID = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PF_InData {
@@ -1745,7 +1777,7 @@ pub struct PF_InData {
     pub quality: PF_Quality,
     pub version: PF_SpecVersion,
     pub serial_num: A_long,
-    pub appl_id: A_long,
+    pub appl_id: A_AppID,
     pub num_params: A_long,
     pub reserved: A_long,
     pub what_cpu: A_long,
@@ -1878,209 +1910,209 @@ pub struct DRAWBOT_Rect32 {
 pub struct DRAWBOT_MatrixF32 {
     pub mat: [[f32; 3usize]; 3usize],
 }
-pub const kDRAWBOT_FillType_EvenOdd: _bindgen_ty_37 = 0;
-pub const kDRAWBOT_FillType_Winding: _bindgen_ty_37 = 1;
-pub const kDRAWBOT_FillType_Default: _bindgen_ty_37 = 1;
-pub type _bindgen_ty_37 = ::std::os::raw::c_uint;
-pub type DRAWBOT_FillType = ::std::os::raw::c_int;
-pub const kDRAWBOT_PixelLayout_24RGB: _bindgen_ty_38 = 0;
-pub const kDRAWBOT_PixelLayout_24BGR: _bindgen_ty_38 = 1;
-pub const kDRAWBOT_PixelLayout_32RGB: _bindgen_ty_38 = 2;
-pub const kDRAWBOT_PixelLayout_32BGR: _bindgen_ty_38 = 3;
-pub const kDRAWBOT_PixelLayout_32ARGB_Straight: _bindgen_ty_38 = 4;
-pub const kDRAWBOT_PixelLayout_32ARGB_Premul: _bindgen_ty_38 = 5;
-pub const kDRAWBOT_PixelLayout_32BGRA_Straight: _bindgen_ty_38 = 6;
-pub const kDRAWBOT_PixelLayout_32BGRA_Premul: _bindgen_ty_38 = 7;
-pub type _bindgen_ty_38 = ::std::os::raw::c_uint;
-pub type DRAWBOT_PixelLayout = ::std::os::raw::c_int;
-pub const kDRAWBOT_TextAlignment_Left: _bindgen_ty_39 = 0;
-pub const kDRAWBOT_TextAlignment_Center: _bindgen_ty_39 = 1;
-pub const kDRAWBOT_TextAlignment_Right: _bindgen_ty_39 = 2;
-pub const kDRAWBOT_TextAlignment_Default: _bindgen_ty_39 = 0;
+pub const kDRAWBOT_FillType_EvenOdd: _bindgen_ty_39 = 0;
+pub const kDRAWBOT_FillType_Winding: _bindgen_ty_39 = 1;
+pub const kDRAWBOT_FillType_Default: _bindgen_ty_39 = 1;
 pub type _bindgen_ty_39 = ::std::os::raw::c_uint;
-pub type DRAWBOT_TextAlignment = ::std::os::raw::c_int;
-pub const kDRAWBOT_TextTruncation_None: _bindgen_ty_40 = 0;
-pub const kDRAWBOT_TextTruncation_End: _bindgen_ty_40 = 1;
-pub const kDRAWBOT_TextTruncation_EndEllipsis: _bindgen_ty_40 = 2;
-pub const kDRAWBOT_TextTruncation_PathEllipsis: _bindgen_ty_40 = 3;
+pub type DRAWBOT_FillType = ::std::os::raw::c_int;
+pub const kDRAWBOT_PixelLayout_24RGB: _bindgen_ty_40 = 0;
+pub const kDRAWBOT_PixelLayout_24BGR: _bindgen_ty_40 = 1;
+pub const kDRAWBOT_PixelLayout_32RGB: _bindgen_ty_40 = 2;
+pub const kDRAWBOT_PixelLayout_32BGR: _bindgen_ty_40 = 3;
+pub const kDRAWBOT_PixelLayout_32ARGB_Straight: _bindgen_ty_40 = 4;
+pub const kDRAWBOT_PixelLayout_32ARGB_Premul: _bindgen_ty_40 = 5;
+pub const kDRAWBOT_PixelLayout_32BGRA_Straight: _bindgen_ty_40 = 6;
+pub const kDRAWBOT_PixelLayout_32BGRA_Premul: _bindgen_ty_40 = 7;
 pub type _bindgen_ty_40 = ::std::os::raw::c_uint;
-pub type DRAWBOT_TextTruncation = ::std::os::raw::c_int;
-pub const kDRAWBOT_InterpolationPolicy_None: _bindgen_ty_41 = 0;
-pub const kDRAWBOT_InterpolationPolicy_Med: _bindgen_ty_41 = 1;
-pub const kDRAWBOT_InterpolationPolicy_High: _bindgen_ty_41 = 2;
-pub const kDRAWBOT_InterpolationPolicy_Default: _bindgen_ty_41 = 0;
+pub type DRAWBOT_PixelLayout = ::std::os::raw::c_int;
+pub const kDRAWBOT_TextAlignment_Left: _bindgen_ty_41 = 0;
+pub const kDRAWBOT_TextAlignment_Center: _bindgen_ty_41 = 1;
+pub const kDRAWBOT_TextAlignment_Right: _bindgen_ty_41 = 2;
+pub const kDRAWBOT_TextAlignment_Default: _bindgen_ty_41 = 0;
 pub type _bindgen_ty_41 = ::std::os::raw::c_uint;
-pub type DRAWBOT_InterpolationPolicy = ::std::os::raw::c_int;
-pub const kDRAWBOT_AntiAliasPolicy_None: _bindgen_ty_42 = 0;
-pub const kDRAWBOT_AntiAliasPolicy_Med: _bindgen_ty_42 = 1;
-pub const kDRAWBOT_AntiAliasPolicy_High: _bindgen_ty_42 = 2;
-pub const kDRAWBOT_AntiAliasPolicy_Default: _bindgen_ty_42 = 0;
+pub type DRAWBOT_TextAlignment = ::std::os::raw::c_int;
+pub const kDRAWBOT_TextTruncation_None: _bindgen_ty_42 = 0;
+pub const kDRAWBOT_TextTruncation_End: _bindgen_ty_42 = 1;
+pub const kDRAWBOT_TextTruncation_EndEllipsis: _bindgen_ty_42 = 2;
+pub const kDRAWBOT_TextTruncation_PathEllipsis: _bindgen_ty_42 = 3;
 pub type _bindgen_ty_42 = ::std::os::raw::c_uint;
-pub type DRAWBOT_AntiAliasPolicy = ::std::os::raw::c_int;
-pub const PF_CustomEFlag_NONE: _bindgen_ty_43 = 0;
-pub const PF_CustomEFlag_COMP: _bindgen_ty_43 = 1;
-pub const PF_CustomEFlag_LAYER: _bindgen_ty_43 = 2;
-pub const PF_CustomEFlag_EFFECT: _bindgen_ty_43 = 4;
-pub const PF_CustomEFlag_PREVIEW: _bindgen_ty_43 = 8;
-#[doc = " PF_CustomFlags\n\n kinds of events and actions the custom parameter type might require\n"]
+pub type DRAWBOT_TextTruncation = ::std::os::raw::c_int;
+pub const kDRAWBOT_InterpolationPolicy_None: _bindgen_ty_43 = 0;
+pub const kDRAWBOT_InterpolationPolicy_Med: _bindgen_ty_43 = 1;
+pub const kDRAWBOT_InterpolationPolicy_High: _bindgen_ty_43 = 2;
+pub const kDRAWBOT_InterpolationPolicy_Default: _bindgen_ty_43 = 0;
 pub type _bindgen_ty_43 = ::std::os::raw::c_uint;
+pub type DRAWBOT_InterpolationPolicy = ::std::os::raw::c_int;
+pub const kDRAWBOT_AntiAliasPolicy_None: _bindgen_ty_44 = 0;
+pub const kDRAWBOT_AntiAliasPolicy_Med: _bindgen_ty_44 = 1;
+pub const kDRAWBOT_AntiAliasPolicy_High: _bindgen_ty_44 = 2;
+pub const kDRAWBOT_AntiAliasPolicy_Default: _bindgen_ty_44 = 0;
+pub type _bindgen_ty_44 = ::std::os::raw::c_uint;
+pub type DRAWBOT_AntiAliasPolicy = ::std::os::raw::c_int;
+pub const PF_CustomEFlag_NONE: _bindgen_ty_45 = 0;
+pub const PF_CustomEFlag_COMP: _bindgen_ty_45 = 1;
+pub const PF_CustomEFlag_LAYER: _bindgen_ty_45 = 2;
+pub const PF_CustomEFlag_EFFECT: _bindgen_ty_45 = 4;
+pub const PF_CustomEFlag_PREVIEW: _bindgen_ty_45 = 8;
+#[doc = " PF_CustomFlags\n\n kinds of events and actions the custom parameter type might require\n"]
+pub type _bindgen_ty_45 = ::std::os::raw::c_uint;
 pub type PF_CustomEventFlags = A_long;
-pub const PF_Window_NONE: _bindgen_ty_44 = -1;
-pub const PF_Window_COMP: _bindgen_ty_44 = 0;
-pub const PF_Window_LAYER: _bindgen_ty_44 = 1;
-pub const PF_Window_EFFECT: _bindgen_ty_44 = 2;
-pub const PF_Window_PREVIEW: _bindgen_ty_44 = 3;
-pub type _bindgen_ty_44 = ::std::os::raw::c_int;
+pub const PF_Window_NONE: _bindgen_ty_46 = -1;
+pub const PF_Window_COMP: _bindgen_ty_46 = 0;
+pub const PF_Window_LAYER: _bindgen_ty_46 = 1;
+pub const PF_Window_EFFECT: _bindgen_ty_46 = 2;
+pub const PF_Window_PREVIEW: _bindgen_ty_46 = 3;
+pub type _bindgen_ty_46 = ::std::os::raw::c_int;
 pub type PF_WindowType = A_long;
-pub const PF_Event_NONE: _bindgen_ty_45 = -1;
-pub const PF_Event_NEW_CONTEXT: _bindgen_ty_45 = 0;
-pub const PF_Event_ACTIVATE: _bindgen_ty_45 = 1;
-pub const PF_Event_DO_CLICK: _bindgen_ty_45 = 2;
-pub const PF_Event_DRAG: _bindgen_ty_45 = 3;
-pub const PF_Event_DRAW: _bindgen_ty_45 = 4;
-pub const PF_Event_DEACTIVATE: _bindgen_ty_45 = 5;
-pub const PF_Event_CLOSE_CONTEXT: _bindgen_ty_45 = 6;
-pub const PF_Event_IDLE: _bindgen_ty_45 = 7;
-pub const PF_Event_KEYDOWN_OBSOLETE: _bindgen_ty_45 = 8;
-pub const PF_Event_ADJUST_CURSOR: _bindgen_ty_45 = 9;
-pub const PF_Event_KEYDOWN: _bindgen_ty_45 = 10;
-pub const PF_Event_MOUSE_EXITED: _bindgen_ty_45 = 11;
-pub const PF_Event_NUM_EVENTS: _bindgen_ty_45 = 12;
-pub type _bindgen_ty_45 = ::std::os::raw::c_int;
+pub const PF_Event_NONE: _bindgen_ty_47 = -1;
+pub const PF_Event_NEW_CONTEXT: _bindgen_ty_47 = 0;
+pub const PF_Event_ACTIVATE: _bindgen_ty_47 = 1;
+pub const PF_Event_DO_CLICK: _bindgen_ty_47 = 2;
+pub const PF_Event_DRAG: _bindgen_ty_47 = 3;
+pub const PF_Event_DRAW: _bindgen_ty_47 = 4;
+pub const PF_Event_DEACTIVATE: _bindgen_ty_47 = 5;
+pub const PF_Event_CLOSE_CONTEXT: _bindgen_ty_47 = 6;
+pub const PF_Event_IDLE: _bindgen_ty_47 = 7;
+pub const PF_Event_KEYDOWN_OBSOLETE: _bindgen_ty_47 = 8;
+pub const PF_Event_ADJUST_CURSOR: _bindgen_ty_47 = 9;
+pub const PF_Event_KEYDOWN: _bindgen_ty_47 = 10;
+pub const PF_Event_MOUSE_EXITED: _bindgen_ty_47 = 11;
+pub const PF_Event_NUM_EVENTS: _bindgen_ty_47 = 12;
+pub type _bindgen_ty_47 = ::std::os::raw::c_int;
 pub type PF_EventType = A_long;
-pub const PF_Cursor_NONE: _bindgen_ty_46 = 0;
-pub const PF_Cursor_CUSTOM: _bindgen_ty_46 = 1;
-pub const PF_Cursor_ARROW: _bindgen_ty_46 = 2;
-pub const PF_Cursor_HOLLOW_ARROW: _bindgen_ty_46 = 3;
-pub const PF_Cursor_WATCH_N_WAIT: _bindgen_ty_46 = 4;
-pub const PF_Cursor_MAGNIFY: _bindgen_ty_46 = 5;
-pub const PF_Cursor_MAGNIFY_PLUS: _bindgen_ty_46 = 6;
-pub const PF_Cursor_MAGNIFY_MINUS: _bindgen_ty_46 = 7;
-pub const PF_Cursor_CROSSHAIRS: _bindgen_ty_46 = 8;
-pub const PF_Cursor_CROSS_RECT: _bindgen_ty_46 = 9;
-pub const PF_Cursor_CROSS_OVAL: _bindgen_ty_46 = 10;
-pub const PF_Cursor_CROSS_ROTATE: _bindgen_ty_46 = 11;
-pub const PF_Cursor_PAN: _bindgen_ty_46 = 12;
-pub const PF_Cursor_EYEDROPPER: _bindgen_ty_46 = 13;
-pub const PF_Cursor_HAND: _bindgen_ty_46 = 14;
-pub const PF_Cursor_PEN: _bindgen_ty_46 = 15;
-pub const PF_Cursor_PEN_ADD: _bindgen_ty_46 = 16;
-pub const PF_Cursor_PEN_DELETE: _bindgen_ty_46 = 17;
-pub const PF_Cursor_PEN_CLOSE: _bindgen_ty_46 = 18;
-pub const PF_Cursor_PEN_DRAG: _bindgen_ty_46 = 19;
-pub const PF_Cursor_PEN_CORNER: _bindgen_ty_46 = 20;
-pub const PF_Cursor_RESIZE_VERTICAL: _bindgen_ty_46 = 21;
-pub const PF_Cursor_RESIZE_HORIZONTAL: _bindgen_ty_46 = 22;
-pub const PF_Cursor_FINGER_POINTER: _bindgen_ty_46 = 23;
-pub const PF_Cursor_SCALE_HORIZ: _bindgen_ty_46 = 24;
-pub const PF_Cursor_SCALE_DIAG_LR: _bindgen_ty_46 = 25;
-pub const PF_Cursor_SCALE_VERT: _bindgen_ty_46 = 26;
-pub const PF_Cursor_SCALE_DIAG_UR: _bindgen_ty_46 = 27;
-pub const PF_Cursor_ROT_TOP: _bindgen_ty_46 = 28;
-pub const PF_Cursor_ROT_TOP_RIGHT: _bindgen_ty_46 = 29;
-pub const PF_Cursor_ROT_RIGHT: _bindgen_ty_46 = 30;
-pub const PF_Cursor_ROT_BOT_RIGHT: _bindgen_ty_46 = 31;
-pub const PF_Cursor_ROT_BOTTOM: _bindgen_ty_46 = 32;
-pub const PF_Cursor_ROT_BOT_LEFT: _bindgen_ty_46 = 33;
-pub const PF_Cursor_ROT_LEFT: _bindgen_ty_46 = 34;
-pub const PF_Cursor_ROT_TOP_LEFT: _bindgen_ty_46 = 35;
-pub const PF_Cursor_DRAG_CENTER: _bindgen_ty_46 = 36;
-pub const PF_Cursor_COPY: _bindgen_ty_46 = 37;
-pub const PF_Cursor_ALIAS: _bindgen_ty_46 = 38;
-pub const PF_Cursor_CONTEXT: _bindgen_ty_46 = 39;
-pub const PF_Cursor_SLIP_EDIT: _bindgen_ty_46 = 40;
-pub const PF_Cursor_CAMERA_ORBIT_CAMERA: _bindgen_ty_46 = 41;
-pub const PF_Cursor_CAMERA_PAN_CAMERA: _bindgen_ty_46 = 42;
-pub const PF_Cursor_CAMERA_DOLLY_CAMERA: _bindgen_ty_46 = 43;
-pub const PF_Cursor_ROTATE_X: _bindgen_ty_46 = 44;
-pub const PF_Cursor_ROTATE_Y: _bindgen_ty_46 = 45;
-pub const PF_Cursor_ROTATE_Z: _bindgen_ty_46 = 46;
-pub const PF_Cursor_ARROW_X: _bindgen_ty_46 = 47;
-pub const PF_Cursor_ARROW_Y: _bindgen_ty_46 = 48;
-pub const PF_Cursor_ARROW_Z: _bindgen_ty_46 = 49;
-pub const PF_Cursor_SCISSORS: _bindgen_ty_46 = 50;
-pub const PF_Cursor_FAT_EYEDROPPER: _bindgen_ty_46 = 51;
-pub const PF_Cursor_FINGER_POINTER_SCRUB: _bindgen_ty_46 = 52;
-pub const PF_Cursor_HORZ_I_BEAM: _bindgen_ty_46 = 53;
-pub const PF_Cursor_VERT_I_BEAM: _bindgen_ty_46 = 54;
-pub const PF_Cursor_HORZ_BOX_I_BEAM: _bindgen_ty_46 = 55;
-pub const PF_Cursor_VERT_BOX_I_BEAM: _bindgen_ty_46 = 56;
-pub const PF_Cursor_I_BEAM_0: _bindgen_ty_46 = 57;
-pub const PF_Cursor_I_BEAM_11_25: _bindgen_ty_46 = 58;
-pub const PF_Cursor_I_BEAM_22_5: _bindgen_ty_46 = 59;
-pub const PF_Cursor_I_BEAM_33_75: _bindgen_ty_46 = 60;
-pub const PF_Cursor_I_BEAM_45: _bindgen_ty_46 = 61;
-pub const PF_Cursor_I_BEAM_56_25: _bindgen_ty_46 = 62;
-pub const PF_Cursor_I_BEAM_67_5: _bindgen_ty_46 = 63;
-pub const PF_Cursor_I_BEAM_78_75: _bindgen_ty_46 = 64;
-pub const PF_Cursor_I_BEAM_90: _bindgen_ty_46 = 65;
-pub const PF_Cursor_I_BEAM_101_25: _bindgen_ty_46 = 66;
-pub const PF_Cursor_I_BEAM_112_5: _bindgen_ty_46 = 67;
-pub const PF_Cursor_I_BEAM_123_75: _bindgen_ty_46 = 68;
-pub const PF_Cursor_I_BEAM_135: _bindgen_ty_46 = 69;
-pub const PF_Cursor_I_BEAM_146_25: _bindgen_ty_46 = 70;
-pub const PF_Cursor_I_BEAM_157_5: _bindgen_ty_46 = 71;
-pub const PF_Cursor_I_BEAM_168_75: _bindgen_ty_46 = 72;
-pub const PF_Cursor_CROSSHAIRS_PICKUP: _bindgen_ty_46 = 73;
-pub const PF_Cursor_ARROW_SELECTOR: _bindgen_ty_46 = 74;
-pub const PF_Cursor_LAYER_MOVE: _bindgen_ty_46 = 75;
-pub const PF_Cursor_MOVE_START_MARGIN: _bindgen_ty_46 = 76;
-pub const PF_Cursor_MOVE_END_MARGIN: _bindgen_ty_46 = 77;
-pub const PF_Cursor_SOLID_ARROW: _bindgen_ty_46 = 78;
-pub const PF_Cursor_HOLLOW_ARROW_PLUS: _bindgen_ty_46 = 79;
-pub const PF_Cursor_BRUSH_CENTER: _bindgen_ty_46 = 80;
-pub const PF_Cursor_CLONE_SOURCE: _bindgen_ty_46 = 81;
-pub const PF_Cursor_CLONE_SOURCE_OFFSET: _bindgen_ty_46 = 82;
-pub const PF_Cursor_HOLLOW_LAYER_MOVE: _bindgen_ty_46 = 83;
-pub const PF_Cursor_MOVE_TRACK_SEARCH_REGION: _bindgen_ty_46 = 84;
-pub const PF_Cursor_MOVE_TRACK_ATTACH_POINT: _bindgen_ty_46 = 85;
-pub const PF_Cursor_COLOR_CUBE_CROSS_SECTION: _bindgen_ty_46 = 86;
-pub const PF_Cursor_PEN_CORNER_ROTOBEZ_TENSION: _bindgen_ty_46 = 87;
-pub const PF_Cursor_PIN: _bindgen_ty_46 = 88;
-pub const PF_Cursor_PIN_ADD: _bindgen_ty_46 = 89;
-pub const PF_Cursor_MESH_ADD: _bindgen_ty_46 = 90;
-pub const PF_Cursor_MARQUEE: _bindgen_ty_46 = 91;
-pub const PF_Cursor_CROSS_ROUNDED_RECT: _bindgen_ty_46 = 92;
-pub const PF_Cursor_CROSS_POLYGON: _bindgen_ty_46 = 93;
-pub const PF_Cursor_CROSS_STAR: _bindgen_ty_46 = 94;
-pub const PF_Cursor_PIN_STARCH: _bindgen_ty_46 = 95;
-pub const PF_Cursor_PIN_OVERLAP: _bindgen_ty_46 = 96;
-pub const PF_Cursor_STOPWATCH: _bindgen_ty_46 = 97;
-pub const PF_Cursor_DRAG_DOT: _bindgen_ty_46 = 98;
-pub const PF_Cursor_DRAG_CIRCLE: _bindgen_ty_46 = 99;
-pub const PF_Cursor_DIRECT_SELECT: _bindgen_ty_46 = 100;
-pub const PF_Cursor_DRAG_COPY_MOVE: _bindgen_ty_46 = 101;
-pub const PF_Cursor_DRAG_COPY_ROTATE: _bindgen_ty_46 = 102;
-pub const PF_Cursor_CAMERA_MAYA: _bindgen_ty_46 = 103;
-pub const PF_Cursor_RESIZE_HORIZONTAL_LEFT: _bindgen_ty_46 = 104;
-pub const PF_Cursor_RESIZE_HORIZONTAL_RIGHT: _bindgen_ty_46 = 105;
-pub const PF_Cursor_FEATHER: _bindgen_ty_46 = 106;
-pub const PF_Cursor_FEATHER_ADD: _bindgen_ty_46 = 107;
-pub const PF_Cursor_FEATHER_DELETE: _bindgen_ty_46 = 108;
-pub const PF_Cursor_FEATHER_MOVE: _bindgen_ty_46 = 109;
-pub const PF_Cursor_FEATHER_TENSION: _bindgen_ty_46 = 110;
-pub const PF_Cursor_FEATHER_MARQUEE: _bindgen_ty_46 = 111;
-pub const PF_Cursor_LASSO_ARROW: _bindgen_ty_46 = 112;
-pub const PF_Cursor_DRAG_NO_DROP: _bindgen_ty_46 = 113;
-pub const PF_Cursor_DRAG_COPY: _bindgen_ty_46 = 114;
-pub const PF_Cursor_DRAG_LINK: _bindgen_ty_46 = 115;
-pub const PF_Cursor_PIN_BEND: _bindgen_ty_46 = 116;
-pub const PF_Cursor_PIN_ADVANCED: _bindgen_ty_46 = 117;
-pub const PF_Cursor_CAMERA_ORBIT_CURSOR: _bindgen_ty_46 = 118;
-pub const PF_Cursor_CAMERA_ORBIT_SCENE: _bindgen_ty_46 = 119;
-pub const PF_Cursor_CAMERA_PAN_CURSOR: _bindgen_ty_46 = 120;
-pub const PF_Cursor_CAMERA_DOLLY_TOWARDS_CURSOR: _bindgen_ty_46 = 121;
-pub const PF_Cursor_CAMERA_DOLLY_TO_CURSOR: _bindgen_ty_46 = 122;
-pub const PF_MAX_CURSOR_PLUS_ONE: _bindgen_ty_46 = 123;
-pub type _bindgen_ty_46 = ::std::os::raw::c_uint;
+pub const PF_Cursor_NONE: _bindgen_ty_48 = 0;
+pub const PF_Cursor_CUSTOM: _bindgen_ty_48 = 1;
+pub const PF_Cursor_ARROW: _bindgen_ty_48 = 2;
+pub const PF_Cursor_HOLLOW_ARROW: _bindgen_ty_48 = 3;
+pub const PF_Cursor_WATCH_N_WAIT: _bindgen_ty_48 = 4;
+pub const PF_Cursor_MAGNIFY: _bindgen_ty_48 = 5;
+pub const PF_Cursor_MAGNIFY_PLUS: _bindgen_ty_48 = 6;
+pub const PF_Cursor_MAGNIFY_MINUS: _bindgen_ty_48 = 7;
+pub const PF_Cursor_CROSSHAIRS: _bindgen_ty_48 = 8;
+pub const PF_Cursor_CROSS_RECT: _bindgen_ty_48 = 9;
+pub const PF_Cursor_CROSS_OVAL: _bindgen_ty_48 = 10;
+pub const PF_Cursor_CROSS_ROTATE: _bindgen_ty_48 = 11;
+pub const PF_Cursor_PAN: _bindgen_ty_48 = 12;
+pub const PF_Cursor_EYEDROPPER: _bindgen_ty_48 = 13;
+pub const PF_Cursor_HAND: _bindgen_ty_48 = 14;
+pub const PF_Cursor_PEN: _bindgen_ty_48 = 15;
+pub const PF_Cursor_PEN_ADD: _bindgen_ty_48 = 16;
+pub const PF_Cursor_PEN_DELETE: _bindgen_ty_48 = 17;
+pub const PF_Cursor_PEN_CLOSE: _bindgen_ty_48 = 18;
+pub const PF_Cursor_PEN_DRAG: _bindgen_ty_48 = 19;
+pub const PF_Cursor_PEN_CORNER: _bindgen_ty_48 = 20;
+pub const PF_Cursor_RESIZE_VERTICAL: _bindgen_ty_48 = 21;
+pub const PF_Cursor_RESIZE_HORIZONTAL: _bindgen_ty_48 = 22;
+pub const PF_Cursor_FINGER_POINTER: _bindgen_ty_48 = 23;
+pub const PF_Cursor_SCALE_HORIZ: _bindgen_ty_48 = 24;
+pub const PF_Cursor_SCALE_DIAG_LR: _bindgen_ty_48 = 25;
+pub const PF_Cursor_SCALE_VERT: _bindgen_ty_48 = 26;
+pub const PF_Cursor_SCALE_DIAG_UR: _bindgen_ty_48 = 27;
+pub const PF_Cursor_ROT_TOP: _bindgen_ty_48 = 28;
+pub const PF_Cursor_ROT_TOP_RIGHT: _bindgen_ty_48 = 29;
+pub const PF_Cursor_ROT_RIGHT: _bindgen_ty_48 = 30;
+pub const PF_Cursor_ROT_BOT_RIGHT: _bindgen_ty_48 = 31;
+pub const PF_Cursor_ROT_BOTTOM: _bindgen_ty_48 = 32;
+pub const PF_Cursor_ROT_BOT_LEFT: _bindgen_ty_48 = 33;
+pub const PF_Cursor_ROT_LEFT: _bindgen_ty_48 = 34;
+pub const PF_Cursor_ROT_TOP_LEFT: _bindgen_ty_48 = 35;
+pub const PF_Cursor_DRAG_CENTER: _bindgen_ty_48 = 36;
+pub const PF_Cursor_COPY: _bindgen_ty_48 = 37;
+pub const PF_Cursor_ALIAS: _bindgen_ty_48 = 38;
+pub const PF_Cursor_CONTEXT: _bindgen_ty_48 = 39;
+pub const PF_Cursor_SLIP_EDIT: _bindgen_ty_48 = 40;
+pub const PF_Cursor_CAMERA_ORBIT_CAMERA: _bindgen_ty_48 = 41;
+pub const PF_Cursor_CAMERA_PAN_CAMERA: _bindgen_ty_48 = 42;
+pub const PF_Cursor_CAMERA_DOLLY_CAMERA: _bindgen_ty_48 = 43;
+pub const PF_Cursor_ROTATE_X: _bindgen_ty_48 = 44;
+pub const PF_Cursor_ROTATE_Y: _bindgen_ty_48 = 45;
+pub const PF_Cursor_ROTATE_Z: _bindgen_ty_48 = 46;
+pub const PF_Cursor_ARROW_X: _bindgen_ty_48 = 47;
+pub const PF_Cursor_ARROW_Y: _bindgen_ty_48 = 48;
+pub const PF_Cursor_ARROW_Z: _bindgen_ty_48 = 49;
+pub const PF_Cursor_SCISSORS: _bindgen_ty_48 = 50;
+pub const PF_Cursor_FAT_EYEDROPPER: _bindgen_ty_48 = 51;
+pub const PF_Cursor_FINGER_POINTER_SCRUB: _bindgen_ty_48 = 52;
+pub const PF_Cursor_HORZ_I_BEAM: _bindgen_ty_48 = 53;
+pub const PF_Cursor_VERT_I_BEAM: _bindgen_ty_48 = 54;
+pub const PF_Cursor_HORZ_BOX_I_BEAM: _bindgen_ty_48 = 55;
+pub const PF_Cursor_VERT_BOX_I_BEAM: _bindgen_ty_48 = 56;
+pub const PF_Cursor_I_BEAM_0: _bindgen_ty_48 = 57;
+pub const PF_Cursor_I_BEAM_11_25: _bindgen_ty_48 = 58;
+pub const PF_Cursor_I_BEAM_22_5: _bindgen_ty_48 = 59;
+pub const PF_Cursor_I_BEAM_33_75: _bindgen_ty_48 = 60;
+pub const PF_Cursor_I_BEAM_45: _bindgen_ty_48 = 61;
+pub const PF_Cursor_I_BEAM_56_25: _bindgen_ty_48 = 62;
+pub const PF_Cursor_I_BEAM_67_5: _bindgen_ty_48 = 63;
+pub const PF_Cursor_I_BEAM_78_75: _bindgen_ty_48 = 64;
+pub const PF_Cursor_I_BEAM_90: _bindgen_ty_48 = 65;
+pub const PF_Cursor_I_BEAM_101_25: _bindgen_ty_48 = 66;
+pub const PF_Cursor_I_BEAM_112_5: _bindgen_ty_48 = 67;
+pub const PF_Cursor_I_BEAM_123_75: _bindgen_ty_48 = 68;
+pub const PF_Cursor_I_BEAM_135: _bindgen_ty_48 = 69;
+pub const PF_Cursor_I_BEAM_146_25: _bindgen_ty_48 = 70;
+pub const PF_Cursor_I_BEAM_157_5: _bindgen_ty_48 = 71;
+pub const PF_Cursor_I_BEAM_168_75: _bindgen_ty_48 = 72;
+pub const PF_Cursor_CROSSHAIRS_PICKUP: _bindgen_ty_48 = 73;
+pub const PF_Cursor_ARROW_SELECTOR: _bindgen_ty_48 = 74;
+pub const PF_Cursor_LAYER_MOVE: _bindgen_ty_48 = 75;
+pub const PF_Cursor_MOVE_START_MARGIN: _bindgen_ty_48 = 76;
+pub const PF_Cursor_MOVE_END_MARGIN: _bindgen_ty_48 = 77;
+pub const PF_Cursor_SOLID_ARROW: _bindgen_ty_48 = 78;
+pub const PF_Cursor_HOLLOW_ARROW_PLUS: _bindgen_ty_48 = 79;
+pub const PF_Cursor_BRUSH_CENTER: _bindgen_ty_48 = 80;
+pub const PF_Cursor_CLONE_SOURCE: _bindgen_ty_48 = 81;
+pub const PF_Cursor_CLONE_SOURCE_OFFSET: _bindgen_ty_48 = 82;
+pub const PF_Cursor_HOLLOW_LAYER_MOVE: _bindgen_ty_48 = 83;
+pub const PF_Cursor_MOVE_TRACK_SEARCH_REGION: _bindgen_ty_48 = 84;
+pub const PF_Cursor_MOVE_TRACK_ATTACH_POINT: _bindgen_ty_48 = 85;
+pub const PF_Cursor_COLOR_CUBE_CROSS_SECTION: _bindgen_ty_48 = 86;
+pub const PF_Cursor_PEN_CORNER_ROTOBEZ_TENSION: _bindgen_ty_48 = 87;
+pub const PF_Cursor_PIN: _bindgen_ty_48 = 88;
+pub const PF_Cursor_PIN_ADD: _bindgen_ty_48 = 89;
+pub const PF_Cursor_MESH_ADD: _bindgen_ty_48 = 90;
+pub const PF_Cursor_MARQUEE: _bindgen_ty_48 = 91;
+pub const PF_Cursor_CROSS_ROUNDED_RECT: _bindgen_ty_48 = 92;
+pub const PF_Cursor_CROSS_POLYGON: _bindgen_ty_48 = 93;
+pub const PF_Cursor_CROSS_STAR: _bindgen_ty_48 = 94;
+pub const PF_Cursor_PIN_STARCH: _bindgen_ty_48 = 95;
+pub const PF_Cursor_PIN_OVERLAP: _bindgen_ty_48 = 96;
+pub const PF_Cursor_STOPWATCH: _bindgen_ty_48 = 97;
+pub const PF_Cursor_DRAG_DOT: _bindgen_ty_48 = 98;
+pub const PF_Cursor_DRAG_CIRCLE: _bindgen_ty_48 = 99;
+pub const PF_Cursor_DIRECT_SELECT: _bindgen_ty_48 = 100;
+pub const PF_Cursor_DRAG_COPY_MOVE: _bindgen_ty_48 = 101;
+pub const PF_Cursor_DRAG_COPY_ROTATE: _bindgen_ty_48 = 102;
+pub const PF_Cursor_CAMERA_MAYA: _bindgen_ty_48 = 103;
+pub const PF_Cursor_RESIZE_HORIZONTAL_LEFT: _bindgen_ty_48 = 104;
+pub const PF_Cursor_RESIZE_HORIZONTAL_RIGHT: _bindgen_ty_48 = 105;
+pub const PF_Cursor_FEATHER: _bindgen_ty_48 = 106;
+pub const PF_Cursor_FEATHER_ADD: _bindgen_ty_48 = 107;
+pub const PF_Cursor_FEATHER_DELETE: _bindgen_ty_48 = 108;
+pub const PF_Cursor_FEATHER_MOVE: _bindgen_ty_48 = 109;
+pub const PF_Cursor_FEATHER_TENSION: _bindgen_ty_48 = 110;
+pub const PF_Cursor_FEATHER_MARQUEE: _bindgen_ty_48 = 111;
+pub const PF_Cursor_LASSO_ARROW: _bindgen_ty_48 = 112;
+pub const PF_Cursor_DRAG_NO_DROP: _bindgen_ty_48 = 113;
+pub const PF_Cursor_DRAG_COPY: _bindgen_ty_48 = 114;
+pub const PF_Cursor_DRAG_LINK: _bindgen_ty_48 = 115;
+pub const PF_Cursor_PIN_BEND: _bindgen_ty_48 = 116;
+pub const PF_Cursor_PIN_ADVANCED: _bindgen_ty_48 = 117;
+pub const PF_Cursor_CAMERA_ORBIT_CURSOR: _bindgen_ty_48 = 118;
+pub const PF_Cursor_CAMERA_ORBIT_SCENE: _bindgen_ty_48 = 119;
+pub const PF_Cursor_CAMERA_PAN_CURSOR: _bindgen_ty_48 = 120;
+pub const PF_Cursor_CAMERA_DOLLY_TOWARDS_CURSOR: _bindgen_ty_48 = 121;
+pub const PF_Cursor_CAMERA_DOLLY_TO_CURSOR: _bindgen_ty_48 = 122;
+pub const PF_MAX_CURSOR_PLUS_ONE: _bindgen_ty_48 = 123;
+pub type _bindgen_ty_48 = ::std::os::raw::c_uint;
 pub type PF_CursorType = A_long;
-pub const PF_Mod_NONE: _bindgen_ty_47 = 0;
-pub const PF_Mod_CMD_CTRL_KEY: _bindgen_ty_47 = 256;
-pub const PF_Mod_SHIFT_KEY: _bindgen_ty_47 = 512;
-pub const PF_Mod_CAPS_LOCK_KEY: _bindgen_ty_47 = 1024;
-pub const PF_Mod_OPT_ALT_KEY: _bindgen_ty_47 = 2048;
-pub const PF_Mod_MAC_CONTROL_KEY: _bindgen_ty_47 = 4096;
-pub type _bindgen_ty_47 = ::std::os::raw::c_uint;
+pub const PF_Mod_NONE: _bindgen_ty_49 = 0;
+pub const PF_Mod_CMD_CTRL_KEY: _bindgen_ty_49 = 256;
+pub const PF_Mod_SHIFT_KEY: _bindgen_ty_49 = 512;
+pub const PF_Mod_CAPS_LOCK_KEY: _bindgen_ty_49 = 1024;
+pub const PF_Mod_OPT_ALT_KEY: _bindgen_ty_49 = 2048;
+pub const PF_Mod_MAC_CONTROL_KEY: _bindgen_ty_49 = 4096;
+pub type _bindgen_ty_49 = ::std::os::raw::c_uint;
 pub type PF_Modifiers = A_long;
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -2125,64 +2157,64 @@ pub struct PF_KeyDownEvent {
     pub keycode: PF_KeyCode,
     pub modifiers: PF_Modifiers,
 }
-pub const PF_KEYCODE_FLAG_Printable: _bindgen_ty_48 = -2147483648;
-pub const PF_KEYCODE_FLAG_Extended: _bindgen_ty_48 = 1073741824;
-pub type _bindgen_ty_48 = ::std::os::raw::c_int;
-pub const PF_ControlCode_Unknown: _bindgen_ty_49 = 65535;
-pub const PF_ControlCode_Space: _bindgen_ty_49 = 1;
-pub const PF_ControlCode_Backspace: _bindgen_ty_49 = 2;
-pub const PF_ControlCode_Tab: _bindgen_ty_49 = 3;
-pub const PF_ControlCode_Return: _bindgen_ty_49 = 4;
-pub const PF_ControlCode_Enter: _bindgen_ty_49 = 5;
-pub const PF_ControlCode_Escape: _bindgen_ty_49 = 6;
-pub const PF_ControlCode_F1: _bindgen_ty_49 = 7;
-pub const PF_ControlCode_F2: _bindgen_ty_49 = 8;
-pub const PF_ControlCode_F3: _bindgen_ty_49 = 9;
-pub const PF_ControlCode_F4: _bindgen_ty_49 = 10;
-pub const PF_ControlCode_F5: _bindgen_ty_49 = 11;
-pub const PF_ControlCode_F6: _bindgen_ty_49 = 12;
-pub const PF_ControlCode_F7: _bindgen_ty_49 = 13;
-pub const PF_ControlCode_F8: _bindgen_ty_49 = 14;
-pub const PF_ControlCode_F9: _bindgen_ty_49 = 15;
-pub const PF_ControlCode_F10: _bindgen_ty_49 = 16;
-pub const PF_ControlCode_F11: _bindgen_ty_49 = 17;
-pub const PF_ControlCode_F12: _bindgen_ty_49 = 18;
-pub const PF_ControlCode_F13: _bindgen_ty_49 = 19;
-pub const PF_ControlCode_F14: _bindgen_ty_49 = 20;
-pub const PF_ControlCode_F15: _bindgen_ty_49 = 21;
-pub const PF_ControlCode_F16: _bindgen_ty_49 = 22;
-pub const PF_ControlCode_F17: _bindgen_ty_49 = 23;
-pub const PF_ControlCode_F18: _bindgen_ty_49 = 24;
-pub const PF_ControlCode_F19: _bindgen_ty_49 = 25;
-pub const PF_ControlCode_F20: _bindgen_ty_49 = 26;
-pub const PF_ControlCode_F21: _bindgen_ty_49 = 27;
-pub const PF_ControlCode_F22: _bindgen_ty_49 = 28;
-pub const PF_ControlCode_F23: _bindgen_ty_49 = 29;
-pub const PF_ControlCode_F24: _bindgen_ty_49 = 30;
-pub const PF_ControlCode_PrintScreen: _bindgen_ty_49 = 31;
-pub const PF_ControlCode_ScrollLock: _bindgen_ty_49 = 32;
-pub const PF_ControlCode_Pause: _bindgen_ty_49 = 33;
-pub const PF_ControlCode_Insert: _bindgen_ty_49 = 34;
-pub const PF_ControlCode_Delete: _bindgen_ty_49 = 35;
-pub const PF_ControlCode_Home: _bindgen_ty_49 = 36;
-pub const PF_ControlCode_End: _bindgen_ty_49 = 37;
-pub const PF_ControlCode_PageUp: _bindgen_ty_49 = 38;
-pub const PF_ControlCode_PageDown: _bindgen_ty_49 = 39;
-pub const PF_ControlCode_Help: _bindgen_ty_49 = 40;
-pub const PF_ControlCode_Clear: _bindgen_ty_49 = 41;
-pub const PF_ControlCode_Left: _bindgen_ty_49 = 42;
-pub const PF_ControlCode_Right: _bindgen_ty_49 = 43;
-pub const PF_ControlCode_Up: _bindgen_ty_49 = 44;
-pub const PF_ControlCode_Down: _bindgen_ty_49 = 45;
-pub const PF_ControlCode_NumLock: _bindgen_ty_49 = 46;
-pub const PF_ControlCode_Command: _bindgen_ty_49 = 47;
-pub const PF_ControlCode_Option: _bindgen_ty_49 = 48;
-pub const PF_ControlCode_Alt: _bindgen_ty_49 = 48;
-pub const PF_ControlCode_Control: _bindgen_ty_49 = 49;
-pub const PF_ControlCode_Shift: _bindgen_ty_49 = 50;
-pub const PF_ControlCode_CapsLock: _bindgen_ty_49 = 51;
-pub const PF_ControlCode_ContextMenu: _bindgen_ty_49 = 52;
-pub type _bindgen_ty_49 = ::std::os::raw::c_uint;
+pub const PF_KEYCODE_FLAG_Printable: _bindgen_ty_50 = -2147483648;
+pub const PF_KEYCODE_FLAG_Extended: _bindgen_ty_50 = 1073741824;
+pub type _bindgen_ty_50 = ::std::os::raw::c_int;
+pub const PF_ControlCode_Unknown: _bindgen_ty_51 = 65535;
+pub const PF_ControlCode_Space: _bindgen_ty_51 = 1;
+pub const PF_ControlCode_Backspace: _bindgen_ty_51 = 2;
+pub const PF_ControlCode_Tab: _bindgen_ty_51 = 3;
+pub const PF_ControlCode_Return: _bindgen_ty_51 = 4;
+pub const PF_ControlCode_Enter: _bindgen_ty_51 = 5;
+pub const PF_ControlCode_Escape: _bindgen_ty_51 = 6;
+pub const PF_ControlCode_F1: _bindgen_ty_51 = 7;
+pub const PF_ControlCode_F2: _bindgen_ty_51 = 8;
+pub const PF_ControlCode_F3: _bindgen_ty_51 = 9;
+pub const PF_ControlCode_F4: _bindgen_ty_51 = 10;
+pub const PF_ControlCode_F5: _bindgen_ty_51 = 11;
+pub const PF_ControlCode_F6: _bindgen_ty_51 = 12;
+pub const PF_ControlCode_F7: _bindgen_ty_51 = 13;
+pub const PF_ControlCode_F8: _bindgen_ty_51 = 14;
+pub const PF_ControlCode_F9: _bindgen_ty_51 = 15;
+pub const PF_ControlCode_F10: _bindgen_ty_51 = 16;
+pub const PF_ControlCode_F11: _bindgen_ty_51 = 17;
+pub const PF_ControlCode_F12: _bindgen_ty_51 = 18;
+pub const PF_ControlCode_F13: _bindgen_ty_51 = 19;
+pub const PF_ControlCode_F14: _bindgen_ty_51 = 20;
+pub const PF_ControlCode_F15: _bindgen_ty_51 = 21;
+pub const PF_ControlCode_F16: _bindgen_ty_51 = 22;
+pub const PF_ControlCode_F17: _bindgen_ty_51 = 23;
+pub const PF_ControlCode_F18: _bindgen_ty_51 = 24;
+pub const PF_ControlCode_F19: _bindgen_ty_51 = 25;
+pub const PF_ControlCode_F20: _bindgen_ty_51 = 26;
+pub const PF_ControlCode_F21: _bindgen_ty_51 = 27;
+pub const PF_ControlCode_F22: _bindgen_ty_51 = 28;
+pub const PF_ControlCode_F23: _bindgen_ty_51 = 29;
+pub const PF_ControlCode_F24: _bindgen_ty_51 = 30;
+pub const PF_ControlCode_PrintScreen: _bindgen_ty_51 = 31;
+pub const PF_ControlCode_ScrollLock: _bindgen_ty_51 = 32;
+pub const PF_ControlCode_Pause: _bindgen_ty_51 = 33;
+pub const PF_ControlCode_Insert: _bindgen_ty_51 = 34;
+pub const PF_ControlCode_Delete: _bindgen_ty_51 = 35;
+pub const PF_ControlCode_Home: _bindgen_ty_51 = 36;
+pub const PF_ControlCode_End: _bindgen_ty_51 = 37;
+pub const PF_ControlCode_PageUp: _bindgen_ty_51 = 38;
+pub const PF_ControlCode_PageDown: _bindgen_ty_51 = 39;
+pub const PF_ControlCode_Help: _bindgen_ty_51 = 40;
+pub const PF_ControlCode_Clear: _bindgen_ty_51 = 41;
+pub const PF_ControlCode_Left: _bindgen_ty_51 = 42;
+pub const PF_ControlCode_Right: _bindgen_ty_51 = 43;
+pub const PF_ControlCode_Up: _bindgen_ty_51 = 44;
+pub const PF_ControlCode_Down: _bindgen_ty_51 = 45;
+pub const PF_ControlCode_NumLock: _bindgen_ty_51 = 46;
+pub const PF_ControlCode_Command: _bindgen_ty_51 = 47;
+pub const PF_ControlCode_Option: _bindgen_ty_51 = 48;
+pub const PF_ControlCode_Alt: _bindgen_ty_51 = 48;
+pub const PF_ControlCode_Control: _bindgen_ty_51 = 49;
+pub const PF_ControlCode_Shift: _bindgen_ty_51 = 50;
+pub const PF_ControlCode_CapsLock: _bindgen_ty_51 = 51;
+pub const PF_ControlCode_ContextMenu: _bindgen_ty_51 = 52;
+pub type _bindgen_ty_51 = ::std::os::raw::c_uint;
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub union PF_EventUnion {
@@ -2299,10 +2331,10 @@ pub struct PF_EventCallbacks {
     >,
 }
 pub type PF_EventCallbacksPtr = *mut PF_EventCallbacks;
-pub const PF_EA_NONE: _bindgen_ty_50 = 0;
-pub const PF_EA_PARAM_TITLE: _bindgen_ty_50 = 1;
-pub const PF_EA_CONTROL: _bindgen_ty_50 = 2;
-pub type _bindgen_ty_50 = ::std::os::raw::c_uint;
+pub const PF_EA_NONE: _bindgen_ty_52 = 0;
+pub const PF_EA_PARAM_TITLE: _bindgen_ty_52 = 1;
+pub const PF_EA_CONTROL: _bindgen_ty_52 = 2;
+pub type _bindgen_ty_52 = ::std::os::raw::c_uint;
 pub type PF_EffectArea = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2313,16 +2345,16 @@ pub struct PF_EffectWindowInfo {
     pub param_title_frame: PF_UnionableRect,
     pub horiz_offset: A_long,
 }
-pub const PF_EO_NONE: _bindgen_ty_51 = 0;
-pub const PF_EO_HANDLED_EVENT: _bindgen_ty_51 = 1;
-pub const PF_EO_ALWAYS_UPDATE: _bindgen_ty_51 = 2;
-pub const PF_EO_NEVER_UPDATE: _bindgen_ty_51 = 4;
-pub const PF_EO_UPDATE_NOW: _bindgen_ty_51 = 8;
-pub type _bindgen_ty_51 = ::std::os::raw::c_uint;
+pub const PF_EO_NONE: _bindgen_ty_53 = 0;
+pub const PF_EO_HANDLED_EVENT: _bindgen_ty_53 = 1;
+pub const PF_EO_ALWAYS_UPDATE: _bindgen_ty_53 = 2;
+pub const PF_EO_NEVER_UPDATE: _bindgen_ty_53 = 4;
+pub const PF_EO_UPDATE_NOW: _bindgen_ty_53 = 8;
+pub type _bindgen_ty_53 = ::std::os::raw::c_uint;
 pub type PF_EventOutFlags = A_long;
-pub const PF_EI_NONE: _bindgen_ty_52 = 0;
-pub const PF_EI_DONT_DRAW: _bindgen_ty_52 = 1;
-pub type _bindgen_ty_52 = ::std::os::raw::c_uint;
+pub const PF_EI_NONE: _bindgen_ty_54 = 0;
+pub const PF_EI_DONT_DRAW: _bindgen_ty_54 = 1;
+pub type _bindgen_ty_54 = ::std::os::raw::c_uint;
 pub type PF_EventInFlags = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2346,12 +2378,12 @@ pub struct PF_EventExtra {
     pub evt_in_flags: PF_EventInFlags,
     pub evt_out_flags: PF_EventOutFlags,
 }
-pub const PF_UIAlignment_NONE: _bindgen_ty_53 = 0;
-pub const PF_UIAlignment_TOP: _bindgen_ty_53 = 1;
-pub const PF_UIAlignment_LEFT: _bindgen_ty_53 = 2;
-pub const PF_UIAlignment_BOTTOM: _bindgen_ty_53 = 4;
-pub const PF_UIAlignment_RIGHT: _bindgen_ty_53 = 8;
-pub type _bindgen_ty_53 = ::std::os::raw::c_uint;
+pub const PF_UIAlignment_NONE: _bindgen_ty_55 = 0;
+pub const PF_UIAlignment_TOP: _bindgen_ty_55 = 1;
+pub const PF_UIAlignment_LEFT: _bindgen_ty_55 = 2;
+pub const PF_UIAlignment_BOTTOM: _bindgen_ty_55 = 4;
+pub const PF_UIAlignment_RIGHT: _bindgen_ty_55 = 8;
+pub type _bindgen_ty_55 = ::std::os::raw::c_uint;
 pub type PF_UIAlignment = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2475,14 +2507,14 @@ pub struct PF_AdvAppSuite2 {
     pub PF_AppendInfoText:
         ::std::option::Option<unsafe extern "C" fn(appendZ0: *const A_char) -> PF_Err>,
 }
-pub const PF_Step_FORWARD: _bindgen_ty_54 = 0;
-pub const PF_Step_BACKWARD: _bindgen_ty_54 = 1;
-pub type _bindgen_ty_54 = ::std::os::raw::c_uint;
+pub const PF_Step_FORWARD: _bindgen_ty_56 = 0;
+pub const PF_Step_BACKWARD: _bindgen_ty_56 = 1;
+pub type _bindgen_ty_56 = ::std::os::raw::c_uint;
 pub type PF_Step = A_LegacyEnumType;
-pub const PF_TimeDisplayFormatTimecode: _bindgen_ty_55 = 0;
-pub const PF_TimeDisplayFormatFrames: _bindgen_ty_55 = 1;
-pub const PF_TimeDisplayFormatFeetFrames: _bindgen_ty_55 = 2;
-pub type _bindgen_ty_55 = ::std::os::raw::c_uint;
+pub const PF_TimeDisplayFormatTimecode: _bindgen_ty_57 = 0;
+pub const PF_TimeDisplayFormatFrames: _bindgen_ty_57 = 1;
+pub const PF_TimeDisplayFormatFeetFrames: _bindgen_ty_57 = 2;
+pub type _bindgen_ty_57 = ::std::os::raw::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PF_TimeDisplayPrefVersion3 {
@@ -2757,62 +2789,62 @@ pub struct PF_ChannelSuite1 {
     >,
 }
 pub type PF_KernelFlags = A_u_long;
-pub const PF_SampleEdgeBehav_ZERO: _bindgen_ty_56 = 0;
+pub const PF_SampleEdgeBehav_ZERO: _bindgen_ty_58 = 0;
 #[doc = " ---------- PF_SampleEdgeBehav ----------\n\nThe sampling routines always deal with 32 bit images, and thus\nneed to compute properly alpha-weighted samples. An issue arises\nwhen an attempt is made to sample outside of the image content area.\n\nBefore PF_PLUG_IN_VERSION 2, After Effects always treated pixels\noutside of the image content area as having alpha = 0, which is desirable\nin many cases. Distortions and other effects may want different sampling\nbehaviors, however, hence the PF_SampleEdgeBehav.\n"]
-pub type _bindgen_ty_56 = ::std::os::raw::c_uint;
-pub type PF_SampleEdgeBehav = A_u_long;
-pub const PF_Xfer_NONE: _bindgen_ty_57 = -1;
-pub const PF_Xfer_COPY: _bindgen_ty_57 = 0;
-pub const PF_Xfer_BEHIND: _bindgen_ty_57 = 1;
-pub const PF_Xfer_IN_FRONT: _bindgen_ty_57 = 2;
-pub const PF_Xfer_DISSOLVE: _bindgen_ty_57 = 3;
-pub const PF_Xfer_ADD: _bindgen_ty_57 = 4;
-pub const PF_Xfer_MULTIPLY: _bindgen_ty_57 = 5;
-pub const PF_Xfer_SCREEN: _bindgen_ty_57 = 6;
-pub const PF_Xfer_OVERLAY: _bindgen_ty_57 = 7;
-pub const PF_Xfer_SOFT_LIGHT: _bindgen_ty_57 = 8;
-pub const PF_Xfer_HARD_LIGHT: _bindgen_ty_57 = 9;
-pub const PF_Xfer_DARKEN: _bindgen_ty_57 = 10;
-pub const PF_Xfer_LIGHTEN: _bindgen_ty_57 = 11;
-pub const PF_Xfer_DIFFERENCE: _bindgen_ty_57 = 12;
-pub const PF_Xfer_HUE: _bindgen_ty_57 = 13;
-pub const PF_Xfer_SATURATION: _bindgen_ty_57 = 14;
-pub const PF_Xfer_COLOR: _bindgen_ty_57 = 15;
-pub const PF_Xfer_LUMINOSITY: _bindgen_ty_57 = 16;
-pub const PF_Xfer_MULTIPLY_ALPHA: _bindgen_ty_57 = 17;
-pub const PF_Xfer_MULTIPLY_ALPHA_LUMA: _bindgen_ty_57 = 18;
-pub const PF_Xfer_MULTIPLY_NOT_ALPHA: _bindgen_ty_57 = 19;
-pub const PF_Xfer_MULTIPLY_NOT_ALPHA_LUMA: _bindgen_ty_57 = 20;
-pub const PF_Xfer_ADDITIVE_PREMUL: _bindgen_ty_57 = 21;
-pub const PF_Xfer_ALPHA_ADD: _bindgen_ty_57 = 22;
-pub const PF_Xfer_COLOR_DODGE: _bindgen_ty_57 = 23;
-pub const PF_Xfer_COLOR_BURN: _bindgen_ty_57 = 24;
-pub const PF_Xfer_EXCLUSION: _bindgen_ty_57 = 25;
-pub const PF_Xfer_DIFFERENCE2: _bindgen_ty_57 = 26;
-pub const PF_Xfer_COLOR_DODGE2: _bindgen_ty_57 = 27;
-pub const PF_Xfer_COLOR_BURN2: _bindgen_ty_57 = 28;
-pub const PF_Xfer_LINEAR_DODGE: _bindgen_ty_57 = 29;
-pub const PF_Xfer_LINEAR_BURN: _bindgen_ty_57 = 30;
-pub const PF_Xfer_LINEAR_LIGHT: _bindgen_ty_57 = 31;
-pub const PF_Xfer_VIVID_LIGHT: _bindgen_ty_57 = 32;
-pub const PF_Xfer_PIN_LIGHT: _bindgen_ty_57 = 33;
-pub const PF_Xfer_HARD_MIX: _bindgen_ty_57 = 34;
-pub const PF_Xfer_LIGHTER_COLOR: _bindgen_ty_57 = 35;
-pub const PF_Xfer_DARKER_COLOR: _bindgen_ty_57 = 36;
-pub const PF_Xfer_SUBTRACT: _bindgen_ty_57 = 37;
-pub const PF_Xfer_DIVIDE: _bindgen_ty_57 = 38;
-pub const PF_Xfer_RESERVED0: _bindgen_ty_57 = 39;
-pub const PF_Xfer_RESERVED1: _bindgen_ty_57 = 40;
-pub const PF_Xfer_NUM_MODES: _bindgen_ty_57 = 41;
-pub type _bindgen_ty_57 = ::std::os::raw::c_int;
-pub const PF_Xfer_TINT: _bindgen_ty_58 = 29;
-pub const PF_Xfer_SHADE: _bindgen_ty_58 = 30;
-pub const PF_Xfer_INTENSE_LIGHT: _bindgen_ty_58 = 32;
 pub type _bindgen_ty_58 = ::std::os::raw::c_uint;
-pub const PF_MaskFlag_NONE: _bindgen_ty_59 = 0;
-pub const PF_MaskFlag_INVERTED: _bindgen_ty_59 = 1;
-pub const PF_MaskFlag_LUMINANCE: _bindgen_ty_59 = 2;
-pub type _bindgen_ty_59 = ::std::os::raw::c_uint;
+pub type PF_SampleEdgeBehav = A_u_long;
+pub const PF_Xfer_NONE: _bindgen_ty_59 = -1;
+pub const PF_Xfer_COPY: _bindgen_ty_59 = 0;
+pub const PF_Xfer_BEHIND: _bindgen_ty_59 = 1;
+pub const PF_Xfer_IN_FRONT: _bindgen_ty_59 = 2;
+pub const PF_Xfer_DISSOLVE: _bindgen_ty_59 = 3;
+pub const PF_Xfer_ADD: _bindgen_ty_59 = 4;
+pub const PF_Xfer_MULTIPLY: _bindgen_ty_59 = 5;
+pub const PF_Xfer_SCREEN: _bindgen_ty_59 = 6;
+pub const PF_Xfer_OVERLAY: _bindgen_ty_59 = 7;
+pub const PF_Xfer_SOFT_LIGHT: _bindgen_ty_59 = 8;
+pub const PF_Xfer_HARD_LIGHT: _bindgen_ty_59 = 9;
+pub const PF_Xfer_DARKEN: _bindgen_ty_59 = 10;
+pub const PF_Xfer_LIGHTEN: _bindgen_ty_59 = 11;
+pub const PF_Xfer_DIFFERENCE: _bindgen_ty_59 = 12;
+pub const PF_Xfer_HUE: _bindgen_ty_59 = 13;
+pub const PF_Xfer_SATURATION: _bindgen_ty_59 = 14;
+pub const PF_Xfer_COLOR: _bindgen_ty_59 = 15;
+pub const PF_Xfer_LUMINOSITY: _bindgen_ty_59 = 16;
+pub const PF_Xfer_MULTIPLY_ALPHA: _bindgen_ty_59 = 17;
+pub const PF_Xfer_MULTIPLY_ALPHA_LUMA: _bindgen_ty_59 = 18;
+pub const PF_Xfer_MULTIPLY_NOT_ALPHA: _bindgen_ty_59 = 19;
+pub const PF_Xfer_MULTIPLY_NOT_ALPHA_LUMA: _bindgen_ty_59 = 20;
+pub const PF_Xfer_ADDITIVE_PREMUL: _bindgen_ty_59 = 21;
+pub const PF_Xfer_ALPHA_ADD: _bindgen_ty_59 = 22;
+pub const PF_Xfer_COLOR_DODGE: _bindgen_ty_59 = 23;
+pub const PF_Xfer_COLOR_BURN: _bindgen_ty_59 = 24;
+pub const PF_Xfer_EXCLUSION: _bindgen_ty_59 = 25;
+pub const PF_Xfer_DIFFERENCE2: _bindgen_ty_59 = 26;
+pub const PF_Xfer_COLOR_DODGE2: _bindgen_ty_59 = 27;
+pub const PF_Xfer_COLOR_BURN2: _bindgen_ty_59 = 28;
+pub const PF_Xfer_LINEAR_DODGE: _bindgen_ty_59 = 29;
+pub const PF_Xfer_LINEAR_BURN: _bindgen_ty_59 = 30;
+pub const PF_Xfer_LINEAR_LIGHT: _bindgen_ty_59 = 31;
+pub const PF_Xfer_VIVID_LIGHT: _bindgen_ty_59 = 32;
+pub const PF_Xfer_PIN_LIGHT: _bindgen_ty_59 = 33;
+pub const PF_Xfer_HARD_MIX: _bindgen_ty_59 = 34;
+pub const PF_Xfer_LIGHTER_COLOR: _bindgen_ty_59 = 35;
+pub const PF_Xfer_DARKER_COLOR: _bindgen_ty_59 = 36;
+pub const PF_Xfer_SUBTRACT: _bindgen_ty_59 = 37;
+pub const PF_Xfer_DIVIDE: _bindgen_ty_59 = 38;
+pub const PF_Xfer_RESERVED0: _bindgen_ty_59 = 39;
+pub const PF_Xfer_RESERVED1: _bindgen_ty_59 = 40;
+pub const PF_Xfer_NUM_MODES: _bindgen_ty_59 = 41;
+pub type _bindgen_ty_59 = ::std::os::raw::c_int;
+pub const PF_Xfer_TINT: _bindgen_ty_60 = 29;
+pub const PF_Xfer_SHADE: _bindgen_ty_60 = 30;
+pub const PF_Xfer_INTENSE_LIGHT: _bindgen_ty_60 = 32;
+pub type _bindgen_ty_60 = ::std::os::raw::c_uint;
+pub const PF_MaskFlag_NONE: _bindgen_ty_61 = 0;
+pub const PF_MaskFlag_INVERTED: _bindgen_ty_61 = 1;
+pub const PF_MaskFlag_LUMINANCE: _bindgen_ty_61 = 2;
+pub type _bindgen_ty_61 = ::std::os::raw::c_uint;
 pub type PF_MaskFlags = A_long;
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -2838,53 +2870,53 @@ pub struct PF_SampPB {
     pub fcd_table: *mut A_u_char,
     pub reserved: [A_long; 8usize],
 }
-pub const PF_Callback_NONE: _bindgen_ty_60 = 0;
-pub const PF_Callback_BEGIN_SAMPLING: _bindgen_ty_60 = 1;
-pub const PF_Callback_SUBPIXEL_SAMPLE: _bindgen_ty_60 = 2;
-pub const PF_Callback_AREA_SAMPLE: _bindgen_ty_60 = 3;
-pub const PF_Callback_OBSOLETE0: _bindgen_ty_60 = 4;
-pub const PF_Callback_END_SAMPLING: _bindgen_ty_60 = 5;
-pub const PF_Callback_COMPOSITE_RECT: _bindgen_ty_60 = 6;
-pub const PF_Callback_BLEND: _bindgen_ty_60 = 7;
-pub const PF_Callback_CONVOLVE: _bindgen_ty_60 = 8;
-pub const PF_Callback_COPY: _bindgen_ty_60 = 9;
-pub const PF_Callback_FILL: _bindgen_ty_60 = 10;
-pub const PF_Callback_GAUSSIAN: _bindgen_ty_60 = 11;
-pub const PF_Callback_ITERATE: _bindgen_ty_60 = 12;
-pub const PF_Callback_PREMUL: _bindgen_ty_60 = 13;
-pub const PF_Callback_PREMUL_COLOR: _bindgen_ty_60 = 14;
-pub const PF_Callback_RGB_TO_HLS: _bindgen_ty_60 = 15;
-pub const PF_Callback_HLS_TO_RGB: _bindgen_ty_60 = 16;
-pub const PF_Callback_RGB_TO_YIQ: _bindgen_ty_60 = 17;
-pub const PF_Callback_YIQ_TO_RGB: _bindgen_ty_60 = 18;
-pub const PF_Callback_LUMINANCE: _bindgen_ty_60 = 19;
-pub const PF_Callback_HUE: _bindgen_ty_60 = 20;
-pub const PF_Callback_LIGHTNESS: _bindgen_ty_60 = 21;
-pub const PF_Callback_SATURATION: _bindgen_ty_60 = 22;
-pub const PF_Callback_NEW_WORLD: _bindgen_ty_60 = 23;
-pub const PF_Callback_DISPOSE_WORLD: _bindgen_ty_60 = 24;
-pub const PF_Callback_ITERATE_ORIGIN: _bindgen_ty_60 = 25;
-pub const PF_Callback_ITERATE_LUT: _bindgen_ty_60 = 26;
-pub const PF_Callback_TRANSFER_RECT: _bindgen_ty_60 = 27;
-pub const PF_Callback_TRANSFORM_WORLD: _bindgen_ty_60 = 28;
-pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC: _bindgen_ty_60 = 29;
-pub const PF_Callback_ITERATE_GENERIC: _bindgen_ty_60 = 30;
-pub const PF_Callback_SUBPIXEL_SAMPLE16: _bindgen_ty_60 = 31;
-pub const PF_Callback_AREA_SAMPLE16: _bindgen_ty_60 = 32;
-pub const PF_Callback_FILL16: _bindgen_ty_60 = 33;
-pub const PF_Callback_PREMUL_COLOR16: _bindgen_ty_60 = 34;
-pub const PF_Callback_ITERATE16: _bindgen_ty_60 = 35;
-pub const PF_Callback_ITERATE_ORIGIN16: _bindgen_ty_60 = 36;
-pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC16: _bindgen_ty_60 = 37;
-pub const PF_Callback_ITERATE_GENERIC_NO_MAX_THREADS: _bindgen_ty_60 = 38;
-pub const PF_Callback_ITERATE_NO_MAX_THREADS: _bindgen_ty_60 = 39;
-pub const PF_Callback_ITERATE_ORIGIN_NO_MAX_THREADS: _bindgen_ty_60 = 40;
-pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC_NO_MAX_THREADS: _bindgen_ty_60 = 41;
-pub const PF_Callback_ITERATE16_NO_MAX_THREADS: _bindgen_ty_60 = 42;
-pub const PF_Callback_ITERATE_ORIGIN16_NO_MAX_THREADS: _bindgen_ty_60 = 43;
-pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC16_NO_MAX_THREADS: _bindgen_ty_60 = 44;
+pub const PF_Callback_NONE: _bindgen_ty_62 = 0;
+pub const PF_Callback_BEGIN_SAMPLING: _bindgen_ty_62 = 1;
+pub const PF_Callback_SUBPIXEL_SAMPLE: _bindgen_ty_62 = 2;
+pub const PF_Callback_AREA_SAMPLE: _bindgen_ty_62 = 3;
+pub const PF_Callback_OBSOLETE0: _bindgen_ty_62 = 4;
+pub const PF_Callback_END_SAMPLING: _bindgen_ty_62 = 5;
+pub const PF_Callback_COMPOSITE_RECT: _bindgen_ty_62 = 6;
+pub const PF_Callback_BLEND: _bindgen_ty_62 = 7;
+pub const PF_Callback_CONVOLVE: _bindgen_ty_62 = 8;
+pub const PF_Callback_COPY: _bindgen_ty_62 = 9;
+pub const PF_Callback_FILL: _bindgen_ty_62 = 10;
+pub const PF_Callback_GAUSSIAN: _bindgen_ty_62 = 11;
+pub const PF_Callback_ITERATE: _bindgen_ty_62 = 12;
+pub const PF_Callback_PREMUL: _bindgen_ty_62 = 13;
+pub const PF_Callback_PREMUL_COLOR: _bindgen_ty_62 = 14;
+pub const PF_Callback_RGB_TO_HLS: _bindgen_ty_62 = 15;
+pub const PF_Callback_HLS_TO_RGB: _bindgen_ty_62 = 16;
+pub const PF_Callback_RGB_TO_YIQ: _bindgen_ty_62 = 17;
+pub const PF_Callback_YIQ_TO_RGB: _bindgen_ty_62 = 18;
+pub const PF_Callback_LUMINANCE: _bindgen_ty_62 = 19;
+pub const PF_Callback_HUE: _bindgen_ty_62 = 20;
+pub const PF_Callback_LIGHTNESS: _bindgen_ty_62 = 21;
+pub const PF_Callback_SATURATION: _bindgen_ty_62 = 22;
+pub const PF_Callback_NEW_WORLD: _bindgen_ty_62 = 23;
+pub const PF_Callback_DISPOSE_WORLD: _bindgen_ty_62 = 24;
+pub const PF_Callback_ITERATE_ORIGIN: _bindgen_ty_62 = 25;
+pub const PF_Callback_ITERATE_LUT: _bindgen_ty_62 = 26;
+pub const PF_Callback_TRANSFER_RECT: _bindgen_ty_62 = 27;
+pub const PF_Callback_TRANSFORM_WORLD: _bindgen_ty_62 = 28;
+pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC: _bindgen_ty_62 = 29;
+pub const PF_Callback_ITERATE_GENERIC: _bindgen_ty_62 = 30;
+pub const PF_Callback_SUBPIXEL_SAMPLE16: _bindgen_ty_62 = 31;
+pub const PF_Callback_AREA_SAMPLE16: _bindgen_ty_62 = 32;
+pub const PF_Callback_FILL16: _bindgen_ty_62 = 33;
+pub const PF_Callback_PREMUL_COLOR16: _bindgen_ty_62 = 34;
+pub const PF_Callback_ITERATE16: _bindgen_ty_62 = 35;
+pub const PF_Callback_ITERATE_ORIGIN16: _bindgen_ty_62 = 36;
+pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC16: _bindgen_ty_62 = 37;
+pub const PF_Callback_ITERATE_GENERIC_NO_MAX_THREADS: _bindgen_ty_62 = 38;
+pub const PF_Callback_ITERATE_NO_MAX_THREADS: _bindgen_ty_62 = 39;
+pub const PF_Callback_ITERATE_ORIGIN_NO_MAX_THREADS: _bindgen_ty_62 = 40;
+pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC_NO_MAX_THREADS: _bindgen_ty_62 = 41;
+pub const PF_Callback_ITERATE16_NO_MAX_THREADS: _bindgen_ty_62 = 42;
+pub const PF_Callback_ITERATE_ORIGIN16_NO_MAX_THREADS: _bindgen_ty_62 = 43;
+pub const PF_Callback_ITERATE_ORIGIN_NON_CLIP_SRC16_NO_MAX_THREADS: _bindgen_ty_62 = 44;
 #[doc = " ---------- Callback Selectors ----------\n\nSome callbacks have different high and low quality versions.\nThe parameter block of function pointers will automatically\nbe filled with the appropriate versions for the current quality\nsetting, but some filters may wish to override this and access\na callback of different quality.  To do this, a get_callback_addr\ncallback is provided which will take a callback selector and a\ndesired quality and return the callback of that quality.  The\nselectors for the various callbacks are listed here.  Also, a\ntypedef for the function pointer that will be returned is given."]
-pub type _bindgen_ty_60 = ::std::os::raw::c_uint;
+pub type _bindgen_ty_62 = ::std::os::raw::c_uint;
 pub type PF_CallbackID = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2893,28 +2925,28 @@ pub struct PF_YouMustCastThisToActualFunctionType {
 }
 #[doc = "Previous versions of PF_CallbackFunc were defined using varargs in attempt to enforce\nthe effect_ref passed as the first argument to all callbacks. The actual host\nimplementations are generally *not* varargs, and on some platforms the calling\nconventions between normal C ABI and C varargs ABI are not compatible. If your\ncode is trying to call through a PF_CallbackFunc it is unsafe; with this definition\nit will now no longer compile. To fix, cast to the proper API signature before\ncalling. Or better, use the extensive Suite implementations which are explicitly typed"]
 pub type PF_CallbackFunc = *mut PF_YouMustCastThisToActualFunctionType;
-pub const PF_PlatData_MAIN_WND: _bindgen_ty_61 = 0;
-pub const PF_PlatData_EXE_FILE_PATH_DEPRECATED: _bindgen_ty_61 = 1;
-pub const PF_PlatData_RES_FILE_PATH_DEPRECATED: _bindgen_ty_61 = 2;
-pub const PF_PlatData_RES_REFNUM: _bindgen_ty_61 = 3;
-pub const PF_PlatData_RES_DLLINSTANCE: _bindgen_ty_61 = 4;
-pub const PF_PlatData_SP_PLUG_REF: _bindgen_ty_61 = 5;
-pub const PF_PlatData_BUNDLE_REF: _bindgen_ty_61 = 6;
-pub const PF_PlatData_EXE_FILE_PATH_W: _bindgen_ty_61 = 7;
-pub const PF_PlatData_RES_FILE_PATH_W: _bindgen_ty_61 = 8;
-pub type _bindgen_ty_61 = ::std::os::raw::c_uint;
+pub const PF_PlatData_MAIN_WND: _bindgen_ty_63 = 0;
+pub const PF_PlatData_EXE_FILE_PATH_DEPRECATED: _bindgen_ty_63 = 1;
+pub const PF_PlatData_RES_FILE_PATH_DEPRECATED: _bindgen_ty_63 = 2;
+pub const PF_PlatData_RES_REFNUM: _bindgen_ty_63 = 3;
+pub const PF_PlatData_RES_DLLINSTANCE: _bindgen_ty_63 = 4;
+pub const PF_PlatData_SP_PLUG_REF: _bindgen_ty_63 = 5;
+pub const PF_PlatData_BUNDLE_REF: _bindgen_ty_63 = 6;
+pub const PF_PlatData_EXE_FILE_PATH_W: _bindgen_ty_63 = 7;
+pub const PF_PlatData_RES_FILE_PATH_W: _bindgen_ty_63 = 8;
+pub type _bindgen_ty_63 = ::std::os::raw::c_uint;
 pub type PF_PlatDataID = A_long;
-pub const PF_Plane_ALPHA: _bindgen_ty_62 = 1;
-pub const PF_Plane_RED: _bindgen_ty_62 = 2;
-pub const PF_Plane_GREEN: _bindgen_ty_62 = 4;
-pub const PF_Plane_BLUE: _bindgen_ty_62 = 8;
+pub const PF_Plane_ALPHA: _bindgen_ty_64 = 1;
+pub const PF_Plane_RED: _bindgen_ty_64 = 2;
+pub const PF_Plane_GREEN: _bindgen_ty_64 = 4;
+pub const PF_Plane_BLUE: _bindgen_ty_64 = 8;
 #[doc = " ---------- Image Plane Selectors ----------\n\nThese constants can be used to specify a subset\nof the planes of the 32-bit image."]
-pub type _bindgen_ty_62 = ::std::os::raw::c_uint;
+pub type _bindgen_ty_64 = ::std::os::raw::c_uint;
 pub type PF_Plane = A_u_long;
 #[doc = " ---------- ANSI Routines Block ----------\n\nWithin the callback routines block there is a block of ANSI\nroutines, so that the filter will not need to link with the\nANSI library.  The following structure describes that block\nand is included in the larger Callback Routines block below.\n\nAll angles are expressed in radians; use PF_RAD_PER_DEGREE\nto convert from degrees to radians, if necessary.  Be aware\nthat angle parameter types use degrees (in fixed point).\n\nSprintf and strcpy are provided to facilitate string usage,\nsuch as printing for names and supervised controls.\n\nNone of these callbacks vary based on the Quality setting."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct PF_ANSICallbacks {
+pub struct PF_ANSICallbacksBlock {
     pub atan: ::std::option::Option<unsafe extern "C" fn(arg1: A_FpLong) -> A_FpLong>,
     pub atan2: ::std::option::Option<unsafe extern "C" fn(y: A_FpLong, x: A_FpLong) -> A_FpLong>,
     pub ceil: ::std::option::Option<unsafe extern "C" fn(arg1: A_FpLong) -> A_FpLong>,
@@ -2938,7 +2970,7 @@ pub struct PF_ANSICallbacks {
     >,
     pub asin: ::std::option::Option<unsafe extern "C" fn(arg1: A_FpLong) -> A_FpLong>,
     pub acos: ::std::option::Option<unsafe extern "C" fn(arg1: A_FpLong) -> A_FpLong>,
-    pub ansi_procs: [A_long; 1usize],
+    pub unused_longA: [A_long; 1usize],
 }
 #[doc = " ---------- Colorspace Conversion Callbacks\n"]
 #[repr(C)]
@@ -3003,12 +3035,12 @@ pub struct PF_ColorCallbacks {
 }
 pub type PF_BatchSampleFunc = *mut ::std::os::raw::c_void;
 pub type PF_BatchSample16Func = *mut ::std::os::raw::c_void;
-pub const PF_NewWorldFlag_NONE: _bindgen_ty_63 = 0;
-pub const PF_NewWorldFlag_CLEAR_PIXELS: _bindgen_ty_63 = 1;
-pub const PF_NewWorldFlag_DEEP_PIXELS: _bindgen_ty_63 = 2;
-pub const PF_NewWorldFlag_RESERVED0: _bindgen_ty_63 = 4;
-pub const PF_NewWorldFlag_RESERVED1: _bindgen_ty_63 = 8;
-pub type _bindgen_ty_63 = ::std::os::raw::c_uint;
+pub const PF_NewWorldFlag_NONE: _bindgen_ty_65 = 0;
+pub const PF_NewWorldFlag_CLEAR_PIXELS: _bindgen_ty_65 = 1;
+pub const PF_NewWorldFlag_DEEP_PIXELS: _bindgen_ty_65 = 2;
+pub const PF_NewWorldFlag_RESERVED0: _bindgen_ty_65 = 4;
+pub const PF_NewWorldFlag_RESERVED1: _bindgen_ty_65 = 8;
+pub type _bindgen_ty_65 = ::std::os::raw::c_uint;
 pub type PF_NewWorldFlags = A_long;
 #[doc = "prototypes for PF_ITERATE8 and PF_ITERATE16 pixel functions\n\nthe user of PF_ITERATE provides a refcon; After Effects may distribute iteration\nacross multiple threads, so any data pointed to by refconL should be read-only or\nproperly synchronized\n\ninP is writable only if the world you pass to PF_ITERATE() is PF_WorldFlag_WRITEABLE\n\n"]
 pub type PF_IteratePixel8Func = ::std::option::Option<
@@ -3255,7 +3287,7 @@ pub struct _PF_UtilCallbacks {
     >,
     pub app:
         ::std::option::Option<unsafe extern "C" fn(arg1: PF_ProgPtr, arg2: A_long, ...) -> PF_Err>,
-    pub ansi: PF_ANSICallbacks,
+    pub ansi: PF_ANSICallbacksBlock,
     pub colorCB: PF_ColorCallbacks,
     pub get_platform_data: ::std::option::Option<
         unsafe extern "C" fn(
@@ -3386,18 +3418,18 @@ pub struct _PF_UtilCallbacks {
     pub reserved: [A_long; 1usize],
 }
 pub type PF_UtilCallbacks = _PF_UtilCallbacks;
-pub const PF_PixelFormat_ARGB32: _bindgen_ty_64 = 1650946657;
-pub const PF_PixelFormat_ARGB64: _bindgen_ty_64 = 909206881;
-pub const PF_PixelFormat_ARGB128: _bindgen_ty_64 = 842229089;
-pub const PF_PixelFormat_GPU_BGRA128: _bindgen_ty_64 = 1094992704;
-pub const PF_PixelFormat_RESERVED: _bindgen_ty_64 = 1631863616;
-pub const PF_PixelFormat_BGRA32: _bindgen_ty_64 = 1634887522;
-pub const PF_PixelFormat_VUYA32: _bindgen_ty_64 = 1635349878;
-pub const PF_PixelFormat_NTSCDV25: _bindgen_ty_64 = 846100068;
-pub const PF_PixelFormat_PALDV25: _bindgen_ty_64 = 846231140;
-pub const PF_PixelFormat_INVALID: _bindgen_ty_64 = 1717854562;
-pub const PF_PixelFormat_FORCE_LONG_INT: _bindgen_ty_64 = 4294967295;
-pub type _bindgen_ty_64 = ::std::os::raw::c_uint;
+pub const PF_PixelFormat_ARGB32: _bindgen_ty_66 = 1650946657;
+pub const PF_PixelFormat_ARGB64: _bindgen_ty_66 = 909206881;
+pub const PF_PixelFormat_ARGB128: _bindgen_ty_66 = 842229089;
+pub const PF_PixelFormat_GPU_BGRA128: _bindgen_ty_66 = 1094992704;
+pub const PF_PixelFormat_RESERVED: _bindgen_ty_66 = 1631863616;
+pub const PF_PixelFormat_BGRA32: _bindgen_ty_66 = 1634887522;
+pub const PF_PixelFormat_VUYA32: _bindgen_ty_66 = 1635349878;
+pub const PF_PixelFormat_NTSCDV25: _bindgen_ty_66 = 846100068;
+pub const PF_PixelFormat_PALDV25: _bindgen_ty_66 = 846231140;
+pub const PF_PixelFormat_INVALID: _bindgen_ty_66 = 1717854562;
+pub const PF_PixelFormat_FORCE_LONG_INT: _bindgen_ty_66 = 4294967295;
+pub type _bindgen_ty_66 = ::std::os::raw::c_uint;
 pub type PF_PixelFormat = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4697,14 +4729,14 @@ pub struct PF_PathDataSuite1 {
 pub struct PF_State {
     pub reservedAL: [A_long; 4usize],
 }
-pub const PF_TimeDir_GREATER_THAN: _bindgen_ty_65 = 0;
-pub const PF_TimeDir_LESS_THAN: _bindgen_ty_65 = 1;
-pub const PF_TimeDir_GREATER_THAN_OR_EQUAL: _bindgen_ty_65 = 4096;
-pub const PF_TimeDir_LESS_THAN_OR_EQUAL: _bindgen_ty_65 = 4097;
-pub type _bindgen_ty_65 = ::std::os::raw::c_uint;
+pub const PF_TimeDir_GREATER_THAN: _bindgen_ty_67 = 0;
+pub const PF_TimeDir_LESS_THAN: _bindgen_ty_67 = 1;
+pub const PF_TimeDir_GREATER_THAN_OR_EQUAL: _bindgen_ty_67 = 4096;
+pub const PF_TimeDir_LESS_THAN_OR_EQUAL: _bindgen_ty_67 = 4097;
+pub type _bindgen_ty_67 = ::std::os::raw::c_uint;
 pub type PF_TimeDir = A_long;
 pub type PF_KeyIndex = A_long;
-#[doc = " PF_ParamUtilsSuite3\n\nPF_UpdateParamUI()\n\nYou can call this function for each param whose UI settings you\nwant to change when handling a PF_Cmd_USER_CHANGED_PARAM or\nPF_Cmd_UPDATE_PARAMS_UI.  These changes are cosmetic only, and don't\ngo into the undo buffer.\n\nThe ONLY fields that can be changed in this way are:\n\nPF_ParamDef\nui_flags: PF_PUI_ECW_SEPARATOR, PF_PUI_DISABLED only (and PF_PUI_INVISIBLE in Premiere).\nui_width\nui_height\nname\nflags: PF_ParamFlag_COLLAPSE_TWIRLY only\n\nPF_ParamDefUnion:\nslider_min, slider_max, precision, display_flags of any slider type\n\nFor PF_PUI_STD_CONTROL_ONLY params, you can also change the value field by setting\nPF_ChangeFlag_CHANGED_VALUE before returning.  But you are not allowed to change\nthe value during PF_Cmd_UPDATE_PARAMS_UI.\n\nPF_GetCurrentState() / PF_AreStatesIdentical()\nThis API lets you determine if a set of your inputs (either layers, other properties, or both)\nare different between when you first called PF_GetCurrentState() and a current call, so it can\nbe used for caching. You can specify a range of time to consider or all of time.\n\nFor effects that do simulation across time and therefore set PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT,\nwhen you ask about a time range, it will be expanded to include any times needed to produce\nthat range.\n\nSee doc on the old PF_HaveInputsChangedOverTimeSpan() for historical context."]
+#[doc = " PF_ParamUtilsSuite3\n\nPF_UpdateParamUI()\n\nYou can call this function for each param whose UI settings you\nwant to change when handling a PF_Cmd_USER_CHANGED_PARAM or\nPF_Cmd_UPDATE_PARAMS_UI.  These changes are cosmetic only, and don't\ngo into the undo buffer.\n\nThe ONLY fields that can be changed in this way are:\n\nPF_ParamDef\nui_flags: PF_PUI_ECW_SEPARATOR, PF_PUI_DISABLED only (and PF_PUI_INVISIBLE in Premiere).\nui_width\nui_height\nname\nflags: PF_ParamFlag_COLLAPSE_TWIRLY only\n\nPF_ParamDefUnion:\nslider_min, slider_max, precision, display_flags of any slider type\n\nPF_GetCurrentState() / PF_AreStatesIdentical()\nThis API lets you determine if a set of your inputs (either layers, other properties, or both)\nare different between when you first called PF_GetCurrentState() and a current call, so it can\nbe used for caching. You can specify a range of time to consider or all of time.\n\nFor effects that do simulation across time and therefore set PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT,\nwhen you ask about a time range, it will be expanded to include any times needed to produce\nthat range.\n\nSee doc on the old PF_HaveInputsChangedOverTimeSpan() for historical context."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PF_ParamUtilsSuite3 {
@@ -4824,100 +4856,100 @@ pub struct PF_AngleParamSuite1 {
         ) -> PF_Err,
     >,
 }
-pub const PF_App_Color_NONE: _bindgen_ty_66 = -1;
-pub const PF_App_Color_FRAME: _bindgen_ty_66 = 0;
-pub const PF_App_Color_FILL: _bindgen_ty_66 = 1;
-pub const PF_App_Color_TEXT: _bindgen_ty_66 = 2;
-pub const PF_App_Color_LIGHT_TINGE: _bindgen_ty_66 = 3;
-pub const PF_App_Color_DARK_TINGE: _bindgen_ty_66 = 4;
-pub const PF_App_Color_HILITE: _bindgen_ty_66 = 5;
-pub const PF_App_Color_SHADOW: _bindgen_ty_66 = 6;
-pub const PF_App_Color_BUTTON_FRAME: _bindgen_ty_66 = 7;
-pub const PF_App_Color_BUTTON_FILL: _bindgen_ty_66 = 8;
-pub const PF_App_Color_BUTTON_TEXT: _bindgen_ty_66 = 9;
-pub const PF_App_Color_BUTTON_LIGHT_TINGE: _bindgen_ty_66 = 10;
-pub const PF_App_Color_BUTTON_DARK_TINGE: _bindgen_ty_66 = 11;
-pub const PF_App_Color_BUTTON_HILITE: _bindgen_ty_66 = 12;
-pub const PF_App_Color_BUTTON_SHADOW: _bindgen_ty_66 = 13;
-pub const PF_App_Color_BUTTON_PRESSED_FRAME: _bindgen_ty_66 = 14;
-pub const PF_App_Color_BUTTON_PRESSED_FILL: _bindgen_ty_66 = 15;
-pub const PF_App_Color_BUTTON_PRESSED_TEXT: _bindgen_ty_66 = 16;
-pub const PF_App_Color_BUTTON_PRESSED_LIGHT_TINGE: _bindgen_ty_66 = 17;
-pub const PF_App_Color_BUTTON_PRESSED_DARK_TINGE: _bindgen_ty_66 = 18;
-pub const PF_App_Color_BUTTON_PRESSED_HILITE: _bindgen_ty_66 = 19;
-pub const PF_App_Color_BUTTON_PRESSED_SHADOW: _bindgen_ty_66 = 20;
-pub const PF_App_Color_FRAME_DISABLED: _bindgen_ty_66 = 21;
-pub const PF_App_Color_FILL_DISABLED: _bindgen_ty_66 = 22;
-pub const PF_App_Color_TEXT_DISABLED: _bindgen_ty_66 = 23;
-pub const PF_App_Color_LIGHT_TINGE_DISABLED: _bindgen_ty_66 = 24;
-pub const PF_App_Color_DARK_TINGE_DISABLED: _bindgen_ty_66 = 25;
-pub const PF_App_Color_HILITE_DISABLED: _bindgen_ty_66 = 26;
-pub const PF_App_Color_SHADOW_DISABLED: _bindgen_ty_66 = 27;
-pub const PF_App_Color_BUTTON_FRAME_DISABLED: _bindgen_ty_66 = 28;
-pub const PF_App_Color_BUTTON_FILL_DISABLED: _bindgen_ty_66 = 29;
-pub const PF_App_Color_BUTTON_TEXT_DISABLED: _bindgen_ty_66 = 30;
-pub const PF_App_Color_BUTTON_LIGHT_TINGE_DISABLED: _bindgen_ty_66 = 31;
-pub const PF_App_Color_BUTTON_DARK_TINGE_DISABLED: _bindgen_ty_66 = 32;
-pub const PF_App_Color_BUTTON_HILITE_DISABLED: _bindgen_ty_66 = 33;
-pub const PF_App_Color_BUTTON_SHADOW_DISABLED: _bindgen_ty_66 = 34;
-pub const PF_App_Color_BUTTON_PRESSED_FRAME_DISABLED: _bindgen_ty_66 = 35;
-pub const PF_App_Color_BUTTON_PRESSED_FILL_DISABLED: _bindgen_ty_66 = 36;
-pub const PF_App_Color_BUTTON_PRESSED_TEXT_DISABLED: _bindgen_ty_66 = 37;
-pub const PF_App_Color_BUTTON_PRESSED_LIGHT_TINGE_DISABLED: _bindgen_ty_66 = 38;
-pub const PF_App_Color_BUTTON_PRESSED_DARK_TINGE_DISABLED: _bindgen_ty_66 = 39;
-pub const PF_App_Color_BUTTON_PRESSED_HILITE_DISABLED: _bindgen_ty_66 = 40;
-pub const PF_App_Color_BUTTON_PRESSED_SHADOW_DISABLED: _bindgen_ty_66 = 41;
-pub const PF_App_Color_BLACK: _bindgen_ty_66 = 42;
-pub const PF_App_Color_WHITE: _bindgen_ty_66 = 43;
-pub const PF_App_Color_GRAY: _bindgen_ty_66 = 44;
-pub const PF_App_Color_RED: _bindgen_ty_66 = 45;
-pub const PF_App_Color_YELLOW: _bindgen_ty_66 = 46;
-pub const PF_App_Color_GREEN: _bindgen_ty_66 = 47;
-pub const PF_App_Color_CYAN: _bindgen_ty_66 = 48;
-pub const PF_App_Color_TLW_NEEDLE_CURRENT_TIME: _bindgen_ty_66 = 49;
-pub const PF_App_Color_TLW_NEEDLE_PREVIEW_TIME: _bindgen_ty_66 = 50;
-pub const PF_App_Color_TLW_CACHE_MARK_MEM: _bindgen_ty_66 = 51;
-pub const PF_App_Color_TLW_CACHE_MARK_DISK: _bindgen_ty_66 = 52;
-pub const PF_App_Color_TLW_CACHE_MARK_MIX: _bindgen_ty_66 = 53;
-pub const PF_App_Color_FILL_LIGHT: _bindgen_ty_66 = 54;
-pub const PF_App_Color_HOT_TEXT: _bindgen_ty_66 = 55;
-pub const PF_App_Color_HOT_TEXT_DISABLED: _bindgen_ty_66 = 56;
-pub const PF_App_Color_LABEL_0: _bindgen_ty_66 = 57;
-pub const PF_App_Color_LABEL_1: _bindgen_ty_66 = 58;
-pub const PF_App_Color_LABEL_2: _bindgen_ty_66 = 59;
-pub const PF_App_Color_LABEL_3: _bindgen_ty_66 = 60;
-pub const PF_App_Color_LABEL_4: _bindgen_ty_66 = 61;
-pub const PF_App_Color_LABEL_5: _bindgen_ty_66 = 62;
-pub const PF_App_Color_LABEL_6: _bindgen_ty_66 = 63;
-pub const PF_App_Color_LABEL_7: _bindgen_ty_66 = 64;
-pub const PF_App_Color_LABEL_8: _bindgen_ty_66 = 65;
-pub const PF_App_Color_LABEL_9: _bindgen_ty_66 = 66;
-pub const PF_App_Color_LABEL_10: _bindgen_ty_66 = 67;
-pub const PF_App_Color_LABEL_11: _bindgen_ty_66 = 68;
-pub const PF_App_Color_LABEL_12: _bindgen_ty_66 = 69;
-pub const PF_App_Color_LABEL_13: _bindgen_ty_66 = 70;
-pub const PF_App_Color_LABEL_14: _bindgen_ty_66 = 71;
-pub const PF_App_Color_LABEL_15: _bindgen_ty_66 = 72;
-pub const PF_App_Color_LABEL_16: _bindgen_ty_66 = 73;
-pub const PF_App_Color_TLW_CACHE_MARK_MEM_DUBIOUS: _bindgen_ty_66 = 74;
-pub const PF_App_Color_TLW_CACHE_MARK_DISK_DUBIOUS: _bindgen_ty_66 = 75;
-pub const PF_App_Color_TLW_CACHE_MARK_MIX_DUBIOUS: _bindgen_ty_66 = 76;
-pub const PF_App_Color_HOT_TEXT_PRESSED: _bindgen_ty_66 = 77;
-pub const PF_App_Color_HOT_TEXT_WARNING: _bindgen_ty_66 = 78;
-pub const PF_App_Color_PURE_BLACK: _bindgen_ty_66 = 79;
-pub const PF_App_Color_PURE_WHITE: _bindgen_ty_66 = 80;
-pub const PF_App_Color_PANEL_BACKGROUND: _bindgen_ty_66 = 1000;
-pub const PF_App_Color_LIST_BOX_FILL: _bindgen_ty_66 = 1001;
-pub const PF_App_Color_DARK_CAPTION_FILL: _bindgen_ty_66 = 1002;
-pub const PF_App_Color_DARK_CAPTION_TEXT: _bindgen_ty_66 = 1003;
-pub const PF_App_Color_TEXT_ON_LIGHTER_BG: _bindgen_ty_66 = 1004;
-pub const PF_App_Color_NUMTYPES: _bindgen_ty_66 = 1005;
-pub type _bindgen_ty_66 = ::std::os::raw::c_int;
+pub const PF_App_Color_NONE: _bindgen_ty_68 = -1;
+pub const PF_App_Color_FRAME: _bindgen_ty_68 = 0;
+pub const PF_App_Color_FILL: _bindgen_ty_68 = 1;
+pub const PF_App_Color_TEXT: _bindgen_ty_68 = 2;
+pub const PF_App_Color_LIGHT_TINGE: _bindgen_ty_68 = 3;
+pub const PF_App_Color_DARK_TINGE: _bindgen_ty_68 = 4;
+pub const PF_App_Color_HILITE: _bindgen_ty_68 = 5;
+pub const PF_App_Color_SHADOW: _bindgen_ty_68 = 6;
+pub const PF_App_Color_BUTTON_FRAME: _bindgen_ty_68 = 7;
+pub const PF_App_Color_BUTTON_FILL: _bindgen_ty_68 = 8;
+pub const PF_App_Color_BUTTON_TEXT: _bindgen_ty_68 = 9;
+pub const PF_App_Color_BUTTON_LIGHT_TINGE: _bindgen_ty_68 = 10;
+pub const PF_App_Color_BUTTON_DARK_TINGE: _bindgen_ty_68 = 11;
+pub const PF_App_Color_BUTTON_HILITE: _bindgen_ty_68 = 12;
+pub const PF_App_Color_BUTTON_SHADOW: _bindgen_ty_68 = 13;
+pub const PF_App_Color_BUTTON_PRESSED_FRAME: _bindgen_ty_68 = 14;
+pub const PF_App_Color_BUTTON_PRESSED_FILL: _bindgen_ty_68 = 15;
+pub const PF_App_Color_BUTTON_PRESSED_TEXT: _bindgen_ty_68 = 16;
+pub const PF_App_Color_BUTTON_PRESSED_LIGHT_TINGE: _bindgen_ty_68 = 17;
+pub const PF_App_Color_BUTTON_PRESSED_DARK_TINGE: _bindgen_ty_68 = 18;
+pub const PF_App_Color_BUTTON_PRESSED_HILITE: _bindgen_ty_68 = 19;
+pub const PF_App_Color_BUTTON_PRESSED_SHADOW: _bindgen_ty_68 = 20;
+pub const PF_App_Color_FRAME_DISABLED: _bindgen_ty_68 = 21;
+pub const PF_App_Color_FILL_DISABLED: _bindgen_ty_68 = 22;
+pub const PF_App_Color_TEXT_DISABLED: _bindgen_ty_68 = 23;
+pub const PF_App_Color_LIGHT_TINGE_DISABLED: _bindgen_ty_68 = 24;
+pub const PF_App_Color_DARK_TINGE_DISABLED: _bindgen_ty_68 = 25;
+pub const PF_App_Color_HILITE_DISABLED: _bindgen_ty_68 = 26;
+pub const PF_App_Color_SHADOW_DISABLED: _bindgen_ty_68 = 27;
+pub const PF_App_Color_BUTTON_FRAME_DISABLED: _bindgen_ty_68 = 28;
+pub const PF_App_Color_BUTTON_FILL_DISABLED: _bindgen_ty_68 = 29;
+pub const PF_App_Color_BUTTON_TEXT_DISABLED: _bindgen_ty_68 = 30;
+pub const PF_App_Color_BUTTON_LIGHT_TINGE_DISABLED: _bindgen_ty_68 = 31;
+pub const PF_App_Color_BUTTON_DARK_TINGE_DISABLED: _bindgen_ty_68 = 32;
+pub const PF_App_Color_BUTTON_HILITE_DISABLED: _bindgen_ty_68 = 33;
+pub const PF_App_Color_BUTTON_SHADOW_DISABLED: _bindgen_ty_68 = 34;
+pub const PF_App_Color_BUTTON_PRESSED_FRAME_DISABLED: _bindgen_ty_68 = 35;
+pub const PF_App_Color_BUTTON_PRESSED_FILL_DISABLED: _bindgen_ty_68 = 36;
+pub const PF_App_Color_BUTTON_PRESSED_TEXT_DISABLED: _bindgen_ty_68 = 37;
+pub const PF_App_Color_BUTTON_PRESSED_LIGHT_TINGE_DISABLED: _bindgen_ty_68 = 38;
+pub const PF_App_Color_BUTTON_PRESSED_DARK_TINGE_DISABLED: _bindgen_ty_68 = 39;
+pub const PF_App_Color_BUTTON_PRESSED_HILITE_DISABLED: _bindgen_ty_68 = 40;
+pub const PF_App_Color_BUTTON_PRESSED_SHADOW_DISABLED: _bindgen_ty_68 = 41;
+pub const PF_App_Color_BLACK: _bindgen_ty_68 = 42;
+pub const PF_App_Color_WHITE: _bindgen_ty_68 = 43;
+pub const PF_App_Color_GRAY: _bindgen_ty_68 = 44;
+pub const PF_App_Color_RED: _bindgen_ty_68 = 45;
+pub const PF_App_Color_YELLOW: _bindgen_ty_68 = 46;
+pub const PF_App_Color_GREEN: _bindgen_ty_68 = 47;
+pub const PF_App_Color_CYAN: _bindgen_ty_68 = 48;
+pub const PF_App_Color_TLW_NEEDLE_CURRENT_TIME: _bindgen_ty_68 = 49;
+pub const PF_App_Color_TLW_NEEDLE_PREVIEW_TIME: _bindgen_ty_68 = 50;
+pub const PF_App_Color_TLW_CACHE_MARK_MEM: _bindgen_ty_68 = 51;
+pub const PF_App_Color_TLW_CACHE_MARK_DISK: _bindgen_ty_68 = 52;
+pub const PF_App_Color_TLW_CACHE_MARK_MIX: _bindgen_ty_68 = 53;
+pub const PF_App_Color_FILL_LIGHT: _bindgen_ty_68 = 54;
+pub const PF_App_Color_HOT_TEXT: _bindgen_ty_68 = 55;
+pub const PF_App_Color_HOT_TEXT_DISABLED: _bindgen_ty_68 = 56;
+pub const PF_App_Color_LABEL_0: _bindgen_ty_68 = 57;
+pub const PF_App_Color_LABEL_1: _bindgen_ty_68 = 58;
+pub const PF_App_Color_LABEL_2: _bindgen_ty_68 = 59;
+pub const PF_App_Color_LABEL_3: _bindgen_ty_68 = 60;
+pub const PF_App_Color_LABEL_4: _bindgen_ty_68 = 61;
+pub const PF_App_Color_LABEL_5: _bindgen_ty_68 = 62;
+pub const PF_App_Color_LABEL_6: _bindgen_ty_68 = 63;
+pub const PF_App_Color_LABEL_7: _bindgen_ty_68 = 64;
+pub const PF_App_Color_LABEL_8: _bindgen_ty_68 = 65;
+pub const PF_App_Color_LABEL_9: _bindgen_ty_68 = 66;
+pub const PF_App_Color_LABEL_10: _bindgen_ty_68 = 67;
+pub const PF_App_Color_LABEL_11: _bindgen_ty_68 = 68;
+pub const PF_App_Color_LABEL_12: _bindgen_ty_68 = 69;
+pub const PF_App_Color_LABEL_13: _bindgen_ty_68 = 70;
+pub const PF_App_Color_LABEL_14: _bindgen_ty_68 = 71;
+pub const PF_App_Color_LABEL_15: _bindgen_ty_68 = 72;
+pub const PF_App_Color_LABEL_16: _bindgen_ty_68 = 73;
+pub const PF_App_Color_TLW_CACHE_MARK_MEM_DUBIOUS: _bindgen_ty_68 = 74;
+pub const PF_App_Color_TLW_CACHE_MARK_DISK_DUBIOUS: _bindgen_ty_68 = 75;
+pub const PF_App_Color_TLW_CACHE_MARK_MIX_DUBIOUS: _bindgen_ty_68 = 76;
+pub const PF_App_Color_HOT_TEXT_PRESSED: _bindgen_ty_68 = 77;
+pub const PF_App_Color_HOT_TEXT_WARNING: _bindgen_ty_68 = 78;
+pub const PF_App_Color_PURE_BLACK: _bindgen_ty_68 = 79;
+pub const PF_App_Color_PURE_WHITE: _bindgen_ty_68 = 80;
+pub const PF_App_Color_PANEL_BACKGROUND: _bindgen_ty_68 = 1000;
+pub const PF_App_Color_LIST_BOX_FILL: _bindgen_ty_68 = 1001;
+pub const PF_App_Color_DARK_CAPTION_FILL: _bindgen_ty_68 = 1002;
+pub const PF_App_Color_DARK_CAPTION_TEXT: _bindgen_ty_68 = 1003;
+pub const PF_App_Color_TEXT_ON_LIGHTER_BG: _bindgen_ty_68 = 1004;
+pub const PF_App_Color_NUMTYPES: _bindgen_ty_68 = 1005;
+pub type _bindgen_ty_68 = ::std::os::raw::c_int;
 pub type PF_App_ColorType = A_short;
-pub const PF_EyeDropperSampleMode_DEFAULT: _bindgen_ty_67 = 0;
-pub const PF_EyeDropperSampleMode_STRAIGHT: _bindgen_ty_67 = 1;
-pub const PF_EyeDropperSampleMode_PREMUL: _bindgen_ty_67 = 2;
-pub type _bindgen_ty_67 = ::std::os::raw::c_uint;
+pub const PF_EyeDropperSampleMode_DEFAULT: _bindgen_ty_69 = 0;
+pub const PF_EyeDropperSampleMode_STRAIGHT: _bindgen_ty_69 = 1;
+pub const PF_EyeDropperSampleMode_PREMUL: _bindgen_ty_69 = 2;
+pub type _bindgen_ty_69 = ::std::os::raw::c_uint;
 pub type PF_EyeDropperSampleMode = A_short;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -4933,17 +4965,17 @@ pub struct PF_AppPersonalTextInfo {
     pub org: [A_char; 64usize],
     pub serial_str: [A_char; 64usize],
 }
-pub const PF_FontStyle_NONE: _bindgen_ty_68 = -1;
-pub const PF_FontStyle_SYS: _bindgen_ty_68 = 0;
-pub const PF_FontStyle_SMALL: _bindgen_ty_68 = 1;
-pub const PF_FontStyle_SMALL_BOLD: _bindgen_ty_68 = 2;
-pub const PF_FontStyle_SMALL_ITALIC: _bindgen_ty_68 = 3;
-pub const PF_FontStyle_MED: _bindgen_ty_68 = 4;
-pub const PF_FontStyle_MED_BOLD: _bindgen_ty_68 = 5;
-pub const PF_FontStyle_APP: _bindgen_ty_68 = 6;
-pub const PF_FontStyle_APP_BOLD: _bindgen_ty_68 = 7;
-pub const PF_FontStyle_APP_ITALIC: _bindgen_ty_68 = 8;
-pub type _bindgen_ty_68 = ::std::os::raw::c_int;
+pub const PF_FontStyle_NONE: _bindgen_ty_70 = -1;
+pub const PF_FontStyle_SYS: _bindgen_ty_70 = 0;
+pub const PF_FontStyle_SMALL: _bindgen_ty_70 = 1;
+pub const PF_FontStyle_SMALL_BOLD: _bindgen_ty_70 = 2;
+pub const PF_FontStyle_SMALL_ITALIC: _bindgen_ty_70 = 3;
+pub const PF_FontStyle_MED: _bindgen_ty_70 = 4;
+pub const PF_FontStyle_MED_BOLD: _bindgen_ty_70 = 5;
+pub const PF_FontStyle_APP: _bindgen_ty_70 = 6;
+pub const PF_FontStyle_APP_BOLD: _bindgen_ty_70 = 7;
+pub const PF_FontStyle_APP_ITALIC: _bindgen_ty_70 = 8;
+pub type _bindgen_ty_70 = ::std::os::raw::c_int;
 pub type PF_FontStyleSheet = A_LegacyEnumType;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -5278,22 +5310,22 @@ pub struct PF_EffectCustomUISuite1 {
         ) -> PF_Err,
     >,
 }
-pub const PF_SuiteTool_NONE: _bindgen_ty_69 = 0;
-pub const PF_SuiteTool_ARROW: _bindgen_ty_69 = 1;
-pub const PF_SuiteTool_ROTATE: _bindgen_ty_69 = 2;
-pub const PF_SuiteTool_SHAPE: _bindgen_ty_69 = 3;
-pub const PF_SuiteTool_OBSOLETE: _bindgen_ty_69 = 4;
-pub const PF_SuiteTool_PEN: _bindgen_ty_69 = 5;
-pub const PF_SuiteTool_PAN: _bindgen_ty_69 = 6;
-pub const PF_SuiteTool_HAND: _bindgen_ty_69 = 7;
-pub const PF_SuiteTool_MAGNIFY: _bindgen_ty_69 = 8;
-pub const PF_SuiteTool_ROUNDED_RECT: _bindgen_ty_69 = 9;
-pub const PF_SuiteTool_POLYGON: _bindgen_ty_69 = 10;
-pub const PF_SuiteTool_STAR: _bindgen_ty_69 = 11;
-pub const PF_SuiteTool_PIN: _bindgen_ty_69 = 12;
-pub const PF_SuiteTool_PIN_STARCH: _bindgen_ty_69 = 13;
-pub const PF_SuiteTool_PIN_DEPTH: _bindgen_ty_69 = 14;
-pub type _bindgen_ty_69 = ::std::os::raw::c_uint;
+pub const PF_SuiteTool_NONE: _bindgen_ty_71 = 0;
+pub const PF_SuiteTool_ARROW: _bindgen_ty_71 = 1;
+pub const PF_SuiteTool_ROTATE: _bindgen_ty_71 = 2;
+pub const PF_SuiteTool_SHAPE: _bindgen_ty_71 = 3;
+pub const PF_SuiteTool_OBSOLETE: _bindgen_ty_71 = 4;
+pub const PF_SuiteTool_PEN: _bindgen_ty_71 = 5;
+pub const PF_SuiteTool_PAN: _bindgen_ty_71 = 6;
+pub const PF_SuiteTool_HAND: _bindgen_ty_71 = 7;
+pub const PF_SuiteTool_MAGNIFY: _bindgen_ty_71 = 8;
+pub const PF_SuiteTool_ROUNDED_RECT: _bindgen_ty_71 = 9;
+pub const PF_SuiteTool_POLYGON: _bindgen_ty_71 = 10;
+pub const PF_SuiteTool_STAR: _bindgen_ty_71 = 11;
+pub const PF_SuiteTool_PIN: _bindgen_ty_71 = 12;
+pub const PF_SuiteTool_PIN_STARCH: _bindgen_ty_71 = 13;
+pub const PF_SuiteTool_PIN_DEPTH: _bindgen_ty_71 = 14;
+pub type _bindgen_ty_71 = ::std::os::raw::c_uint;
 pub type PF_SuiteTool = A_LegacyEnumType;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -5301,53 +5333,53 @@ pub struct PF_HelperSuite1 {
     pub PF_GetCurrentTool:
         ::std::option::Option<unsafe extern "C" fn(toolP: *mut PF_SuiteTool) -> PF_Err>,
 }
-pub const PF_ExtendedSuiteTool_NONE: _bindgen_ty_70 = 0;
-pub const PF_ExtendedSuiteTool_ARROW: _bindgen_ty_70 = 1;
-pub const PF_ExtendedSuiteTool_ROTATE: _bindgen_ty_70 = 2;
-pub const PF_ExtendedSuiteTool_PEN_NORMAL: _bindgen_ty_70 = 3;
-pub const PF_ExtendedSuiteTool_PEN_ADD_POINT: _bindgen_ty_70 = 4;
-pub const PF_ExtendedSuiteTool_PEN_DELETE_POINT: _bindgen_ty_70 = 5;
-pub const PF_ExtendedSuiteTool_PEN_CONVERT_POINT: _bindgen_ty_70 = 6;
-pub const PF_ExtendedSuiteTool_RECT: _bindgen_ty_70 = 7;
-pub const PF_ExtendedSuiteTool_OVAL: _bindgen_ty_70 = 8;
-pub const PF_ExtendedSuiteTool_CAMERA_ORBIT_CAMERA: _bindgen_ty_70 = 9;
-pub const PF_ExtendedSuiteTool_CAMERA_PAN_CAMERA: _bindgen_ty_70 = 10;
-pub const PF_ExtendedSuiteTool_CAMERA_DOLLY_CAMERA: _bindgen_ty_70 = 11;
-pub const PF_ExtendedSuiteTool_PAN_BEHIND: _bindgen_ty_70 = 12;
-pub const PF_ExtendedSuiteTool_HAND: _bindgen_ty_70 = 13;
-pub const PF_ExtendedSuiteTool_MAGNIFY: _bindgen_ty_70 = 14;
-pub const PF_ExtendedSuiteTool_PAINTBRUSH: _bindgen_ty_70 = 15;
-pub const PF_ExtendedSuiteTool_PENCIL: _bindgen_ty_70 = 16;
-pub const PF_ExtendedSuiteTool_CLONE_STAMP: _bindgen_ty_70 = 17;
-pub const PF_ExtendedSuiteTool_ERASER: _bindgen_ty_70 = 18;
-pub const PF_ExtendedSuiteTool_TEXT: _bindgen_ty_70 = 19;
-pub const PF_ExtendedSuiteTool_TEXT_VERTICAL: _bindgen_ty_70 = 20;
-pub const PF_ExtendedSuiteTool_PIN: _bindgen_ty_70 = 21;
-pub const PF_ExtendedSuiteTool_PIN_STARCH: _bindgen_ty_70 = 22;
-pub const PF_ExtendedSuiteTool_PIN_DEPTH: _bindgen_ty_70 = 23;
-pub const PF_ExtendedSuiteTool_ROUNDED_RECT: _bindgen_ty_70 = 24;
-pub const PF_ExtendedSuiteTool_POLYGON: _bindgen_ty_70 = 25;
-pub const PF_ExtendedSuiteTool_STAR: _bindgen_ty_70 = 26;
-pub const PF_ExtendedSuiteTool_QUICKSELECT: _bindgen_ty_70 = 27;
-pub const PF_ExtendedSuiteTool_CAMERA_MAYA: _bindgen_ty_70 = 28;
-pub const PF_ExtendedSuiteTool_HAIRBRUSH: _bindgen_ty_70 = 29;
-pub const PF_ExtendedSuiteTool_FEATHER: _bindgen_ty_70 = 30;
-pub const PF_ExtendedSuiteTool_PIN_BEND: _bindgen_ty_70 = 31;
-pub const PF_ExtendedSuiteTool_PIN_ADVANCED: _bindgen_ty_70 = 32;
-pub const PF_ExtendedSuiteTool_CAMERA_ORBIT_CURSOR: _bindgen_ty_70 = 33;
-pub const PF_ExtendedSuiteTool_CAMERA_ORBIT_SCENE: _bindgen_ty_70 = 34;
-pub const PF_ExtendedSuiteTool_CAMERA_PAN_CURSOR: _bindgen_ty_70 = 35;
-pub const PF_ExtendedSuiteTool_CAMERA_DOLLY_TOWARDS_CURSOR: _bindgen_ty_70 = 36;
-pub const PF_ExtendedSuiteTool_CAMERA_DOLLY_TO_CURSOR: _bindgen_ty_70 = 37;
-pub const PF_ExtendedSuiteTool_OBJECTSELECT: _bindgen_ty_70 = 38;
-pub const PF_ExtendedSuiteTool_CUBE: _bindgen_ty_70 = 39;
-pub const PF_ExtendedSuiteTool_SPHERE: _bindgen_ty_70 = 40;
-pub const PF_ExtendedSuiteTool_PLANE: _bindgen_ty_70 = 41;
-pub const PF_ExtendedSuiteTool_TORUS: _bindgen_ty_70 = 42;
-pub const PF_ExtendedSuiteTool_CONE: _bindgen_ty_70 = 43;
-pub const PF_ExtendedSuiteTool_CYLINDER: _bindgen_ty_70 = 44;
+pub const PF_ExtendedSuiteTool_NONE: _bindgen_ty_72 = 0;
+pub const PF_ExtendedSuiteTool_ARROW: _bindgen_ty_72 = 1;
+pub const PF_ExtendedSuiteTool_ROTATE: _bindgen_ty_72 = 2;
+pub const PF_ExtendedSuiteTool_PEN_NORMAL: _bindgen_ty_72 = 3;
+pub const PF_ExtendedSuiteTool_PEN_ADD_POINT: _bindgen_ty_72 = 4;
+pub const PF_ExtendedSuiteTool_PEN_DELETE_POINT: _bindgen_ty_72 = 5;
+pub const PF_ExtendedSuiteTool_PEN_CONVERT_POINT: _bindgen_ty_72 = 6;
+pub const PF_ExtendedSuiteTool_RECT: _bindgen_ty_72 = 7;
+pub const PF_ExtendedSuiteTool_OVAL: _bindgen_ty_72 = 8;
+pub const PF_ExtendedSuiteTool_CAMERA_ORBIT_CAMERA: _bindgen_ty_72 = 9;
+pub const PF_ExtendedSuiteTool_CAMERA_PAN_CAMERA: _bindgen_ty_72 = 10;
+pub const PF_ExtendedSuiteTool_CAMERA_DOLLY_CAMERA: _bindgen_ty_72 = 11;
+pub const PF_ExtendedSuiteTool_PAN_BEHIND: _bindgen_ty_72 = 12;
+pub const PF_ExtendedSuiteTool_HAND: _bindgen_ty_72 = 13;
+pub const PF_ExtendedSuiteTool_MAGNIFY: _bindgen_ty_72 = 14;
+pub const PF_ExtendedSuiteTool_PAINTBRUSH: _bindgen_ty_72 = 15;
+pub const PF_ExtendedSuiteTool_PENCIL: _bindgen_ty_72 = 16;
+pub const PF_ExtendedSuiteTool_CLONE_STAMP: _bindgen_ty_72 = 17;
+pub const PF_ExtendedSuiteTool_ERASER: _bindgen_ty_72 = 18;
+pub const PF_ExtendedSuiteTool_TEXT: _bindgen_ty_72 = 19;
+pub const PF_ExtendedSuiteTool_TEXT_VERTICAL: _bindgen_ty_72 = 20;
+pub const PF_ExtendedSuiteTool_PIN: _bindgen_ty_72 = 21;
+pub const PF_ExtendedSuiteTool_PIN_STARCH: _bindgen_ty_72 = 22;
+pub const PF_ExtendedSuiteTool_PIN_DEPTH: _bindgen_ty_72 = 23;
+pub const PF_ExtendedSuiteTool_ROUNDED_RECT: _bindgen_ty_72 = 24;
+pub const PF_ExtendedSuiteTool_POLYGON: _bindgen_ty_72 = 25;
+pub const PF_ExtendedSuiteTool_STAR: _bindgen_ty_72 = 26;
+pub const PF_ExtendedSuiteTool_QUICKSELECT: _bindgen_ty_72 = 27;
+pub const PF_ExtendedSuiteTool_CAMERA_MAYA: _bindgen_ty_72 = 28;
+pub const PF_ExtendedSuiteTool_HAIRBRUSH: _bindgen_ty_72 = 29;
+pub const PF_ExtendedSuiteTool_FEATHER: _bindgen_ty_72 = 30;
+pub const PF_ExtendedSuiteTool_PIN_BEND: _bindgen_ty_72 = 31;
+pub const PF_ExtendedSuiteTool_PIN_ADVANCED: _bindgen_ty_72 = 32;
+pub const PF_ExtendedSuiteTool_CAMERA_ORBIT_CURSOR: _bindgen_ty_72 = 33;
+pub const PF_ExtendedSuiteTool_CAMERA_ORBIT_SCENE: _bindgen_ty_72 = 34;
+pub const PF_ExtendedSuiteTool_CAMERA_PAN_CURSOR: _bindgen_ty_72 = 35;
+pub const PF_ExtendedSuiteTool_CAMERA_DOLLY_TOWARDS_CURSOR: _bindgen_ty_72 = 36;
+pub const PF_ExtendedSuiteTool_CAMERA_DOLLY_TO_CURSOR: _bindgen_ty_72 = 37;
+pub const PF_ExtendedSuiteTool_OBJECTSELECT: _bindgen_ty_72 = 38;
+pub const PF_ExtendedSuiteTool_CUBE: _bindgen_ty_72 = 39;
+pub const PF_ExtendedSuiteTool_SPHERE: _bindgen_ty_72 = 40;
+pub const PF_ExtendedSuiteTool_PLANE: _bindgen_ty_72 = 41;
+pub const PF_ExtendedSuiteTool_TORUS: _bindgen_ty_72 = 42;
+pub const PF_ExtendedSuiteTool_CONE: _bindgen_ty_72 = 43;
+pub const PF_ExtendedSuiteTool_CYLINDER: _bindgen_ty_72 = 44;
 #[doc = " PF_HelperSuite2\n\nPF_ParseClipboard()\n\ncauses After Effects to parse the clipboard immediately"]
-pub type _bindgen_ty_70 = ::std::os::raw::c_uint;
+pub type _bindgen_ty_72 = ::std::os::raw::c_uint;
 pub type PF_ExtendedSuiteTool = A_LegacyEnumType;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -5358,16 +5390,16 @@ pub struct PF_HelperSuite2 {
     pub PF_GetCurrentExtendedTool:
         ::std::option::Option<unsafe extern "C" fn(tool: *mut PF_ExtendedSuiteTool) -> PF_Err>,
 }
-pub const FIEL_Type_FRAME_RENDERED: _bindgen_ty_71 = 0;
-pub const FIEL_Type_INTERLACED: _bindgen_ty_71 = 1;
-pub const FIEL_Type_HALF_HEIGHT: _bindgen_ty_71 = 2;
-pub const FIEL_Type_FIELD_DOUBLED: _bindgen_ty_71 = 3;
-pub const FIEL_Type_UNSPECIFIED: _bindgen_ty_71 = 4;
-pub type _bindgen_ty_71 = ::std::os::raw::c_uint;
+pub const FIEL_Type_FRAME_RENDERED: _bindgen_ty_73 = 0;
+pub const FIEL_Type_INTERLACED: _bindgen_ty_73 = 1;
+pub const FIEL_Type_HALF_HEIGHT: _bindgen_ty_73 = 2;
+pub const FIEL_Type_FIELD_DOUBLED: _bindgen_ty_73 = 3;
+pub const FIEL_Type_UNSPECIFIED: _bindgen_ty_73 = 4;
+pub type _bindgen_ty_73 = ::std::os::raw::c_uint;
 pub type FIEL_Type = u32;
-pub const FIEL_Order_UPPER_FIRST: _bindgen_ty_72 = 0;
-pub const FIEL_Order_LOWER_FIRST: _bindgen_ty_72 = 1;
-pub type _bindgen_ty_72 = ::std::os::raw::c_uint;
+pub const FIEL_Order_UPPER_FIRST: _bindgen_ty_74 = 0;
+pub const FIEL_Order_LOWER_FIRST: _bindgen_ty_74 = 1;
+pub type _bindgen_ty_74 = ::std::os::raw::c_uint;
 pub type FIEL_Order = u32;
 #[repr(C, packed(2))]
 #[derive(Debug, Copy, Clone)]
@@ -5420,32 +5452,32 @@ pub struct PR_InData {
     pub aegp_plug_id: A_long,
     pub aegp_refconPV: *mut ::std::os::raw::c_void,
 }
-pub const PR_DialogResult_NO_CHANGE: _bindgen_ty_73 = 0;
-pub const PR_DialogResult_CHANGE_MADE: _bindgen_ty_73 = 1;
+pub const PR_DialogResult_NO_CHANGE: _bindgen_ty_75 = 0;
+pub const PR_DialogResult_CHANGE_MADE: _bindgen_ty_75 = 1;
 #[doc = " response from dialog box function"]
-pub type _bindgen_ty_73 = ::std::os::raw::c_uint;
-pub type PR_DialogResult = A_long;
-pub const PR_QueryType_NONE: _bindgen_ty_74 = 0;
-pub const PR_QueryType_TRANSFORM: _bindgen_ty_74 = 1;
-pub const PR_QueryType_INTERACTIVE_WINDOW_DISPOSE: _bindgen_ty_74 = 2;
-pub const PR_QueryType_INTERACTIVE_WINDOW_CLEAR: _bindgen_ty_74 = 3;
-pub const PR_QueryType_INTERACTIVE_WINDOW_FROZEN_PROXY: _bindgen_ty_74 = 4;
-pub const PR_QueryType_INTERACTIVE_SWAP_BUFFER: _bindgen_ty_74 = 5;
-pub const PR_QueryType_INTERACTIVE_DRAW_PROCS: _bindgen_ty_74 = 6;
-pub const PR_QueryType_PREPARE_FOR_LINE_DRAWING: _bindgen_ty_74 = 7;
-pub const PR_QueryType_UNPREPARE_FOR_LINE_DRAWING: _bindgen_ty_74 = 8;
-pub const PR_QueryType_GET_CURRENT_CONTEXT_SAFE_FOR_LINE_DRAWING: _bindgen_ty_74 = 9;
-pub const PR_QueryType_GET_ARTISAN_QUALITY: _bindgen_ty_74 = 10;
-#[doc = " The types of queries that will be made.\n"]
-pub type _bindgen_ty_74 = ::std::os::raw::c_uint;
-pub type PR_QueryType = A_u_long;
-pub const PR_ArtisanFeature_NONE: _bindgen_ty_75 = 0;
 pub type _bindgen_ty_75 = ::std::os::raw::c_uint;
-pub type PR_ArtisanFeature_Flags = A_long;
-pub const PR_InstanceFlags_NONE: _bindgen_ty_76 = 0;
-pub const PR_InstanceFlags_DUPLICATE: _bindgen_ty_76 = 1;
-#[doc = " PR_InstanceSetupFunc flags"]
+pub type PR_DialogResult = A_long;
+pub const PR_QueryType_NONE: _bindgen_ty_76 = 0;
+pub const PR_QueryType_TRANSFORM: _bindgen_ty_76 = 1;
+pub const PR_QueryType_INTERACTIVE_WINDOW_DISPOSE: _bindgen_ty_76 = 2;
+pub const PR_QueryType_INTERACTIVE_WINDOW_CLEAR: _bindgen_ty_76 = 3;
+pub const PR_QueryType_INTERACTIVE_WINDOW_FROZEN_PROXY: _bindgen_ty_76 = 4;
+pub const PR_QueryType_INTERACTIVE_SWAP_BUFFER: _bindgen_ty_76 = 5;
+pub const PR_QueryType_INTERACTIVE_DRAW_PROCS: _bindgen_ty_76 = 6;
+pub const PR_QueryType_PREPARE_FOR_LINE_DRAWING: _bindgen_ty_76 = 7;
+pub const PR_QueryType_UNPREPARE_FOR_LINE_DRAWING: _bindgen_ty_76 = 8;
+pub const PR_QueryType_GET_CURRENT_CONTEXT_SAFE_FOR_LINE_DRAWING: _bindgen_ty_76 = 9;
+pub const PR_QueryType_GET_ARTISAN_QUALITY: _bindgen_ty_76 = 10;
+#[doc = " The types of queries that will be made.\n"]
 pub type _bindgen_ty_76 = ::std::os::raw::c_uint;
+pub type PR_QueryType = A_u_long;
+pub const PR_ArtisanFeature_NONE: _bindgen_ty_77 = 0;
+pub type _bindgen_ty_77 = ::std::os::raw::c_uint;
+pub type PR_ArtisanFeature_Flags = A_long;
+pub const PR_InstanceFlags_NONE: _bindgen_ty_78 = 0;
+pub const PR_InstanceFlags_DUPLICATE: _bindgen_ty_78 = 1;
+#[doc = " PR_InstanceSetupFunc flags"]
+pub type _bindgen_ty_78 = ::std::os::raw::c_uint;
 pub type PR_InstanceFlags = A_u_long;
 #[doc = " called after main. This happens just once, after the plugin is loaded.\n The global data is common across all instances of the plugin"]
 pub type PR_GlobalSetupFunc = ::std::option::Option<
@@ -5686,71 +5718,71 @@ pub struct AEIO_InData {
     pub aegp_refconPV: *mut ::std::os::raw::c_void,
 }
 pub type AEIO_BasicData = AEIO_InData;
-pub const AEIO_Err_UNSUPPORTED_CALLBACK: _bindgen_ty_77 = 9985;
-pub const AEIO_Err_UNIMPLEMENTED: _bindgen_ty_77 = 9986;
-pub const AEIO_Err_UNSUPPORTED_FILETYPE: _bindgen_ty_77 = 9987;
-pub const AEIO_Err_INAPPROPRIATE_ACTION: _bindgen_ty_77 = 9988;
-pub const AEIO_Err_BAD_BMWORLD: _bindgen_ty_77 = 9989;
-pub const AEIO_Err_INCONSISTENT_PARAMETERS: _bindgen_ty_77 = 9990;
-pub const AEIO_Err_INVALID_TIME: _bindgen_ty_77 = 9991;
-pub const AEIO_Err_USE_DFLT_CALLBACK: _bindgen_ty_77 = 9992;
-pub const AEIO_Err_USER_CANCEL: _bindgen_ty_77 = 9993;
-pub const AEIO_Err_DISK_FULL: _bindgen_ty_77 = 9994;
-pub const AEIO_Err_INITIALIZE_FAILED: _bindgen_ty_77 = 9995;
-pub const AEIO_Err_BAD_FILENAME: _bindgen_ty_77 = 9996;
-pub const AEIO_Err_PARSING: _bindgen_ty_77 = 9997;
-pub const AEIO_Err_NOT_SEQUENCE: _bindgen_ty_77 = 9998;
-pub const AEIO_Err_USE_DFLT_GETSIZES_FREESPACE: _bindgen_ty_77 = 9999;
-pub type _bindgen_ty_77 = ::std::os::raw::c_uint;
-pub type AEIO_Handle = *mut *mut _Up_OpaqueMem;
-pub const AEIO_DFlags_NONE: _bindgen_ty_78 = 0;
-pub const AEIO_DFlags_DID_DEINT: _bindgen_ty_78 = 2;
-pub const AEIO_DFlags_DID_ALPHA_CONV: _bindgen_ty_78 = 4;
-pub type _bindgen_ty_78 = ::std::os::raw::c_uint;
-pub type AEIO_DrawingFlags = A_long;
-pub const AEIO_Qual_LOW: _bindgen_ty_79 = 0;
-pub const AEIO_Qual_HIGH: _bindgen_ty_79 = 1;
+pub const AEIO_Err_UNSUPPORTED_CALLBACK: _bindgen_ty_79 = 9985;
+pub const AEIO_Err_UNIMPLEMENTED: _bindgen_ty_79 = 9986;
+pub const AEIO_Err_UNSUPPORTED_FILETYPE: _bindgen_ty_79 = 9987;
+pub const AEIO_Err_INAPPROPRIATE_ACTION: _bindgen_ty_79 = 9988;
+pub const AEIO_Err_BAD_BMWORLD: _bindgen_ty_79 = 9989;
+pub const AEIO_Err_INCONSISTENT_PARAMETERS: _bindgen_ty_79 = 9990;
+pub const AEIO_Err_INVALID_TIME: _bindgen_ty_79 = 9991;
+pub const AEIO_Err_USE_DFLT_CALLBACK: _bindgen_ty_79 = 9992;
+pub const AEIO_Err_USER_CANCEL: _bindgen_ty_79 = 9993;
+pub const AEIO_Err_DISK_FULL: _bindgen_ty_79 = 9994;
+pub const AEIO_Err_INITIALIZE_FAILED: _bindgen_ty_79 = 9995;
+pub const AEIO_Err_BAD_FILENAME: _bindgen_ty_79 = 9996;
+pub const AEIO_Err_PARSING: _bindgen_ty_79 = 9997;
+pub const AEIO_Err_NOT_SEQUENCE: _bindgen_ty_79 = 9998;
+pub const AEIO_Err_USE_DFLT_GETSIZES_FREESPACE: _bindgen_ty_79 = 9999;
 pub type _bindgen_ty_79 = ::std::os::raw::c_uint;
-pub type AEIO_Quality = A_short;
-pub const AEIO_TimeDir_FORWARD: _bindgen_ty_80 = 0;
-pub const AEIO_TimeDir_BACKWARD: _bindgen_ty_80 = 1;
-pub const AEIO_TimeDir_INCLUDE_BASE_TIME: _bindgen_ty_80 = 4096;
+pub type AEIO_Handle = *mut *mut _Up_OpaqueMem;
+pub const AEIO_DFlags_NONE: _bindgen_ty_80 = 0;
+pub const AEIO_DFlags_DID_DEINT: _bindgen_ty_80 = 2;
+pub const AEIO_DFlags_DID_ALPHA_CONV: _bindgen_ty_80 = 4;
 pub type _bindgen_ty_80 = ::std::os::raw::c_uint;
-pub type AEIO_TimeDir = A_short;
-pub const AEIO_IdleFlag_NONE: _bindgen_ty_81 = 0;
-pub const AEIO_IdleFlag_PURGED_MEM: _bindgen_ty_81 = 1;
-pub const AEIO_IdleFlag_ADD_YOUR_OWN: _bindgen_ty_81 = 2;
+pub type AEIO_DrawingFlags = A_long;
+pub const AEIO_Qual_LOW: _bindgen_ty_81 = 0;
+pub const AEIO_Qual_HIGH: _bindgen_ty_81 = 1;
 pub type _bindgen_ty_81 = ::std::os::raw::c_uint;
-pub type AEIO_IdleFlags = A_long;
-pub const AEIO_SndQuality_APPROX: _bindgen_ty_82 = -1;
-pub const AEIO_SndQuality_LO: _bindgen_ty_82 = 0;
-pub const AEIO_SndQuality_HI: _bindgen_ty_82 = 1;
-pub type _bindgen_ty_82 = ::std::os::raw::c_int;
-pub type AEIO_SndQuality = A_long;
-pub const AEIO_E_UNSIGNED_PCM: _bindgen_ty_83 = 1;
-pub const AEIO_E_SIGNED_PCM: _bindgen_ty_83 = 2;
-pub const AEIO_E_SIGNED_FLOAT: _bindgen_ty_83 = 3;
+pub type AEIO_Quality = A_short;
+pub const AEIO_TimeDir_FORWARD: _bindgen_ty_82 = 0;
+pub const AEIO_TimeDir_BACKWARD: _bindgen_ty_82 = 1;
+pub const AEIO_TimeDir_INCLUDE_BASE_TIME: _bindgen_ty_82 = 4096;
+pub type _bindgen_ty_82 = ::std::os::raw::c_uint;
+pub type AEIO_TimeDir = A_short;
+pub const AEIO_IdleFlag_NONE: _bindgen_ty_83 = 0;
+pub const AEIO_IdleFlag_PURGED_MEM: _bindgen_ty_83 = 1;
+pub const AEIO_IdleFlag_ADD_YOUR_OWN: _bindgen_ty_83 = 2;
 pub type _bindgen_ty_83 = ::std::os::raw::c_uint;
-pub type AEIO_SndEncoding = A_short;
-pub const AEIO_SS_1: _bindgen_ty_84 = 1;
-pub const AEIO_SS_2: _bindgen_ty_84 = 2;
-pub const AEIO_SS_4: _bindgen_ty_84 = 4;
-pub type _bindgen_ty_84 = ::std::os::raw::c_uint;
-pub type AEIO_SndSampleSize = A_short;
-pub const AEIO_SndChannels_MONO: _bindgen_ty_85 = 1;
-pub const AEIO_SndChannels_STEREO: _bindgen_ty_85 = 2;
+pub type AEIO_IdleFlags = A_long;
+pub const AEIO_SndQuality_APPROX: _bindgen_ty_84 = -1;
+pub const AEIO_SndQuality_LO: _bindgen_ty_84 = 0;
+pub const AEIO_SndQuality_HI: _bindgen_ty_84 = 1;
+pub type _bindgen_ty_84 = ::std::os::raw::c_int;
+pub type AEIO_SndQuality = A_long;
+pub const AEIO_E_UNSIGNED_PCM: _bindgen_ty_85 = 1;
+pub const AEIO_E_SIGNED_PCM: _bindgen_ty_85 = 2;
+pub const AEIO_E_SIGNED_FLOAT: _bindgen_ty_85 = 3;
 pub type _bindgen_ty_85 = ::std::os::raw::c_uint;
-pub type AEIO_SndChannels = A_short;
-pub const AEIO_Marker_URL_FLIP: _bindgen_ty_86 = 0;
-pub const AEIO_Marker_CHAPTER: _bindgen_ty_86 = 1;
-pub const AEIO_Marker_HOTSPOT: _bindgen_ty_86 = 2;
-pub const AEIO_Marker_NONE: _bindgen_ty_86 = 3;
+pub type AEIO_SndEncoding = A_short;
+pub const AEIO_SS_1: _bindgen_ty_86 = 1;
+pub const AEIO_SS_2: _bindgen_ty_86 = 2;
+pub const AEIO_SS_4: _bindgen_ty_86 = 4;
 pub type _bindgen_ty_86 = ::std::os::raw::c_uint;
-pub type AEIO_MarkerType = A_u_char;
-pub const AEIO_Field_FRAME: _bindgen_ty_87 = 0;
-pub const AEIO_Field_UPPER: _bindgen_ty_87 = 1;
-pub const AEIO_Field_LOWER: _bindgen_ty_87 = 2;
+pub type AEIO_SndSampleSize = A_short;
+pub const AEIO_SndChannels_MONO: _bindgen_ty_87 = 1;
+pub const AEIO_SndChannels_STEREO: _bindgen_ty_87 = 2;
 pub type _bindgen_ty_87 = ::std::os::raw::c_uint;
+pub type AEIO_SndChannels = A_short;
+pub const AEIO_Marker_URL_FLIP: _bindgen_ty_88 = 0;
+pub const AEIO_Marker_CHAPTER: _bindgen_ty_88 = 1;
+pub const AEIO_Marker_HOTSPOT: _bindgen_ty_88 = 2;
+pub const AEIO_Marker_NONE: _bindgen_ty_88 = 3;
+pub type _bindgen_ty_88 = ::std::os::raw::c_uint;
+pub type AEIO_MarkerType = A_u_char;
+pub const AEIO_Field_FRAME: _bindgen_ty_89 = 0;
+pub const AEIO_Field_UPPER: _bindgen_ty_89 = 1;
+pub const AEIO_Field_LOWER: _bindgen_ty_89 = 2;
+pub type _bindgen_ty_89 = ::std::os::raw::c_uint;
 pub type AEIO_Field = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -5760,61 +5792,61 @@ pub struct AEIO_Marker {
     pub urlZ0: *const A_char,
     pub url_frame_targetZ0: *const A_char,
 }
-pub const AEIO_FrameBlend_NONE: _bindgen_ty_88 = 0;
-pub const AEIO_FrameBlend_LOW: _bindgen_ty_88 = 1;
-pub const AEIO_FrameBlend_HIGH: _bindgen_ty_88 = 2;
-pub type _bindgen_ty_88 = ::std::os::raw::c_uint;
+pub const AEIO_FrameBlend_NONE: _bindgen_ty_90 = 0;
+pub const AEIO_FrameBlend_LOW: _bindgen_ty_90 = 1;
+pub const AEIO_FrameBlend_HIGH: _bindgen_ty_90 = 2;
+pub type _bindgen_ty_90 = ::std::os::raw::c_uint;
 pub type AEIO_FrameBlend = A_char;
-pub const AEIO_LFlag_ALFA: _bindgen_ty_89 = 1;
-pub const AEIO_LFlag_FIELDS: _bindgen_ty_89 = 2;
-pub const AEIO_LFlag_SIGNATURE: _bindgen_ty_89 = 4;
-pub type _bindgen_ty_89 = ::std::os::raw::c_uint;
-pub type AEIO_LabelFlags = A_long;
-pub const AEIO_InputDepth_1: _bindgen_ty_90 = 1;
-pub const AEIO_InputDepth_2: _bindgen_ty_90 = 2;
-pub const AEIO_InputDepth_4: _bindgen_ty_90 = 4;
-pub const AEIO_InputDepth_8: _bindgen_ty_90 = 8;
-pub const AEIO_InputDepth_16: _bindgen_ty_90 = 16;
-pub const AEIO_InputDepth_24: _bindgen_ty_90 = 24;
-pub const AEIO_InputDepth_30: _bindgen_ty_90 = 30;
-pub const AEIO_InputDepth_32: _bindgen_ty_90 = 32;
-pub const AEIO_InputDepth_GRAY_2: _bindgen_ty_90 = 34;
-pub const AEIO_InputDepth_GRAY_4: _bindgen_ty_90 = 36;
-pub const AEIO_InputDepth_GRAY_8: _bindgen_ty_90 = 40;
-pub const AEIO_InputDepth_48: _bindgen_ty_90 = 48;
-pub const AEIO_InputDepth_64: _bindgen_ty_90 = 64;
-pub const AEIO_InputDepth_96: _bindgen_ty_90 = 96;
-pub const AEIO_InputDepth_128: _bindgen_ty_90 = 128;
-pub const AEIO_InputDepth_GRAY_16: _bindgen_ty_90 = -16;
-pub const AEIO_InputDepth_GRAY_32: _bindgen_ty_90 = -32;
-pub type _bindgen_ty_90 = ::std::os::raw::c_int;
-pub type AEIO_InputDepth = A_long;
-pub const AEIO_SupportedDepthFlags_NONE: _bindgen_ty_91 = 0;
-pub const AEIO_SupportedDepthFlags_DEPTH_1: _bindgen_ty_91 = 2;
-pub const AEIO_SupportedDepthFlags_DEPTH_2: _bindgen_ty_91 = 4;
-pub const AEIO_SupportedDepthFlags_DEPTH_4: _bindgen_ty_91 = 8;
-pub const AEIO_SupportedDepthFlags_DEPTH_8: _bindgen_ty_91 = 16;
-pub const AEIO_SupportedDepthFlags_DEPTH_16: _bindgen_ty_91 = 32;
-pub const AEIO_SupportedDepthFlags_DEPTH_24: _bindgen_ty_91 = 64;
-pub const AEIO_SupportedDepthFlags_DEPTH_32: _bindgen_ty_91 = 128;
-pub const AEIO_SupportedDepthFlags_DEPTH_GRAY_2: _bindgen_ty_91 = 256;
-pub const AEIO_SupportedDepthFlags_DEPTH_GRAY_4: _bindgen_ty_91 = 512;
-pub const AEIO_SupportedDepthFlags_DEPTH_GRAY_8: _bindgen_ty_91 = 1024;
-pub const AEIO_SupportedDepthFlags_DEPTH_48: _bindgen_ty_91 = 2048;
-pub const AEIO_SupportedDepthFlags_DEPTH_64: _bindgen_ty_91 = 4096;
-pub const AEIO_SupportedDepthFlags_DEPTH_GRAY_16: _bindgen_ty_91 = 8192;
-pub const AEIO_SupportedDepthFlags_DEPTH_96: _bindgen_ty_91 = 16384;
-pub const AEIO_SupportedDepthFlags_DEPTH_128: _bindgen_ty_91 = 32768;
-pub const AEIO_SupportedDepthFlags_LAST: _bindgen_ty_91 = 65536;
+pub const AEIO_LFlag_ALFA: _bindgen_ty_91 = 1;
+pub const AEIO_LFlag_FIELDS: _bindgen_ty_91 = 2;
+pub const AEIO_LFlag_SIGNATURE: _bindgen_ty_91 = 4;
 pub type _bindgen_ty_91 = ::std::os::raw::c_uint;
+pub type AEIO_LabelFlags = A_long;
+pub const AEIO_InputDepth_1: _bindgen_ty_92 = 1;
+pub const AEIO_InputDepth_2: _bindgen_ty_92 = 2;
+pub const AEIO_InputDepth_4: _bindgen_ty_92 = 4;
+pub const AEIO_InputDepth_8: _bindgen_ty_92 = 8;
+pub const AEIO_InputDepth_16: _bindgen_ty_92 = 16;
+pub const AEIO_InputDepth_24: _bindgen_ty_92 = 24;
+pub const AEIO_InputDepth_30: _bindgen_ty_92 = 30;
+pub const AEIO_InputDepth_32: _bindgen_ty_92 = 32;
+pub const AEIO_InputDepth_GRAY_2: _bindgen_ty_92 = 34;
+pub const AEIO_InputDepth_GRAY_4: _bindgen_ty_92 = 36;
+pub const AEIO_InputDepth_GRAY_8: _bindgen_ty_92 = 40;
+pub const AEIO_InputDepth_48: _bindgen_ty_92 = 48;
+pub const AEIO_InputDepth_64: _bindgen_ty_92 = 64;
+pub const AEIO_InputDepth_96: _bindgen_ty_92 = 96;
+pub const AEIO_InputDepth_128: _bindgen_ty_92 = 128;
+pub const AEIO_InputDepth_GRAY_16: _bindgen_ty_92 = -16;
+pub const AEIO_InputDepth_GRAY_32: _bindgen_ty_92 = -32;
+pub type _bindgen_ty_92 = ::std::os::raw::c_int;
+pub type AEIO_InputDepth = A_long;
+pub const AEIO_SupportedDepthFlags_NONE: _bindgen_ty_93 = 0;
+pub const AEIO_SupportedDepthFlags_DEPTH_1: _bindgen_ty_93 = 2;
+pub const AEIO_SupportedDepthFlags_DEPTH_2: _bindgen_ty_93 = 4;
+pub const AEIO_SupportedDepthFlags_DEPTH_4: _bindgen_ty_93 = 8;
+pub const AEIO_SupportedDepthFlags_DEPTH_8: _bindgen_ty_93 = 16;
+pub const AEIO_SupportedDepthFlags_DEPTH_16: _bindgen_ty_93 = 32;
+pub const AEIO_SupportedDepthFlags_DEPTH_24: _bindgen_ty_93 = 64;
+pub const AEIO_SupportedDepthFlags_DEPTH_32: _bindgen_ty_93 = 128;
+pub const AEIO_SupportedDepthFlags_DEPTH_GRAY_2: _bindgen_ty_93 = 256;
+pub const AEIO_SupportedDepthFlags_DEPTH_GRAY_4: _bindgen_ty_93 = 512;
+pub const AEIO_SupportedDepthFlags_DEPTH_GRAY_8: _bindgen_ty_93 = 1024;
+pub const AEIO_SupportedDepthFlags_DEPTH_48: _bindgen_ty_93 = 2048;
+pub const AEIO_SupportedDepthFlags_DEPTH_64: _bindgen_ty_93 = 4096;
+pub const AEIO_SupportedDepthFlags_DEPTH_GRAY_16: _bindgen_ty_93 = 8192;
+pub const AEIO_SupportedDepthFlags_DEPTH_96: _bindgen_ty_93 = 16384;
+pub const AEIO_SupportedDepthFlags_DEPTH_128: _bindgen_ty_93 = 32768;
+pub const AEIO_SupportedDepthFlags_LAST: _bindgen_ty_93 = 65536;
+pub type _bindgen_ty_93 = ::std::os::raw::c_uint;
 pub type AEIO_SupportedDepthFlags = A_long;
-pub const AEIO_Phase_NO_PULLDOWN: _bindgen_ty_92 = 0;
-pub const AEIO_Phase_WSSWW: _bindgen_ty_92 = 1;
-pub const AEIO_Phase_SSWWW: _bindgen_ty_92 = 2;
-pub const AEIO_Phase_SWWWS: _bindgen_ty_92 = 3;
-pub const AEIO_Phase_WWWSS: _bindgen_ty_92 = 4;
-pub const AEIO_Phase_WWSSW: _bindgen_ty_92 = 5;
-pub type _bindgen_ty_92 = ::std::os::raw::c_uint;
+pub const AEIO_Phase_NO_PULLDOWN: _bindgen_ty_94 = 0;
+pub const AEIO_Phase_WSSWW: _bindgen_ty_94 = 1;
+pub const AEIO_Phase_SSWWW: _bindgen_ty_94 = 2;
+pub const AEIO_Phase_SWWWS: _bindgen_ty_94 = 3;
+pub const AEIO_Phase_WWWSS: _bindgen_ty_94 = 4;
+pub const AEIO_Phase_WWSSW: _bindgen_ty_94 = 5;
+pub type _bindgen_ty_94 = ::std::os::raw::c_uint;
 pub type AEIO_Pulldown = A_long;
 pub type AEIO_FileType = A_long;
 pub type AEIO_Creator = A_long;
@@ -5857,15 +5889,15 @@ pub struct AEIO_RationalScale {
     pub x: A_Ratio,
     pub y: A_Ratio,
 }
-pub const AEIO_AlphaPremul: _bindgen_ty_93 = 1;
-pub const AEIO_AlphaInverted: _bindgen_ty_93 = 2;
-pub type _bindgen_ty_93 = ::std::os::raw::c_uint;
+pub const AEIO_AlphaPremul: _bindgen_ty_95 = 1;
+pub const AEIO_AlphaInverted: _bindgen_ty_95 = 2;
+pub type _bindgen_ty_95 = ::std::os::raw::c_uint;
 pub type AEIO_AlphaFlags = A_u_long;
-pub const AEIO_Alpha_STRAIGHT: _bindgen_ty_94 = 0;
-pub const AEIO_Alpha_PREMUL: _bindgen_ty_94 = 1;
-pub const AEIO_Alpha_IGNORE: _bindgen_ty_94 = 2;
-pub const AEIO_Alpha_NONE: _bindgen_ty_94 = 3;
-pub type _bindgen_ty_94 = ::std::os::raw::c_uint;
+pub const AEIO_Alpha_STRAIGHT: _bindgen_ty_96 = 0;
+pub const AEIO_Alpha_PREMUL: _bindgen_ty_96 = 1;
+pub const AEIO_Alpha_IGNORE: _bindgen_ty_96 = 2;
+pub const AEIO_Alpha_NONE: _bindgen_ty_96 = 3;
+pub type _bindgen_ty_96 = ::std::os::raw::c_uint;
 pub type AEIO_AlphaType = A_u_char;
 #[repr(C, packed(2))]
 #[derive(Debug, Copy, Clone)]
@@ -5906,67 +5938,75 @@ pub struct AEIO_DrawFramePB {
     pub required_region0: A_LRect,
     pub inter: AEIO_InterruptFuncs,
 }
-pub const AEIO_RenderMarkerFlag_NONE: _bindgen_ty_95 = 0;
-pub const AEIO_RenderMarkerFlag_COMP: _bindgen_ty_95 = 1;
-pub type _bindgen_ty_95 = ::std::os::raw::c_uint;
-pub type AEIO_RenderMarkerFlag = A_long;
-pub const AEIO_MFlag_NONE: _bindgen_ty_96 = 0;
-pub const AEIO_MFlag_INPUT: _bindgen_ty_96 = 1;
-pub const AEIO_MFlag_OUTPUT: _bindgen_ty_96 = 2;
-pub const AEIO_MFlag_FILE: _bindgen_ty_96 = 4;
-pub const AEIO_MFlag_STILL: _bindgen_ty_96 = 8;
-pub const AEIO_MFlag_VIDEO: _bindgen_ty_96 = 16;
-pub const AEIO_MFlag_AUDIO: _bindgen_ty_96 = 32;
-pub const AEIO_MFlag_NO_TIME: _bindgen_ty_96 = 64;
-pub const AEIO_MFlag_INTERACTIVE_GET: _bindgen_ty_96 = 128;
-pub const AEIO_MFlag_INTERACTIVE_PUT: _bindgen_ty_96 = 256;
-pub const AEIO_MFlag_CANT_CLIP: _bindgen_ty_96 = 512;
-pub const AEIO_MFlag_MUST_INTERACT_PUT: _bindgen_ty_96 = 1024;
-pub const AEIO_MFlag_CANT_SOUND_INTERLEAVE: _bindgen_ty_96 = 2048;
-pub const AEIO_MFlag_CAN_ADD_FRAMES_NON_LINEAR: _bindgen_ty_96 = 4096;
-pub const AEIO_MFlag_HOST_DEPTH_DIALOG: _bindgen_ty_96 = 8192;
-pub const AEIO_MFlag_HOST_FRAME_START_DIALOG: _bindgen_ty_96 = 16384;
-pub const AEIO_MFlag_RESERVED1: _bindgen_ty_96 = 32768;
-pub const AEIO_MFlag_NO_OPTIONS: _bindgen_ty_96 = 65536;
-pub const AEIO_MFlag_RESERVED2: _bindgen_ty_96 = 131072;
-pub const AEIO_MFlag_RESERVED3: _bindgen_ty_96 = 262144;
-pub const AEIO_MFlag_NO_PIXELS: _bindgen_ty_96 = 524288;
-pub const AEIO_MFlag_SEQUENCE_OPTIONS_OK: _bindgen_ty_96 = 1048576;
-pub const AEIO_MFlag_INPUT_OPTIONS: _bindgen_ty_96 = 2097152;
-pub const AEIO_MFlag_HSF_AWARE: _bindgen_ty_96 = 4194304;
-pub const AEIO_MFlag_HAS_LAYERS: _bindgen_ty_96 = 8388608;
-pub const AEIO_MFlag_SCRAP: _bindgen_ty_96 = 16777216;
-pub const AEIO_MFlag_NO_UI: _bindgen_ty_96 = 33554432;
-pub const AEIO_MFlag_SEQ_OPTIONS_DLG: _bindgen_ty_96 = 67108864;
-pub const AEIO_MFlag_HAS_AUX_DATA: _bindgen_ty_96 = 134217728;
-pub const AEIO_MFlag_HAS_META_DATA: _bindgen_ty_96 = 268435456;
-pub const AEIO_MFlag_CAN_DO_MARKERS: _bindgen_ty_96 = 536870912;
-pub const AEIO_MFlag_CAN_DRAW_DEEP: _bindgen_ty_96 = 1073741824;
-pub const AEIO_MFlag_RESERVED4: _bindgen_ty_96 = 2147483648;
-#[doc = "\n PUBLIC ///////////////////////////////////\n"]
-pub type _bindgen_ty_96 = ::std::os::raw::c_uint;
-pub type AEIO_ModuleFlags = A_u_long;
-pub const AEIO_MFlag2_NONE: _bindgen_ty_97 = 0;
-pub const AEIO_MFlag2_AUDIO_OPTIONS: _bindgen_ty_97 = 1;
-pub const AEIO_MFlag2_RESERVED1: _bindgen_ty_97 = 2;
-pub const AEIO_MFlag2_SEND_ADDMARKER_BEFORE_ADDFRAME: _bindgen_ty_97 = 4;
-pub const AEIO_MFlag2_CAN_DO_MARKERS_2: _bindgen_ty_97 = 8;
-pub const AEIO_MFlag2_CAN_DRAW_FLOAT: _bindgen_ty_97 = 16;
-pub const AEIO_MFlag2_RESERVED2: _bindgen_ty_97 = 32;
-pub const AEIO_MFlag2_CAN_DO_AUDIO_32: _bindgen_ty_97 = 64;
-pub const AEIO_MFlag2_RESERVED3: _bindgen_ty_97 = 128;
-pub const AEIO_MFlag2_SUPPORTS_ICC_PROFILES: _bindgen_ty_97 = 256;
-pub const AEIO_MFlag2_CAN_DO_MARKERS_3: _bindgen_ty_97 = 512;
-pub const AEIO_MFlag2_SEND_ADDMARKER_BEFORE_STARTADDING: _bindgen_ty_97 = 1024;
-pub const AEIO_MFlag2_RESERVED4: _bindgen_ty_97 = 2048;
-pub const AEIO_MFlag2_USES_QUICKTIME: _bindgen_ty_97 = 4096;
-pub const AEIO_MFlag2_RESERVED5: _bindgen_ty_97 = 8192;
-pub const AEIO_MFlag2_RESERVED6: _bindgen_ty_97 = 16384;
-pub const AEIO_MFlag2_RESERVED7: _bindgen_ty_97 = 32768;
-pub const AEIO_MFlag2_RESERVED8: _bindgen_ty_97 = 65536;
-pub const AEIO_MFlag2_RESERVED9: _bindgen_ty_97 = 131072;
-pub const AEIO_MFlag2_RESERVED10: _bindgen_ty_97 = 262144;
+pub const AEIO_RenderMarkerFlag_NONE: _bindgen_ty_97 = 0;
+pub const AEIO_RenderMarkerFlag_COMP: _bindgen_ty_97 = 1;
 pub type _bindgen_ty_97 = ::std::os::raw::c_uint;
+pub type AEIO_RenderMarkerFlag = A_long;
+pub const AEIO_MFlag_NONE: _bindgen_ty_98 = 0;
+pub const AEIO_MFlag_INPUT: _bindgen_ty_98 = 1;
+pub const AEIO_MFlag_OUTPUT: _bindgen_ty_98 = 2;
+pub const AEIO_MFlag_FILE: _bindgen_ty_98 = 4;
+pub const AEIO_MFlag_STILL: _bindgen_ty_98 = 8;
+pub const AEIO_MFlag_VIDEO: _bindgen_ty_98 = 16;
+pub const AEIO_MFlag_AUDIO: _bindgen_ty_98 = 32;
+pub const AEIO_MFlag_NO_TIME: _bindgen_ty_98 = 64;
+pub const AEIO_MFlag_INTERACTIVE_GET: _bindgen_ty_98 = 128;
+pub const AEIO_MFlag_INTERACTIVE_PUT: _bindgen_ty_98 = 256;
+pub const AEIO_MFlag_CANT_CLIP: _bindgen_ty_98 = 512;
+pub const AEIO_MFlag_MUST_INTERACT_PUT: _bindgen_ty_98 = 1024;
+pub const AEIO_MFlag_CANT_SOUND_INTERLEAVE: _bindgen_ty_98 = 2048;
+pub const AEIO_MFlag_CAN_ADD_FRAMES_NON_LINEAR: _bindgen_ty_98 = 4096;
+pub const AEIO_MFlag_HOST_DEPTH_DIALOG: _bindgen_ty_98 = 8192;
+pub const AEIO_MFlag_HOST_FRAME_START_DIALOG: _bindgen_ty_98 = 16384;
+pub const AEIO_MFlag_RESERVED1: _bindgen_ty_98 = 32768;
+pub const AEIO_MFlag_NO_OPTIONS: _bindgen_ty_98 = 65536;
+pub const AEIO_MFlag_RESERVED2: _bindgen_ty_98 = 131072;
+pub const AEIO_MFlag_RESERVED3: _bindgen_ty_98 = 262144;
+pub const AEIO_MFlag_NO_PIXELS: _bindgen_ty_98 = 524288;
+pub const AEIO_MFlag_SEQUENCE_OPTIONS_OK: _bindgen_ty_98 = 1048576;
+pub const AEIO_MFlag_INPUT_OPTIONS: _bindgen_ty_98 = 2097152;
+pub const AEIO_MFlag_HSF_AWARE: _bindgen_ty_98 = 4194304;
+pub const AEIO_MFlag_HAS_LAYERS: _bindgen_ty_98 = 8388608;
+pub const AEIO_MFlag_SCRAP: _bindgen_ty_98 = 16777216;
+pub const AEIO_MFlag_NO_UI: _bindgen_ty_98 = 33554432;
+pub const AEIO_MFlag_SEQ_OPTIONS_DLG: _bindgen_ty_98 = 67108864;
+pub const AEIO_MFlag_HAS_AUX_DATA: _bindgen_ty_98 = 134217728;
+pub const AEIO_MFlag_HAS_META_DATA: _bindgen_ty_98 = 268435456;
+pub const AEIO_MFlag_CAN_DO_MARKERS: _bindgen_ty_98 = 536870912;
+pub const AEIO_MFlag_CAN_DRAW_DEEP: _bindgen_ty_98 = 1073741824;
+pub const AEIO_MFlag_RESERVED4: _bindgen_ty_98 = 2147483648;
+#[doc = "\n PUBLIC ///////////////////////////////////\n"]
+pub type _bindgen_ty_98 = ::std::os::raw::c_uint;
+pub type AEIO_ModuleFlags = A_u_long;
+pub const AEIO_MFlag2_NONE: _bindgen_ty_99 = 0;
+pub const AEIO_MFlag2_AUDIO_OPTIONS: _bindgen_ty_99 = 1;
+pub const AEIO_MFlag2_RESERVED1: _bindgen_ty_99 = 2;
+pub const AEIO_MFlag2_SEND_ADDMARKER_BEFORE_ADDFRAME: _bindgen_ty_99 = 4;
+pub const AEIO_MFlag2_CAN_DO_MARKERS_2: _bindgen_ty_99 = 8;
+pub const AEIO_MFlag2_CAN_DRAW_FLOAT: _bindgen_ty_99 = 16;
+pub const AEIO_MFlag2_RESERVED2: _bindgen_ty_99 = 32;
+pub const AEIO_MFlag2_CAN_DO_AUDIO_32: _bindgen_ty_99 = 64;
+pub const AEIO_MFlag2_RESERVED3: _bindgen_ty_99 = 128;
+pub const AEIO_MFlag2_SUPPORTS_ICC_PROFILES: _bindgen_ty_99 = 256;
+pub const AEIO_MFlag2_CAN_DO_MARKERS_3: _bindgen_ty_99 = 512;
+pub const AEIO_MFlag2_SEND_ADDMARKER_BEFORE_STARTADDING: _bindgen_ty_99 = 1024;
+pub const AEIO_MFlag2_RESERVED4: _bindgen_ty_99 = 2048;
+pub const AEIO_MFlag2_USES_QUICKTIME: _bindgen_ty_99 = 4096;
+pub const AEIO_MFlag2_RESERVED5: _bindgen_ty_99 = 8192;
+pub const AEIO_MFlag2_RESERVED6: _bindgen_ty_99 = 16384;
+pub const AEIO_MFlag2_RESERVED7: _bindgen_ty_99 = 32768;
+pub const AEIO_MFlag2_RESERVED8: _bindgen_ty_99 = 65536;
+pub const AEIO_MFlag2_RESERVED9: _bindgen_ty_99 = 131072;
+pub const AEIO_MFlag2_RESERVED10: _bindgen_ty_99 = 262144;
+pub const AEIO_MFlag2_RESERVED11: _bindgen_ty_99 = 524288;
+pub const AEIO_MFlag2_RESERVED12: _bindgen_ty_99 = 1048576;
+pub const AEIO_MFlag2_RESERVED21: _bindgen_ty_99 = 2097152;
+pub const AEIO_MFlag2_RESERVED22: _bindgen_ty_99 = 4194304;
+pub const AEIO_MFlag2_RESERVED23: _bindgen_ty_99 = 8388608;
+pub const AEIO_MFlag2_RESERVED24: _bindgen_ty_99 = 16777216;
+pub const AEIO_MFlag2_RESERVED25: _bindgen_ty_99 = 33554432;
+pub const AEIO_MFlag2_SUPPORTS_CICP: _bindgen_ty_99 = 67108864;
+pub type _bindgen_ty_99 = ::std::os::raw::c_uint;
 pub type AEIO_ModuleFlags2 = A_u_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6695,15 +6735,15 @@ pub struct _AEGP_CancelRefcon {
     _unused: [u8; 0],
 }
 pub type AEGP_CancelRefcon = *mut _AEGP_CancelRefcon;
-pub const AEGP_Platform_MAC: _bindgen_ty_98 = 0;
-pub const AEGP_Platform_WIN: _bindgen_ty_98 = 1;
-pub type _bindgen_ty_98 = ::std::os::raw::c_uint;
+pub const AEGP_Platform_MAC: _bindgen_ty_100 = 0;
+pub const AEGP_Platform_WIN: _bindgen_ty_100 = 1;
+pub type _bindgen_ty_100 = ::std::os::raw::c_uint;
 pub type AEGP_Platform = A_long;
-pub const AEGP_ProjBitDepth_8: _bindgen_ty_99 = 0;
-pub const AEGP_ProjBitDepth_16: _bindgen_ty_99 = 1;
-pub const AEGP_ProjBitDepth_32: _bindgen_ty_99 = 2;
-pub const AEGP_ProjBitDepth_NUM_VALID_DEPTHS: _bindgen_ty_99 = 3;
-pub type _bindgen_ty_99 = ::std::os::raw::c_uint;
+pub const AEGP_ProjBitDepth_8: _bindgen_ty_101 = 0;
+pub const AEGP_ProjBitDepth_16: _bindgen_ty_101 = 1;
+pub const AEGP_ProjBitDepth_32: _bindgen_ty_101 = 2;
+pub const AEGP_ProjBitDepth_NUM_VALID_DEPTHS: _bindgen_ty_101 = 3;
+pub type _bindgen_ty_101 = ::std::os::raw::c_uint;
 pub type AEGP_ProjBitDepth = A_char;
 pub type AEGP_Index = A_long;
 pub type AEGP_LayerIDVal = A_long;
@@ -6716,51 +6756,51 @@ pub struct AEGP_ColorVal {
     pub greenF: A_FpLong,
     pub blueF: A_FpLong,
 }
-pub const AEGP_CameraType_NONE: _bindgen_ty_100 = -1;
-pub const AEGP_CameraType_PERSPECTIVE: _bindgen_ty_100 = 0;
-pub const AEGP_CameraType_ORTHOGRAPHIC: _bindgen_ty_100 = 1;
-pub const AEGP_CameraType_NUM_TYPES: _bindgen_ty_100 = 2;
-pub type _bindgen_ty_100 = ::std::os::raw::c_int;
+pub const AEGP_CameraType_NONE: _bindgen_ty_102 = -1;
+pub const AEGP_CameraType_PERSPECTIVE: _bindgen_ty_102 = 0;
+pub const AEGP_CameraType_ORTHOGRAPHIC: _bindgen_ty_102 = 1;
+pub const AEGP_CameraType_NUM_TYPES: _bindgen_ty_102 = 2;
+pub type _bindgen_ty_102 = ::std::os::raw::c_int;
 pub type AEGP_CameraType = A_u_long;
-pub const AEGP_FootageDepth_1: _bindgen_ty_101 = 1;
-pub const AEGP_FootageDepth_2: _bindgen_ty_101 = 2;
-pub const AEGP_FootageDepth_4: _bindgen_ty_101 = 4;
-pub const AEGP_FootageDepth_8: _bindgen_ty_101 = 8;
-pub const AEGP_FootageDepth_16: _bindgen_ty_101 = 16;
-pub const AEGP_FootageDepth_24: _bindgen_ty_101 = 24;
-pub const AEGP_FootageDepth_30: _bindgen_ty_101 = 30;
-pub const AEGP_FootageDepth_32: _bindgen_ty_101 = 32;
-pub const AEGP_FootageDepth_GRAY_2: _bindgen_ty_101 = 34;
-pub const AEGP_FootageDepth_GRAY_4: _bindgen_ty_101 = 36;
-pub const AEGP_FootageDepth_GRAY_8: _bindgen_ty_101 = 40;
-pub const AEGP_FootageDepth_48: _bindgen_ty_101 = 48;
-pub const AEGP_FootageDepth_64: _bindgen_ty_101 = 64;
-pub const AEGP_FootageDepth_GRAY_16: _bindgen_ty_101 = -16;
-pub type _bindgen_ty_101 = ::std::os::raw::c_int;
-pub const AEGP_FilmSizeUnits_NONE: _bindgen_ty_102 = 0;
-pub const AEGP_FilmSizeUnits_HORIZONTAL: _bindgen_ty_102 = 1;
-pub const AEGP_FilmSizeUnits_VERTICAL: _bindgen_ty_102 = 2;
-pub const AEGP_FilmSizeUnits_DIAGONAL: _bindgen_ty_102 = 3;
-pub type _bindgen_ty_102 = ::std::os::raw::c_uint;
-pub type AEGP_FilmSizeUnits = A_long;
-pub const AEGP_LightType_NONE: _bindgen_ty_103 = -1;
-pub const AEGP_LightType_PARALLEL: _bindgen_ty_103 = 0;
-pub const AEGP_LightType_SPOT: _bindgen_ty_103 = 1;
-pub const AEGP_LightType_POINT: _bindgen_ty_103 = 2;
-pub const AEGP_LightType_AMBIENT: _bindgen_ty_103 = 3;
-pub const AEGP_LightType_ENVIRONMENT: _bindgen_ty_103 = 4;
-pub const AEGP_LightType_NUM_TYPES: _bindgen_ty_103 = 5;
+pub const AEGP_FootageDepth_1: _bindgen_ty_103 = 1;
+pub const AEGP_FootageDepth_2: _bindgen_ty_103 = 2;
+pub const AEGP_FootageDepth_4: _bindgen_ty_103 = 4;
+pub const AEGP_FootageDepth_8: _bindgen_ty_103 = 8;
+pub const AEGP_FootageDepth_16: _bindgen_ty_103 = 16;
+pub const AEGP_FootageDepth_24: _bindgen_ty_103 = 24;
+pub const AEGP_FootageDepth_30: _bindgen_ty_103 = 30;
+pub const AEGP_FootageDepth_32: _bindgen_ty_103 = 32;
+pub const AEGP_FootageDepth_GRAY_2: _bindgen_ty_103 = 34;
+pub const AEGP_FootageDepth_GRAY_4: _bindgen_ty_103 = 36;
+pub const AEGP_FootageDepth_GRAY_8: _bindgen_ty_103 = 40;
+pub const AEGP_FootageDepth_48: _bindgen_ty_103 = 48;
+pub const AEGP_FootageDepth_64: _bindgen_ty_103 = 64;
+pub const AEGP_FootageDepth_GRAY_16: _bindgen_ty_103 = -16;
 pub type _bindgen_ty_103 = ::std::os::raw::c_int;
-pub type AEGP_LightType = A_u_long;
-pub const AEGP_LightFalloff_NONE: _bindgen_ty_104 = 0;
-pub const AEGP_LightFalloff_SMOOTH: _bindgen_ty_104 = 1;
-pub const AEGP_LightFalloff_INVERSE_SQUARE_CLAMPED: _bindgen_ty_104 = 2;
+pub const AEGP_FilmSizeUnits_NONE: _bindgen_ty_104 = 0;
+pub const AEGP_FilmSizeUnits_HORIZONTAL: _bindgen_ty_104 = 1;
+pub const AEGP_FilmSizeUnits_VERTICAL: _bindgen_ty_104 = 2;
+pub const AEGP_FilmSizeUnits_DIAGONAL: _bindgen_ty_104 = 3;
 pub type _bindgen_ty_104 = ::std::os::raw::c_uint;
+pub type AEGP_FilmSizeUnits = A_long;
+pub const AEGP_LightType_NONE: _bindgen_ty_105 = -1;
+pub const AEGP_LightType_PARALLEL: _bindgen_ty_105 = 0;
+pub const AEGP_LightType_SPOT: _bindgen_ty_105 = 1;
+pub const AEGP_LightType_POINT: _bindgen_ty_105 = 2;
+pub const AEGP_LightType_AMBIENT: _bindgen_ty_105 = 3;
+pub const AEGP_LightType_ENVIRONMENT: _bindgen_ty_105 = 4;
+pub const AEGP_LightType_NUM_TYPES: _bindgen_ty_105 = 5;
+pub type _bindgen_ty_105 = ::std::os::raw::c_int;
+pub type AEGP_LightType = A_u_long;
+pub const AEGP_LightFalloff_NONE: _bindgen_ty_106 = 0;
+pub const AEGP_LightFalloff_SMOOTH: _bindgen_ty_106 = 1;
+pub const AEGP_LightFalloff_INVERSE_SQUARE_CLAMPED: _bindgen_ty_106 = 2;
+pub type _bindgen_ty_106 = ::std::os::raw::c_uint;
 pub type AEGP_LightFalloffType = A_u_long;
-pub const AEGP_TimeDisplayType_TIMECODE: _bindgen_ty_105 = 0;
-pub const AEGP_TimeDisplayType_FRAMES: _bindgen_ty_105 = 1;
-pub const AEGP_TimeDisplayType_FEET_AND_FRAMES: _bindgen_ty_105 = 2;
-pub type _bindgen_ty_105 = ::std::os::raw::c_uint;
+pub const AEGP_TimeDisplayType_TIMECODE: _bindgen_ty_107 = 0;
+pub const AEGP_TimeDisplayType_FRAMES: _bindgen_ty_107 = 1;
+pub const AEGP_TimeDisplayType_FEET_AND_FRAMES: _bindgen_ty_107 = 2;
+pub type _bindgen_ty_107 = ::std::os::raw::c_uint;
 pub type AEGP_TimeDisplayType = A_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6772,18 +6812,18 @@ pub struct AEGP_TimeDisplay2 {
     pub starting_frameL: A_long,
     pub auto_timecode_baseB: A_Boolean,
 }
-pub const AEGP_TimeDisplay_TIMECODE: _bindgen_ty_106 = 0;
-pub const AEGP_TimeDisplay_FRAMES: _bindgen_ty_106 = 1;
-pub type _bindgen_ty_106 = ::std::os::raw::c_uint;
-pub type AEGP_TimeDisplayMode = ::std::os::raw::c_char;
-pub const AEGP_SourceTimecode_ZERO: _bindgen_ty_107 = 0;
-pub const AEGP_SourceTimecode_SOURCE_TIMECODE: _bindgen_ty_107 = 1;
-pub type _bindgen_ty_107 = ::std::os::raw::c_uint;
-pub type AEGP_SourceTimecodeDisplayMode = ::std::os::raw::c_char;
-pub const AEGP_Frames_ZERO_BASED: _bindgen_ty_108 = 0;
-pub const AEGP_Frames_ONE_BASED: _bindgen_ty_108 = 1;
-pub const AEGP_Frames_TIMECODE_CONVERSION: _bindgen_ty_108 = 2;
+pub const AEGP_TimeDisplay_TIMECODE: _bindgen_ty_108 = 0;
+pub const AEGP_TimeDisplay_FRAMES: _bindgen_ty_108 = 1;
 pub type _bindgen_ty_108 = ::std::os::raw::c_uint;
+pub type AEGP_TimeDisplayMode = ::std::os::raw::c_char;
+pub const AEGP_SourceTimecode_ZERO: _bindgen_ty_109 = 0;
+pub const AEGP_SourceTimecode_SOURCE_TIMECODE: _bindgen_ty_109 = 1;
+pub type _bindgen_ty_109 = ::std::os::raw::c_uint;
+pub type AEGP_SourceTimecodeDisplayMode = ::std::os::raw::c_char;
+pub const AEGP_Frames_ZERO_BASED: _bindgen_ty_110 = 0;
+pub const AEGP_Frames_ONE_BASED: _bindgen_ty_110 = 1;
+pub const AEGP_Frames_TIMECODE_CONVERSION: _bindgen_ty_110 = 2;
+pub type _bindgen_ty_110 = ::std::os::raw::c_uint;
 pub type AEGP_FramesDisplayMode = ::std::os::raw::c_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6843,12 +6883,12 @@ pub struct AEGP_ProjSuite6 {
         unsafe extern "C" fn(projectH: AEGP_ProjectH, bit_depth: AEGP_ProjBitDepth) -> A_Err,
     >,
 }
-pub const AEGP_SoundEncoding_UNSIGNED_PCM: _bindgen_ty_109 = 3;
-pub const AEGP_SoundEncoding_SIGNED_PCM: _bindgen_ty_109 = 4;
-pub const AEGP_SoundEncoding_FLOAT: _bindgen_ty_109 = 5;
-pub const AEGP_SoundEncoding_END: _bindgen_ty_109 = 6;
-pub const AEGP_SoundEncoding_BEGIN: _bindgen_ty_109 = 3;
-pub type _bindgen_ty_109 = ::std::os::raw::c_uint;
+pub const AEGP_SoundEncoding_UNSIGNED_PCM: _bindgen_ty_111 = 3;
+pub const AEGP_SoundEncoding_SIGNED_PCM: _bindgen_ty_111 = 4;
+pub const AEGP_SoundEncoding_FLOAT: _bindgen_ty_111 = 5;
+pub const AEGP_SoundEncoding_END: _bindgen_ty_111 = 6;
+pub const AEGP_SoundEncoding_BEGIN: _bindgen_ty_111 = 3;
+pub type _bindgen_ty_111 = ::std::os::raw::c_uint;
 pub type AEGP_SoundEncoding = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -6858,57 +6898,57 @@ pub struct AEGP_SoundDataFormat {
     pub bytes_per_sampleL: A_long,
     pub num_channelsL: A_long,
 }
-pub const AEGP_ItemType_NONE: _bindgen_ty_110 = 0;
-pub const AEGP_ItemType_FOLDER: _bindgen_ty_110 = 1;
-pub const AEGP_ItemType_COMP: _bindgen_ty_110 = 2;
-pub const AEGP_ItemType_SOLID_defunct: _bindgen_ty_110 = 3;
-pub const AEGP_ItemType_FOOTAGE: _bindgen_ty_110 = 4;
-pub const AEGP_ItemType_NUM_TYPES1: _bindgen_ty_110 = 5;
-pub type _bindgen_ty_110 = ::std::os::raw::c_uint;
+pub const AEGP_ItemType_NONE: _bindgen_ty_112 = 0;
+pub const AEGP_ItemType_FOLDER: _bindgen_ty_112 = 1;
+pub const AEGP_ItemType_COMP: _bindgen_ty_112 = 2;
+pub const AEGP_ItemType_SOLID_defunct: _bindgen_ty_112 = 3;
+pub const AEGP_ItemType_FOOTAGE: _bindgen_ty_112 = 4;
+pub const AEGP_ItemType_NUM_TYPES1: _bindgen_ty_112 = 5;
+pub type _bindgen_ty_112 = ::std::os::raw::c_uint;
 pub type AEGP_ItemType = A_short;
-pub const AEGP_ItemFlag_MISSING: _bindgen_ty_111 = 1;
-pub const AEGP_ItemFlag_HAS_PROXY: _bindgen_ty_111 = 2;
-pub const AEGP_ItemFlag_USING_PROXY: _bindgen_ty_111 = 4;
-pub const AEGP_ItemFlag_MISSING_PROXY: _bindgen_ty_111 = 8;
-pub const AEGP_ItemFlag_HAS_VIDEO: _bindgen_ty_111 = 16;
-pub const AEGP_ItemFlag_HAS_AUDIO: _bindgen_ty_111 = 32;
-pub const AEGP_ItemFlag_STILL: _bindgen_ty_111 = 64;
-pub const AEGP_ItemFlag_HAS_ACTIVE_AUDIO: _bindgen_ty_111 = 128;
-pub type _bindgen_ty_111 = ::std::os::raw::c_uint;
-pub type AEGP_ItemFlags = A_long;
-pub const AEGP_Label_NONE: _bindgen_ty_112 = -1;
-pub const AEGP_Label_NO_LABEL: _bindgen_ty_112 = 0;
-pub const AEGP_Label_1: _bindgen_ty_112 = 1;
-pub const AEGP_Label_2: _bindgen_ty_112 = 2;
-pub const AEGP_Label_3: _bindgen_ty_112 = 3;
-pub const AEGP_Label_4: _bindgen_ty_112 = 4;
-pub const AEGP_Label_5: _bindgen_ty_112 = 5;
-pub const AEGP_Label_6: _bindgen_ty_112 = 6;
-pub const AEGP_Label_7: _bindgen_ty_112 = 7;
-pub const AEGP_Label_8: _bindgen_ty_112 = 8;
-pub const AEGP_Label_9: _bindgen_ty_112 = 9;
-pub const AEGP_Label_10: _bindgen_ty_112 = 10;
-pub const AEGP_Label_11: _bindgen_ty_112 = 11;
-pub const AEGP_Label_12: _bindgen_ty_112 = 12;
-pub const AEGP_Label_13: _bindgen_ty_112 = 13;
-pub const AEGP_Label_14: _bindgen_ty_112 = 14;
-pub const AEGP_Label_15: _bindgen_ty_112 = 15;
-pub const AEGP_Label_16: _bindgen_ty_112 = 16;
-pub const AEGP_Label_NUMTYPES: _bindgen_ty_112 = 17;
-pub type _bindgen_ty_112 = ::std::os::raw::c_int;
-pub type AEGP_LabelID = A_char;
-pub const AEGP_PersistentType_MACHINE_SPECIFIC: _bindgen_ty_113 = 0;
-pub const AEGP_PersistentType_MACHINE_INDEPENDENT: _bindgen_ty_113 = 1;
-pub const AEGP_PersistentType_MACHINE_INDEPENDENT_RENDER: _bindgen_ty_113 = 2;
-pub const AEGP_PersistentType_MACHINE_INDEPENDENT_OUTPUT: _bindgen_ty_113 = 3;
-pub const AEGP_PersistentType_MACHINE_INDEPENDENT_COMPOSITION: _bindgen_ty_113 = 4;
-pub const AEGP_PersistentType_MACHINE_SPECIFIC_TEXT: _bindgen_ty_113 = 5;
-pub const AEGP_PersistentType_MACHINE_SPECIFIC_PAINT: _bindgen_ty_113 = 6;
-pub const AEGP_PersistentType_MACHINE_SPECIFIC_EFFECTS: _bindgen_ty_113 = 7;
-pub const AEGP_PersistentType_MACHINE_SPECIFIC_EXPRESSION_SNIPPETS: _bindgen_ty_113 = 8;
-pub const AEGP_PersistentType_MACHINE_SPECIFIC_SCRIPT_SNIPPETS: _bindgen_ty_113 = 9;
-pub const AEGP_PersistentType_NUMTYPES: _bindgen_ty_113 = 10;
+pub const AEGP_ItemFlag_MISSING: _bindgen_ty_113 = 1;
+pub const AEGP_ItemFlag_HAS_PROXY: _bindgen_ty_113 = 2;
+pub const AEGP_ItemFlag_USING_PROXY: _bindgen_ty_113 = 4;
+pub const AEGP_ItemFlag_MISSING_PROXY: _bindgen_ty_113 = 8;
+pub const AEGP_ItemFlag_HAS_VIDEO: _bindgen_ty_113 = 16;
+pub const AEGP_ItemFlag_HAS_AUDIO: _bindgen_ty_113 = 32;
+pub const AEGP_ItemFlag_STILL: _bindgen_ty_113 = 64;
+pub const AEGP_ItemFlag_HAS_ACTIVE_AUDIO: _bindgen_ty_113 = 128;
 pub type _bindgen_ty_113 = ::std::os::raw::c_uint;
+pub type AEGP_ItemFlags = A_long;
+pub const AEGP_Label_NONE: _bindgen_ty_114 = -1;
+pub const AEGP_Label_NO_LABEL: _bindgen_ty_114 = 0;
+pub const AEGP_Label_1: _bindgen_ty_114 = 1;
+pub const AEGP_Label_2: _bindgen_ty_114 = 2;
+pub const AEGP_Label_3: _bindgen_ty_114 = 3;
+pub const AEGP_Label_4: _bindgen_ty_114 = 4;
+pub const AEGP_Label_5: _bindgen_ty_114 = 5;
+pub const AEGP_Label_6: _bindgen_ty_114 = 6;
+pub const AEGP_Label_7: _bindgen_ty_114 = 7;
+pub const AEGP_Label_8: _bindgen_ty_114 = 8;
+pub const AEGP_Label_9: _bindgen_ty_114 = 9;
+pub const AEGP_Label_10: _bindgen_ty_114 = 10;
+pub const AEGP_Label_11: _bindgen_ty_114 = 11;
+pub const AEGP_Label_12: _bindgen_ty_114 = 12;
+pub const AEGP_Label_13: _bindgen_ty_114 = 13;
+pub const AEGP_Label_14: _bindgen_ty_114 = 14;
+pub const AEGP_Label_15: _bindgen_ty_114 = 15;
+pub const AEGP_Label_16: _bindgen_ty_114 = 16;
+pub const AEGP_Label_NUMTYPES: _bindgen_ty_114 = 17;
+pub type _bindgen_ty_114 = ::std::os::raw::c_int;
+pub type AEGP_LabelID = A_char;
+pub const AEGP_PersistentType_MACHINE_SPECIFIC: _bindgen_ty_115 = 0;
+pub const AEGP_PersistentType_MACHINE_INDEPENDENT: _bindgen_ty_115 = 1;
+pub const AEGP_PersistentType_MACHINE_INDEPENDENT_RENDER: _bindgen_ty_115 = 2;
+pub const AEGP_PersistentType_MACHINE_INDEPENDENT_OUTPUT: _bindgen_ty_115 = 3;
+pub const AEGP_PersistentType_MACHINE_INDEPENDENT_COMPOSITION: _bindgen_ty_115 = 4;
+pub const AEGP_PersistentType_MACHINE_SPECIFIC_TEXT: _bindgen_ty_115 = 5;
+pub const AEGP_PersistentType_MACHINE_SPECIFIC_PAINT: _bindgen_ty_115 = 6;
+pub const AEGP_PersistentType_MACHINE_SPECIFIC_EFFECTS: _bindgen_ty_115 = 7;
+pub const AEGP_PersistentType_MACHINE_SPECIFIC_EXPRESSION_SNIPPETS: _bindgen_ty_115 = 8;
+pub const AEGP_PersistentType_MACHINE_SPECIFIC_SCRIPT_SNIPPETS: _bindgen_ty_115 = 9;
+pub const AEGP_PersistentType_NUMTYPES: _bindgen_ty_115 = 10;
+pub type _bindgen_ty_115 = ::std::os::raw::c_uint;
 pub type AEGP_PersistentType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7055,18 +7095,18 @@ pub struct AEGP_DownsampleFactor {
     pub xS: A_short,
     pub yS: A_short,
 }
-pub const AEGP_CompFlag_SHOW_ALL_SHY: _bindgen_ty_114 = 1;
-pub const AEGP_CompFlag_RESERVED_1: _bindgen_ty_114 = 2;
-pub const AEGP_CompFlag_RESERVED_2: _bindgen_ty_114 = 4;
-pub const AEGP_CompFlag_ENABLE_MOTION_BLUR: _bindgen_ty_114 = 8;
-pub const AEGP_CompFlag_ENABLE_TIME_FILTER: _bindgen_ty_114 = 16;
-pub const AEGP_CompFlag_GRID_TO_FRAMES: _bindgen_ty_114 = 32;
-pub const AEGP_CompFlag_GRID_TO_FIELDS: _bindgen_ty_114 = 64;
-pub const AEGP_CompFlag_USE_LOCAL_DSF: _bindgen_ty_114 = 128;
-pub const AEGP_CompFlag_DRAFT_3D: _bindgen_ty_114 = 256;
-pub const AEGP_CompFlag_SHOW_GRAPH: _bindgen_ty_114 = 512;
-pub const AEGP_CompFlag_RESERVED_3: _bindgen_ty_114 = 1024;
-pub type _bindgen_ty_114 = ::std::os::raw::c_uint;
+pub const AEGP_CompFlag_SHOW_ALL_SHY: _bindgen_ty_116 = 1;
+pub const AEGP_CompFlag_RESERVED_1: _bindgen_ty_116 = 2;
+pub const AEGP_CompFlag_RESERVED_2: _bindgen_ty_116 = 4;
+pub const AEGP_CompFlag_ENABLE_MOTION_BLUR: _bindgen_ty_116 = 8;
+pub const AEGP_CompFlag_ENABLE_TIME_FILTER: _bindgen_ty_116 = 16;
+pub const AEGP_CompFlag_GRID_TO_FRAMES: _bindgen_ty_116 = 32;
+pub const AEGP_CompFlag_GRID_TO_FIELDS: _bindgen_ty_116 = 64;
+pub const AEGP_CompFlag_USE_LOCAL_DSF: _bindgen_ty_116 = 128;
+pub const AEGP_CompFlag_DRAFT_3D: _bindgen_ty_116 = 256;
+pub const AEGP_CompFlag_SHOW_GRAPH: _bindgen_ty_116 = 512;
+pub const AEGP_CompFlag_RESERVED_3: _bindgen_ty_116 = 1024;
+pub type _bindgen_ty_116 = ::std::os::raw::c_uint;
 pub type AEGP_CompFlags = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7262,10 +7302,10 @@ pub struct AEGP_CompSuite12 {
     pub AEGP_ReorderCompSelection:
         ::std::option::Option<unsafe extern "C" fn(compH: AEGP_CompH, index: A_long) -> A_Err>,
 }
-pub const AEGP_MemFlag_NONE: _bindgen_ty_115 = 0;
-pub const AEGP_MemFlag_CLEAR: _bindgen_ty_115 = 1;
-pub const AEGP_MemFlag_QUIET: _bindgen_ty_115 = 2;
-pub type _bindgen_ty_115 = ::std::os::raw::c_uint;
+pub const AEGP_MemFlag_NONE: _bindgen_ty_117 = 0;
+pub const AEGP_MemFlag_CLEAR: _bindgen_ty_117 = 1;
+pub const AEGP_MemFlag_QUIET: _bindgen_ty_117 = 2;
+pub type _bindgen_ty_117 = ::std::os::raw::c_uint;
 pub type AEGP_MemFlag = A_long;
 pub type AEGP_MemSize = A_u_long;
 #[repr(C)]
@@ -7310,16 +7350,16 @@ pub struct AEGP_MemorySuite1 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_TransferFlag_PRESERVE_ALPHA: _bindgen_ty_116 = 1;
-pub const AEGP_TransferFlag_RANDOMIZE_DISSOLVE: _bindgen_ty_116 = 2;
-pub type _bindgen_ty_116 = ::std::os::raw::c_uint;
+pub const AEGP_TransferFlag_PRESERVE_ALPHA: _bindgen_ty_118 = 1;
+pub const AEGP_TransferFlag_RANDOMIZE_DISSOLVE: _bindgen_ty_118 = 2;
+pub type _bindgen_ty_118 = ::std::os::raw::c_uint;
 pub type AEGP_TransferFlags = A_long;
-pub const AEGP_TrackMatte_NO_TRACK_MATTE: _bindgen_ty_117 = 0;
-pub const AEGP_TrackMatte_ALPHA: _bindgen_ty_117 = 1;
-pub const AEGP_TrackMatte_NOT_ALPHA: _bindgen_ty_117 = 2;
-pub const AEGP_TrackMatte_LUMA: _bindgen_ty_117 = 3;
-pub const AEGP_TrackMatte_NOT_LUMA: _bindgen_ty_117 = 4;
-pub type _bindgen_ty_117 = ::std::os::raw::c_uint;
+pub const AEGP_TrackMatte_NO_TRACK_MATTE: _bindgen_ty_119 = 0;
+pub const AEGP_TrackMatte_ALPHA: _bindgen_ty_119 = 1;
+pub const AEGP_TrackMatte_NOT_ALPHA: _bindgen_ty_119 = 2;
+pub const AEGP_TrackMatte_LUMA: _bindgen_ty_119 = 3;
+pub const AEGP_TrackMatte_NOT_LUMA: _bindgen_ty_119 = 4;
+pub type _bindgen_ty_119 = ::std::os::raw::c_uint;
 pub type AEGP_TrackMatte = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7328,57 +7368,57 @@ pub struct AEGP_LayerTransferMode {
     pub flags: AEGP_TransferFlags,
     pub track_matte: AEGP_TrackMatte,
 }
-pub const AEGP_LayerQual_NONE: _bindgen_ty_118 = -1;
-pub const AEGP_LayerQual_WIREFRAME: _bindgen_ty_118 = 0;
-pub const AEGP_LayerQual_DRAFT: _bindgen_ty_118 = 1;
-pub const AEGP_LayerQual_BEST: _bindgen_ty_118 = 2;
-pub type _bindgen_ty_118 = ::std::os::raw::c_int;
+pub const AEGP_LayerQual_NONE: _bindgen_ty_120 = -1;
+pub const AEGP_LayerQual_WIREFRAME: _bindgen_ty_120 = 0;
+pub const AEGP_LayerQual_DRAFT: _bindgen_ty_120 = 1;
+pub const AEGP_LayerQual_BEST: _bindgen_ty_120 = 2;
+pub type _bindgen_ty_120 = ::std::os::raw::c_int;
 pub type AEGP_LayerQuality = A_short;
-pub const AEGP_LayerSamplingQual_BILINEAR: _bindgen_ty_119 = 0;
-pub const AEGP_LayerSamplingQual_BICUBIC: _bindgen_ty_119 = 1;
-pub type _bindgen_ty_119 = ::std::os::raw::c_uint;
+pub const AEGP_LayerSamplingQual_BILINEAR: _bindgen_ty_121 = 0;
+pub const AEGP_LayerSamplingQual_BICUBIC: _bindgen_ty_121 = 1;
+pub type _bindgen_ty_121 = ::std::os::raw::c_uint;
 pub type AEGP_LayerSamplingQuality = A_short;
-pub const AEGP_LayerFlag_NONE: _bindgen_ty_120 = 0;
-pub const AEGP_LayerFlag_VIDEO_ACTIVE: _bindgen_ty_120 = 1;
-pub const AEGP_LayerFlag_AUDIO_ACTIVE: _bindgen_ty_120 = 2;
-pub const AEGP_LayerFlag_EFFECTS_ACTIVE: _bindgen_ty_120 = 4;
-pub const AEGP_LayerFlag_MOTION_BLUR: _bindgen_ty_120 = 8;
-pub const AEGP_LayerFlag_FRAME_BLENDING: _bindgen_ty_120 = 16;
-pub const AEGP_LayerFlag_LOCKED: _bindgen_ty_120 = 32;
-pub const AEGP_LayerFlag_SHY: _bindgen_ty_120 = 64;
-pub const AEGP_LayerFlag_COLLAPSE: _bindgen_ty_120 = 128;
-pub const AEGP_LayerFlag_AUTO_ORIENT_ROTATION: _bindgen_ty_120 = 256;
-pub const AEGP_LayerFlag_ADJUSTMENT_LAYER: _bindgen_ty_120 = 512;
-pub const AEGP_LayerFlag_TIME_REMAPPING: _bindgen_ty_120 = 1024;
-pub const AEGP_LayerFlag_LAYER_IS_3D: _bindgen_ty_120 = 2048;
-pub const AEGP_LayerFlag_LOOK_AT_CAMERA: _bindgen_ty_120 = 4096;
-pub const AEGP_LayerFlag_LOOK_AT_POI: _bindgen_ty_120 = 8192;
-pub const AEGP_LayerFlag_SOLO: _bindgen_ty_120 = 16384;
-pub const AEGP_LayerFlag_MARKERS_LOCKED: _bindgen_ty_120 = 32768;
-pub const AEGP_LayerFlag_NULL_LAYER: _bindgen_ty_120 = 65536;
-pub const AEGP_LayerFlag_HIDE_LOCKED_MASKS: _bindgen_ty_120 = 131072;
-pub const AEGP_LayerFlag_GUIDE_LAYER: _bindgen_ty_120 = 262144;
-pub const AEGP_LayerFlag_ADVANCED_FRAME_BLENDING: _bindgen_ty_120 = 524288;
-pub const AEGP_LayerFlag_SUBLAYERS_RENDER_SEPARATELY: _bindgen_ty_120 = 1048576;
-pub const AEGP_LayerFlag_ENVIRONMENT_LAYER: _bindgen_ty_120 = 2097152;
-pub type _bindgen_ty_120 = ::std::os::raw::c_uint;
-pub type AEGP_LayerFlags = A_long;
-pub const AEGP_ObjectType_NONE: _bindgen_ty_121 = -1;
-pub const AEGP_ObjectType_AV: _bindgen_ty_121 = 0;
-pub const AEGP_ObjectType_LIGHT: _bindgen_ty_121 = 1;
-pub const AEGP_ObjectType_CAMERA: _bindgen_ty_121 = 2;
-pub const AEGP_ObjectType_TEXT: _bindgen_ty_121 = 3;
-pub const AEGP_ObjectType_VECTOR: _bindgen_ty_121 = 4;
-pub const AEGP_ObjectType_3D_MODEL: _bindgen_ty_121 = 5;
-pub const AEGP_ObjectType_RESERVED1: _bindgen_ty_121 = 6;
-pub const AEGP_ObjectType_RESERVED2: _bindgen_ty_121 = 7;
-pub const AEGP_ObjectType_RESERVED3: _bindgen_ty_121 = 8;
-pub const AEGP_ObjectType_NUM_TYPES: _bindgen_ty_121 = 9;
-pub type _bindgen_ty_121 = ::std::os::raw::c_int;
-pub type AEGP_ObjectType = A_long;
-pub const AEGP_LTimeMode_LayerTime: _bindgen_ty_122 = 0;
-pub const AEGP_LTimeMode_CompTime: _bindgen_ty_122 = 1;
+pub const AEGP_LayerFlag_NONE: _bindgen_ty_122 = 0;
+pub const AEGP_LayerFlag_VIDEO_ACTIVE: _bindgen_ty_122 = 1;
+pub const AEGP_LayerFlag_AUDIO_ACTIVE: _bindgen_ty_122 = 2;
+pub const AEGP_LayerFlag_EFFECTS_ACTIVE: _bindgen_ty_122 = 4;
+pub const AEGP_LayerFlag_MOTION_BLUR: _bindgen_ty_122 = 8;
+pub const AEGP_LayerFlag_FRAME_BLENDING: _bindgen_ty_122 = 16;
+pub const AEGP_LayerFlag_LOCKED: _bindgen_ty_122 = 32;
+pub const AEGP_LayerFlag_SHY: _bindgen_ty_122 = 64;
+pub const AEGP_LayerFlag_COLLAPSE: _bindgen_ty_122 = 128;
+pub const AEGP_LayerFlag_AUTO_ORIENT_ROTATION: _bindgen_ty_122 = 256;
+pub const AEGP_LayerFlag_ADJUSTMENT_LAYER: _bindgen_ty_122 = 512;
+pub const AEGP_LayerFlag_TIME_REMAPPING: _bindgen_ty_122 = 1024;
+pub const AEGP_LayerFlag_LAYER_IS_3D: _bindgen_ty_122 = 2048;
+pub const AEGP_LayerFlag_LOOK_AT_CAMERA: _bindgen_ty_122 = 4096;
+pub const AEGP_LayerFlag_LOOK_AT_POI: _bindgen_ty_122 = 8192;
+pub const AEGP_LayerFlag_SOLO: _bindgen_ty_122 = 16384;
+pub const AEGP_LayerFlag_MARKERS_LOCKED: _bindgen_ty_122 = 32768;
+pub const AEGP_LayerFlag_NULL_LAYER: _bindgen_ty_122 = 65536;
+pub const AEGP_LayerFlag_HIDE_LOCKED_MASKS: _bindgen_ty_122 = 131072;
+pub const AEGP_LayerFlag_GUIDE_LAYER: _bindgen_ty_122 = 262144;
+pub const AEGP_LayerFlag_ADVANCED_FRAME_BLENDING: _bindgen_ty_122 = 524288;
+pub const AEGP_LayerFlag_SUBLAYERS_RENDER_SEPARATELY: _bindgen_ty_122 = 1048576;
+pub const AEGP_LayerFlag_ENVIRONMENT_LAYER: _bindgen_ty_122 = 2097152;
 pub type _bindgen_ty_122 = ::std::os::raw::c_uint;
+pub type AEGP_LayerFlags = A_long;
+pub const AEGP_ObjectType_NONE: _bindgen_ty_123 = -1;
+pub const AEGP_ObjectType_AV: _bindgen_ty_123 = 0;
+pub const AEGP_ObjectType_LIGHT: _bindgen_ty_123 = 1;
+pub const AEGP_ObjectType_CAMERA: _bindgen_ty_123 = 2;
+pub const AEGP_ObjectType_TEXT: _bindgen_ty_123 = 3;
+pub const AEGP_ObjectType_VECTOR: _bindgen_ty_123 = 4;
+pub const AEGP_ObjectType_3D_MODEL: _bindgen_ty_123 = 5;
+pub const AEGP_ObjectType_RESERVED1: _bindgen_ty_123 = 6;
+pub const AEGP_ObjectType_RESERVED2: _bindgen_ty_123 = 7;
+pub const AEGP_ObjectType_RESERVED3: _bindgen_ty_123 = 8;
+pub const AEGP_ObjectType_NUM_TYPES: _bindgen_ty_123 = 9;
+pub type _bindgen_ty_123 = ::std::os::raw::c_int;
+pub type AEGP_ObjectType = A_long;
+pub const AEGP_LTimeMode_LayerTime: _bindgen_ty_124 = 0;
+pub const AEGP_LTimeMode_CompTime: _bindgen_ty_124 = 1;
+pub type _bindgen_ty_124 = ::std::os::raw::c_uint;
 pub type AEGP_LTimeMode = A_short;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7632,86 +7672,86 @@ pub struct AEGP_LayerSuite9 {
     pub AEGP_RemoveTrackMatte:
         ::std::option::Option<unsafe extern "C" fn(layerH: AEGP_LayerH) -> A_Err>,
 }
-pub const AEGP_LayerStream_NONE: _bindgen_ty_123 = -1;
-pub const AEGP_LayerStream_ANCHORPOINT: _bindgen_ty_123 = 0;
-pub const AEGP_LayerStream_POSITION: _bindgen_ty_123 = 1;
-pub const AEGP_LayerStream_SCALE: _bindgen_ty_123 = 2;
-pub const AEGP_LayerStream_ROTATION: _bindgen_ty_123 = 3;
-pub const AEGP_LayerStream_ROTATE_Z: _bindgen_ty_123 = 3;
-pub const AEGP_LayerStream_OPACITY: _bindgen_ty_123 = 4;
-pub const AEGP_LayerStream_AUDIO: _bindgen_ty_123 = 5;
-pub const AEGP_LayerStream_MARKER: _bindgen_ty_123 = 6;
-pub const AEGP_LayerStream_TIME_REMAP: _bindgen_ty_123 = 7;
-pub const AEGP_LayerStream_ROTATE_X: _bindgen_ty_123 = 8;
-pub const AEGP_LayerStream_ROTATE_Y: _bindgen_ty_123 = 9;
-pub const AEGP_LayerStream_ORIENTATION: _bindgen_ty_123 = 10;
-pub const AEGP_LayerStream_ZOOM: _bindgen_ty_123 = 11;
-pub const AEGP_LayerStream_DEPTH_OF_FIELD: _bindgen_ty_123 = 12;
-pub const AEGP_LayerStream_FOCUS_DISTANCE: _bindgen_ty_123 = 13;
-pub const AEGP_LayerStream_APERTURE: _bindgen_ty_123 = 14;
-pub const AEGP_LayerStream_BLUR_LEVEL: _bindgen_ty_123 = 15;
-pub const AEGP_LayerStream_INTENSITY: _bindgen_ty_123 = 16;
-pub const AEGP_LayerStream_COLOR: _bindgen_ty_123 = 17;
-pub const AEGP_LayerStream_CONE_ANGLE: _bindgen_ty_123 = 18;
-pub const AEGP_LayerStream_CONE_FEATHER: _bindgen_ty_123 = 19;
-pub const AEGP_LayerStream_SHADOW_DARKNESS: _bindgen_ty_123 = 20;
-pub const AEGP_LayerStream_SHADOW_DIFFUSION: _bindgen_ty_123 = 21;
-pub const AEGP_LayerStream_ACCEPTS_SHADOWS: _bindgen_ty_123 = 22;
-pub const AEGP_LayerStream_ACCEPTS_LIGHTS: _bindgen_ty_123 = 23;
-pub const AEGP_LayerStream_AMBIENT_COEFF: _bindgen_ty_123 = 24;
-pub const AEGP_LayerStream_DIFFUSE_COEFF: _bindgen_ty_123 = 25;
-pub const AEGP_LayerStream_SPECULAR_INTENSITY: _bindgen_ty_123 = 26;
-pub const AEGP_LayerStream_SPECULAR_SHININESS: _bindgen_ty_123 = 27;
-pub const AEGP_LayerStream_CASTS_SHADOWS: _bindgen_ty_123 = 28;
-pub const AEGP_LayerStream_LIGHT_TRANSMISSION: _bindgen_ty_123 = 29;
-pub const AEGP_LayerStream_METAL: _bindgen_ty_123 = 30;
-pub const AEGP_LayerStream_SOURCE_TEXT: _bindgen_ty_123 = 31;
-pub const AEGP_LayerStream_IRIS_SHAPE: _bindgen_ty_123 = 32;
-pub const AEGP_LayerStream_IRIS_ROTATION: _bindgen_ty_123 = 33;
-pub const AEGP_LayerStream_IRIS_ROUNDNESS: _bindgen_ty_123 = 34;
-pub const AEGP_LayerStream_IRIS_ASPECT_RATIO: _bindgen_ty_123 = 35;
-pub const AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE: _bindgen_ty_123 = 36;
-pub const AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN: _bindgen_ty_123 = 37;
-pub const AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD: _bindgen_ty_123 = 38;
-pub const AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION: _bindgen_ty_123 = 39;
-pub const AEGP_LayerStream_LIGHT_FALLOFF_TYPE: _bindgen_ty_123 = 40;
-pub const AEGP_LayerStream_LIGHT_FALLOFF_START: _bindgen_ty_123 = 41;
-pub const AEGP_LayerStream_LIGHT_FALLOFF_DISTANCE: _bindgen_ty_123 = 42;
-pub const AEGP_LayerStream_REFLECTION_INTENSITY: _bindgen_ty_123 = 43;
-pub const AEGP_LayerStream_REFLECTION_SHARPNESS: _bindgen_ty_123 = 44;
-pub const AEGP_LayerStream_REFLECTION_ROLLOFF: _bindgen_ty_123 = 45;
-pub const AEGP_LayerStream_TRANSPARENCY_COEFF: _bindgen_ty_123 = 46;
-pub const AEGP_LayerStream_TRANSPARENCY_ROLLOFF: _bindgen_ty_123 = 47;
-pub const AEGP_LayerStream_INDEX_OF_REFRACTION: _bindgen_ty_123 = 48;
-pub const AEGP_LayerStream_EXTRUSION_BEVEL_STYLE: _bindgen_ty_123 = 49;
-pub const AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION: _bindgen_ty_123 = 50;
-pub const AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH: _bindgen_ty_123 = 51;
-pub const AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH: _bindgen_ty_123 = 52;
-pub const AEGP_LayerStream_EXTRUSION_DEPTH: _bindgen_ty_123 = 53;
-pub const AEGP_LayerStream_PLANE_CURVATURE: _bindgen_ty_123 = 54;
-pub const AEGP_LayerStream_PLANE_SUBDIVISION: _bindgen_ty_123 = 55;
-pub const AEGP_LayerStream_LIGHT_BACKGROUND_VISIBLE: _bindgen_ty_123 = 56;
-pub const AEGP_LayerStream_LIGHT_BACKGROUND_OPACITY: _bindgen_ty_123 = 57;
-pub const AEGP_LayerStream_LIGHT_BACKGROUND_BLUR: _bindgen_ty_123 = 58;
-pub const AEGP_LayerStream_SHADOW_COLOR: _bindgen_ty_123 = 59;
-pub const AEGP_LayerStream_NUMTYPES: _bindgen_ty_123 = 60;
-pub const AEGP_LayerStream_BEGIN: _bindgen_ty_123 = 0;
-pub const AEGP_LayerStream_END: _bindgen_ty_123 = 60;
-pub type _bindgen_ty_123 = ::std::os::raw::c_int;
+pub const AEGP_LayerStream_NONE: _bindgen_ty_125 = -1;
+pub const AEGP_LayerStream_ANCHORPOINT: _bindgen_ty_125 = 0;
+pub const AEGP_LayerStream_POSITION: _bindgen_ty_125 = 1;
+pub const AEGP_LayerStream_SCALE: _bindgen_ty_125 = 2;
+pub const AEGP_LayerStream_ROTATION: _bindgen_ty_125 = 3;
+pub const AEGP_LayerStream_ROTATE_Z: _bindgen_ty_125 = 3;
+pub const AEGP_LayerStream_OPACITY: _bindgen_ty_125 = 4;
+pub const AEGP_LayerStream_AUDIO: _bindgen_ty_125 = 5;
+pub const AEGP_LayerStream_MARKER: _bindgen_ty_125 = 6;
+pub const AEGP_LayerStream_TIME_REMAP: _bindgen_ty_125 = 7;
+pub const AEGP_LayerStream_ROTATE_X: _bindgen_ty_125 = 8;
+pub const AEGP_LayerStream_ROTATE_Y: _bindgen_ty_125 = 9;
+pub const AEGP_LayerStream_ORIENTATION: _bindgen_ty_125 = 10;
+pub const AEGP_LayerStream_ZOOM: _bindgen_ty_125 = 11;
+pub const AEGP_LayerStream_DEPTH_OF_FIELD: _bindgen_ty_125 = 12;
+pub const AEGP_LayerStream_FOCUS_DISTANCE: _bindgen_ty_125 = 13;
+pub const AEGP_LayerStream_APERTURE: _bindgen_ty_125 = 14;
+pub const AEGP_LayerStream_BLUR_LEVEL: _bindgen_ty_125 = 15;
+pub const AEGP_LayerStream_INTENSITY: _bindgen_ty_125 = 16;
+pub const AEGP_LayerStream_COLOR: _bindgen_ty_125 = 17;
+pub const AEGP_LayerStream_CONE_ANGLE: _bindgen_ty_125 = 18;
+pub const AEGP_LayerStream_CONE_FEATHER: _bindgen_ty_125 = 19;
+pub const AEGP_LayerStream_SHADOW_DARKNESS: _bindgen_ty_125 = 20;
+pub const AEGP_LayerStream_SHADOW_DIFFUSION: _bindgen_ty_125 = 21;
+pub const AEGP_LayerStream_ACCEPTS_SHADOWS: _bindgen_ty_125 = 22;
+pub const AEGP_LayerStream_ACCEPTS_LIGHTS: _bindgen_ty_125 = 23;
+pub const AEGP_LayerStream_AMBIENT_COEFF: _bindgen_ty_125 = 24;
+pub const AEGP_LayerStream_DIFFUSE_COEFF: _bindgen_ty_125 = 25;
+pub const AEGP_LayerStream_SPECULAR_INTENSITY: _bindgen_ty_125 = 26;
+pub const AEGP_LayerStream_SPECULAR_SHININESS: _bindgen_ty_125 = 27;
+pub const AEGP_LayerStream_CASTS_SHADOWS: _bindgen_ty_125 = 28;
+pub const AEGP_LayerStream_LIGHT_TRANSMISSION: _bindgen_ty_125 = 29;
+pub const AEGP_LayerStream_METAL: _bindgen_ty_125 = 30;
+pub const AEGP_LayerStream_SOURCE_TEXT: _bindgen_ty_125 = 31;
+pub const AEGP_LayerStream_IRIS_SHAPE: _bindgen_ty_125 = 32;
+pub const AEGP_LayerStream_IRIS_ROTATION: _bindgen_ty_125 = 33;
+pub const AEGP_LayerStream_IRIS_ROUNDNESS: _bindgen_ty_125 = 34;
+pub const AEGP_LayerStream_IRIS_ASPECT_RATIO: _bindgen_ty_125 = 35;
+pub const AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE: _bindgen_ty_125 = 36;
+pub const AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN: _bindgen_ty_125 = 37;
+pub const AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD: _bindgen_ty_125 = 38;
+pub const AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION: _bindgen_ty_125 = 39;
+pub const AEGP_LayerStream_LIGHT_FALLOFF_TYPE: _bindgen_ty_125 = 40;
+pub const AEGP_LayerStream_LIGHT_FALLOFF_START: _bindgen_ty_125 = 41;
+pub const AEGP_LayerStream_LIGHT_FALLOFF_DISTANCE: _bindgen_ty_125 = 42;
+pub const AEGP_LayerStream_REFLECTION_INTENSITY: _bindgen_ty_125 = 43;
+pub const AEGP_LayerStream_REFLECTION_SHARPNESS: _bindgen_ty_125 = 44;
+pub const AEGP_LayerStream_REFLECTION_ROLLOFF: _bindgen_ty_125 = 45;
+pub const AEGP_LayerStream_TRANSPARENCY_COEFF: _bindgen_ty_125 = 46;
+pub const AEGP_LayerStream_TRANSPARENCY_ROLLOFF: _bindgen_ty_125 = 47;
+pub const AEGP_LayerStream_INDEX_OF_REFRACTION: _bindgen_ty_125 = 48;
+pub const AEGP_LayerStream_EXTRUSION_BEVEL_STYLE: _bindgen_ty_125 = 49;
+pub const AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION: _bindgen_ty_125 = 50;
+pub const AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH: _bindgen_ty_125 = 51;
+pub const AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH: _bindgen_ty_125 = 52;
+pub const AEGP_LayerStream_EXTRUSION_DEPTH: _bindgen_ty_125 = 53;
+pub const AEGP_LayerStream_PLANE_CURVATURE: _bindgen_ty_125 = 54;
+pub const AEGP_LayerStream_PLANE_SUBDIVISION: _bindgen_ty_125 = 55;
+pub const AEGP_LayerStream_LIGHT_BACKGROUND_VISIBLE: _bindgen_ty_125 = 56;
+pub const AEGP_LayerStream_LIGHT_BACKGROUND_OPACITY: _bindgen_ty_125 = 57;
+pub const AEGP_LayerStream_LIGHT_BACKGROUND_BLUR: _bindgen_ty_125 = 58;
+pub const AEGP_LayerStream_SHADOW_COLOR: _bindgen_ty_125 = 59;
+pub const AEGP_LayerStream_NUMTYPES: _bindgen_ty_125 = 60;
+pub const AEGP_LayerStream_BEGIN: _bindgen_ty_125 = 0;
+pub const AEGP_LayerStream_END: _bindgen_ty_125 = 60;
+pub type _bindgen_ty_125 = ::std::os::raw::c_int;
 pub type AEGP_LayerStream = A_long;
-pub const AEGP_MaskStream_OUTLINE: _bindgen_ty_124 = 400;
-pub const AEGP_MaskStream_OPACITY: _bindgen_ty_124 = 401;
-pub const AEGP_MaskStream_FEATHER: _bindgen_ty_124 = 402;
-pub const AEGP_MaskStream_EXPANSION: _bindgen_ty_124 = 403;
-pub const AEGP_MaskStream_BEGIN: _bindgen_ty_124 = 400;
-pub const AEGP_MaskStream_END: _bindgen_ty_124 = 404;
-pub type _bindgen_ty_124 = ::std::os::raw::c_uint;
+pub const AEGP_MaskStream_OUTLINE: _bindgen_ty_126 = 400;
+pub const AEGP_MaskStream_OPACITY: _bindgen_ty_126 = 401;
+pub const AEGP_MaskStream_FEATHER: _bindgen_ty_126 = 402;
+pub const AEGP_MaskStream_EXPANSION: _bindgen_ty_126 = 403;
+pub const AEGP_MaskStream_BEGIN: _bindgen_ty_126 = 400;
+pub const AEGP_MaskStream_END: _bindgen_ty_126 = 404;
+pub type _bindgen_ty_126 = ::std::os::raw::c_uint;
 pub type AEGP_MaskStream = A_long;
-pub const AEGP_StreamFlag_NONE: _bindgen_ty_125 = 0;
-pub const AEGP_StreamFlag_HAS_MIN: _bindgen_ty_125 = 1;
-pub const AEGP_StreamFlag_HAS_MAX: _bindgen_ty_125 = 2;
-pub const AEGP_StreamFlag_IS_SPATIAL: _bindgen_ty_125 = 4;
-pub type _bindgen_ty_125 = ::std::os::raw::c_uint;
+pub const AEGP_StreamFlag_NONE: _bindgen_ty_127 = 0;
+pub const AEGP_StreamFlag_HAS_MIN: _bindgen_ty_127 = 1;
+pub const AEGP_StreamFlag_HAS_MAX: _bindgen_ty_127 = 2;
+pub const AEGP_StreamFlag_IS_SPATIAL: _bindgen_ty_127 = 4;
+pub type _bindgen_ty_127 = ::std::os::raw::c_uint;
 pub type AEGP_StreamFlags = A_long;
 pub type AEGP_OneDVal = A_FpLong;
 #[repr(C)]
@@ -7729,20 +7769,20 @@ pub struct AEGP_ThreeDVal {
 }
 pub type AEGP_FourDVal = [A_FpLong; 4usize];
 pub type AEGP_ArbBlockVal = A_Handle;
-pub const AEGP_KeyInterp_NONE: _bindgen_ty_126 = 0;
-pub const AEGP_KeyInterp_LINEAR: _bindgen_ty_126 = 1;
-pub const AEGP_KeyInterp_BEZIER: _bindgen_ty_126 = 2;
-pub const AEGP_KeyInterp_HOLD: _bindgen_ty_126 = 3;
-pub const AEGP_Interp_NUM_VALUES: _bindgen_ty_126 = 4;
-pub type _bindgen_ty_126 = ::std::os::raw::c_uint;
+pub const AEGP_KeyInterp_NONE: _bindgen_ty_128 = 0;
+pub const AEGP_KeyInterp_LINEAR: _bindgen_ty_128 = 1;
+pub const AEGP_KeyInterp_BEZIER: _bindgen_ty_128 = 2;
+pub const AEGP_KeyInterp_HOLD: _bindgen_ty_128 = 3;
+pub const AEGP_Interp_NUM_VALUES: _bindgen_ty_128 = 4;
+pub type _bindgen_ty_128 = ::std::os::raw::c_uint;
 pub type AEGP_KeyframeInterpolationType = A_long;
-pub const AEGP_KeyInterpMask_NONE: _bindgen_ty_127 = 0;
-pub const AEGP_KeyInterpMask_LINEAR: _bindgen_ty_127 = 1;
-pub const AEGP_KeyInterpMask_BEZIER: _bindgen_ty_127 = 2;
-pub const AEGP_KeyInterpMask_HOLD: _bindgen_ty_127 = 4;
-pub const AEGP_KeyInterpMask_CUSTOM: _bindgen_ty_127 = 8;
-pub const AEGP_KeyInterpMask_ANY: _bindgen_ty_127 = 65535;
-pub type _bindgen_ty_127 = ::std::os::raw::c_uint;
+pub const AEGP_KeyInterpMask_NONE: _bindgen_ty_129 = 0;
+pub const AEGP_KeyInterpMask_LINEAR: _bindgen_ty_129 = 1;
+pub const AEGP_KeyInterpMask_BEZIER: _bindgen_ty_129 = 2;
+pub const AEGP_KeyInterpMask_HOLD: _bindgen_ty_129 = 4;
+pub const AEGP_KeyInterpMask_CUSTOM: _bindgen_ty_129 = 8;
+pub const AEGP_KeyInterpMask_ANY: _bindgen_ty_129 = 65535;
+pub type _bindgen_ty_129 = ::std::os::raw::c_uint;
 pub type AEGP_KeyInterpolationMask = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7771,20 +7811,20 @@ pub struct AEGP_StreamValue2 {
     pub streamH: AEGP_StreamRefH,
     pub val: AEGP_StreamVal2,
 }
-pub const AEGP_StreamType_NO_DATA: _bindgen_ty_128 = 0;
-pub const AEGP_StreamType_ThreeD_SPATIAL: _bindgen_ty_128 = 1;
-pub const AEGP_StreamType_ThreeD: _bindgen_ty_128 = 2;
-pub const AEGP_StreamType_TwoD_SPATIAL: _bindgen_ty_128 = 3;
-pub const AEGP_StreamType_TwoD: _bindgen_ty_128 = 4;
-pub const AEGP_StreamType_OneD: _bindgen_ty_128 = 5;
-pub const AEGP_StreamType_COLOR: _bindgen_ty_128 = 6;
-pub const AEGP_StreamType_ARB: _bindgen_ty_128 = 7;
-pub const AEGP_StreamType_MARKER: _bindgen_ty_128 = 8;
-pub const AEGP_StreamType_LAYER_ID: _bindgen_ty_128 = 9;
-pub const AEGP_StreamType_MASK_ID: _bindgen_ty_128 = 10;
-pub const AEGP_StreamType_MASK: _bindgen_ty_128 = 11;
-pub const AEGP_StreamType_TEXT_DOCUMENT: _bindgen_ty_128 = 12;
-pub type _bindgen_ty_128 = ::std::os::raw::c_uint;
+pub const AEGP_StreamType_NO_DATA: _bindgen_ty_130 = 0;
+pub const AEGP_StreamType_ThreeD_SPATIAL: _bindgen_ty_130 = 1;
+pub const AEGP_StreamType_ThreeD: _bindgen_ty_130 = 2;
+pub const AEGP_StreamType_TwoD_SPATIAL: _bindgen_ty_130 = 3;
+pub const AEGP_StreamType_TwoD: _bindgen_ty_130 = 4;
+pub const AEGP_StreamType_OneD: _bindgen_ty_130 = 5;
+pub const AEGP_StreamType_COLOR: _bindgen_ty_130 = 6;
+pub const AEGP_StreamType_ARB: _bindgen_ty_130 = 7;
+pub const AEGP_StreamType_MARKER: _bindgen_ty_130 = 8;
+pub const AEGP_StreamType_LAYER_ID: _bindgen_ty_130 = 9;
+pub const AEGP_StreamType_MASK_ID: _bindgen_ty_130 = 10;
+pub const AEGP_StreamType_MASK: _bindgen_ty_130 = 11;
+pub const AEGP_StreamType_TEXT_DOCUMENT: _bindgen_ty_130 = 12;
+pub type _bindgen_ty_130 = ::std::os::raw::c_uint;
 pub type AEGP_StreamType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7932,19 +7972,19 @@ pub struct AEGP_StreamSuite6 {
         unsafe extern "C" fn(streamH: AEGP_StreamRefH, outID: *mut i32) -> A_Err,
     >,
 }
-pub const AEGP_StreamGroupingType_NONE: _bindgen_ty_129 = -1;
-pub const AEGP_StreamGroupingType_LEAF: _bindgen_ty_129 = 0;
-pub const AEGP_StreamGroupingType_NAMED_GROUP: _bindgen_ty_129 = 1;
-pub const AEGP_StreamGroupingType_INDEXED_GROUP: _bindgen_ty_129 = 2;
-pub type _bindgen_ty_129 = ::std::os::raw::c_int;
+pub const AEGP_StreamGroupingType_NONE: _bindgen_ty_131 = -1;
+pub const AEGP_StreamGroupingType_LEAF: _bindgen_ty_131 = 0;
+pub const AEGP_StreamGroupingType_NAMED_GROUP: _bindgen_ty_131 = 1;
+pub const AEGP_StreamGroupingType_INDEXED_GROUP: _bindgen_ty_131 = 2;
+pub type _bindgen_ty_131 = ::std::os::raw::c_int;
 pub type AEGP_StreamGroupingType = A_long;
-pub const AEGP_DynStreamFlag_ACTIVE_EYEBALL: _bindgen_ty_130 = 1;
-pub const AEGP_DynStreamFlag_HIDDEN: _bindgen_ty_130 = 2;
-pub const AEGP_DynStreamFlag_DISABLED: _bindgen_ty_130 = 16;
-pub const AEGP_DynStreamFlag_ELIDED: _bindgen_ty_130 = 32;
-pub const AEGP_DynStreamFlag_SHOWN_WHEN_EMPTY: _bindgen_ty_130 = 1024;
-pub const AEGP_DynStreamFlag_SKIP_REVEAL_WHEN_UNHIDDEN: _bindgen_ty_130 = 65536;
-pub type _bindgen_ty_130 = ::std::os::raw::c_uint;
+pub const AEGP_DynStreamFlag_ACTIVE_EYEBALL: _bindgen_ty_132 = 1;
+pub const AEGP_DynStreamFlag_HIDDEN: _bindgen_ty_132 = 2;
+pub const AEGP_DynStreamFlag_DISABLED: _bindgen_ty_132 = 16;
+pub const AEGP_DynStreamFlag_ELIDED: _bindgen_ty_132 = 32;
+pub const AEGP_DynStreamFlag_SHOWN_WHEN_EMPTY: _bindgen_ty_132 = 1024;
+pub const AEGP_DynStreamFlag_SKIP_REVEAL_WHEN_UNHIDDEN: _bindgen_ty_132 = 65536;
+pub type _bindgen_ty_132 = ::std::os::raw::c_uint;
 pub type AEGP_DynStreamFlags = A_u_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8081,16 +8121,16 @@ pub struct AEGP_DynamicStreamSuite4 {
     >,
 }
 pub type AEGP_KeyframeIndex = A_long;
-pub const AEGP_KeyframeFlag_NONE: _bindgen_ty_131 = 0;
-pub const AEGP_KeyframeFlag_TEMPORAL_CONTINUOUS: _bindgen_ty_131 = 1;
-pub const AEGP_KeyframeFlag_TEMPORAL_AUTOBEZIER: _bindgen_ty_131 = 2;
-pub const AEGP_KeyframeFlag_SPATIAL_CONTINUOUS: _bindgen_ty_131 = 4;
-pub const AEGP_KeyframeFlag_SPATIAL_AUTOBEZIER: _bindgen_ty_131 = 8;
-pub const AEGP_KeyframeFlag_ROVING: _bindgen_ty_131 = 16;
-pub type _bindgen_ty_131 = ::std::os::raw::c_uint;
+pub const AEGP_KeyframeFlag_NONE: _bindgen_ty_133 = 0;
+pub const AEGP_KeyframeFlag_TEMPORAL_CONTINUOUS: _bindgen_ty_133 = 1;
+pub const AEGP_KeyframeFlag_TEMPORAL_AUTOBEZIER: _bindgen_ty_133 = 2;
+pub const AEGP_KeyframeFlag_SPATIAL_CONTINUOUS: _bindgen_ty_133 = 4;
+pub const AEGP_KeyframeFlag_SPATIAL_AUTOBEZIER: _bindgen_ty_133 = 8;
+pub const AEGP_KeyframeFlag_ROVING: _bindgen_ty_133 = 16;
+pub type _bindgen_ty_133 = ::std::os::raw::c_uint;
 pub type AEGP_KeyframeFlags = A_long;
-pub const AEGP_NumKF_NO_DATA: _bindgen_ty_132 = -1;
-pub type _bindgen_ty_132 = ::std::os::raw::c_int;
+pub const AEGP_NumKF_NO_DATA: _bindgen_ty_134 = -1;
+pub type _bindgen_ty_134 = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct AEGP_KeyframeSuite5 {
@@ -8257,19 +8297,19 @@ pub struct AEGP_TextDocumentSuite1 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_MarkerString_NONE: _bindgen_ty_133 = 0;
-pub const AEGP_MarkerString_COMMENT: _bindgen_ty_133 = 1;
-pub const AEGP_MarkerString_CHAPTER: _bindgen_ty_133 = 2;
-pub const AEGP_MarkerString_URL: _bindgen_ty_133 = 3;
-pub const AEGP_MarkerString_FRAME_TARGET: _bindgen_ty_133 = 4;
-pub const AEGP_MarkerString_CUE_POINT_NAME: _bindgen_ty_133 = 5;
-pub const AEGP_MarkerString_NUMTYPES: _bindgen_ty_133 = 6;
-pub type _bindgen_ty_133 = ::std::os::raw::c_uint;
+pub const AEGP_MarkerString_NONE: _bindgen_ty_135 = 0;
+pub const AEGP_MarkerString_COMMENT: _bindgen_ty_135 = 1;
+pub const AEGP_MarkerString_CHAPTER: _bindgen_ty_135 = 2;
+pub const AEGP_MarkerString_URL: _bindgen_ty_135 = 3;
+pub const AEGP_MarkerString_FRAME_TARGET: _bindgen_ty_135 = 4;
+pub const AEGP_MarkerString_CUE_POINT_NAME: _bindgen_ty_135 = 5;
+pub const AEGP_MarkerString_NUMTYPES: _bindgen_ty_135 = 6;
+pub type _bindgen_ty_135 = ::std::os::raw::c_uint;
 pub type AEGP_MarkerStringType = A_long;
-pub const AEGP_MarkerFlag_NONE: _bindgen_ty_134 = 0;
-pub const AEGP_MarkerFlag_NAVIGATION: _bindgen_ty_134 = 1;
-pub const AEGP_MarkerFlag_PROTECT_REGION: _bindgen_ty_134 = 2;
-pub type _bindgen_ty_134 = ::std::os::raw::c_uint;
+pub const AEGP_MarkerFlag_NONE: _bindgen_ty_136 = 0;
+pub const AEGP_MarkerFlag_NAVIGATION: _bindgen_ty_136 = 1;
+pub const AEGP_MarkerFlag_PROTECT_REGION: _bindgen_ty_136 = 2;
+pub type _bindgen_ty_136 = ::std::os::raw::c_uint;
 pub type AEGP_MarkerFlagType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8376,12 +8416,12 @@ pub struct AEGP_TextLayerSuite1 {
     >,
 }
 pub type AEGP_InstalledEffectKey = A_long;
-pub const AEGP_EffectFlags_NONE: _bindgen_ty_135 = 0;
-pub const AEGP_EffectFlags_ACTIVE: _bindgen_ty_135 = 1;
-pub const AEGP_EffectFlags_AUDIO_ONLY: _bindgen_ty_135 = 2;
-pub const AEGP_EffectFlags_AUDIO_TOO: _bindgen_ty_135 = 4;
-pub const AEGP_EffectFlags_MISSING: _bindgen_ty_135 = 8;
-pub type _bindgen_ty_135 = ::std::os::raw::c_uint;
+pub const AEGP_EffectFlags_NONE: _bindgen_ty_137 = 0;
+pub const AEGP_EffectFlags_ACTIVE: _bindgen_ty_137 = 1;
+pub const AEGP_EffectFlags_AUDIO_ONLY: _bindgen_ty_137 = 2;
+pub const AEGP_EffectFlags_AUDIO_TOO: _bindgen_ty_137 = 4;
+pub const AEGP_EffectFlags_MISSING: _bindgen_ty_137 = 8;
+pub type _bindgen_ty_137 = ::std::os::raw::c_uint;
 pub type AEGP_EffectFlags = A_long;
 pub type AEGP_EffectIndex = A_long;
 #[repr(C)]
@@ -8520,22 +8560,22 @@ pub struct AEGP_EffectSuite5 {
     >,
 }
 pub type AEGP_MaskIndex = A_long;
-pub const AEGP_MaskMBlur_SAME_AS_LAYER: _bindgen_ty_136 = 0;
-pub const AEGP_MaskMBlur_OFF: _bindgen_ty_136 = 1;
-pub const AEGP_MaskMBlur_ON: _bindgen_ty_136 = 2;
-pub type _bindgen_ty_136 = ::std::os::raw::c_uint;
-pub type AEGP_MaskMBlur = A_u_char;
-pub const AEGP_MaskFeatherFalloff_SMOOTH: _bindgen_ty_137 = 0;
-pub const AEGP_MaskFeatherFalloff_LINEAR: _bindgen_ty_137 = 1;
-pub type _bindgen_ty_137 = ::std::os::raw::c_uint;
-pub type AEGP_MaskFeatherFalloff = A_u_char;
-pub const AEGP_MaskFeatherInterp_NORMAL: _bindgen_ty_138 = 0;
-pub const AEGP_MaskFeatherInterp_HOLD_CW: _bindgen_ty_138 = 1;
+pub const AEGP_MaskMBlur_SAME_AS_LAYER: _bindgen_ty_138 = 0;
+pub const AEGP_MaskMBlur_OFF: _bindgen_ty_138 = 1;
+pub const AEGP_MaskMBlur_ON: _bindgen_ty_138 = 2;
 pub type _bindgen_ty_138 = ::std::os::raw::c_uint;
-pub type AEGP_MaskFeatherInterp = A_u_char;
-pub const AEGP_MaskFeatherType_OUTER: _bindgen_ty_139 = 0;
-pub const AEGP_MaskFeatherType_INNER: _bindgen_ty_139 = 1;
+pub type AEGP_MaskMBlur = A_u_char;
+pub const AEGP_MaskFeatherFalloff_SMOOTH: _bindgen_ty_139 = 0;
+pub const AEGP_MaskFeatherFalloff_LINEAR: _bindgen_ty_139 = 1;
 pub type _bindgen_ty_139 = ::std::os::raw::c_uint;
+pub type AEGP_MaskFeatherFalloff = A_u_char;
+pub const AEGP_MaskFeatherInterp_NORMAL: _bindgen_ty_140 = 0;
+pub const AEGP_MaskFeatherInterp_HOLD_CW: _bindgen_ty_140 = 1;
+pub type _bindgen_ty_140 = ::std::os::raw::c_uint;
+pub type AEGP_MaskFeatherInterp = A_u_char;
+pub const AEGP_MaskFeatherType_OUTER: _bindgen_ty_141 = 0;
+pub const AEGP_MaskFeatherType_INNER: _bindgen_ty_141 = 1;
+pub type _bindgen_ty_141 = ::std::os::raw::c_uint;
 pub type AEGP_MaskFeatherType = A_u_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8706,10 +8746,10 @@ pub struct AEGP_MaskOutlineSuite3 {
     >,
 }
 pub type AEGP_InterlaceLabel = FIEL_Label;
-pub const AEGP_AlphaPremul: _bindgen_ty_140 = 1;
-pub const AEGP_AlphaInverted: _bindgen_ty_140 = 2;
-pub const AEGP_AlphaIgnore: _bindgen_ty_140 = 4;
-pub type _bindgen_ty_140 = ::std::os::raw::c_uint;
+pub const AEGP_AlphaPremul: _bindgen_ty_142 = 1;
+pub const AEGP_AlphaInverted: _bindgen_ty_142 = 2;
+pub const AEGP_AlphaIgnore: _bindgen_ty_142 = 4;
+pub type _bindgen_ty_142 = ::std::os::raw::c_uint;
 pub type AEGP_AlphaFlags = A_u_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8719,18 +8759,18 @@ pub struct AEGP_AlphaLabel {
     pub greenCu: A_u_char,
     pub blueCu: A_u_char,
 }
-pub const AEGP_PulldownPhase_NO_PULLDOWN: _bindgen_ty_141 = 0;
-pub const AEGP_PulldownPhase_WSSWW: _bindgen_ty_141 = 1;
-pub const AEGP_PulldownPhase_SSWWW: _bindgen_ty_141 = 2;
-pub const AEGP_PulldownPhase_SWWWS: _bindgen_ty_141 = 3;
-pub const AEGP_PulldownPhase_WWWSS: _bindgen_ty_141 = 4;
-pub const AEGP_PulldownPhase_WWSSW: _bindgen_ty_141 = 5;
-pub const AEGP_PulldownPhase_WWWSW: _bindgen_ty_141 = 6;
-pub const AEGP_PulldownPhase_WWSWW: _bindgen_ty_141 = 7;
-pub const AEGP_PulldownPhase_WSWWW: _bindgen_ty_141 = 8;
-pub const AEGP_PulldownPhase_SWWWW: _bindgen_ty_141 = 9;
-pub const AEGP_PulldownPhase_WWWWS: _bindgen_ty_141 = 10;
-pub type _bindgen_ty_141 = ::std::os::raw::c_uint;
+pub const AEGP_PulldownPhase_NO_PULLDOWN: _bindgen_ty_143 = 0;
+pub const AEGP_PulldownPhase_WSSWW: _bindgen_ty_143 = 1;
+pub const AEGP_PulldownPhase_SSWWW: _bindgen_ty_143 = 2;
+pub const AEGP_PulldownPhase_SWWWS: _bindgen_ty_143 = 3;
+pub const AEGP_PulldownPhase_WWWSS: _bindgen_ty_143 = 4;
+pub const AEGP_PulldownPhase_WWSSW: _bindgen_ty_143 = 5;
+pub const AEGP_PulldownPhase_WWWSW: _bindgen_ty_143 = 6;
+pub const AEGP_PulldownPhase_WWSWW: _bindgen_ty_143 = 7;
+pub const AEGP_PulldownPhase_WSWWW: _bindgen_ty_143 = 8;
+pub const AEGP_PulldownPhase_SWWWW: _bindgen_ty_143 = 9;
+pub const AEGP_PulldownPhase_WWWWS: _bindgen_ty_143 = 10;
+pub type _bindgen_ty_143 = ::std::os::raw::c_uint;
 pub type AEGP_PulldownPhase = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8751,9 +8791,9 @@ pub struct AEGP_FootageInterp {
     pub depthL: A_long,
     pub motion_dB: A_Boolean,
 }
-pub const AEGP_LayerDrawStyle_LAYER_BOUNDS: _bindgen_ty_142 = 0;
-pub const AEGP_LayerDrawStyle_DOCUMENT_BOUNDS: _bindgen_ty_142 = 1;
-pub type _bindgen_ty_142 = ::std::os::raw::c_uint;
+pub const AEGP_LayerDrawStyle_LAYER_BOUNDS: _bindgen_ty_144 = 0;
+pub const AEGP_LayerDrawStyle_DOCUMENT_BOUNDS: _bindgen_ty_144 = 1;
+pub type _bindgen_ty_144 = ::std::os::raw::c_uint;
 pub type AEGP_LayerDrawStyle = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8771,15 +8811,15 @@ pub struct AEGP_FileSequenceImportOptions {
     pub start_frameL: A_long,
     pub end_frameL: A_long,
 }
-pub const AEGP_FootageSignature_NONE: _bindgen_ty_143 = -1;
-pub const AEGP_FootageSignature_MISSING: _bindgen_ty_143 = 0;
-pub const AEGP_FootageSignature_SOLID: _bindgen_ty_143 = 1399811177;
-pub type _bindgen_ty_143 = ::std::os::raw::c_int;
+pub const AEGP_FootageSignature_NONE: _bindgen_ty_145 = -1;
+pub const AEGP_FootageSignature_MISSING: _bindgen_ty_145 = 0;
+pub const AEGP_FootageSignature_SOLID: _bindgen_ty_145 = 1399811177;
+pub type _bindgen_ty_145 = ::std::os::raw::c_int;
 pub type AEGP_FootageSignature = A_long;
-pub const AEGP_InterpretationStyle_NO_DIALOG_GUESS: _bindgen_ty_144 = 0;
-pub const AEGP_InterpretationStyle_DIALOG_OK: _bindgen_ty_144 = 1;
-pub const AEGP_InterpretationStyle_NO_DIALOG_NO_GUESS: _bindgen_ty_144 = 2;
-pub type _bindgen_ty_144 = ::std::os::raw::c_uint;
+pub const AEGP_InterpretationStyle_NO_DIALOG_GUESS: _bindgen_ty_146 = 0;
+pub const AEGP_InterpretationStyle_DIALOG_OK: _bindgen_ty_146 = 1;
+pub const AEGP_InterpretationStyle_NO_DIALOG_NO_GUESS: _bindgen_ty_146 = 2;
+pub type _bindgen_ty_146 = ::std::os::raw::c_uint;
 pub type AEGP_InterpretationStyle = A_u_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8921,23 +8961,23 @@ pub struct AEGP_FootageSuite5 {
     >,
 }
 pub type AEGP_Command = A_long;
-pub const AEGP_WindType_NONE: _bindgen_ty_145 = 0;
-pub const AEGP_WindType_PROJECT: _bindgen_ty_145 = 1;
-pub const AEGP_WindType_COMP: _bindgen_ty_145 = 2;
-pub const AEGP_WindType_TIME_LAYOUT: _bindgen_ty_145 = 3;
-pub const AEGP_WindType_LAYER: _bindgen_ty_145 = 4;
-pub const AEGP_WindType_FOOTAGE: _bindgen_ty_145 = 5;
-pub const AEGP_WindType_RENDER_QUEUE: _bindgen_ty_145 = 6;
-pub const AEGP_WindType_QT: _bindgen_ty_145 = 7;
-pub const AEGP_WindType_DIALOG: _bindgen_ty_145 = 8;
-pub const AEGP_WindType_FLOWCHART: _bindgen_ty_145 = 9;
-pub const AEGP_WindType_EFFECT: _bindgen_ty_145 = 10;
-pub const AEGP_WindType_OTHER: _bindgen_ty_145 = 11;
-pub type _bindgen_ty_145 = ::std::os::raw::c_uint;
+pub const AEGP_WindType_NONE: _bindgen_ty_147 = 0;
+pub const AEGP_WindType_PROJECT: _bindgen_ty_147 = 1;
+pub const AEGP_WindType_COMP: _bindgen_ty_147 = 2;
+pub const AEGP_WindType_TIME_LAYOUT: _bindgen_ty_147 = 3;
+pub const AEGP_WindType_LAYER: _bindgen_ty_147 = 4;
+pub const AEGP_WindType_FOOTAGE: _bindgen_ty_147 = 5;
+pub const AEGP_WindType_RENDER_QUEUE: _bindgen_ty_147 = 6;
+pub const AEGP_WindType_QT: _bindgen_ty_147 = 7;
+pub const AEGP_WindType_DIALOG: _bindgen_ty_147 = 8;
+pub const AEGP_WindType_FLOWCHART: _bindgen_ty_147 = 9;
+pub const AEGP_WindType_EFFECT: _bindgen_ty_147 = 10;
+pub const AEGP_WindType_OTHER: _bindgen_ty_147 = 11;
+pub type _bindgen_ty_147 = ::std::os::raw::c_uint;
 pub type AEGP_WindowType = A_LegacyEnumType;
-pub const AEGP_HP_BeforeAE: _bindgen_ty_146 = 1;
-pub const AEGP_HP_AfterAE: _bindgen_ty_146 = 2;
-pub type _bindgen_ty_146 = ::std::os::raw::c_uint;
+pub const AEGP_HP_BeforeAE: _bindgen_ty_148 = 1;
+pub const AEGP_HP_AfterAE: _bindgen_ty_148 = 2;
+pub type _bindgen_ty_148 = ::std::os::raw::c_uint;
 pub type AEGP_HookPriority = A_u_long;
 pub type AEGP_CommandHook = ::std::option::Option<
     unsafe extern "C" fn(
@@ -9082,24 +9122,24 @@ pub struct AEGP_RegisterSuite5 {
         unsafe extern "C" fn(english_nameZ: *const A_char, localized_nameZ: *const A_char) -> A_Err,
     >,
 }
-pub const AEGP_Menu_NONE: _bindgen_ty_147 = 0;
-pub const AEGP_Menu_APPLE: _bindgen_ty_147 = 1;
-pub const AEGP_Menu_FILE: _bindgen_ty_147 = 2;
-pub const AEGP_Menu_EDIT: _bindgen_ty_147 = 3;
-pub const AEGP_Menu_COMPOSITION: _bindgen_ty_147 = 4;
-pub const AEGP_Menu_LAYER: _bindgen_ty_147 = 5;
-pub const AEGP_Menu_EFFECT: _bindgen_ty_147 = 6;
-pub const AEGP_Menu_WINDOW: _bindgen_ty_147 = 7;
-pub const AEGP_Menu_FLOATERS: _bindgen_ty_147 = 8;
-pub const AEGP_Menu_KF_ASSIST: _bindgen_ty_147 = 9;
-pub const AEGP_Menu_IMPORT: _bindgen_ty_147 = 10;
-pub const AEGP_Menu_SAVE_FRAME_AS: _bindgen_ty_147 = 11;
-pub const AEGP_Menu_PREFS: _bindgen_ty_147 = 12;
-pub const AEGP_Menu_EXPORT: _bindgen_ty_147 = 13;
-pub const AEGP_Menu_ANIMATION: _bindgen_ty_147 = 14;
-pub const AEGP_Menu_PURGE: _bindgen_ty_147 = 15;
-pub const AEGP_Menu_NEW: _bindgen_ty_147 = 16;
-pub type _bindgen_ty_147 = ::std::os::raw::c_uint;
+pub const AEGP_Menu_NONE: _bindgen_ty_149 = 0;
+pub const AEGP_Menu_APPLE: _bindgen_ty_149 = 1;
+pub const AEGP_Menu_FILE: _bindgen_ty_149 = 2;
+pub const AEGP_Menu_EDIT: _bindgen_ty_149 = 3;
+pub const AEGP_Menu_COMPOSITION: _bindgen_ty_149 = 4;
+pub const AEGP_Menu_LAYER: _bindgen_ty_149 = 5;
+pub const AEGP_Menu_EFFECT: _bindgen_ty_149 = 6;
+pub const AEGP_Menu_WINDOW: _bindgen_ty_149 = 7;
+pub const AEGP_Menu_FLOATERS: _bindgen_ty_149 = 8;
+pub const AEGP_Menu_KF_ASSIST: _bindgen_ty_149 = 9;
+pub const AEGP_Menu_IMPORT: _bindgen_ty_149 = 10;
+pub const AEGP_Menu_SAVE_FRAME_AS: _bindgen_ty_149 = 11;
+pub const AEGP_Menu_PREFS: _bindgen_ty_149 = 12;
+pub const AEGP_Menu_EXPORT: _bindgen_ty_149 = 13;
+pub const AEGP_Menu_ANIMATION: _bindgen_ty_149 = 14;
+pub const AEGP_Menu_PURGE: _bindgen_ty_149 = 15;
+pub const AEGP_Menu_NEW: _bindgen_ty_149 = 16;
+pub type _bindgen_ty_149 = ::std::os::raw::c_uint;
 pub type AEGP_MenuID = A_LegacyEnumType;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -9133,11 +9173,11 @@ pub struct AEGP_CommandSuite1 {
 pub struct AEGP_ErrReportState {
     pub reservedAL: [A_long; 12usize],
 }
-pub const AEGP_GetPathTypes_PLUGIN: _bindgen_ty_148 = 0;
-pub const AEGP_GetPathTypes_USER_PLUGIN: _bindgen_ty_148 = 1;
-pub const AEGP_GetPathTypes_ALLUSER_PLUGIN: _bindgen_ty_148 = 2;
-pub const AEGP_GetPathTypes_APP: _bindgen_ty_148 = 3;
-pub type _bindgen_ty_148 = ::std::os::raw::c_uint;
+pub const AEGP_GetPathTypes_PLUGIN: _bindgen_ty_150 = 0;
+pub const AEGP_GetPathTypes_USER_PLUGIN: _bindgen_ty_150 = 1;
+pub const AEGP_GetPathTypes_ALLUSER_PLUGIN: _bindgen_ty_150 = 2;
+pub const AEGP_GetPathTypes_APP: _bindgen_ty_150 = 3;
+pub type _bindgen_ty_150 = ::std::os::raw::c_uint;
 pub type AEGP_GetPathTypes = A_u_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -9419,22 +9459,22 @@ pub struct AEGP_ColorSettingsSuite6 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_RenderQueueState_STOPPED: _bindgen_ty_149 = 0;
-pub const AEGP_RenderQueueState_PAUSED: _bindgen_ty_149 = 1;
-pub const AEGP_RenderQueueState_RENDERING: _bindgen_ty_149 = 2;
-pub type _bindgen_ty_149 = ::std::os::raw::c_uint;
+pub const AEGP_RenderQueueState_STOPPED: _bindgen_ty_151 = 0;
+pub const AEGP_RenderQueueState_PAUSED: _bindgen_ty_151 = 1;
+pub const AEGP_RenderQueueState_RENDERING: _bindgen_ty_151 = 2;
+pub type _bindgen_ty_151 = ::std::os::raw::c_uint;
 pub type AEGP_RenderQueueState = A_u_long;
-pub const AEGP_RenderItemStatus_NONE: _bindgen_ty_150 = -2;
-pub const AEGP_RenderItemStatus_WILL_CONTINUE: _bindgen_ty_150 = -1;
-pub const AEGP_RenderItemStatus_NEEDS_OUTPUT: _bindgen_ty_150 = 0;
-pub const AEGP_RenderItemStatus_UNQUEUED: _bindgen_ty_150 = 1;
-pub const AEGP_RenderItemStatus_QUEUED: _bindgen_ty_150 = 2;
-pub const AEGP_RenderItemStatus_RENDERING: _bindgen_ty_150 = 3;
-pub const AEGP_RenderItemStatus_USER_STOPPED: _bindgen_ty_150 = 4;
-pub const AEGP_RenderItemStatus_ERR_STOPPED: _bindgen_ty_150 = 5;
-pub const AEGP_RenderItemStatus_DONE: _bindgen_ty_150 = 6;
-pub const AEGP_RenderItemStatus_LAST_PLUS_ONE: _bindgen_ty_150 = 7;
-pub type _bindgen_ty_150 = ::std::os::raw::c_int;
+pub const AEGP_RenderItemStatus_NONE: _bindgen_ty_152 = -2;
+pub const AEGP_RenderItemStatus_WILL_CONTINUE: _bindgen_ty_152 = -1;
+pub const AEGP_RenderItemStatus_NEEDS_OUTPUT: _bindgen_ty_152 = 0;
+pub const AEGP_RenderItemStatus_UNQUEUED: _bindgen_ty_152 = 1;
+pub const AEGP_RenderItemStatus_QUEUED: _bindgen_ty_152 = 2;
+pub const AEGP_RenderItemStatus_RENDERING: _bindgen_ty_152 = 3;
+pub const AEGP_RenderItemStatus_USER_STOPPED: _bindgen_ty_152 = 4;
+pub const AEGP_RenderItemStatus_ERR_STOPPED: _bindgen_ty_152 = 5;
+pub const AEGP_RenderItemStatus_DONE: _bindgen_ty_152 = 6;
+pub const AEGP_RenderItemStatus_LAST_PLUS_ONE: _bindgen_ty_152 = 7;
+pub type _bindgen_ty_152 = ::std::os::raw::c_int;
 pub type AEGP_RenderItemStatusType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -9447,49 +9487,49 @@ pub struct AEGP_RenderQueueSuite1 {
     pub AEGP_GetRenderQueueState:
         ::std::option::Option<unsafe extern "C" fn(stateP: *mut AEGP_RenderQueueState) -> A_Err>,
 }
-pub const AEGP_LogType_NONE: _bindgen_ty_151 = -1;
-pub const AEGP_LogType_ERRORS_ONLY: _bindgen_ty_151 = 0;
-pub const AEGP_LogType_PLUS_SETTINGS: _bindgen_ty_151 = 1;
-pub const AEGP_LogType_PER_FRAME_INFO: _bindgen_ty_151 = 2;
-pub const AEGP_LogType_NUM_TYPES: _bindgen_ty_151 = 3;
-pub type _bindgen_ty_151 = ::std::os::raw::c_int;
-pub type AEGP_LogType = A_long;
-pub const AEGP_Embedding_NONE: _bindgen_ty_152 = -1;
-pub const AEGP_Embedding_NOTHING: _bindgen_ty_152 = 0;
-pub const AEGP_Embedding_LINK: _bindgen_ty_152 = 1;
-pub const AEGP_Embedding_LINK_AND_COPY: _bindgen_ty_152 = 2;
-pub const AEGP_Embedding_NUM_TYPES: _bindgen_ty_152 = 3;
-pub type _bindgen_ty_152 = ::std::os::raw::c_int;
-pub type AEGP_EmbeddingType = A_long;
-pub const AEGP_PostRenderOptions_NONE: _bindgen_ty_153 = -1;
-pub const AEGP_PostRenderOptions_IMPORT: _bindgen_ty_153 = 0;
-pub const AEGP_PostRenderOptions_IMPORT_AND_REPLACE_USAGE: _bindgen_ty_153 = 1;
-pub const AEGP_PostRenderOptions_SET_PROXY: _bindgen_ty_153 = 2;
-pub const AEGP_PostRenderOptions_NUM_OPTIONS: _bindgen_ty_153 = 3;
+pub const AEGP_LogType_NONE: _bindgen_ty_153 = -1;
+pub const AEGP_LogType_ERRORS_ONLY: _bindgen_ty_153 = 0;
+pub const AEGP_LogType_PLUS_SETTINGS: _bindgen_ty_153 = 1;
+pub const AEGP_LogType_PER_FRAME_INFO: _bindgen_ty_153 = 2;
+pub const AEGP_LogType_NUM_TYPES: _bindgen_ty_153 = 3;
 pub type _bindgen_ty_153 = ::std::os::raw::c_int;
-pub type AEGP_PostRenderAction = A_long;
-pub const AEGP_OutputType_NONE: _bindgen_ty_154 = 0;
-pub const AEGP_OutputType_VIDEO: _bindgen_ty_154 = 1;
-pub const AEGP_OutputType_AUDIO: _bindgen_ty_154 = 2;
-pub const AEGP_OutputType_NUM_TYPES: _bindgen_ty_154 = 3;
-pub type _bindgen_ty_154 = ::std::os::raw::c_uint;
-pub type AEGP_OutputTypes = A_long;
-pub const AEGP_VideoChannels_NONE: _bindgen_ty_155 = -1;
-pub const AEGP_VideoChannels_RGB: _bindgen_ty_155 = 0;
-pub const AEGP_VideoChannels_RGBA: _bindgen_ty_155 = 1;
-pub const AEGP_VideoChannels_ALPHA: _bindgen_ty_155 = 2;
-pub const AEGP_VideoChannels_NUMTYPES: _bindgen_ty_155 = 3;
+pub type AEGP_LogType = A_long;
+pub const AEGP_Embedding_NONE: _bindgen_ty_154 = -1;
+pub const AEGP_Embedding_NOTHING: _bindgen_ty_154 = 0;
+pub const AEGP_Embedding_LINK: _bindgen_ty_154 = 1;
+pub const AEGP_Embedding_LINK_AND_COPY: _bindgen_ty_154 = 2;
+pub const AEGP_Embedding_NUM_TYPES: _bindgen_ty_154 = 3;
+pub type _bindgen_ty_154 = ::std::os::raw::c_int;
+pub type AEGP_EmbeddingType = A_long;
+pub const AEGP_PostRenderOptions_NONE: _bindgen_ty_155 = -1;
+pub const AEGP_PostRenderOptions_IMPORT: _bindgen_ty_155 = 0;
+pub const AEGP_PostRenderOptions_IMPORT_AND_REPLACE_USAGE: _bindgen_ty_155 = 1;
+pub const AEGP_PostRenderOptions_SET_PROXY: _bindgen_ty_155 = 2;
+pub const AEGP_PostRenderOptions_NUM_OPTIONS: _bindgen_ty_155 = 3;
 pub type _bindgen_ty_155 = ::std::os::raw::c_int;
-pub type AEGP_VideoChannels = A_long;
-pub const AEGP_StretchQual_NONE: _bindgen_ty_156 = -1;
-pub const AEGP_StretchQual_LOW: _bindgen_ty_156 = 0;
-pub const AEGP_StretchQual_HIGH: _bindgen_ty_156 = 1;
-pub const AEGP_StretchQual_NUMTYPES: _bindgen_ty_156 = 2;
-pub type _bindgen_ty_156 = ::std::os::raw::c_int;
-pub type AEGP_StretchQuality = A_long;
-pub const AEGP_OutputColorType_STRAIGHT: _bindgen_ty_157 = -1;
-pub const AEGP_OutputColorType_PREMUL: _bindgen_ty_157 = 0;
+pub type AEGP_PostRenderAction = A_long;
+pub const AEGP_OutputType_NONE: _bindgen_ty_156 = 0;
+pub const AEGP_OutputType_VIDEO: _bindgen_ty_156 = 1;
+pub const AEGP_OutputType_AUDIO: _bindgen_ty_156 = 2;
+pub const AEGP_OutputType_NUM_TYPES: _bindgen_ty_156 = 3;
+pub type _bindgen_ty_156 = ::std::os::raw::c_uint;
+pub type AEGP_OutputTypes = A_long;
+pub const AEGP_VideoChannels_NONE: _bindgen_ty_157 = -1;
+pub const AEGP_VideoChannels_RGB: _bindgen_ty_157 = 0;
+pub const AEGP_VideoChannels_RGBA: _bindgen_ty_157 = 1;
+pub const AEGP_VideoChannels_ALPHA: _bindgen_ty_157 = 2;
+pub const AEGP_VideoChannels_NUMTYPES: _bindgen_ty_157 = 3;
 pub type _bindgen_ty_157 = ::std::os::raw::c_int;
+pub type AEGP_VideoChannels = A_long;
+pub const AEGP_StretchQual_NONE: _bindgen_ty_158 = -1;
+pub const AEGP_StretchQual_LOW: _bindgen_ty_158 = 0;
+pub const AEGP_StretchQual_HIGH: _bindgen_ty_158 = 1;
+pub const AEGP_StretchQual_NUMTYPES: _bindgen_ty_158 = 2;
+pub type _bindgen_ty_158 = ::std::os::raw::c_int;
+pub type AEGP_StretchQuality = A_long;
+pub const AEGP_OutputColorType_STRAIGHT: _bindgen_ty_159 = -1;
+pub const AEGP_OutputColorType_PREMUL: _bindgen_ty_159 = 0;
+pub type _bindgen_ty_159 = ::std::os::raw::c_int;
 pub type AEGP_OutputColorType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -9690,36 +9730,36 @@ pub struct AEGP_OutputModuleSuite4 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_RenderHints_NONE: _bindgen_ty_158 = 0;
-pub const AEGP_RenderHints_IGNORE_EXTENTS: _bindgen_ty_158 = 1;
-pub const AEGP_RenderHints_NO_TRANSFER_MODE: _bindgen_ty_158 = 2;
-pub type _bindgen_ty_158 = ::std::os::raw::c_uint;
+pub const AEGP_RenderHints_NONE: _bindgen_ty_160 = 0;
+pub const AEGP_RenderHints_IGNORE_EXTENTS: _bindgen_ty_160 = 1;
+pub const AEGP_RenderHints_NO_TRANSFER_MODE: _bindgen_ty_160 = 2;
+pub type _bindgen_ty_160 = ::std::os::raw::c_uint;
 pub type AEGP_RenderHints = A_u_long;
-pub const AEGP_RenderReceiptStatus_INVALID: _bindgen_ty_159 = 0;
-pub const AEGP_RenderReceiptStatus_VALID: _bindgen_ty_159 = 1;
-pub const AEGP_RenderReceiptStatus_VALID_BUT_INCOMPLETE: _bindgen_ty_159 = 2;
-pub type _bindgen_ty_159 = ::std::os::raw::c_uint;
+pub const AEGP_RenderReceiptStatus_INVALID: _bindgen_ty_161 = 0;
+pub const AEGP_RenderReceiptStatus_VALID: _bindgen_ty_161 = 1;
+pub const AEGP_RenderReceiptStatus_VALID_BUT_INCOMPLETE: _bindgen_ty_161 = 2;
+pub type _bindgen_ty_161 = ::std::os::raw::c_uint;
 pub type AEGP_RenderReceiptStatus = A_u_long;
-pub const AEGP_BinType_NONE: _bindgen_ty_160 = -1;
-pub const AEGP_BinType_2D: _bindgen_ty_160 = 0;
-pub const AEGP_BinType_3D: _bindgen_ty_160 = 1;
-pub type _bindgen_ty_160 = ::std::os::raw::c_int;
+pub const AEGP_BinType_NONE: _bindgen_ty_162 = -1;
+pub const AEGP_BinType_2D: _bindgen_ty_162 = 0;
+pub const AEGP_BinType_3D: _bindgen_ty_162 = 1;
+pub type _bindgen_ty_162 = ::std::os::raw::c_int;
 pub type AEGP_BinType = A_long;
 pub type AEGP_PlatformWindowRef = *mut ::std::os::raw::c_void;
-pub const AEGP_DisplayChannel_NONE: _bindgen_ty_161 = 0;
-pub const AEGP_DisplayChannel_RED: _bindgen_ty_161 = 1;
-pub const AEGP_DisplayChannel_GREEN: _bindgen_ty_161 = 2;
-pub const AEGP_DisplayChannel_BLUE: _bindgen_ty_161 = 3;
-pub const AEGP_DisplayChannel_ALPHA: _bindgen_ty_161 = 4;
-pub const AEGP_DisplayChannel_RED_ALT: _bindgen_ty_161 = 5;
-pub const AEGP_DisplayChannel_GREEN_ALT: _bindgen_ty_161 = 6;
-pub const AEGP_DisplayChannel_BLUE_ALT: _bindgen_ty_161 = 7;
-pub const AEGP_DisplayChannel_ALPHA_ALT: _bindgen_ty_161 = 8;
-pub const AEGP_DisplayChannel_NUM_ITEMS: _bindgen_ty_161 = 9;
-pub type _bindgen_ty_161 = ::std::os::raw::c_uint;
+pub const AEGP_DisplayChannel_NONE: _bindgen_ty_163 = 0;
+pub const AEGP_DisplayChannel_RED: _bindgen_ty_163 = 1;
+pub const AEGP_DisplayChannel_GREEN: _bindgen_ty_163 = 2;
+pub const AEGP_DisplayChannel_BLUE: _bindgen_ty_163 = 3;
+pub const AEGP_DisplayChannel_ALPHA: _bindgen_ty_163 = 4;
+pub const AEGP_DisplayChannel_RED_ALT: _bindgen_ty_163 = 5;
+pub const AEGP_DisplayChannel_GREEN_ALT: _bindgen_ty_163 = 6;
+pub const AEGP_DisplayChannel_BLUE_ALT: _bindgen_ty_163 = 7;
+pub const AEGP_DisplayChannel_ALPHA_ALT: _bindgen_ty_163 = 8;
+pub const AEGP_DisplayChannel_NUM_ITEMS: _bindgen_ty_163 = 9;
+pub type _bindgen_ty_163 = ::std::os::raw::c_uint;
 pub type AEGP_DisplayChannelType = A_long;
-pub const AEGP_RenderNumEffects_ALL_EFFECTS: _bindgen_ty_162 = -1;
-pub type _bindgen_ty_162 = ::std::os::raw::c_int;
+pub const AEGP_RenderNumEffects_ALL_EFFECTS: _bindgen_ty_164 = -1;
+pub type _bindgen_ty_164 = ::std::os::raw::c_int;
 pub type AEGP_NumEffectsToRenderType = A_short;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -10156,12 +10196,12 @@ pub struct AEGP_LightSuite3 {
         unsafe extern "C" fn(light_layerH: AEGP_LayerH, light_sourceH: AEGP_LayerH) -> A_Err,
     >,
 }
-pub const AEGP_Query_Xform_LAYER: _bindgen_ty_163 = 0;
-pub const AEGP_Query_Xform_WORLD: _bindgen_ty_163 = 1;
-pub const AEGP_Query_Xform_VIEW: _bindgen_ty_163 = 2;
-pub const AEGP_Query_Xform_SCREEN: _bindgen_ty_163 = 3;
+pub const AEGP_Query_Xform_LAYER: _bindgen_ty_165 = 0;
+pub const AEGP_Query_Xform_WORLD: _bindgen_ty_165 = 1;
+pub const AEGP_Query_Xform_VIEW: _bindgen_ty_165 = 2;
+pub const AEGP_Query_Xform_SCREEN: _bindgen_ty_165 = 3;
 #[doc = " the type of source or dst transformation wanted"]
-pub type _bindgen_ty_163 = ::std::os::raw::c_uint;
+pub type _bindgen_ty_165 = ::std::os::raw::c_uint;
 pub type AEGP_QueryXformType = A_u_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -10386,9 +10426,12 @@ pub struct AEGP_PFInterfaceSuite1 {
     >,
 }
 pub type AEIO_FileSize = A_u_longlong;
+pub type AEIO_DataRange = A_long;
+pub type AEIO_ColorModel = A_long;
+pub type AEIO_Colorimetry = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct AEGP_IOInSuite6 {
+pub struct AEGP_IOInSuite7 {
     pub AEGP_GetInSpecOptionsHandle: ::std::option::Option<
         unsafe extern "C" fn(
             inH: AEIO_InSpecH,
@@ -10531,10 +10574,22 @@ pub struct AEGP_IOInSuite6 {
             inIsRGB: A_Boolean,
         ) -> A_Err,
     >,
+    pub AEGP_SetInSpecColorSpaceFromCICP2: ::std::option::Option<
+        unsafe extern "C" fn(
+            inH: AEIO_InSpecH,
+            inColorPrimariesCode: A_long,
+            inTransferCharacteristicsCode: A_long,
+            inMatrixCoefficientsCode: A_long,
+            inFullRangeVideoFlag: A_long,
+            inBitDepthL: A_long,
+            inColorModelL: A_long,
+            inColorimetryL: A_long,
+        ) -> A_Err,
+    >,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct AEGP_IOOutSuite5 {
+pub struct AEGP_IOOutSuite6 {
     pub AEGP_GetOutSpecOptionsHandle: ::std::option::Option<
         unsafe extern "C" fn(
             outH: AEIO_OutSpecH,
@@ -10663,6 +10718,16 @@ pub struct AEGP_IOOutSuite5 {
     >,
     pub AEGP_GetOutSpecIsDropFrame: ::std::option::Option<
         unsafe extern "C" fn(outH: AEIO_OutSpecH, outIsDropFramePB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecColorSpaceAsCICPIfCompatible: ::std::option::Option<
+        unsafe extern "C" fn(
+            outH: AEIO_OutSpecH,
+            outColorPrimariesCodePL: *mut A_long,
+            outTransferCharacteristicsCodePL: *mut A_long,
+            outMatrixCoefficientsCodePL: *mut A_long,
+            outIsFullRangePL: *mut A_long,
+            outIsSuccesPB: *mut A_Boolean,
+        ) -> A_Err,
     >,
 }
 pub type AE_FIM_ImportFlavorRef = A_long;
@@ -10916,17 +10981,17 @@ pub struct AEGP_PersistentDataSuite4 {
     pub AEGP_GetPrefsDirectory:
         ::std::option::Option<unsafe extern "C" fn(unicode_pathPH: *mut AEGP_MemHandle) -> A_Err>,
 }
-pub const AEGP_CollectionItemType_NONE: _bindgen_ty_166 = 0;
-pub const AEGP_CollectionItemType_LAYER: _bindgen_ty_166 = 1;
-pub const AEGP_CollectionItemType_MASK: _bindgen_ty_166 = 2;
-pub const AEGP_CollectionItemType_EFFECT: _bindgen_ty_166 = 3;
-pub const AEGP_CollectionItemType_STREAM: _bindgen_ty_166 = 4;
-pub const AEGP_CollectionItemType_KEYFRAME: _bindgen_ty_166 = 5;
-pub const AEGP_CollectionItemType_MASK_VERTEX: _bindgen_ty_166 = 6;
-pub const AEGP_CollectionItemType_STREAMREF: _bindgen_ty_166 = 7;
-pub const AEGP_CollectionItemType_END: _bindgen_ty_166 = 8;
-pub const AEGP_CollectionItemType_BEGIN: _bindgen_ty_166 = 1;
-pub type _bindgen_ty_166 = ::std::os::raw::c_uint;
+pub const AEGP_CollectionItemType_NONE: _bindgen_ty_171 = 0;
+pub const AEGP_CollectionItemType_LAYER: _bindgen_ty_171 = 1;
+pub const AEGP_CollectionItemType_MASK: _bindgen_ty_171 = 2;
+pub const AEGP_CollectionItemType_EFFECT: _bindgen_ty_171 = 3;
+pub const AEGP_CollectionItemType_STREAM: _bindgen_ty_171 = 4;
+pub const AEGP_CollectionItemType_KEYFRAME: _bindgen_ty_171 = 5;
+pub const AEGP_CollectionItemType_MASK_VERTEX: _bindgen_ty_171 = 6;
+pub const AEGP_CollectionItemType_STREAMREF: _bindgen_ty_171 = 7;
+pub const AEGP_CollectionItemType_END: _bindgen_ty_171 = 8;
+pub const AEGP_CollectionItemType_BEGIN: _bindgen_ty_171 = 1;
+pub type _bindgen_ty_171 = ::std::os::raw::c_uint;
 pub type AEGP_CollectionItemType = A_LegacyEnumType;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -10945,13 +11010,13 @@ pub struct AEGP_EffectCollectionItem {
     pub layerH: AEGP_LayerH,
     pub index: AEGP_EffectIndex,
 }
-pub const AEGP_StreamCollectionItemType_NONE: _bindgen_ty_167 = 0;
-pub const AEGP_StreamCollectionItemType_LAYER: _bindgen_ty_167 = 1;
-pub const AEGP_StreamCollectionItemType_MASK: _bindgen_ty_167 = 2;
-pub const AEGP_StreamCollectionItemType_EFFECT: _bindgen_ty_167 = 3;
-pub const AEGP_StreamCollectionItemType_END: _bindgen_ty_167 = 4;
-pub const AEGP_StreamCollectionItemType_BEGIN: _bindgen_ty_167 = 1;
-pub type _bindgen_ty_167 = ::std::os::raw::c_uint;
+pub const AEGP_StreamCollectionItemType_NONE: _bindgen_ty_172 = 0;
+pub const AEGP_StreamCollectionItemType_LAYER: _bindgen_ty_172 = 1;
+pub const AEGP_StreamCollectionItemType_MASK: _bindgen_ty_172 = 2;
+pub const AEGP_StreamCollectionItemType_EFFECT: _bindgen_ty_172 = 3;
+pub const AEGP_StreamCollectionItemType_END: _bindgen_ty_172 = 4;
+pub const AEGP_StreamCollectionItemType_BEGIN: _bindgen_ty_172 = 1;
+pub type _bindgen_ty_172 = ::std::os::raw::c_uint;
 pub type AEGP_StreamCollectionItemType = A_LegacyEnumType;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -11048,11 +11113,11 @@ pub struct AEGP_CollectionSuite2 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_WorldType_NONE: _bindgen_ty_168 = 0;
-pub const AEGP_WorldType_8: _bindgen_ty_168 = 1;
-pub const AEGP_WorldType_16: _bindgen_ty_168 = 2;
-pub const AEGP_WorldType_32: _bindgen_ty_168 = 3;
-pub type _bindgen_ty_168 = ::std::os::raw::c_uint;
+pub const AEGP_WorldType_NONE: _bindgen_ty_173 = 0;
+pub const AEGP_WorldType_8: _bindgen_ty_173 = 1;
+pub const AEGP_WorldType_16: _bindgen_ty_173 = 2;
+pub const AEGP_WorldType_32: _bindgen_ty_173 = 3;
+pub type _bindgen_ty_173 = ::std::os::raw::c_uint;
 pub type AEGP_WorldType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -11119,18 +11184,18 @@ pub struct AEGP_WorldSuite3 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_MatteMode_STRAIGHT: _bindgen_ty_169 = 0;
-pub const AEGP_MatteMode_PREMUL_BLACK: _bindgen_ty_169 = 1;
-pub const AEGP_MatteMode_PREMUL_BG_COLOR: _bindgen_ty_169 = 2;
-pub type _bindgen_ty_169 = ::std::os::raw::c_uint;
+pub const AEGP_MatteMode_STRAIGHT: _bindgen_ty_174 = 0;
+pub const AEGP_MatteMode_PREMUL_BLACK: _bindgen_ty_174 = 1;
+pub const AEGP_MatteMode_PREMUL_BG_COLOR: _bindgen_ty_174 = 2;
+pub type _bindgen_ty_174 = ::std::os::raw::c_uint;
 pub type AEGP_MatteMode = A_long;
-pub const AEGP_ChannelOrder_ARGB: _bindgen_ty_170 = 0;
-pub const AEGP_ChannelOrder_BGRA: _bindgen_ty_170 = 1;
-pub type _bindgen_ty_170 = ::std::os::raw::c_uint;
+pub const AEGP_ChannelOrder_ARGB: _bindgen_ty_175 = 0;
+pub const AEGP_ChannelOrder_BGRA: _bindgen_ty_175 = 1;
+pub type _bindgen_ty_175 = ::std::os::raw::c_uint;
 pub type AEGP_ChannelOrder = A_char;
-pub const AEGP_ItemQuality_DRAFT: _bindgen_ty_171 = 0;
-pub const AEGP_ItemQuality_BEST: _bindgen_ty_171 = 1;
-pub type _bindgen_ty_171 = ::std::os::raw::c_uint;
+pub const AEGP_ItemQuality_DRAFT: _bindgen_ty_176 = 0;
+pub const AEGP_ItemQuality_BEST: _bindgen_ty_176 = 1;
+pub type _bindgen_ty_176 = ::std::os::raw::c_uint;
 pub type AEGP_ItemQuality = A_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -21596,6 +21661,152 @@ pub struct AEGP_IterateSuite1 {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct AEGP_IOInSuite6 {
+    pub AEGP_GetInSpecOptionsHandle: ::std::option::Option<
+        unsafe extern "C" fn(
+            inH: AEIO_InSpecH,
+            optionsPPV: *mut *mut ::std::os::raw::c_void,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetInSpecOptionsHandle: ::std::option::Option<
+        unsafe extern "C" fn(
+            inH: AEIO_InSpecH,
+            optionsPV: *mut ::std::os::raw::c_void,
+            old_optionsPPV: *mut *mut ::std::os::raw::c_void,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetInSpecFilePath: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, unicode_pathPH: *mut AEGP_MemHandle) -> A_Err,
+    >,
+    pub AEGP_GetInSpecNativeFPS: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, native_fpsP: *mut A_Fixed) -> A_Err,
+    >,
+    pub AEGP_SetInSpecNativeFPS: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, native_fps: A_Fixed) -> A_Err,
+    >,
+    pub AEGP_GetInSpecDepth: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, depthPS: *mut A_short) -> A_Err,
+    >,
+    pub AEGP_SetInSpecDepth:
+        ::std::option::Option<unsafe extern "C" fn(inH: AEIO_InSpecH, depthS: A_short) -> A_Err>,
+    pub AEGP_GetInSpecSize: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, sizePL: *mut AEIO_FileSize) -> A_Err,
+    >,
+    pub AEGP_SetInSpecSize: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, sizeL: AEIO_FileSize) -> A_Err,
+    >,
+    pub AEGP_GetInSpecInterlaceLabel: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, interlaceP: *mut FIEL_Label) -> A_Err,
+    >,
+    pub AEGP_SetInSpecInterlaceLabel: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, interlaceP: *const FIEL_Label) -> A_Err,
+    >,
+    pub AEGP_GetInSpecAlphaLabel: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, alphaP: *mut AEIO_AlphaLabel) -> A_Err,
+    >,
+    pub AEGP_SetInSpecAlphaLabel: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, alphaP: *const AEIO_AlphaLabel) -> A_Err,
+    >,
+    pub AEGP_GetInSpecDuration: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, durationP: *mut A_Time) -> A_Err,
+    >,
+    pub AEGP_SetInSpecDuration: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, durationP: *const A_Time) -> A_Err,
+    >,
+    pub AEGP_GetInSpecDimensions: ::std::option::Option<
+        unsafe extern "C" fn(
+            inH: AEIO_InSpecH,
+            widthPL0: *mut A_long,
+            heightPL0: *mut A_long,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetInSpecDimensions: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, widthL: A_long, heightL: A_long) -> A_Err,
+    >,
+    pub AEGP_InSpecGetRationalDimensions: ::std::option::Option<
+        unsafe extern "C" fn(
+            inH: AEIO_InSpecH,
+            rs0: *const AEIO_RationalScale,
+            width0: *mut A_long,
+            height0: *mut A_long,
+            r0: *mut A_Rect,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetInSpecHSF:
+        ::std::option::Option<unsafe extern "C" fn(inH: AEIO_InSpecH, hsfP: *mut A_Ratio) -> A_Err>,
+    pub AEGP_SetInSpecHSF: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, hsfP: *const A_Ratio) -> A_Err,
+    >,
+    pub AEGP_GetInSpecSoundRate: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, ratePF: *mut A_FpLong) -> A_Err,
+    >,
+    pub AEGP_SetInSpecSoundRate:
+        ::std::option::Option<unsafe extern "C" fn(inH: AEIO_InSpecH, rateF: A_FpLong) -> A_Err>,
+    pub AEGP_GetInSpecSoundEncoding: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, encodingP: *mut AEIO_SndEncoding) -> A_Err,
+    >,
+    pub AEGP_SetInSpecSoundEncoding: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, encoding: AEIO_SndEncoding) -> A_Err,
+    >,
+    pub AEGP_GetInSpecSoundSampleSize: ::std::option::Option<
+        unsafe extern "C" fn(
+            inH: AEIO_InSpecH,
+            bytes_per_sampleP: *mut AEIO_SndSampleSize,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetInSpecSoundSampleSize: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, bytes_per_sample: AEIO_SndSampleSize) -> A_Err,
+    >,
+    pub AEGP_GetInSpecSoundChannels: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, num_channelsP: *mut AEIO_SndChannels) -> A_Err,
+    >,
+    pub AEGP_SetInSpecSoundChannels: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, num_channels: AEIO_SndChannels) -> A_Err,
+    >,
+    pub AEGP_AddAuxExtMap: ::std::option::Option<
+        unsafe extern "C" fn(extension: *const A_char, file_type: A_long, creator: A_long) -> A_Err,
+    >,
+    pub AEGP_SetInSpecEmbeddedColorProfile: ::std::option::Option<
+        unsafe extern "C" fn(
+            inH: AEIO_InSpecH,
+            color_profileP0: AEGP_ConstColorProfileP,
+            profile_descP0: *const A_UTF16Char,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetInSpecAssignedColorProfile: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, color_profileP: AEGP_ConstColorProfileP) -> A_Err,
+    >,
+    pub AEGP_GetInSpecNativeStartTime: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, startTimeP: *mut A_Time) -> A_Err,
+    >,
+    pub AEGP_SetInSpecNativeStartTime: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, startTimeP: *const A_Time) -> A_Err,
+    >,
+    pub AEGP_ClearInSpecNativeStartTime:
+        ::std::option::Option<unsafe extern "C" fn(inH: AEIO_InSpecH) -> A_Err>,
+    pub AEGP_GetInSpecNativeDisplayDropFrame: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, displayDropFrameBP: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_SetInSpecNativeDisplayDropFrame: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, displayDropFrameB: A_Boolean) -> A_Err,
+    >,
+    pub AEGP_SetInSpecStillSequenceNativeFPS: ::std::option::Option<
+        unsafe extern "C" fn(inH: AEIO_InSpecH, native_still_seq_fps: A_Fixed) -> A_Err,
+    >,
+    pub AEGP_SetInSpecColorSpaceFromCICP: ::std::option::Option<
+        unsafe extern "C" fn(
+            inH: AEIO_InSpecH,
+            inColorPrimariesCode: A_long,
+            inTransferCharacteristicsCode: A_long,
+            inMatrixCoefficientsCode: A_long,
+            inFullRangeVideoFlag: A_long,
+            inBitDepthL: A_long,
+            inIsRGB: A_Boolean,
+        ) -> A_Err,
+    >,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct AEGP_IOInSuite5 {
     pub AEGP_GetInSpecOptionsHandle: ::std::option::Option<
         unsafe extern "C" fn(
@@ -21849,6 +22060,139 @@ pub struct AEGP_IOInSuite4 {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct AEGP_IOOutSuite5 {
+    pub AEGP_GetOutSpecOptionsHandle: ::std::option::Option<
+        unsafe extern "C" fn(
+            outH: AEIO_OutSpecH,
+            optionsPPV: *mut *mut ::std::os::raw::c_void,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecOptionsHandle: ::std::option::Option<
+        unsafe extern "C" fn(
+            outH: AEIO_OutSpecH,
+            optionsPV: *mut ::std::os::raw::c_void,
+            old_optionsPPVO: *mut *mut ::std::os::raw::c_void,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecFilePath: ::std::option::Option<
+        unsafe extern "C" fn(
+            outH: AEIO_OutSpecH,
+            unicode_pathPH: *mut AEGP_MemHandle,
+            file_reservedPB: *mut A_Boolean,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecFPS: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, native_fpsP: *mut A_Fixed) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecNativeFPS: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, native_fpsP: A_Fixed) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecDepth: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, depthPS: *mut A_short) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecDepth:
+        ::std::option::Option<unsafe extern "C" fn(outH: AEIO_OutSpecH, depthPS: A_short) -> A_Err>,
+    pub AEGP_GetOutSpecInterlaceLabel: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, interlaceP: *mut FIEL_Label) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecInterlaceLabel: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, interlaceP: *const FIEL_Label) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecAlphaLabel: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, alphaP: *mut AEIO_AlphaLabel) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecAlphaLabel: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, alphaP: *const AEIO_AlphaLabel) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecDuration: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, durationP: *mut A_Time) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecDuration: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, durationP: *const A_Time) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecDimensions: ::std::option::Option<
+        unsafe extern "C" fn(
+            outH: AEIO_OutSpecH,
+            widthPL: *mut A_long,
+            heightPL: *mut A_long,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecHSF: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, hsfP: *mut A_Ratio) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecHSF: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, hsfP: *const A_Ratio) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecSoundRate: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, ratePF: *mut A_FpLong) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecSoundRate:
+        ::std::option::Option<unsafe extern "C" fn(outH: AEIO_OutSpecH, rateF: A_FpLong) -> A_Err>,
+    pub AEGP_GetOutSpecSoundEncoding: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, encodingP: *mut AEIO_SndEncoding) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecSoundEncoding: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, encoding: AEIO_SndEncoding) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecSoundSampleSize: ::std::option::Option<
+        unsafe extern "C" fn(
+            outH: AEIO_OutSpecH,
+            bytes_per_sampleP: *mut AEIO_SndSampleSize,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecSoundSampleSize: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, bytes_per_sample: AEIO_SndSampleSize) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecSoundChannels: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, num_channelsP: *mut AEIO_SndChannels) -> A_Err,
+    >,
+    pub AEGP_SetOutSpecSoundChannels: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, num_channels: AEIO_SndChannels) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecIsStill: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, is_stillPB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecPosterTime: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, poster_timeP: *mut A_Time) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecStartFrame: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, start_frameP: *mut A_long) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecPullDown: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, pulldownP: *mut AEIO_Pulldown) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecIsMissing: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, missingPB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecShouldEmbedICCProfile: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, embedPB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetNewOutSpecColorProfile: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            outH: AEIO_OutSpecH,
+            color_profilePP: *mut AEGP_ColorProfileP,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecOutputModule: ::std::option::Option<
+        unsafe extern "C" fn(
+            outH: AEIO_OutSpecH,
+            rq_itemP: *mut AEGP_RQItemRefH,
+            om_refP: *mut AEGP_OutputModuleRefH,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecStartTime: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, outStartTimePT: *mut A_Time) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecFrameTime: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, outFrameTimePT: *mut A_Time) -> A_Err,
+    >,
+    pub AEGP_GetOutSpecIsDropFrame: ::std::option::Option<
+        unsafe extern "C" fn(outH: AEIO_OutSpecH, outIsDropFramePB: *mut A_Boolean) -> A_Err,
+    >,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct AEGP_IOOutSuite4 {
     pub AEGP_GetOutSpecOptionsHandle: ::std::option::Option<
         unsafe extern "C" fn(
@@ -22033,6 +22377,93 @@ pub type PF_PluginDataCB = ::std::option::Option<
         inReservedInfo: A_long,
     ) -> A_Err,
 >;
+#[doc = " MC Compute -- plugin registration of cached computations"]
+pub type AEGP_CCComputeClassIdP = *const ::std::os::raw::c_char;
+pub type AEGP_CCComputeOptionsRefconP = *mut ::std::os::raw::c_void;
+pub type AEGP_CCComputeValueRefconP = *mut ::std::os::raw::c_void;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_GUID {
+    pub bytes: [A_long; 4usize],
+}
+pub type AEGP_CCComputeKey = AEGP_GUID;
+pub type AEGP_CCComputeKeyP = *mut AEGP_CCComputeKey;
+pub type AEGP_CCCheckoutReceiptP = *mut ::std::os::raw::c_void;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_ComputeCacheCallbacks {
+    pub generate_key: ::std::option::Option<
+        unsafe extern "C" fn(
+            optionsP: AEGP_CCComputeOptionsRefconP,
+            out_keyP: AEGP_CCComputeKeyP,
+        ) -> A_Err,
+    >,
+    pub compute: ::std::option::Option<
+        unsafe extern "C" fn(
+            optionsP: AEGP_CCComputeOptionsRefconP,
+            out_valuePP: *mut AEGP_CCComputeValueRefconP,
+        ) -> A_Err,
+    >,
+    pub approx_size_value:
+        ::std::option::Option<unsafe extern "C" fn(valueP: AEGP_CCComputeValueRefconP) -> usize>,
+    pub delete_compute_value:
+        ::std::option::Option<unsafe extern "C" fn(valueP: AEGP_CCComputeValueRefconP)>,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_ComputeCacheSuite1 {
+    pub AEGP_ClassRegister: ::std::option::Option<
+        unsafe extern "C" fn(
+            compute_classP: AEGP_CCComputeClassIdP,
+            callbacksP: *const AEGP_ComputeCacheCallbacks,
+        ) -> A_Err,
+    >,
+    pub AEGP_ClassUnregister: ::std::option::Option<
+        unsafe extern "C" fn(compute_classP: AEGP_CCComputeClassIdP) -> A_Err,
+    >,
+    pub AEGP_ComputeIfNeededAndCheckout: ::std::option::Option<
+        unsafe extern "C" fn(
+            compute_classP: AEGP_CCComputeClassIdP,
+            opaque_optionsP: AEGP_CCComputeOptionsRefconP,
+            wait_for_other_threadB: bool,
+            compute_receiptPP: *mut AEGP_CCCheckoutReceiptP,
+        ) -> A_Err,
+    >,
+    pub AEGP_CheckoutCached: ::std::option::Option<
+        unsafe extern "C" fn(
+            compute_classP: AEGP_CCComputeClassIdP,
+            opaque_optionsP: AEGP_CCComputeOptionsRefconP,
+            compute_receiptPP: *mut AEGP_CCCheckoutReceiptP,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetReceiptComputeValue: ::std::option::Option<
+        unsafe extern "C" fn(
+            compute_receiptP: AEGP_CCCheckoutReceiptP,
+            compute_valuePP: *mut AEGP_CCComputeValueRefconP,
+        ) -> A_Err,
+    >,
+    pub AEGP_CheckinComputeReceipt: ::std::option::Option<
+        unsafe extern "C" fn(compute_receiptP: AEGP_CCCheckoutReceiptP) -> A_Err,
+    >,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_HashSuite1 {
+    pub AEGP_CreateHashFromPtr: ::std::option::Option<
+        unsafe extern "C" fn(
+            buf_sizeLu: A_u_longlong,
+            bufPV: *const ::std::os::raw::c_void,
+            hashP: *mut AEGP_GUID,
+        ) -> A_Err,
+    >,
+    pub AEGP_HashMixInPtr: ::std::option::Option<
+        unsafe extern "C" fn(
+            buf_sizeLu: A_u_longlong,
+            bufPV: *const ::std::os::raw::c_void,
+            hashP: *mut AEGP_GUID,
+        ) -> A_Err,
+    >,
+}
 #[doc = "\tCurrently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRA_4444_8u: PrPixelFormat = 1634887522;
 #[doc = "\tCurrently supported types"]
@@ -22187,16 +22618,16 @@ pub type PrTime = prInt64;
 pub struct PrSDKString {
     pub opaque: [csSDK_int64; 2usize],
 }
-pub const PF_TimeDisplay_24: _bindgen_ty_175 = 1;
-pub const PF_TimeDisplay_25: _bindgen_ty_175 = 2;
-pub const PF_TimeDisplay_30Drop: _bindgen_ty_175 = 3;
-pub const PF_TimeDisplay_30NonDrop: _bindgen_ty_175 = 4;
-pub const PF_TimeDisplay_50: _bindgen_ty_175 = 5;
-pub const PF_TimeDisplay_60Drop: _bindgen_ty_175 = 6;
-pub const PF_TimeDisplay_60NonDrop: _bindgen_ty_175 = 7;
-pub const PF_TimeDisplay_NonStandard: _bindgen_ty_175 = 8;
-pub const PF_TimeDisplay_Invalid: _bindgen_ty_175 = 9;
-pub type _bindgen_ty_175 = ::std::os::raw::c_uint;
+pub const PF_TimeDisplay_24: _bindgen_ty_180 = 1;
+pub const PF_TimeDisplay_25: _bindgen_ty_180 = 2;
+pub const PF_TimeDisplay_30Drop: _bindgen_ty_180 = 3;
+pub const PF_TimeDisplay_30NonDrop: _bindgen_ty_180 = 4;
+pub const PF_TimeDisplay_50: _bindgen_ty_180 = 5;
+pub const PF_TimeDisplay_60Drop: _bindgen_ty_180 = 6;
+pub const PF_TimeDisplay_60NonDrop: _bindgen_ty_180 = 7;
+pub const PF_TimeDisplay_NonStandard: _bindgen_ty_180 = 8;
+pub const PF_TimeDisplay_Invalid: _bindgen_ty_180 = 9;
+pub type _bindgen_ty_180 = ::std::os::raw::c_uint;
 pub type PF_TimeDisplay = csSDK_uint32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -22976,10 +23407,10 @@ pub struct DRAWBOT_SaveAndRestoreStateStack {
     pub mSuiteP: *mut DRAWBOT_SurfaceSuite2,
 }
 pub type prSuiteError = csSDK_int32;
-pub const suiteError_InvalidParms: _bindgen_ty_177 = 2147483649;
-pub const suiteError_StringNotFound: _bindgen_ty_177 = 2148139008;
-pub const suiteError_StringBufferTooSmall: _bindgen_ty_177 = 2148139009;
-pub type _bindgen_ty_177 = ::std::os::raw::c_uint;
+pub const suiteError_InvalidParms: _bindgen_ty_182 = 2147483649;
+pub const suiteError_StringNotFound: _bindgen_ty_182 = 2148139008;
+pub const suiteError_StringBufferTooSmall: _bindgen_ty_182 = 2148139009;
+pub type _bindgen_ty_182 = ::std::os::raw::c_uint;
 #[repr(C, packed)]
 #[derive(Debug, Copy, Clone)]
 pub struct PrSDKStringSuite {
