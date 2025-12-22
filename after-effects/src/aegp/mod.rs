@@ -79,6 +79,9 @@ pub use suites::comp::{
     CompFlags,
     CompHandle,
 };
+pub use suites::compute_cache:: {
+    ComputeClassId
+};
 pub use suites::effect::{
     Effect,
     EffectFlags,

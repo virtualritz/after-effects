@@ -118,7 +118,7 @@ impl AdobePluginGlobal for Plugin {
         match cmd {
             ae::Command::GlobalSetup => {
                 ae::aegp::suites::ComputeCache::new()?.register_class(
-                    CACHE_ID,
+                    &CACHE_ID,
                     simulation::SimStep::generate_key,
                     simulation::SimStep::compute,
                     simulation::SimStep::approx_size,
@@ -126,14 +126,14 @@ impl AdobePluginGlobal for Plugin {
                 )?;
             }
             ae::Command::GlobalSetdown => {
-                ae::aegp::suites::ComputeCache::new()?.unregister_class(CACHE_ID)?;
+                ae::aegp::suites::ComputeCache::new()?.unregister_class(&CACHE_ID)?;
             }
             ae::Command::Render {
                 in_layer,
                 mut out_layer,
             } => {
                 let num_particles = params.get(Params::NumParticles)?.as_slider()?.value() as u32;
-                let seed = params.get(Params::Seed)?.as_slider()?.value() as u32;
+                let seed = params.get(Params::Seed)?.as_slider()?.value();
                 let size = params.get(Params::Size)?.as_slider()?.value() as usize;
                 let show_velocity = params.get(Params::ShowVelocity)?.as_checkbox()?.value();
                 let use_cache = params.get(Params::UseCache)?.as_checkbox()?.value();
@@ -144,8 +144,8 @@ impl AdobePluginGlobal for Plugin {
 
                 let (w, h) = (in_layer.width() as f32, in_layer.height() as f32);
 
-                let get_gravity_at = |f: u32| -> Result<([f32; 2], f32), ae::Error> {
-                    let time = f as i32 * time_step;
+                let get_gravity_at = |frame: u32| -> Result<([f32; 2], f32), ae::Error> {
+                    let time = frame as i32 * time_step;
                     let gravity_point = params
                         .checkout_at(
                             Params::GravityPoint,
@@ -172,7 +172,13 @@ impl AdobePluginGlobal for Plugin {
                 };
 
                 let step = if use_cache {
-                    simulation::simulate_to_frame(frame, num_particles, seed, dt, &get_gravity_at)?
+                    simulation::simulate_up_to_frame(
+                        frame,
+                        num_particles,
+                        seed,
+                        dt,
+                        &get_gravity_at,
+                    )?
                 } else {
                     simulation::simulate_to_frame_no_cache(
                         frame,

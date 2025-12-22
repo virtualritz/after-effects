@@ -1,4 +1,4 @@
-use std::{ffi::CString, str::FromStr};
+use std::{ffi::CString, marker::PhantomData, str::FromStr};
 
 use after_effects_sys::{
     AEGP_CCCheckoutReceiptP, AEGP_CCComputeKeyP, AEGP_CCComputeOptionsRefconP,
@@ -20,11 +20,35 @@ define_suite!(
     kAEGPComputeCacheSuiteVersion1
 );
 
-pub struct ComputeCacheReceipt {
+pub struct ComputeCacheReceipt<V> {
     receipt_ptr: AEGP_CCCheckoutReceiptP,
+    _phantom_data_v: PhantomData<V>,
 }
 
-impl AsPtr<AEGP_CCCheckoutReceiptP> for ComputeCacheReceipt {
+/// A type safe class ID - this is essentiall a &'str which in most cases will be static.
+/// because the underlying API relies on void* we track the option and value types on the id
+/// to avoid casting to the wrong type.
+///
+/// See the simulation example for an example of usage.
+pub struct ComputeClassId<'a, O, V> {
+    _phantom_data_options: PhantomData<O>,
+    _phantom_data_value: PhantomData<V>,
+    pub id: &'a str,
+}
+
+impl<'a, O, V> ComputeClassId<'a, O, V> {
+    pub const fn new(id: &'a str) -> Self {
+        Self {
+            _phantom_data_options: PhantomData,
+            _phantom_data_value: PhantomData,
+            id,
+        }
+    }
+
+    pub fn id(&self) -> &'a str { self.id }
+}
+
+impl<V> AsPtr<AEGP_CCCheckoutReceiptP> for ComputeCacheReceipt<V> {
     #[inline]
     fn as_ptr(&self) -> ae_sys::AEGP_CCCheckoutReceiptP { self.receipt_ptr }
 }
@@ -38,7 +62,7 @@ impl ComputeCacheSuite {
     /// with captured state). This is enforced at compile time.
     pub fn register_class<O, V, GenKey, Compute, ApproxSize, Delete>(
         &self,
-        compute_class_id: &str,
+        compute_class_id: &ComputeClassId<O, V>,
         _generate_key: GenKey,
         _compute: Compute,
         _approx_size: ApproxSize,
@@ -105,7 +129,7 @@ impl ComputeCacheSuite {
             conjure::<Delete>()(unsafe { *Box::from_raw(value_p as *mut V) })
         }
 
-        let c_str = CString::from_str(compute_class_id).map_err(|_| Error::InvalidParms)?;
+        let c_str = CString::from_str(compute_class_id.id()).map_err(|_| Error::InvalidParms)?;
 
         let callbacks = AEGP_ComputeCacheCallbacks {
             generate_key: Some(generate_key_trampoline::<O, GenKey>),
@@ -126,17 +150,18 @@ impl ComputeCacheSuite {
     /// Returns the receipt if available, otherwise returns `None`.
     ///
     /// Useful for polling patterns where another thread handles computation.
-    pub fn checkout_cached<T>(
+    pub fn checkout_cached<O, V>(
         &self,
-        compute_class_id: &str,
-        options: &mut T,
-    ) -> Result<Option<ComputeCacheReceipt>, Error> {
-        let c_str = CString::from_str(compute_class_id).map_err(|_| Error::InvalidParms)?;
-        let result = call_suite_fn_single!(self, AEGP_CheckoutCached -> AEGP_CCCheckoutReceiptP, c_str.as_ptr(), options as *mut T as *mut _);
+        compute_class_id: &ComputeClassId<O, V>,
+        options: &mut O,
+    ) -> Result<Option<ComputeCacheReceipt<V>>, Error> {
+        let c_str = CString::from_str(compute_class_id.id()).map_err(|_| Error::InvalidParms)?;
+        let result = call_suite_fn_single!(self, AEGP_CheckoutCached -> AEGP_CCCheckoutReceiptP, c_str.as_ptr(), options as *mut O as *mut _);
 
         match result {
             Ok(ptr) => Ok(Some(ComputeCacheReceipt {
                 receipt_ptr: ptr as *mut _,
+                _phantom_data_v: PhantomData,
             })),
             Err(Error::NotInComputeCache) => Ok(None),
             Err(e) => Err(e),
@@ -147,8 +172,11 @@ impl ComputeCacheSuite {
     /// All cached values will be purged at this time through calls to `delete_compute_value`.
     ///
     /// Typically invoked during `PF_Cmd_GLOBAL_SETDOWN`.
-    pub fn unregister_class(&self, compute_class_id: &str) -> Result<(), Error> {
-        let c_str = CString::from_str(compute_class_id).map_err(|_| Error::InvalidParms)?;
+    pub fn unregister_class<O, V>(
+        &self,
+        compute_class_id: &ComputeClassId<O, V>,
+    ) -> Result<(), Error> {
+        let c_str = CString::from_str(compute_class_id.id()).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, AEGP_ClassUnregister, c_str.as_ptr())
     }
 
@@ -157,21 +185,24 @@ impl ComputeCacheSuite {
     /// The `wait_for_other_thread` parameter determines behavior: when `true`,
     /// it always computes or waits for completion; when `false`, it returns
     /// [`Error::NotInComputeCache`] if another thread is already computing.
-    pub fn compute_if_needed_and_checkout<T>(
+    pub fn compute_if_needed_and_checkout<O, V>(
         &self,
-        compute_class_id: &str,
-        options: &mut T,
+        compute_class_id: ComputeClassId<O, V>,
+        options: &mut O,
         wait_for_other_thread: bool,
-    ) -> Result<ComputeCacheReceipt, Error> {
-        let c_str = CString::from_str(compute_class_id).map_err(|_| Error::InvalidParms)?;
+    ) -> Result<ComputeCacheReceipt<V>, Error> {
+        let c_str = CString::from_str(compute_class_id.id()).map_err(|_| Error::InvalidParms)?;
         let receipt_ptr = call_suite_fn_single!(
             self,
             AEGP_ComputeIfNeededAndCheckout -> AEGP_CCCheckoutReceiptP,
             c_str.as_ptr(),
-            options as *mut T as *mut _,
+            options as *mut O as *mut _,
             wait_for_other_thread
         )?;
-        Ok(ComputeCacheReceipt { receipt_ptr })
+        Ok(ComputeCacheReceipt {
+            receipt_ptr,
+            _phantom_data_v: PhantomData,
+        })
     }
 
     /// Signals completion of cache value usage before returning to the host.
@@ -192,7 +223,7 @@ impl ComputeCacheSuite {
     /// line up it will induce UB.
     pub fn receipt_compute_value<'a, V>(
         &self,
-        receipt: &'a impl AsPtr<AEGP_CCCheckoutReceiptP>,
+        receipt: &ComputeCacheReceipt<V>,
     ) -> Result<&'a V, Error> {
         let value_ptr = call_suite_fn_single!(
             self,

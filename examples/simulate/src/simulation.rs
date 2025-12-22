@@ -1,8 +1,9 @@
-use after_effects as ae;
+use after_effects::{self as ae, aegp::ComputeClassId};
 use bytemuck::{Pod, Zeroable};
 use std::mem::size_of_val;
 
-pub const CACHE_ID: &str = "particle_cache";
+pub const CACHE_ID: ComputeClassId<SimOptions, SimStep> = ComputeClassId::new("particle_cache");
+
 // Store the particle state every 8 frames - 6 times per second of footage.
 // 16 bytes * 36 saves a minte * 1 million particles 500mb per minute of simulation max
 const KEYFRAME_INTERVAL: u32 = 8;
@@ -10,9 +11,9 @@ const KEYFRAME_INTERVAL: u32 = 8;
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
 #[repr(C)]
 pub struct SimParams {
-    pub keyframe: u32,
+    pub frame: u32,
     pub num_particles: u32,
-    pub seed: u32,
+    pub seed: i32,
     pub gravity_pt: [f32; 2],
     pub gravity_str: f32,
 }
@@ -20,8 +21,7 @@ pub struct SimParams {
 #[derive(Clone)]
 pub struct SimOptions {
     pub params: SimParams,
-    /// Pre-computed step to store in cache. If None, compute() returns initial state.
-    pub precomputed: Option<SimStep>,
+    pub step: SimStep,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -45,28 +45,22 @@ impl SimStep {
         log::info!("Dropping simstep");
     }
 
-    // this is a misnormer, Instead of doing any work in compute we just pass the result
-    // as part of the arguments. These callbacks were really poorly thought out by adobe.
-    pub fn compute(opts: &SimOptions) -> Result<Self, ae::Error> {
-        match &opts.precomputed {
-            Some(step) => Ok(step.clone()),
-            None => Ok(Self::initial(
-                opts.params.num_particles,
-                opts.params.seed as u64,
-            )),
-        }
-    }
+    // We pass the pre-computed result via SimOptions rather than computing here.
+    // Otherwise simoptions would contain a bunch of function pointers and lifetimes,
+    // it's just not a very good API design for lifetime-intuition and signature sanity.
+    pub fn compute(opts: &SimOptions) -> Result<Self, ae::Error> { Ok(opts.step.clone()) }
 
     pub fn approx_size(&self) -> usize { size_of_val(self.0.as_slice()) }
 
-    pub fn initial(num_particles: u32, seed: u64) -> Self {
-        let mut rng = fastrand::Rng::with_seed(seed);
+    pub fn initial(num_particles: u32, seed: i32) -> Self {
+        // just reinterpret - it's fine it's a seed
+        let mut rng = fastrand::Rng::with_seed(seed as u64);
         Self(
             (0..num_particles)
                 .map(|_| Particle {
                     pos: [rng.f32(), rng.f32()],
                     vel: [0.0, 0.0],
-                    drag: 0.95 + rng.f32() * 0.04,
+                    drag: 0.95 + rng.f32() * 0.04, // randomize friction s.t. it avoids visual uniformity
                 })
                 .collect(),
         )
@@ -75,6 +69,7 @@ impl SimStep {
     pub fn step(&mut self, dt: f32, gravity_pt: [f32; 2], gravity_str: f32) {
         const MAX_VEL: f32 = 2.0;
         const MIN_DIST: f32 = 0.01;
+        // dead simple euler sim just as an example
         for p in &mut self.0 {
             let dir = [gravity_pt[0] - p.pos[0], gravity_pt[1] - p.pos[1]];
             let dist = (dir[0].powi(2) + dir[1].powi(2)).sqrt().max(MIN_DIST);
@@ -91,11 +86,59 @@ impl SimStep {
     }
 }
 
-// Run the simulation starting at the most recent simstep
-pub fn simulate_to_frame<F>(
+/// Find the most recent cached frame, or None if no cache hits.
+fn find_cached_frame<F>(
+    cache: &ae::aegp::suites::ComputeCache,
     target_frame: u32,
     num_particles: u32,
-    seed: u32,
+    seed: i32,
+    get_gravity_at: &F,
+) -> Option<(u32, SimStep)>
+where
+    F: Fn(u32) -> Result<([f32; 2], f32), ae::Error>,
+{
+    let target_keyframe = target_frame / KEYFRAME_INTERVAL;
+    for kf in (0..=target_keyframe).rev() {
+        let frame = kf * KEYFRAME_INTERVAL;
+        let (gravity_pt, gravity_str) = get_gravity_at(frame).ok()?;
+
+        let mut opts = SimOptions {
+            params: SimParams {
+                frame,
+                num_particles,
+                seed,
+                gravity_pt,
+                gravity_str,
+            },
+            step: SimStep(Vec::new()),
+        };
+
+        if let Some(receipt) = cache.checkout_cached(&CACHE_ID, &mut opts).ok().flatten() {
+            if let Ok(step) = cache.receipt_compute_value::<SimStep>(&receipt) {
+                let result = step.clone();
+                let _ = cache.check_in_compute_receipt(receipt);
+                return Some((frame, result));
+            }
+        }
+    }
+    None
+}
+
+fn cache_keyframe(cache: &ae::aegp::suites::ComputeCache, params: SimParams, step: &SimStep) {
+    let mut opts = SimOptions {
+        params,
+        step: step.clone(),
+    };
+    if let Ok(receipt) = cache.compute_if_needed_and_checkout(CACHE_ID, &mut opts, true) {
+        let _ = cache.check_in_compute_receipt(receipt);
+    }
+}
+
+/// Run the simulation to target_frame, using cached keyframes when available.
+pub fn simulate_up_to_frame<F>(
+    target_frame: u32,
+    num_particles: u32,
+    seed: i32,
     dt: f32,
     get_gravity_at: &F,
 ) -> Result<SimStep, ae::Error>
@@ -104,84 +147,41 @@ where
 {
     let cache = ae::aegp::suites::ComputeCache::new()?;
 
-    if target_frame == 0 {
-        return Ok(SimStep::initial(num_particles, seed as u64));
-    }
-
-    let target_keyframe = target_frame / KEYFRAME_INTERVAL;
-
-    // find last cached keyframe
-    let (start_frame, current_step) = (0..=target_keyframe)
-        .rev()
-        .find_map(|kf| {
-            let keyframe_frame = kf * KEYFRAME_INTERVAL;
-
-            let (gravity_pt, gravity_str) = get_gravity_at(keyframe_frame).ok()?;
-
-            let mut opts = SimOptions {
-                params: SimParams {
-                    keyframe: kf,
-                    num_particles,
-                    seed,
-                    gravity_pt,
-                    gravity_str,
-                },
-                precomputed: None,
-            };
-
-            cache
-                .checkout_cached(CACHE_ID, &mut opts)
-                .ok()
-                .flatten()
-                .and_then(|receipt| {
-                    let step: &SimStep = cache.receipt_compute_value(&receipt).ok()?;
-                    let result = step.clone();
-                    cache.check_in_compute_receipt(receipt).ok()?;
-                    Some((keyframe_frame, result))
-                })
-        })
-        .unwrap_or_else(|| (0, SimStep::initial(num_particles, seed as u64)));
-
-    let mut current_step = current_step;
+    let (start_frame, mut step) =
+        find_cached_frame(&cache, target_frame, num_particles, seed, get_gravity_at)
+            .unwrap_or_else(|| (0, SimStep::initial(num_particles, seed)));
 
     for frame in (start_frame + 1)..=target_frame {
         let (gravity_pt, gravity_str) = get_gravity_at(frame)?;
-        current_step.step(dt, gravity_pt, gravity_str);
+        step.step(dt, gravity_pt, gravity_str);
 
-        // Cache at keyframe boundaries
-        if frame % KEYFRAME_INTERVAL == 0 {
-            let kf = frame / KEYFRAME_INTERVAL;
-            let mut opts = SimOptions {
-                params: SimParams {
-                    keyframe: kf,
-                    num_particles,
-                    seed,
-                    gravity_pt,
-                    gravity_str,
-                },
-                precomputed: Some(current_step.clone()),
+        if frame.is_multiple_of(KEYFRAME_INTERVAL) {
+            let params = SimParams {
+                frame,
+                num_particles,
+                seed,
+                gravity_pt,
+                gravity_str,
             };
-            if let Ok(receipt) = cache.compute_if_needed_and_checkout(CACHE_ID, &mut opts, true) {
-                let _ = cache.check_in_compute_receipt(receipt);
-            }
+            cache_keyframe(&cache, params, &step);
         }
     }
 
-    Ok(current_step)
+    Ok(step)
 }
 
 /// Purely to demonstrate the speed of the simulation without caching
 pub fn simulate_to_frame_no_cache<F>(
     target_frame: u32,
     num_particles: u32,
-    seed: u32,
+    seed: i32,
     dt: f32,
     get_gravity_at: &F,
 ) -> Result<SimStep, ae::Error>
 where
     F: Fn(u32) -> Result<([f32; 2], f32), ae::Error>,
 {
-    let mut current_step = SimStep::initial(num_particles, seed as u64);
+    let mut current_step = SimStep::initial(num_particles, seed);
 
     for frame in 1..=target_frame {
         let (gravity_pt, gravity_str) = get_gravity_at(frame)?;
