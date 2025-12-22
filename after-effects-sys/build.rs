@@ -15,15 +15,12 @@ fn main() {
         return;
     }
 
-    let ae_sdk_path = &env::var("AESDK_ROOT")
-        .ok()
-        .filter(|x| !x.is_empty())
-        .expect(
-            "AESDK_ROOT environment variable not set – cannot find AfterEffects SDK.\n\
+    let ae_sdk_path = &env::var("AESDK_ROOT").ok().filter(|x| !x.is_empty()).expect(
+        "AESDK_ROOT environment variable not set – cannot find AfterEffects SDK.\n\
         Please set AESDK_ROOT to the root folder of your AfterEffects SDK\n\
         installation (this folder contains the Examples folder & the SDK\n\
         Guide PDF).",
-        );
+    );
 
     if !Path::new(ae_sdk_path).exists() {
         panic!("AESDK_ROOT environment variable points to non-existent path: {ae_sdk_path}");
@@ -112,16 +109,9 @@ fn main() {
     // Let's just rewrite the bindings here and pretend it never happened
     if let Ok(mut content) = std::fs::read_to_string(out_path.join("bindings.rs")) {
         if content.contains("pub __bindgen_anon_1: PF_Point__bindgen_ty_1,") {
-            content = content.replace(
-                "pub __bindgen_anon_1: PF_Point__bindgen_ty_1,",
-                "pub h: A_long,",
-            );
-            content = content.replace(
-                "pub __bindgen_anon_2: PF_Point__bindgen_ty_2,",
-                "pub v: A_long,",
-            );
-            std::fs::write(out_path.join("bindings.rs"), content)
-                .expect("Couldn't rewrite AfterEffects bindings!");
+            content = content.replace("pub __bindgen_anon_1: PF_Point__bindgen_ty_1,", "pub h: A_long,");
+            content = content.replace("pub __bindgen_anon_2: PF_Point__bindgen_ty_2,", "pub v: A_long,");
+            std::fs::write(out_path.join("bindings.rs"), content).expect("Couldn't rewrite AfterEffects bindings!");
         }
     }
 }
