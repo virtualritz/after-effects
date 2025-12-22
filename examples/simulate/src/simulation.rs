@@ -97,9 +97,11 @@ fn find_cached_frame<F>(
 where
     F: Fn(u32) -> Result<([f32; 2], f32), ae::Error>,
 {
-    let target_keyframe = target_frame / KEYFRAME_INTERVAL;
-    for kf in (0..=target_keyframe).rev() {
-        let frame = kf * KEYFRAME_INTERVAL;
+    let last_cacheable = (target_frame / KEYFRAME_INTERVAL) * KEYFRAME_INTERVAL;
+    for frame in (0..=last_cacheable)
+        .rev()
+        .step_by(KEYFRAME_INTERVAL as usize)
+    {
         let (gravity_pt, gravity_str) = get_gravity_at(frame).ok()?;
 
         let mut opts = SimOptions {
@@ -110,6 +112,8 @@ where
                 gravity_pt,
                 gravity_str,
             },
+            // This is not great. but if you want to compute outside of the compute callback
+            // (which in all likelihood you do), then you need a dummy for your computed data for cachelookups
             step: SimStep(Vec::new()),
         };
 
@@ -124,7 +128,7 @@ where
     None
 }
 
-fn cache_keyframe(cache: &ae::aegp::suites::ComputeCache, params: SimParams, step: &SimStep) {
+fn cache_frame(cache: &ae::aegp::suites::ComputeCache, params: SimParams, step: &SimStep) {
     let mut opts = SimOptions {
         params,
         step: step.clone(),
@@ -163,7 +167,7 @@ where
                 gravity_pt,
                 gravity_str,
             };
-            cache_keyframe(&cache, params, &step);
+            cache_frame(&cache, params, &step);
         }
     }
 
