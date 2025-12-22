@@ -10,7 +10,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 after-effects = { path = "../../after-effects" }
+bytemuck = { version = "1", features = ["derive"] }
 fastrand = "2"
+log = "0.4"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }

@@ -7,7 +7,6 @@ use after_effects_sys::{
 
 use crate::{aegp::Guid, *};
 
-/// Conjures a zero-sized function type from thin air.
 #[inline(always)]
 fn conjure<F>() -> F {
     const { assert!(std::mem::size_of::<F>() == 0) }
@@ -31,6 +30,10 @@ impl AsPtr<AEGP_CCCheckoutReceiptP> for ComputeCacheReceipt {
 }
 
 impl ComputeCacheSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
+
     /// The callback functions must be statically known function items (not closures
     /// with captured state). This is enforced at compile time.
     pub fn register_class<O, V, GenKey, Compute, ApproxSize, Delete>(

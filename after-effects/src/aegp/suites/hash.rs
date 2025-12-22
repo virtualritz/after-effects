@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use crate::*;
 
 define_suite!(
@@ -33,6 +35,10 @@ impl From<Guid> for ae_sys::AEGP_GUID {
 }
 
 impl HashSuite {
+    /// Acquire this suite from the host. Returns error if the suite is not available.
+    /// Suite is released on drop.
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
+
     /// Call this to begin creating the hash which will be returned in hashP
     /// that can be used for returning from generate_key.
     pub fn create_hash_from_ptr(&self, data: &[u8]) -> Result<Guid, Error> {

@@ -30,7 +30,8 @@ fn main() {
         Property::AE_Effect_Global_OutFlags(
             OutFlags::PixIndependent |
             OutFlags::UseOutputExtent |
-            OutFlags::DeepColorAware
+            OutFlags::DeepColorAware |
+            OutFlags::NonParamVary
         ),
         Property::AE_Effect_Global_OutFlags_2(
             OutFlags2::SupportsThreadedRendering |
