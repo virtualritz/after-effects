@@ -31,6 +31,8 @@ fn main() {
             OutFlags::PixIndependent |
             OutFlags::UseOutputExtent |
             OutFlags::DeepColorAware |
+            // this is important, without it the simulation won't run
+            // unless a parameter is animated.
             OutFlags::NonParamVary
         ),
         Property::AE_Effect_Global_OutFlags_2(

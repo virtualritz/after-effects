@@ -3,15 +3,16 @@ use bytemuck::{Pod, Zeroable};
 use std::mem::size_of_val;
 
 pub const CACHE_ID: &str = "particle_cache";
-// Store the particle state every 8 frames - 6 times per f
-const KEYFRAME_INTERVAL: i32 = 8;
+// Store the particle state every 8 frames - 6 times per second of footage.
+// 16 bytes * 36 saves a minte * 1 million particles 500mb per minute of simulation max
+const KEYFRAME_INTERVAL: u32 = 8;
 
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
 #[repr(C)]
 pub struct SimParams {
-    pub keyframe: i32,
-    pub num_particles: i32,
-    pub seed: i32,
+    pub keyframe: u32,
+    pub num_particles: u32,
+    pub seed: u32,
     pub gravity_pt: [f32; 2],
     pub gravity_str: f32,
 }
@@ -27,6 +28,7 @@ pub struct SimOptions {
 pub struct Particle {
     pub pos: [f32; 2],
     pub vel: [f32; 2],
+    pub drag: f32,
 }
 
 #[derive(Clone, Debug)]
@@ -43,6 +45,8 @@ impl SimStep {
         log::info!("Dropping simstep");
     }
 
+    // this is a misnormer, Instead of doing any work in compute we just pass the result
+    // as part of the arguments. These callbacks were really poorly thought out by adobe.
     pub fn compute(opts: &SimOptions) -> Result<Self, ae::Error> {
         match &opts.precomputed {
             Some(step) => Ok(step.clone()),
@@ -55,25 +59,22 @@ impl SimStep {
 
     pub fn approx_size(&self) -> usize { size_of_val(self.0.as_slice()) }
 
-    pub fn initial(num_particles: i32, seed: u64) -> Self {
+    pub fn initial(num_particles: u32, seed: u64) -> Self {
         let mut rng = fastrand::Rng::with_seed(seed);
-        let particles = (0..num_particles)
-            .map(|_| {
-                let pos = [rng.f32(), rng.f32()];
-                Particle {
-                    pos,
+        Self(
+            (0..num_particles)
+                .map(|_| Particle {
+                    pos: [rng.f32(), rng.f32()],
                     vel: [0.0, 0.0],
-                }
-            })
-            .collect();
-        Self(particles)
+                    drag: 0.95 + rng.f32() * 0.04,
+                })
+                .collect(),
+        )
     }
 
     pub fn step(&mut self, dt: f32, gravity_pt: [f32; 2], gravity_str: f32) {
         const MAX_VEL: f32 = 2.0;
         const MIN_DIST: f32 = 0.01;
-        const DRAG: f32 = 0.98;
-
         for p in &mut self.0 {
             let dir = [gravity_pt[0] - p.pos[0], gravity_pt[1] - p.pos[1]];
             let dist = (dir[0].powi(2) + dir[1].powi(2)).sqrt().max(MIN_DIST);
@@ -81,8 +82,8 @@ impl SimStep {
 
             let accel = [norm[0] * gravity_str, norm[1] * gravity_str];
 
-            p.vel[0] = (p.vel[0] * DRAG + accel[0] * dt).clamp(-MAX_VEL, MAX_VEL);
-            p.vel[1] = (p.vel[1] * DRAG + accel[1] * dt).clamp(-MAX_VEL, MAX_VEL);
+            p.vel[0] = (p.vel[0] * p.drag + accel[0] * dt).clamp(-MAX_VEL, MAX_VEL);
+            p.vel[1] = (p.vel[1] * p.drag + accel[1] * dt).clamp(-MAX_VEL, MAX_VEL);
 
             p.pos[0] += p.vel[0] * dt;
             p.pos[1] += p.vel[1] * dt;
@@ -90,26 +91,26 @@ impl SimStep {
     }
 }
 
+// Run the simulation starting at the most recent simstep
 pub fn simulate_to_frame<F>(
-    target_frame: i32,
-    num_particles: i32,
-    seed: i32,
+    target_frame: u32,
+    num_particles: u32,
+    seed: u32,
     dt: f32,
-    // pass a closure which can retrieve the params at any time step.
     get_gravity_at: &F,
 ) -> Result<SimStep, ae::Error>
 where
-    F: Fn(i32) -> Result<([f32; 2], f32), ae::Error>,
+    F: Fn(u32) -> Result<([f32; 2], f32), ae::Error>,
 {
     let cache = ae::aegp::suites::ComputeCache::new()?;
 
-    if target_frame <= 0 {
+    if target_frame == 0 {
         return Ok(SimStep::initial(num_particles, seed as u64));
     }
 
     let target_keyframe = target_frame / KEYFRAME_INTERVAL;
 
-    // Search backwards for a cached keyframe
+    // find last cached keyframe
     let (start_frame, current_step) = (0..=target_keyframe)
         .rev()
         .find_map(|kf| {
@@ -142,7 +143,7 @@ where
         .unwrap_or_else(|| (0, SimStep::initial(num_particles, seed as u64)));
 
     let mut current_step = current_step;
-    // Step forward from start_frame to target_frame
+
     for frame in (start_frame + 1)..=target_frame {
         let (gravity_pt, gravity_str) = get_gravity_at(frame)?;
         current_step.step(dt, gravity_pt, gravity_str);
@@ -171,14 +172,14 @@ where
 
 /// Purely to demonstrate the speed of the simulation without caching
 pub fn simulate_to_frame_no_cache<F>(
-    target_frame: i32,
-    num_particles: i32,
-    seed: i32,
+    target_frame: u32,
+    num_particles: u32,
+    seed: u32,
     dt: f32,
     get_gravity_at: &F,
 ) -> Result<SimStep, ae::Error>
 where
-    F: Fn(i32) -> Result<([f32; 2], f32), ae::Error>,
+    F: Fn(u32) -> Result<([f32; 2], f32), ae::Error>,
 {
     let mut current_step = SimStep::initial(num_particles, seed as u64);
 
@@ -190,26 +191,69 @@ where
     Ok(current_step)
 }
 
-pub fn blit_particles(layer: &mut ae::Layer, particles: &[Particle], radius: i32) {
-    let (w, h) = (layer.width() as i32, layer.height() as i32);
-    let radius_sq = (radius as i64) * (radius as i64);
+pub fn blit_particles(
+    layer: &mut ae::Layer,
+    particles: &[Particle],
+    size: usize,
+    show_velocity: bool,
+) {
+    let (w, h) = (layer.width(), layer.height());
+    let depth = layer.bit_depth();
+
+    const MAX_VEL: f32 = 2.0;
+    let vel_to_unit = |v: f32| ((v / MAX_VEL) * 0.5 + 0.5).clamp(0.0, 1.0);
+
     for p in particles {
-        let (px, py) = ((p.pos[0] * w as f32) as i32, (p.pos[1] * h as f32) as i32);
-        for dy in -radius..=radius {
-            for dx in -radius..=radius {
-                let dist_sq = (dx as i64) * (dx as i64) + (dy as i64) * (dy as i64);
-                if dist_sq > radius_sq {
+        let px = (p.pos[0] * w as f32) as usize;
+        let py = (p.pos[1] * h as f32) as usize;
+
+        for dy in 0..size {
+            for dx in 0..size {
+                let (x, y) = (px.saturating_add(dx), py.saturating_add(dy));
+                if x >= w || y >= h {
                     continue;
                 }
-                let (x, y) = (px + dx, py + dy);
-                if x < 0 || y < 0 || x >= w || y >= h {
-                    continue;
+
+                match depth {
+                    8 => {
+                        let pixel = if show_velocity {
+                            ae::Pixel8 {
+                                alpha: 255,
+                                red: (vel_to_unit(p.vel[0]) * 255.0) as u8,
+                                green: (vel_to_unit(p.vel[1]) * 255.0) as u8,
+                                blue: 128,
+                            }
+                        } else {
+                            ae::Pixel8 {
+                                alpha: 255,
+                                red: 255,
+                                green: 255,
+                                blue: 255,
+                            }
+                        };
+                        *layer.as_pixel8_mut(x, y) = pixel;
+                    }
+                    16 => {
+                        let max = ae::MAX_CHANNEL16 as f32;
+                        let pixel = if show_velocity {
+                            ae::Pixel16 {
+                                alpha: ae::MAX_CHANNEL16 as u16,
+                                red: (vel_to_unit(p.vel[0]) * max) as u16,
+                                green: (vel_to_unit(p.vel[1]) * max) as u16,
+                                blue: (max * 0.5) as u16,
+                            }
+                        } else {
+                            ae::Pixel16 {
+                                alpha: ae::MAX_CHANNEL16 as u16,
+                                red: ae::MAX_CHANNEL16 as u16,
+                                green: ae::MAX_CHANNEL16 as u16,
+                                blue: ae::MAX_CHANNEL16 as u16,
+                            }
+                        };
+                        *layer.as_pixel16_mut(x, y) = pixel;
+                    }
+                    _ => {}
                 }
-                let pixel = layer.as_pixel8_mut(x as usize, y as usize);
-                pixel.red = 255;
-                pixel.green = 255;
-                pixel.blue = 255;
-                pixel.alpha = 255;
             }
         }
     }

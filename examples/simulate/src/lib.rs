@@ -6,9 +6,10 @@ use after_effects as ae;
 enum Params {
     NumParticles,
     Seed,
-    Radius,
+    Size,
     GravityPoint,
     GravityStrength,
+    ShowVelocity,
     UseCache,
 }
 
@@ -31,9 +32,9 @@ impl AdobePluginGlobal for Plugin {
             "Num Particles",
             ae::SliderDef::setup(|f| {
                 f.set_slider_min(1);
-                f.set_slider_max(100000);
+                f.set_slider_max(10_000_000);
                 f.set_valid_min(1);
-                f.set_valid_max(1000000);
+                f.set_valid_max(10_000_000);
                 f.set_default(10000);
                 f.set_value(10000);
             }),
@@ -55,15 +56,15 @@ impl AdobePluginGlobal for Plugin {
             ae::ParamUIFlags::empty(),
         )?;
         params.add(
-            Params::Radius,
-            "Radius",
-            ae::FloatSliderDef::setup(|f| {
-                f.set_slider_min(1.0);
-                f.set_slider_max(5.0);
-                f.set_valid_min(1.0);
-                f.set_valid_max(8.0);
-                f.set_default(1.0);
-                f.set_value(1.0);
+            Params::Size,
+            "Size",
+            ae::SliderDef::setup(|f| {
+                f.set_slider_min(1);
+                f.set_slider_max(8);
+                f.set_valid_min(1);
+                f.set_valid_max(16);
+                f.set_default(2);
+                f.set_value(2);
             }),
         )?;
         params.add(
@@ -85,6 +86,15 @@ impl AdobePluginGlobal for Plugin {
                 f.set_default(1.5);
                 f.set_value(1.5);
                 f.set_precision(2);
+            }),
+        )?;
+        params.add(
+            Params::ShowVelocity,
+            "Show Velocity",
+            ae::CheckBoxDef::setup(|f| {
+                f.set_default(false);
+                f.set_value(false);
+                f.set_label("As Color");
             }),
         )?;
         params.add(
@@ -122,19 +132,20 @@ impl AdobePluginGlobal for Plugin {
                 in_layer,
                 mut out_layer,
             } => {
-                let num_particles = params.get(Params::NumParticles)?.as_slider()?.value();
-                let seed = params.get(Params::Seed)?.as_slider()?.value();
-                let radius = params.get(Params::Radius)?.as_float_slider()?.value() as f32;
+                let num_particles = params.get(Params::NumParticles)?.as_slider()?.value() as u32;
+                let seed = params.get(Params::Seed)?.as_slider()?.value() as u32;
+                let size = params.get(Params::Size)?.as_slider()?.value() as usize;
+                let show_velocity = params.get(Params::ShowVelocity)?.as_checkbox()?.value();
                 let use_cache = params.get(Params::UseCache)?.as_checkbox()?.value();
-                let frame = in_data.current_frame().round() as i32;
+                let frame = in_data.current_frame().round() as u32;
                 let time_step = in_data.time_step();
                 let time_scale = in_data.time_scale();
                 let dt = time_step as f32 / time_scale as f32;
 
                 let (w, h) = (in_layer.width() as f32, in_layer.height() as f32);
 
-                let get_gravity_at = |f: i32| -> Result<([f32; 2], f32), ae::Error> {
-                    let time = f * time_step;
+                let get_gravity_at = |f: u32| -> Result<([f32; 2], f32), ae::Error> {
+                    let time = f as i32 * time_step;
                     let gravity_point = params
                         .checkout_at(
                             Params::GravityPoint,
@@ -172,8 +183,8 @@ impl AdobePluginGlobal for Plugin {
                     )?
                 };
 
-                out_layer.copy_from(&in_layer, None, None)?;
-                simulation::blit_particles(&mut out_layer, &step.0, radius as i32);
+                out_layer.fill(None, None)?;
+                simulation::blit_particles(&mut out_layer, &step.0, size, show_velocity);
             }
             _ => {}
         }
