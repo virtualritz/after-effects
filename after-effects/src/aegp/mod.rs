@@ -34,6 +34,9 @@ pub mod suites {
     pub(crate) mod render_async_manager; pub use render_async_manager::RenderAsyncManagerSuite as RenderAsyncManager;
     pub(crate) mod render_options;       pub use render_options      ::RenderOptionsSuite      as RenderOptions;
     pub(crate) mod render;               pub use render              ::RenderSuite             as Render;
+    pub(crate) mod output_module;        pub use output_module       ::OutputModuleSuite       as OutputModule;
+    pub(crate) mod render_queue;         pub use render_queue        ::RenderQueueSuite        as RenderQueue;
+    pub(crate) mod render_queue_item;    pub use render_queue_item   ::RenderQueueItemSuite    as RenderQueueItem;
     pub(crate) mod sound_data;           pub use sound_data          ::SoundDataSuite          as SoundData;
     pub(crate) mod stream;               pub use stream              ::{ StreamSuite           as Stream,
                                                                          DynamicStreamSuite    as DynamicStream };
@@ -146,6 +149,20 @@ pub use suites::render_options::{
     RenderOptionsHandle,
     ItemQuality,
     ChannelOrder
+};
+pub use suites::output_module::{
+    EmbeddingType,
+    OutputTypes,
+    PostRenderAction,
+    StretchQuality,
+    VideoChannels,
+};
+pub use suites::render_queue::RenderQueueState;
+pub use suites::render_queue_item::{
+    LogType,
+    OutputModuleRefHandle,
+    RenderItemStatus,
+    RQItemRefHandle,
 };
 pub use suites::sound_data::SoundDataHandle;
 pub use suites::stream::{
