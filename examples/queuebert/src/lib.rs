@@ -227,7 +227,7 @@ fn handle_queuebert_command() -> Result<(), Error> {
             if !audio_enabled || sound_format.sample_rateF == 0.0 {
                 let new_sound_format = after_effects::sys::AEGP_SoundDataFormat {
                     sample_rateF: 44100.0,
-                    encoding: after_effects::sys::AEGP_SoundEncoding_FLOAT,
+                    encoding: after_effects::sys::AEGP_SoundEncoding_FLOAT as _,
                     bytes_per_sampleL: 4,
                     num_channelsL: 1,
                 };
