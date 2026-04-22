@@ -510,6 +510,10 @@ pub const kAEGPIOInSuiteVersion4: u32 = 5;
 pub const kAEGPIOOutSuiteVersion5: u32 = 8;
 pub const kAEGPIOOutSuiteVersion4: u32 = 7;
 pub const kAEGPFIMSuiteVersion3: u32 = 3;
+pub const kAEGPComputeCacheSuite: &[u8; 19] = b"AEGP Compute Cache\0";
+pub const kAEGPComputeCacheSuiteVersion1: u32 = 1;
+pub const kAEGPHashSuite: &[u8; 16] = b"AEGP Hash Suite\0";
+pub const kAEGPHashSuiteVersion1: u32 = 1;
 pub const kPFPixelFormatSuiteVersion1: u32 = 1;
 pub const kPFPixelFormatSuiteVersion: u32 = 1;
 pub const kPFBackgroundFrameSuite: &[u8; 26] = b"PF Background Frame Suite\0";
@@ -22373,6 +22377,93 @@ pub type PF_PluginDataCB = ::std::option::Option<
         inReservedInfo: A_long,
     ) -> A_Err,
 >;
+#[doc = " MC Compute -- plugin registration of cached computations"]
+pub type AEGP_CCComputeClassIdP = *const ::std::os::raw::c_char;
+pub type AEGP_CCComputeOptionsRefconP = *mut ::std::os::raw::c_void;
+pub type AEGP_CCComputeValueRefconP = *mut ::std::os::raw::c_void;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_GUID {
+    pub bytes: [A_long; 4usize],
+}
+pub type AEGP_CCComputeKey = AEGP_GUID;
+pub type AEGP_CCComputeKeyP = *mut AEGP_CCComputeKey;
+pub type AEGP_CCCheckoutReceiptP = *mut ::std::os::raw::c_void;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_ComputeCacheCallbacks {
+    pub generate_key: ::std::option::Option<
+        unsafe extern "C" fn(
+            optionsP: AEGP_CCComputeOptionsRefconP,
+            out_keyP: AEGP_CCComputeKeyP,
+        ) -> A_Err,
+    >,
+    pub compute: ::std::option::Option<
+        unsafe extern "C" fn(
+            optionsP: AEGP_CCComputeOptionsRefconP,
+            out_valuePP: *mut AEGP_CCComputeValueRefconP,
+        ) -> A_Err,
+    >,
+    pub approx_size_value:
+        ::std::option::Option<unsafe extern "C" fn(valueP: AEGP_CCComputeValueRefconP) -> usize>,
+    pub delete_compute_value:
+        ::std::option::Option<unsafe extern "C" fn(valueP: AEGP_CCComputeValueRefconP)>,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_ComputeCacheSuite1 {
+    pub AEGP_ClassRegister: ::std::option::Option<
+        unsafe extern "C" fn(
+            compute_classP: AEGP_CCComputeClassIdP,
+            callbacksP: *const AEGP_ComputeCacheCallbacks,
+        ) -> A_Err,
+    >,
+    pub AEGP_ClassUnregister: ::std::option::Option<
+        unsafe extern "C" fn(compute_classP: AEGP_CCComputeClassIdP) -> A_Err,
+    >,
+    pub AEGP_ComputeIfNeededAndCheckout: ::std::option::Option<
+        unsafe extern "C" fn(
+            compute_classP: AEGP_CCComputeClassIdP,
+            opaque_optionsP: AEGP_CCComputeOptionsRefconP,
+            wait_for_other_threadB: bool,
+            compute_receiptPP: *mut AEGP_CCCheckoutReceiptP,
+        ) -> A_Err,
+    >,
+    pub AEGP_CheckoutCached: ::std::option::Option<
+        unsafe extern "C" fn(
+            compute_classP: AEGP_CCComputeClassIdP,
+            opaque_optionsP: AEGP_CCComputeOptionsRefconP,
+            compute_receiptPP: *mut AEGP_CCCheckoutReceiptP,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetReceiptComputeValue: ::std::option::Option<
+        unsafe extern "C" fn(
+            compute_receiptP: AEGP_CCCheckoutReceiptP,
+            compute_valuePP: *mut AEGP_CCComputeValueRefconP,
+        ) -> A_Err,
+    >,
+    pub AEGP_CheckinComputeReceipt: ::std::option::Option<
+        unsafe extern "C" fn(compute_receiptP: AEGP_CCCheckoutReceiptP) -> A_Err,
+    >,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_HashSuite1 {
+    pub AEGP_CreateHashFromPtr: ::std::option::Option<
+        unsafe extern "C" fn(
+            buf_sizeLu: A_u_longlong,
+            bufPV: *const ::std::os::raw::c_void,
+            hashP: *mut AEGP_GUID,
+        ) -> A_Err,
+    >,
+    pub AEGP_HashMixInPtr: ::std::option::Option<
+        unsafe extern "C" fn(
+            buf_sizeLu: A_u_longlong,
+            bufPV: *const ::std::os::raw::c_void,
+            hashP: *mut AEGP_GUID,
+        ) -> A_Err,
+    >,
+}
 #[doc = "\tCurrently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRA_4444_8u: PrPixelFormat = 1634887522;
 #[doc = "\tCurrently supported types"]

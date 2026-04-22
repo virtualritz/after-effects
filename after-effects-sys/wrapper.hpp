@@ -28,6 +28,8 @@
 #include "AE_IO_FileExt.h"
 #include "AE_Macros.h"
 #include "AE_PluginData.h"
+#include "AE_HashSuite.h"
+#include "AE_ComputeCacheSuite.h"
 #include "FIEL_Public.h"
 #include "Mach-O_prefix.h"
 #include "PF_Masks.h"
