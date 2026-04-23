@@ -40,7 +40,6 @@
 #include "PrSDKPixelFormat.h"
 #include "SuiteHelper.h"
 
-
 // Headers/SP subfolder
 //#include "SPAccess.h"
 //#include "SPAdapts.h"
