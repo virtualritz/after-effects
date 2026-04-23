@@ -17,8 +17,8 @@ repository = "https://github.com/virtualritz/after-effects/"
 [dependencies]
 base64 = "0.22"
 bincode = { version = "2.0", features = ["serde"] }
-bitflags = "2.9"
-fastrand = "2.3"
+bitflags = "2.11"
+fastrand = "2.4"
 log = "0.4"
 parking_lot = "0.12"
 premiere-sys = "0.3"                               #{ path = "../premiere-sys" }

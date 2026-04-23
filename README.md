@@ -149,7 +149,7 @@ Extensive portions of Ae and Pr SDKs are wrapped:
 | ✅ Mask                 | ✅ Param Utils                    |             |                       |
 | 🔳 Math                 | ✅ Path Data                      |             |                       |
 | ✅ Memory               | ✅ Path Query                     |             |                       |
-| 🔳 Output Module        | ✅ Pixel Data                     |             |                       |
+| ✅ Output Module        | ✅ Pixel Data                     |             |                       |
 | ✅ Persistent Data      | ✅ Pixel Format                   |             |                       |
 | ✅ PF Interface         | ✅ PointParam                     |             |                       |
 | ✅ Proj                 | 🔳 Sampling8                      |             |                       |
@@ -157,8 +157,8 @@ Extensive portions of Ae and Pr SDKs are wrapped:
 | ✅ Register             | 🔳 SamplingFloat                  |             |                       |
 | ✅ Render Asyc Manager  | ✅ Source Settings                |             |                       |
 | ✅ Render Options       | ✅ Transition                     |             |                       |
-| 🔳 Render Queue Item    | ✅ Utility                        |             |                       |
-| 🔳 Render Queue         | ✅ World                          |             |                       |
+| ✅ Render Queue Item    | ✅ Utility                        |             |                       |
+| ✅ Render Queue         | ✅ World                          |             |                       |
 | ✅ Render               | ✅ World Transform                |             |                       |
 | 🔳 RenderQueue Monitor  |                                   |             |                       |
 | ✅ Sound Data           |                                   |             |                       |

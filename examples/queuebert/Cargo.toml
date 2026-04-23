@@ -1,0 +1,16 @@
+[package]
+name = "queuebert"
+version = "0.0.1"
+description = "Rust port of Adobe's QueueBert AEGP sample - demonstrates Render Queue and Output Module suites"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+log = "0.4"
+after-effects = { path = "../../after-effects" }
+
+[build-dependencies]
+pipl = { path = "../../pipl" }

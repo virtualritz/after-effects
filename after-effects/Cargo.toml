@@ -21,7 +21,7 @@ default = []
 after-effects-sys =  "0.3"
 #after-effects-sys = { path = "../after-effects-sys" }
 bincode = { version = "2.0", features = ["serde"] }
-bitflags = "2.9"
+bitflags = "2.11"
 cstr-literal = "0.1"
 fastrand = "2"
 hash32 = "1"
