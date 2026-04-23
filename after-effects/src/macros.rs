@@ -582,9 +582,9 @@ macro_rules! define_suite_item_wrapper {
                 &self.handle
             }
         }
-        impl Into<$name> for $handle_type {
-            fn into(self) -> $name {
-                $name::from_handle(self, false)
+        impl From<$handle_type> for $name {
+            fn from(handle: $handle_type) -> Self {
+                Self::from_handle(handle, false)
             }
         }
         impl crate::AsPtr<$raw_handle_type> for $name {

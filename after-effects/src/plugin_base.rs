@@ -252,7 +252,7 @@ macro_rules! define_effect {
             // Allocate or restore sequence data pointer
             let sequence_handle = get_sequence_handle::<$sequence_type>(cmd, &in_data).unwrap_or(None);
 
-            let global_lock = global_handle.lock()?;
+            let mut global_lock = global_handle.lock()?;
             let global_inst = global_lock.as_ref_mut()?;
 
             if cmd == RawCommand::ParamsSetup {
@@ -288,7 +288,7 @@ macro_rules! define_effect {
 
             if let Some((mut sequence_handle, needs_lock)) = sequence_handle {
                 let (lock, inst) = if needs_lock {
-                    let lock = sequence_handle.lock()?;
+                    let mut lock = sequence_handle.lock()?;
                     let inst = lock.as_ref_mut()?;
                     (Some(lock), inst)
                 } else {

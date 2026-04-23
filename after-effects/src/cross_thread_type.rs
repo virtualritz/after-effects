@@ -92,7 +92,10 @@ macro_rules! define_cross_thread_type {
                             }
 
                             let data: $type_name = seq.next_element()?.ok_or_else(|| $crate::serde::de::Error::invalid_length(1, &self))?;
-                            [<CrossThread $type_name>]::map().write().insert(id, std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
+
+                            // Use write lock and re-check to avoid race condition
+                            let mut map = [<CrossThread $type_name>]::map().write();
+                            map.entry(id).or_insert_with(|| std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
 
                             Ok([<CrossThread $type_name>] { id })
                         }
@@ -115,8 +118,13 @@ macro_rules! define_cross_thread_type {
                                 }
                             }
                             let id: u64 = id.ok_or_else(|| $crate::serde::de::Error::missing_field("id"))?;
+
                             let data: $type_name = data.ok_or_else(|| $crate::serde::de::Error::missing_field("data"))?;
-                            [<CrossThread $type_name>]::map().write().insert(id, std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
+
+                            // Use write lock and entry API to avoid race condition
+                            let mut write_map = [<CrossThread $type_name>]::map().write();
+                            write_map.entry(id).or_insert_with(|| std::sync::Arc::new($crate::parking_lot::RwLock::new(data)));
+
                             Ok([<CrossThread $type_name>] { id })
                         }
                     }
