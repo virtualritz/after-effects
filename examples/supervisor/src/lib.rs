@@ -139,10 +139,10 @@ impl AdobePluginGlobal for Plugin {
 
 impl AdobePluginInstance for Instance {
     fn flatten(&self) -> Result<(u16, Vec<u8>), Error> {
-        Ok((1, bincode::serialize(self).unwrap()))
+        Ok((1, bincode::serde::encode_to_vec(self, bincode::config::standard()).unwrap()))
     }
     fn unflatten(_version: u16, bytes: &[u8]) -> Result<Self, Error> {
-        Ok(bincode::deserialize(bytes).unwrap_or_default())
+        Ok(bincode::serde::decode_from_slice(bytes, bincode::config::standard()).unwrap_or_default().0)
     }
 
     fn render(&self, _: &mut PluginState, _: &Layer, _: &mut Layer) -> Result<(), ae::Error> { Ok(()) }

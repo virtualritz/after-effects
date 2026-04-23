@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 [dependencies]
 after-effects = { path = "../../after-effects" }
 serde = { version = "1.0", features = ["derive"] }
-png = "0.17"
+png = "0.18"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }

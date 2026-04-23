@@ -33,7 +33,7 @@ pub enum ProcShaderSource<'a> {
 impl<T: Sized> WgpuProcessing<T> {
     pub fn new(shader: ProcShaderSource) -> Self {
         let power_preference = wgpu::PowerPreference::from_env().unwrap_or(PowerPreference::HighPerformance);
-        let mut instance_desc = InstanceDescriptor::default();
+        let mut instance_desc = InstanceDescriptor::new_without_display_handle();
 
         // We can't use the DX12 backend with validation turned on, otherwise it
         // will remove AE's internal D3D12 device:
@@ -43,7 +43,7 @@ impl<T: Sized> WgpuProcessing<T> {
             log::info!("Disabling {:?} because {:?} is on", Backends::DX12, InstanceFlags::VALIDATION);
         }
 
-        let instance = Instance::new(&instance_desc);
+        let instance = Instance::new(instance_desc);
 
         let adapter = pollster::block_on(instance.request_adapter(&RequestAdapterOptions { power_preference, ..Default::default() })).unwrap();
 
@@ -53,7 +53,8 @@ impl<T: Sized> WgpuProcessing<T> {
                 required_features: adapter.features(),
                 required_limits: adapter.limits(),
                 memory_hints: wgpu::MemoryHints::Performance,
-                trace: wgpu::Trace::Off
+                trace: wgpu::Trace::Off,
+                experimental_features: unsafe { wgpu::ExperimentalFeatures::enabled() },
             })
         ).unwrap();
 
@@ -79,8 +80,8 @@ impl<T: Sized> WgpuProcessing<T> {
 
         let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[&layout],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&layout)],
+            immediate_size: 0,
         });
 
         let pipeline = device.create_compute_pipeline(&ComputePipelineDescriptor {
@@ -251,7 +252,7 @@ impl<T: Sized> WgpuProcessing<T> {
         let (sender, receiver) = futures_intrusive::channel::shared::oneshot_channel();
         buffer_slice.map_async(MapMode::Read, move |v| sender.send(v).unwrap());
 
-        let _ = self.device.poll(wgpu::PollType::Wait);
+        let _ = self.device.poll(wgpu::PollType::Wait { submission_index: None, timeout: None });
 
         if let Some(Ok(())) = pollster::block_on(receiver.receive()) {
             let out_stride = out_size.2;

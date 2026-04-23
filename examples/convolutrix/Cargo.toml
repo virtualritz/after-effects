@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 after-effects = { path = "../../after-effects" }
-fastrand = "2.3"
+fastrand = "2.4"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }
