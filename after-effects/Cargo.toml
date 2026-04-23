@@ -18,7 +18,7 @@ artisan-2-api = ["after-effects-sys/artisan-2-api"]
 default = []
 
 [dependencies]
-after-effects-sys =  "0.4"
+after-effects-sys =  "0.3"
 #after-effects-sys = { path = "../after-effects-sys" }
 bincode = { version = "2.0", features = ["serde"] }
 bitflags = "2.11"
