@@ -1,0 +1,18 @@
+[package]
+name = "simulate"
+version = "0.0.1"
+authors = ["mobile-bungalow"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+after-effects = { path = "../../after-effects" }
+bytemuck = { version = "1", features = ["derive"] }
+fastrand = "2"
+log = "0.4"
+
+[build-dependencies]
+pipl = { path = "../../pipl" }

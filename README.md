@@ -128,12 +128,12 @@ Extensive portions of Ae and Pr SDKs are wrapped:
 | ✅ Command              | ✅ AngleParam                     | ✅ Supplier |                       |
 | ✅ Comp                 | 🔳 ANSI                           | ✅ Surface  |                       |
 | ✅ Composite            | ✅ Background Frame               |             |                       |
-| 🔳 Compute              | 🔳 Batch Sampling                 |             |                       |
+| ✅ Compute              | 🔳 Batch Sampling                 |             |                       |
 | ✅ Dynamic Stream       | ✅ Cache On Load                  |             |                       |
 | ✅ Effect               | ✅ Channel                        |             |                       |
 | 🔳 File Import Manager  | ✅ Color Settings                 |             |                       |
 | ✅ Footage              | ✅ Color Callbacks                |             |                       |
-| 🔳 Hash                 | ✅ Color Callbacks 16             |             |                       |
+| ✅ Hash                 | ✅ Color Callbacks 16             |             |                       |
 | ✅ IO In                | ✅ Color Callbacks Float          |             |                       |
 | 🔳 IO Out               | ✅ ColorParam                     |             |                       |
 | ✅ Item                 | ✅ Effect Custom UI               |             |                       |

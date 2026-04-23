@@ -42,6 +42,8 @@ pub mod suites {
                                                                          DynamicStreamSuite    as DynamicStream };
     pub(crate) mod utility;              pub use utility             ::UtilitySuite            as Utility;
     pub(crate) mod world;                pub use world               ::WorldSuite              as World;
+    pub(crate) mod compute_cache;        pub use compute_cache       ::ComputeCacheSuite       as ComputeCache;
+    pub(crate) mod hash;                 pub use hash                ::HashSuite               as Hash;
 }
 
 pub type PluginId = ae_sys::AEGP_PluginID;
@@ -79,6 +81,9 @@ pub use suites::comp::{
     Collection2Handle,
     CompFlags,
     CompHandle,
+};
+pub use suites::compute_cache:: {
+    ComputeClassId
 };
 pub use suites::effect::{
     Effect,
@@ -184,3 +189,4 @@ pub use suites::world::{
     WorldHandle,
     WorldType,
 };
+pub use suites::hash::Guid;

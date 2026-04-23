@@ -167,7 +167,7 @@ define_enum! {
         InvalidParms             = ae_sys::suiteError_InvalidParms,
 
         Unknown10007             = UNKNOWN_ERR_10007,
-
+        NotInComputeCache        = ae_sys::A_Err_NOT_IN_CACHE_OR_COMPUTE_PENDING,
         None = ae_sys::PF_Err_NONE,
     }
 }
@@ -195,6 +195,7 @@ impl From<Error> for &'static str {
             Error::InvalidParms             => "InvalidParms",
             Error::Reserved11               => "Reserved11",
             Error::Unknown10007             => "Unknown10007",
+            Error::NotInComputeCache        => "Value not found in compute cache.",
         }
     }
 }

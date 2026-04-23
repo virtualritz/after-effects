@@ -1059,7 +1059,7 @@ impl<'p> ParamDef<'p> {
 
     pub fn set_name(&mut self, name: &str) -> Result<(), Error> {
         if name.is_empty() {
-            self.param_def.name[0] = 0;
+            self.param_def.name_do_not_use_directly[0] = 0;
             return Ok(());
         }
         // According to Adobe docs, the encoding expected for the name is the system encoding.
@@ -1122,7 +1122,7 @@ impl<'p> ParamDef<'p> {
             if let Some(last_elem) = bytes.get_mut(MAX_NAME_LEN - 1) {
                 *last_elem = 0;
             }
-            self.param_def.name[0..bytes.len()].copy_from_slice(unsafe { std::mem::transmute(bytes.as_slice()) });
+            self.param_def.name_do_not_use_directly[0..bytes.len()].copy_from_slice(unsafe { std::mem::transmute(bytes.as_slice()) });
             return Ok(());
         }
 
