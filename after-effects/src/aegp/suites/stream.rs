@@ -526,7 +526,7 @@ mod dynamic_stream_flag_tests {
     #[test]
     fn dynamic_stream_flags_accept_combined_bits() {
         let raw = ae_sys::AEGP_DynStreamFlag_ACTIVE_EYEBALL | ae_sys::AEGP_DynStreamFlag_HIDDEN;
-        let flags = DynamicStreamFlags::from_bits_retain(raw);
+        let flags = DynamicStreamFlags::from_bits_retain(raw as _);
 
         assert!(flags.contains(DynamicStreamFlags::ActiveEyeball));
         assert!(flags.contains(DynamicStreamFlags::Hidden));
@@ -535,10 +535,10 @@ mod dynamic_stream_flag_tests {
     #[test]
     fn dynamic_stream_flags_preserve_unknown_bits() {
         let raw = ae_sys::AEGP_DynStreamFlag_HIDDEN | (1 << 30);
-        let flags = DynamicStreamFlags::from_bits_retain(raw);
+        let flags = DynamicStreamFlags::from_bits_retain(raw as _);
 
         assert!(flags.contains(DynamicStreamFlags::Hidden));
-        assert_eq!(flags.bits(), raw);
+        assert_eq!(flags.bits(), raw as ae_sys::A_u_long);
     }
 }
 
