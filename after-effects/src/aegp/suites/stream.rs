@@ -497,30 +497,25 @@ define_enum! {
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[allow(non_upper_case_globals)]
     pub struct DynamicStreamFlags: ae_sys::AEGP_DynStreamFlags {
         /// Stream is available for reading and writing
-        #[allow(non_upper_case_globals)]
-        const ActiveEyeball = ae_sys::AEGP_DynStreamFlag_ACTIVE_EYEBALL;
+        const ActiveEyeball = ae_sys::AEGP_DynStreamFlag_ACTIVE_EYEBALL as ae_sys::A_u_long;
         /// Stream is still readable/writable, but it may not currently be visible in the UI
-        #[allow(non_upper_case_globals)]
-        const Hidden = ae_sys::AEGP_DynStreamFlag_HIDDEN;
+        const Hidden = ae_sys::AEGP_DynStreamFlag_HIDDEN as ae_sys::A_u_long;
         /// A read-only flag. Indicates whether the [`StreamReferenceHandle`] is grayed out in the UI.
         ///
         /// Note that as of CS5, this flag will not be returned if a parameter is disabled.
         /// Instead, check `PF_PUI_DISABLED` in `ParamDef`.
-        #[allow(non_upper_case_globals)]
-        const Disabled = ae_sys::AEGP_DynStreamFlag_DISABLED;
+        const Disabled = ae_sys::AEGP_DynStreamFlag_DISABLED as ae_sys::A_u_long;
         /// A read-only flag. Indicates that the [`StreamReferenceHandle`] is read-only, the user never sees it.
         ///
         /// However, the children are still seen and not indented in the Timeline panel.
-        #[allow(non_upper_case_globals)]
-        const Elided = ae_sys::AEGP_DynStreamFlag_ELIDED;
+        const Elided = ae_sys::AEGP_DynStreamFlag_ELIDED as ae_sys::A_u_long;
         /// New in CS6. A read-only flag. Indicates that this stream group should be shown when empty.
-        #[allow(non_upper_case_globals)]
-        const ShownWhenEmpty = ae_sys::AEGP_DynStreamFlag_SHOWN_WHEN_EMPTY;
+        const ShownWhenEmpty = ae_sys::AEGP_DynStreamFlag_SHOWN_WHEN_EMPTY as ae_sys::A_u_long;
         /// New in CS6. A read-only flag. Indicates that this stream property will not be automatically revealed when un-hidden.
-        #[allow(non_upper_case_globals)]
-        const SkipRevealWhenUnhidden = ae_sys::AEGP_DynStreamFlag_SKIP_REVEAL_WHEN_UNHIDDEN;
+        const SkipRevealWhenUnhidden = ae_sys::AEGP_DynStreamFlag_SKIP_REVEAL_WHEN_UNHIDDEN as ae_sys::A_u_long;
     }
 }
 
