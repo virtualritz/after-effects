@@ -263,7 +263,11 @@ impl DynamicStreamSuite {
 
     /// Retrieves the flags for a given [`StreamReferenceHandle`].
     pub fn dynamic_stream_flags(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>) -> Result<DynamicStreamFlags, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetDynamicStreamFlags -> ae_sys::AEGP_DynStreamFlags, stream_ref.as_ptr())?.into())
+        Ok(DynamicStreamFlags::from_bits_retain(call_suite_fn_single!(
+            self,
+            AEGP_GetDynamicStreamFlags -> ae_sys::AEGP_DynStreamFlags,
+            stream_ref.as_ptr()
+        )?))
     }
 
     /// Sets the specified flag for the [`StreamReferenceHandle`].
@@ -273,7 +277,8 @@ impl DynamicStreamSuite {
     /// This call may be used to dynamically show or hide parameters, by setting and clearing [`DynamicStreamFlags::Hidden`].
     /// However, [`DynamicStreamFlags::Disabled`] may not be set.
     pub fn set_dynamic_stream_flag(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>, flag: DynamicStreamFlags, undoable: bool, enabled: bool) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetDynamicStreamFlag, stream_ref.as_ptr(), flag.into(), undoable as _, enabled as _)
+        debug_assert_eq!(flag.bits().count_ones(), 1, "AEGP_SetDynamicStreamFlag expects a single flag");
+        call_suite_fn!(self, AEGP_SetDynamicStreamFlag, stream_ref.as_ptr(), flag.bits(), undoable as _, enabled as _)
     }
 
     /// Retrieves a sub-stream by index from a given [`StreamReferenceHandle`]. Cannot be used on streams of type [`StreamGroupingType::Leaf`].
@@ -490,26 +495,55 @@ define_enum! {
     }
 }
 
-define_enum! {
-    ae_sys::AEGP_DynStreamFlags,
-    DynamicStreamFlags {
+bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct DynamicStreamFlags: ae_sys::AEGP_DynStreamFlags {
         /// Stream is available for reading and writing
-        ActiveEyeball               = ae_sys::AEGP_DynStreamFlag_ACTIVE_EYEBALL,
+        #[allow(non_upper_case_globals)]
+        const ActiveEyeball = ae_sys::AEGP_DynStreamFlag_ACTIVE_EYEBALL;
         /// Stream is still readable/writable, but it may not currently be visible in the UI
-        Hidden                      = ae_sys::AEGP_DynStreamFlag_HIDDEN,
+        #[allow(non_upper_case_globals)]
+        const Hidden = ae_sys::AEGP_DynStreamFlag_HIDDEN;
         /// A read-only flag. Indicates whether the [`StreamReferenceHandle`] is grayed out in the UI.
         ///
         /// Note that as of CS5, this flag will not be returned if a parameter is disabled.
         /// Instead, check `PF_PUI_DISABLED` in `ParamDef`.
-        Disabled                    = ae_sys::AEGP_DynStreamFlag_DISABLED,
+        #[allow(non_upper_case_globals)]
+        const Disabled = ae_sys::AEGP_DynStreamFlag_DISABLED;
         /// A read-only flag. Indicates that the [`StreamReferenceHandle`] is read-only, the user never sees it.
         ///
         /// However, the children are still seen and not indented in the Timeline panel.
-        Elided                      = ae_sys::AEGP_DynStreamFlag_ELIDED,
+        #[allow(non_upper_case_globals)]
+        const Elided = ae_sys::AEGP_DynStreamFlag_ELIDED;
         /// New in CS6. A read-only flag. Indicates that this stream group should be shown when empty.
-        ShownWhenEmpty              = ae_sys::AEGP_DynStreamFlag_SHOWN_WHEN_EMPTY,
+        #[allow(non_upper_case_globals)]
+        const ShownWhenEmpty = ae_sys::AEGP_DynStreamFlag_SHOWN_WHEN_EMPTY;
         /// New in CS6. A read-only flag. Indicates that this stream property will not be automatically revealed when un-hidden.
-        SkipRevealWhenUnhidden      = ae_sys::AEGP_DynStreamFlag_SKIP_REVEAL_WHEN_UNHIDDEN,
+        #[allow(non_upper_case_globals)]
+        const SkipRevealWhenUnhidden = ae_sys::AEGP_DynStreamFlag_SKIP_REVEAL_WHEN_UNHIDDEN;
+    }
+}
+
+#[cfg(test)]
+mod dynamic_stream_flag_tests {
+    use super::*;
+
+    #[test]
+    fn dynamic_stream_flags_accept_combined_bits() {
+        let raw = ae_sys::AEGP_DynStreamFlag_ACTIVE_EYEBALL | ae_sys::AEGP_DynStreamFlag_HIDDEN;
+        let flags = DynamicStreamFlags::from_bits_retain(raw);
+
+        assert!(flags.contains(DynamicStreamFlags::ActiveEyeball));
+        assert!(flags.contains(DynamicStreamFlags::Hidden));
+    }
+
+    #[test]
+    fn dynamic_stream_flags_preserve_unknown_bits() {
+        let raw = ae_sys::AEGP_DynStreamFlag_HIDDEN | (1 << 30);
+        let flags = DynamicStreamFlags::from_bits_retain(raw);
+
+        assert!(flags.contains(DynamicStreamFlags::Hidden));
+        assert_eq!(flags.bits(), raw);
     }
 }
 
