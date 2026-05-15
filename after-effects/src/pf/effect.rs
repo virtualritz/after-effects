@@ -39,8 +39,6 @@ define_suite_item_wrapper!(
 
         // ―――――――――――――――――――――――――――― Utility suite functions ――――――――――――――――――――――――――――
 
-        /// Gets the filter ID for the current effect reference.
-        filter_instance_id()                                            ->  i32 => pf_utility.filter_instance_id,
         /// Retrieves formatted timecode, as well as the currently active video frame.
         ///
         /// Returns a tuple containing `(current_frame, time_display)`
