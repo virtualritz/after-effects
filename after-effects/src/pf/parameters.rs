@@ -10,15 +10,24 @@ const MAX_NAME_LEN: usize = 32;
 /// Convert a UTF-8 string to a `CString` encoded in the system code page
 /// (e.g. CP936/GBK on Chinese Windows). On macOS this is a no-op since the
 /// system uses UTF-8 natively.
+///
+/// Uses [`CP_OEMCP`] on Windows to match the existing behaviour in
+/// [`ParamDef::set_name()`]; on CJK Windows this is equivalent to [`CP_ACP`].
 fn encode_to_system_cstring(s: &str) -> CString {
     #[cfg(target_os = "windows")]
     {
         let bytes = encode_to_system_bytes(s);
-        CString::new(bytes).unwrap_or_else(|_| CString::new("").unwrap())
+        CString::new(bytes).unwrap_or_else(|e| {
+            log::error!("encode_to_system_cstring: {e}");
+            CString::new("").unwrap()
+        })
     }
     #[cfg(not(target_os = "windows"))]
     {
-        CString::new(s).unwrap_or_else(|_| CString::new("").unwrap())
+        CString::new(s).unwrap_or_else(|e| {
+            log::error!("encode_to_system_cstring: {e}");
+            CString::new("").unwrap()
+        })
     }
 }
 
@@ -470,7 +479,10 @@ impl<'a> PopupDef<'a> {
                 }
                 encoded.extend_from_slice(&encode_to_system_bytes(opt));
             }
-            self.options = CString::new(encoded).unwrap();
+            self.options = CString::new(encoded).unwrap_or_else(|e| {
+                log::error!("PopupDef::set_options: {e}");
+                CString::new("").unwrap()
+            });
         }
         #[cfg(not(target_os = "windows"))]
         {
