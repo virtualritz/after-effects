@@ -7,6 +7,52 @@ use objc2_core_foundation::{CFRange, CFString};
 
 const MAX_NAME_LEN: usize = 32;
 
+/// Convert a UTF-8 string to a `CString` encoded in the system code page
+/// (e.g. CP936/GBK on Chinese Windows). On macOS this is a no-op since the
+/// system uses UTF-8 natively.
+fn encode_to_system_cstring(s: &str) -> CString {
+    #[cfg(target_os = "windows")]
+    {
+        let bytes = encode_to_system_bytes(s);
+        CString::new(bytes).unwrap_or_else(|_| CString::new("").unwrap())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        CString::new(s).unwrap_or_else(|_| CString::new("").unwrap())
+    }
+}
+
+/// Convert a UTF-8 string to system-code-page bytes (no trailing NUL).
+#[cfg(target_os = "windows")]
+fn encode_to_system_bytes(s: &str) -> Vec<u8> {
+    use std::ffi::OsStr;
+    use std::os::windows::ffi::OsStrExt;
+    unsafe {
+        use windows_sys::Win32::Globalization::{WideCharToMultiByte, CP_OEMCP};
+        let wstr: Vec<u16> = OsStr::new(s).encode_wide().collect();
+        if wstr.is_empty() {
+            return Vec::new();
+        }
+        let wlen = wstr.len() as i32;
+        let len = WideCharToMultiByte(
+            CP_OEMCP, 0, wstr.as_ptr(), wlen,
+            std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut(),
+        );
+        if len <= 0 {
+            return Vec::new();
+        }
+        let mut bytes: Vec<u8> = Vec::with_capacity(len as usize);
+        let len = WideCharToMultiByte(
+            CP_OEMCP, 0, wstr.as_ptr(), wlen,
+            bytes.as_mut_ptr(), len, std::ptr::null(), std::ptr::null_mut(),
+        );
+        if len > 0 {
+            bytes.set_len(len as usize);
+        }
+        bytes
+    }
+}
+
 define_enum! {
     ae_sys::PF_ParamType,
     ParamType {
@@ -189,7 +235,7 @@ impl<'a> CheckBoxDef<'_> {
         self.def.dephault != 0
     }
     pub fn set_label(&mut self, v: &str) -> &mut Self {
-        self.label = CString::new(v).unwrap();
+        self.label = encode_to_system_cstring(v);
         self.def.u.nameptr = self.label.as_ptr();
         self
     }
@@ -413,7 +459,23 @@ define_param_wrapper! {
 impl<'a> PopupDef<'a> {
     pub fn set_options(&mut self, options: &[&str]) {
         // Build a string in the format "list|of|choices|", the format Ae expects.
-        self.options = CString::new(options.join("|")).unwrap();
+        // Encode each option in the system code page before joining, so non-ASCII
+        // translations render correctly on Windows.
+        #[cfg(target_os = "windows")]
+        {
+            let mut encoded: Vec<u8> = Vec::new();
+            for (i, opt) in options.iter().enumerate() {
+                if i > 0 {
+                    encoded.push(b'|');
+                }
+                encoded.extend_from_slice(&encode_to_system_bytes(opt));
+            }
+            self.options = CString::new(encoded).unwrap();
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            self.options = CString::new(options.join("|")).unwrap();
+        }
         self.def.u.namesptr = self.options.as_ptr();
         self.def.num_choices = options.len().try_into().unwrap();
     }

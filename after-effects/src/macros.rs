@@ -333,7 +333,7 @@ macro_rules! define_param_wrapper {
     (impl String, $name:ident) => {
         paste::item! {
             pub fn [<set_ $name>](&mut self, v: &str) -> &mut Self {
-                self.$name = CString::new(v).unwrap();
+                self.$name = encode_to_system_cstring(v);
                 { self.def.u.namesptr = self.$name.as_ptr(); }
                 self
             }
@@ -345,9 +345,9 @@ macro_rules! define_param_wrapper {
     (impl ShortString, $name:ident) => {
         paste::item! {
             pub fn [<set_ $name>](&mut self, v: &str) -> &mut Self {
-                assert!(v.len() < 32);
-                let cstr = CString::new(v).unwrap();
+                let cstr = encode_to_system_cstring(v);
                 let slice = cstr.to_bytes_with_nul();
+                assert!(slice.len() <= 32);
                 self.def.$name[0..slice.len()].copy_from_slice(unsafe { std::mem::transmute(slice) });
                 self
             }
