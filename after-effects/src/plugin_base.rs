@@ -404,7 +404,9 @@ macro_rules! define_effect {
                         env!("PIPL_KIND")              .parse().unwrap(),
                         env!("PIPL_AE_SPEC_VER_MAJOR") .parse().unwrap(),
                         env!("PIPL_AE_SPEC_VER_MINOR") .parse().unwrap(),
-                        env!("PIPL_AE_RESERVED")       .parse().unwrap(),
+                        // PluginDataEntryFunction2 registration metadata is
+                        // distinct from the PiPL AE_Reserved_Info property.
+                        8,
                         cstr!(env!("PIPL_SUPPORT_URL")).as_ptr() as *const u8, // Support url
                     )
                 }
