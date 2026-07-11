@@ -8,6 +8,7 @@
 /// # 1. The global type
 /// This type will be the same across all instances of the plugin. It can be used to store global state, such as the plugin version, data cache, or any other global data.
 /// It must implement the `Default` trait which will be called on [`Command::GlobalSetup`](crate::pf::Command::GlobalSetup). You can use the `Drop` trait to clean up any resources on [`Command::GlobalSetdown`](crate::pf::Command::GlobalSetdown).
+/// With Multi-Frame Rendering enabled it must also implement `Sync`; use interior synchronization for mutable fields.
 ///
 /// Your global type must implement the `AdobePluginGlobal` trait, which defines the plugin's command selectors.
 /// ```ignore
@@ -18,6 +19,17 @@
 ///         out_data: OutData
 ///     ) -> Result<(), Error>;
 ///
+///     // MFR plugins receive shared global state and must use interior
+///     // synchronization for fields that can change after setup.
+///     #[cfg(threaded_rendering)]
+///     fn handle_command(&self,
+///         command: Command,
+///         in_data: InData,
+///         out_data: OutData,
+///         params: &mut Parameters<ParamsType>
+///     ) -> Result<(), Error>;
+///
+///     #[cfg(not(threaded_rendering))]
 ///     fn handle_command(&mut self,
 ///         command: Command,
 ///         in_data: InData,
@@ -31,6 +43,7 @@
 /// This type will be created in [`Command::SequenceSetup`](crate::pf::Command::SequenceSetup) and destroyed in [`Command::SequenceSetdown`](crate::pf::Command::SequenceSetdown).
 /// It can be used to store instance-specific state, such as some data calculated from the plugin's parameters.
 /// It must implement the `Default` trait which will be called on [`Command::SequenceSetup`](crate::pf::Command::SequenceSetup).
+/// With Multi-Frame Rendering enabled it must also implement `Send + Sync`.
 /// You can use the `Drop` trait to clean up any resources on [`Command::SequenceSetdown`](crate::pf::Command::SequenceSetdown).
 ///
 /// Your instance type must implement the `AdobePluginInstance` trait, which defines the instance's command selectors.
@@ -67,8 +80,10 @@
 /// The `PluginState` struct allows you to access the global struct, instance struct, parameters, and input/output data in your plugin's command selectors.
 /// ```ignore
 /// struct PluginState {
+///    #[cfg(threaded_rendering)]
+///    global: &GlobalType,
+///    #[cfg(not(threaded_rendering))]
 ///    global: &mut GlobalType,
-///    sequence: Option<&mut InstanceType>,
 ///    params: &mut Parameters<ParamsType>,
 ///    in_data: InData,
 ///    out_data: OutData
@@ -126,9 +141,11 @@ macro_rules! define_effect {
         use std::rc::Rc;
         use std::cell::RefCell;
 
-        struct PluginState<'main, 'global, 'sequence, 'params> {
+        struct PluginState<'main, 'global, 'params> {
+            #[cfg(threaded_rendering)]
+            global: &'global $global_type,
+            #[cfg(not(threaded_rendering))]
             global: &'global mut $global_type,
-            sequence: Option<&'sequence mut $sequence_type>,
             params: &'params mut $crate::Parameters<'main, $params_type>,
             in_data: $crate::InData,
             out_data: $crate::OutData
@@ -137,13 +154,16 @@ macro_rules! define_effect {
         // This struct **must** be thread safe
         struct GlobalData {
             params_map: std::sync::OnceLock<HashMap<$params_type, $crate::ParamMapInfo>>,
-            params_num: usize,
+            params_num: std::sync::atomic::AtomicUsize,
             plugin_instance: $global_type
         }
 
         trait AdobePluginGlobal : Default {
             fn params_setup(&self, params: &mut Parameters<$params_type>, in_data: InData, out_data: OutData) -> Result<(), Error>;
 
+            #[cfg(threaded_rendering)]
+            fn handle_command(&self, command: Command, in_data: InData, out_data: OutData, params: &mut Parameters<$params_type>) -> Result<(), Error>;
+            #[cfg(not(threaded_rendering))]
             fn handle_command(&mut self, command: Command, in_data: InData, out_data: OutData, params: &mut Parameters<$params_type>) -> Result<(), Error>;
         }
         trait AdobePluginInstance : Default {
@@ -238,7 +258,7 @@ macro_rules! define_effect {
                 // Allocate global data
                 pf::Handle::new(GlobalData {
                     params_map: std::sync::OnceLock::new(),
-                    params_num: 1,
+                    params_num: std::sync::atomic::AtomicUsize::new(1),
                     plugin_instance: <$global_type>::default()
                 })?
             } else {
@@ -253,29 +273,35 @@ macro_rules! define_effect {
             let sequence_handle = get_sequence_handle::<$sequence_type>(cmd, &in_data).unwrap_or(None);
 
             let mut global_lock = global_handle.lock()?;
+            #[cfg(threaded_rendering)]
+            let global_inst = global_lock.as_ref()?;
+            #[cfg(not(threaded_rendering))]
             let global_inst = global_lock.as_ref_mut()?;
 
             if cmd == RawCommand::ParamsSetup {
                 let mut params = Parameters::<$params_type>::new();
                 params.set_in_data(in_data_ptr);
                 global_inst.plugin_instance.params_setup(&mut params, InData::from_raw(in_data_ptr), OutData::from_raw(out_data_ptr))?;
-                global_inst.params_num = params.num_params();
                 unsafe {
                     (*out_data_ptr).num_params = params.num_params() as i32;
                     global_inst.params_map.set((*params.map).clone()).unwrap();
                 }
+                global_inst.params_num.store(params.num_params(), std::sync::atomic::Ordering::Release);
             }
 
-            let params_slice = if params.is_null() || global_inst.params_num == 0 {
+            let params_num = global_inst.params_num.load(std::sync::atomic::Ordering::Acquire);
+            let params_slice = if params.is_null() || params_num == 0 {
                 &[]
             } else {
-                unsafe { std::slice::from_raw_parts(params, global_inst.params_num) }
+                unsafe { std::slice::from_raw_parts(params, params_num) }
             };
 
-            let mut params_state = Parameters::<$params_type>::with_params(in_data_ptr, params_slice, global_inst.params_map.get(), global_inst.params_num);
+            let mut params_state = Parameters::<$params_type>::with_params(in_data_ptr, params_slice, global_inst.params_map.get(), params_num);
             let mut plugin_state = PluginState {
+                #[cfg(threaded_rendering)]
+                global: &global_inst.plugin_instance,
+                #[cfg(not(threaded_rendering))]
                 global: &mut global_inst.plugin_instance,
-                sequence: sequence_handle.as_ref().map(|x| x.0.as_mut().unwrap()),
                 params: &mut params_state,
                 in_data,
                 out_data
@@ -387,6 +413,9 @@ macro_rules! define_effect {
             in_host_name: *const std::ffi::c_char,
             in_host_version: *const std::ffi::c_char) -> $crate::sys::PF_Err
         {
+            // Callback registration metadata; this is distinct from the PiPL
+            // AE_Reserved_Info/aeFL property, which may legitimately be zero.
+            const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;
             // let _pica = ae::PicaBasicSuite::from_sp_basic_suite_raw(in_sp_basic_suite_ptr);
 
             if in_host_name.is_null() || in_host_version.is_null() {
@@ -404,7 +433,7 @@ macro_rules! define_effect {
                         env!("PIPL_KIND")              .parse().unwrap(),
                         env!("PIPL_AE_SPEC_VER_MAJOR") .parse().unwrap(),
                         env!("PIPL_AE_SPEC_VER_MINOR") .parse().unwrap(),
-                        env!("PIPL_AE_RESERVED")       .parse().unwrap(),
+                        AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,
                         cstr!(env!("PIPL_SUPPORT_URL")).as_ptr() as *const u8, // Support url
                     )
                 }
@@ -450,9 +479,10 @@ macro_rules! define_effect {
 
             #[cfg(threaded_rendering)]
             {
-                fn assert_impl<T: Sync>() { }
-                assert_impl::<$global_type>();
-                assert_impl::<$sequence_type>();
+                fn assert_sync<T: Sync>() { }
+                fn assert_send_sync<T: Send + Sync>() { }
+                assert_sync::<GlobalData>();
+                assert_send_sync::<$sequence_type>();
             }
 
             define_effect!(check_size: $sequence_type);
@@ -603,4 +633,21 @@ macro_rules! define_general_plugin {
             }
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn plugin_data_entry_uses_callback_reserved_info_not_pipl_property() {
+        let source = include_str!("plugin_base.rs");
+        let body = source
+            .split("pub unsafe extern \"C\" fn PluginDataEntryFunction2")
+            .nth(1)
+            .and_then(|tail| tail.split("pub unsafe extern \"C\" fn EffectMain").next())
+            .expect("PluginDataEntryFunction2 body");
+
+        assert!(body.contains("const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;"));
+        assert!(body.contains("AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,"));
+        assert!(!body.contains("env!(\"PIPL_AE_RESERVED\")"));
+    }
 }
