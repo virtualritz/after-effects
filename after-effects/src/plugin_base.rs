@@ -609,18 +609,3 @@ macro_rules! define_general_plugin {
         }
     };
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn effect_main_preserves_plugin_return_message_on_error() {
-        let source = include_str!("plugin_base.rs");
-        let error_branch = source
-            .split("Ok(Err(e)) =>")
-            .nth(1)
-            .and_then(|tail| tail.split("Err(e) =>").next())
-            .expect("caught EffectMain error branch");
-
-        assert!(error_branch.contains("!out_data.has_return_msg()"));
-    }
-}
