@@ -315,16 +315,16 @@ impl UtilCallbacks {
             if size == 0 || in_data.utils.is_null() {
                 return Err(Error::BadCallbackParameter);
             }
-            let new    = (*in_data.utils).host_new_handle   .ok_or(Error::BadCallbackParameter)?;
-            let lock   = (*in_data.utils).host_lock_handle  .ok_or(Error::BadCallbackParameter)?;
-            let unlock = (*in_data.utils).host_unlock_handle.ok_or(Error::BadCallbackParameter)?;
+            let new = (*in_data.utils).host_new_handle.ok_or(Error::BadCallbackParameter)?;
             let ptr = new(size as _);
             if ptr.is_null() {
                 return Err(Error::OutOfMemory);
             }
-            let locked = lock(ptr);
-            unlock(ptr); // we just want to check for null ptr
-            if locked.is_null() {
+            // `host_lock_handle`/`host_unlock_handle` have been no-ops in After
+            // Effects since CS6. A `PF_Handle` is a pointer to the data pointer,
+            // so we dereference it directly to check the allocation succeeded.
+            let data_ptr = *(ptr as *mut *mut c_void);
+            if data_ptr.is_null() {
                 return Err(Error::OutOfMemory);
             }
             Ok(RawHandle {
@@ -692,18 +692,21 @@ impl RawHandle {
     pub fn as_raw(&self) -> ae_sys::PF_Handle {
         self.handle
     }
+    /// Returns a guard exposing a pointer to the handle's data.
+    ///
+    /// `host_lock_handle` has been a no-op in After Effects since CS6, so we no
+    /// longer call it. A `PF_Handle` is a pointer to the data pointer, so the
+    /// data pointer is obtained by dereferencing the handle. The returned guard
+    /// borrows `self`, keeping the handle alive for the lifetime of the borrow.
     pub fn lock(&self) -> Result<RawHandleLock<'_>, Error> {
-        unsafe {
-            let lock = (*self.utils_ptr).host_lock_handle.ok_or(Error::BadCallbackParameter)?;
-            let ptr = lock(self.handle);
-            if ptr.is_null() {
-                return Err(Error::OutOfMemory);
-            }
-            Ok(RawHandleLock {
-                handle: self,
-                ptr,
-            })
+        let ptr = unsafe { *(self.handle as *mut *mut c_void) };
+        if ptr.is_null() {
+            return Err(Error::OutOfMemory);
         }
+        Ok(RawHandleLock {
+            ptr,
+            _marker: std::marker::PhantomData,
+        })
     }
     pub fn size(&self) -> Result<usize, Error> {
         unsafe {
@@ -731,20 +734,15 @@ impl Drop for RawHandle {
     }
 }
 pub struct RawHandleLock<'a> {
-    handle: &'a RawHandle,
     ptr: *mut c_void,
+    // Borrows the [`RawHandle`] so it cannot be disposed while the data pointer
+    // is in use. No unlock is needed on drop: `host_unlock_handle` has been a
+    // no-op in After Effects since CS6.
+    _marker: std::marker::PhantomData<&'a RawHandle>,
 }
 impl<'a> RawHandleLock<'a> {
     pub fn as_ptr(&self) -> *mut c_void {
         self.ptr
-    }
-}
-impl<'a> Drop for RawHandleLock<'a> {
-    fn drop(&mut self) {
-        unsafe {
-            let unlock = (*self.handle.utils_ptr).host_unlock_handle.unwrap();
-            unlock(self.handle.handle);
-        }
     }
 }
 
