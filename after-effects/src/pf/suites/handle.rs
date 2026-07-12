@@ -28,14 +28,24 @@ impl HandleSuite {
     }
 
     /// Lock the handle and return a pointer to the data.
+    ///
+    /// `host_lock_handle` has been a no-op in After Effects since CS6, so we no
+    /// longer call it. A `PF_Handle` is a pointer to the data pointer, so the
+    /// data pointer is obtained by simply dereferencing the handle. Returns a
+    /// null pointer if the handle itself is null.
     pub fn lock_handle(&self, pf_handle: PF_Handle) -> *mut std::ffi::c_void {
-        call_suite_fn_no_err!(self, host_lock_handle, pf_handle)
+        if pf_handle.is_null() {
+            return std::ptr::null_mut();
+        }
+        unsafe { *(pf_handle as *mut *mut std::ffi::c_void) }
     }
 
     /// Unlock the handle.
-    pub fn unlock_handle(&self, pf_handle: PF_Handle) {
-        call_suite_fn_no_err!(self, host_unlock_handle, pf_handle)
-    }
+    ///
+    /// `host_unlock_handle` has been a no-op in After Effects since CS6, so this
+    /// does nothing. It is kept for source compatibility and pairs with
+    /// [`Self::lock_handle`].
+    pub fn unlock_handle(&self, _pf_handle: PF_Handle) {}
 
     /// Dispose of the handle and free the memory.
     pub fn dispose_handle(&self, pf_handle: PF_Handle) {
