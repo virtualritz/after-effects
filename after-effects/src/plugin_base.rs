@@ -102,6 +102,14 @@
 /// This is an enum which covers all parameters in your plugin. It must implement the `Eq`, `PartialEq`, `Hash`, `Clone`, `Copy`, and `Debug` traits.
 /// You will use this enum to define the parameters in `params_setup()` and to access the parameters from the [`Parameters`](crate::pf::Parameters) struct in the `handle_command()` method.
 ///
+/// # Host/version gating
+/// There is no `can_load` hook to refuse loading in a given host: Adobe ignores the
+/// return value of the `PluginDataEntryFunction2` entry point, so a plugin can never
+/// prevent itself from being registered. Gate at runtime instead -- inspect
+/// [`InData::is_after_effects()`](crate::InData::is_after_effects) (or
+/// [`InData::is_premiere()`](crate::InData::is_premiere)) in `params_setup`/render and
+/// bail out with [`OutData::set_error_msg()`](crate::OutData::set_error_msg) when running
+/// in an unsupported host.
 ///
 /// ## Refer to the [Adobe After Effects SDK](https://ae-plugins.docsforadobe.dev/effect-basics/command-selectors.html) to learn more about the plugin entry point and command selectors.
 ///
