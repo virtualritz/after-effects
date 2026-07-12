@@ -109,7 +109,7 @@ impl AdobePluginGlobal for Plugin {
     }
 
     fn handle_command(
-        &mut self,
+        &self,
         cmd: ae::Command,
         in_data: ae::InData,
         _: ae::OutData,

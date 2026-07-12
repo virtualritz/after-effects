@@ -8,6 +8,15 @@ struct Plugin { }
 
 ae::define_effect!(Plugin, (), Params);
 
+#[cfg(test)]
+#[test]
+fn mfr_global_state_is_shared() {
+    let check = |plugin: &PluginState<'_, '_, '_>| {
+        let _: &Plugin = plugin.global;
+    };
+    let _ = check;
+}
+
 impl AdobePluginGlobal for Plugin {
     fn params_setup(&self, params: &mut ae::Parameters<Params>, _: ae::InData, _: ae::OutData) -> Result<(), Error> {
         params.add(Params::Opacity, "Opacity", ae::FloatSliderDef::setup(|f| {
@@ -18,7 +27,7 @@ impl AdobePluginGlobal for Plugin {
         }))
     }
 
-    fn handle_command(&mut self, cmd: ae::Command, in_data: ae::InData, _: ae::OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
+    fn handle_command(&self, cmd: ae::Command, in_data: ae::InData, _: ae::OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
         match cmd {
             ae::Command::Render { in_layer, mut out_layer } => {
                 let slider_value = params.get(Params::Opacity)?.as_float_slider()?.value();

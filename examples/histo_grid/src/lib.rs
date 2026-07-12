@@ -158,7 +158,7 @@ impl AdobePluginGlobal for Plugin {
         Ok(())
     }
 
-    fn handle_command(&mut self, cmd: ae::Command, _in_data: InData, mut out_data: OutData, _params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
+    fn handle_command(&self, cmd: ae::Command, _in_data: InData, mut out_data: OutData, _params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("\rCopyright 2015-2023 Adobe Inc.\rHistoGrid sample.");

@@ -74,7 +74,7 @@ impl AdobePluginGlobal for Plugin {
         Ok(())
     }
 
-    fn handle_command(&mut self, cmd: ae::Command, in_data: InData, mut out_data: OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
+    fn handle_command(&self, cmd: ae::Command, in_data: InData, mut out_data: OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("Rust GPU v0.1\rProcess pixels on the GPU using shader written in Rust and compiled to SPIR-V");

@@ -66,11 +66,16 @@ impl OutData {
 
     /// After Effects displays any string you put here (checked and cleared after every command selector).
     pub fn set_return_msg(&mut self, msg: &str) {
-        //let buf = std::ffi::CString::new(s).unwrap().into_bytes_with_nul();
-        //self.return_msg[0..buf.len()].copy_from_slice(unsafe { std::mem::transmute(buf.as_slice()) });
         let msg = msg.as_bytes();
         assert!(msg.len() < 256);
-        self.as_mut().return_msg[..msg.len()].copy_from_slice(unsafe { std::mem::transmute(msg) });
+        let return_msg = &mut self.as_mut().return_msg;
+        return_msg.fill(0);
+        return_msg[..msg.len()].copy_from_slice(unsafe { std::mem::transmute(msg) });
+    }
+
+    /// Whether the plug-in already supplied a message for the current command.
+    pub fn has_return_msg(&self) -> bool {
+        self.as_ref().return_msg[0] != 0
     }
 
     /// After Effects displays any string you put here as an error (checked and cleared after every command selector).
@@ -123,6 +128,31 @@ impl OutData {
     pub fn set_frame_data<T: Any>(&mut self, val: T) {
         let boxed: Box<Box<dyn Any>> = Box::new(Box::new(val));
         self.as_mut().frame_data = Box::<Box<dyn Any>>::into_raw(boxed) as *mut _;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn return_message_is_nul_terminated_and_detectable() {
+        let mut raw: ae_sys::PF_OutData = unsafe { std::mem::zeroed() };
+        raw.return_msg.fill(b'x' as ae_sys::A_char);
+        let mut out = OutData::from_raw(&mut raw);
+
+        out.set_return_msg("custom error");
+
+        assert!(out.has_return_msg());
+        assert_eq!(raw.return_msg[12], 0);
+    }
+
+    #[test]
+    fn empty_return_message_is_not_detected() {
+        let mut raw: ae_sys::PF_OutData = unsafe { std::mem::zeroed() };
+        let out = OutData::from_raw(&mut raw);
+
+        assert!(!out.has_return_msg());
     }
 }
 
