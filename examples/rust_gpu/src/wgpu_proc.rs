@@ -257,7 +257,11 @@ impl<T: Sized> WgpuProcessing<T> {
         if let Some(Ok(())) = pollster::block_on(receiver.receive()) {
             let out_stride = out_size.2;
 
-            let data = buffer_slice.get_mapped_range();
+            // SAFETY: unreachable Err -- we only reach this branch when the map_async
+            // callback delivered Ok(()) (the `if let Some(Ok(()))` above), so
+            // `staging_buffer.slice(..)` is fully mapped and get_mapped_range() is Ok.
+            // (wgpu 30 changed get_mapped_range() to return a Result.)
+            let data = buffer_slice.get_mapped_range().unwrap();
             if state.padded_out_stride == out_stride as u32 {
                 // Fast path
                 (&mut out_buffer[..height as usize * out_stride]).copy_from_slice(data.as_ref());
