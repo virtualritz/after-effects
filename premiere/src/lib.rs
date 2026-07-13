@@ -1,4 +1,14 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+// FFI binding crate -- see the matching note in the `after-effects` crate.
+#![allow(clippy::too_many_arguments)] // wrappers mirror Adobe's C function signatures
+#![allow(clippy::missing_transmute_annotations)]
+#![allow(clippy::useless_transmute)]
+#![allow(clippy::from_raw_with_void_ptr)]
+#![allow(clippy::type_complexity)] // FFI callback / closure signatures
+#![allow(clippy::question_mark)]
+#![allow(clippy::drop_non_drop)]
+#![allow(clippy::new_without_default)]
+#![allow(clippy::empty_docs)]
 #![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
 
 use premiere_sys as pr_sys;

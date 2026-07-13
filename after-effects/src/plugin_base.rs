@@ -239,6 +239,10 @@ macro_rules! define_effect {
             })
         }
 
+        // `drop(...)` on the sequence/global locks below ends their borrow early
+        // (an intentional NLL scope release, not RAII), which clippy flags as
+        // `drop_non_drop`; the `?`-style error handling is generated, not authored.
+        #[allow(clippy::drop_non_drop, clippy::question_mark)]
         fn handle_effect_main<T: AdobePluginGlobal, S: AdobePluginInstance, P>(
             cmd: $crate::sys::PF_Cmd,
             in_data_ptr: *mut $crate::sys::PF_InData,
@@ -564,6 +568,9 @@ macro_rules! define_effect {
 /// implementing AegpPlugin without the scaffolding in `define_general_plugin`.
 /// You should implement this *once* and only once in any given plugin. It is used to
 /// mark a singleton type for retrieval from a raw pointer in the [RegisterSuite] api's.
+/// # Safety
+/// Implementors promise to implement this exactly once per plugin on a singleton
+/// type, so the raw-pointer retrieval in the `RegisterSuite` APIs is sound.
 pub unsafe trait AegpSeal {}
 
 /// Trait used to implement generic plugins such as menu commands and background tasks.

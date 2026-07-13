@@ -1,3 +1,5 @@
+// Demonstration code: index/counter loops read clearly for pixel-grid work.
+#![allow(clippy::needless_range_loop, clippy::explicit_counter_loop, clippy::field_reassign_with_default, clippy::neg_cmp_op_on_partial_ord)]
 use after_effects as ae;
 
 mod ui;

@@ -110,6 +110,10 @@ impl<'a, T: 'a> MemHandle<'a, T> {
         self.suite.mem_handle_size(self.handle)
     }
 
+    pub fn is_empty(&self) -> Result<bool, Error> {
+        Ok(self.len()? == 0)
+    }
+
     #[inline]
     pub fn lock(&self) -> Result<MemHandleLock<'_, T>, Error> {
         let ptr = self.suite.lock_mem_handle(self.handle)? as *mut T;

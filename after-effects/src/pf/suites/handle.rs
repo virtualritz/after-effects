@@ -37,7 +37,7 @@ impl HandleSuite {
         if pf_handle.is_null() {
             return std::ptr::null_mut();
         }
-        unsafe { *(pf_handle as *mut *mut std::ffi::c_void) }
+        unsafe { *pf_handle }
     }
 
     /// Unlock the handle.

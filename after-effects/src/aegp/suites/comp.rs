@@ -162,7 +162,7 @@ impl CompSuite {
     /// One call to this function is sufficient to set the layer's in point and duration;
     /// it's not necessary to call it twice, once for each timespace.
     pub fn set_comp_work_area_start_and_duration(&self, comp_handle: impl AsPtr<AEGP_CompH>, start: Time, duration: Time) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetCompWorkAreaStartAndDuration, comp_handle.as_ptr(), &start.into() as *const _ as *const ae_sys::A_Time, &duration.into() as *const _ as *const ae_sys::A_Time)
+        call_suite_fn!(self, AEGP_SetCompWorkAreaStartAndDuration, comp_handle.as_ptr(), &start.into() as *const ae_sys::A_Time, &duration.into() as *const ae_sys::A_Time)
     }
 
     /// Creates a new solid with a specified width, height, color, and duration in the composition. Undo-able.
@@ -258,12 +258,12 @@ impl CompSuite {
 
     /// Not undo-able. Sets the displayed start time of a composition (has no effect on the duration of the composition).
     pub fn set_comp_display_start_time(&self, comp_handle: impl AsPtr<AEGP_CompH>, time: Time) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetCompDisplayStartTime, comp_handle.as_ptr(), &time.into() as *const _ as *const ae_sys::A_Time)
+        call_suite_fn!(self, AEGP_SetCompDisplayStartTime, comp_handle.as_ptr(), &time.into() as *const ae_sys::A_Time)
     }
 
     /// Undoable. Sets the duration of the given composition.
     pub fn set_comp_duration(&self, comp_handle: impl AsPtr<AEGP_CompH>, duration: Time) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetCompDuration, comp_handle.as_ptr(), &duration.into() as *const _ as *const ae_sys::A_Time)
+        call_suite_fn!(self, AEGP_SetCompDuration, comp_handle.as_ptr(), &duration.into() as *const ae_sys::A_Time)
     }
 
     /// Creates a "null object" in the composition (useful for translating projects from 3D applications into After Effects).

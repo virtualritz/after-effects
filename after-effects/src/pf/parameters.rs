@@ -180,7 +180,7 @@ define_param_wrapper! {
         param.set_label(" ");
     }
 }
-impl<'a> CheckBoxDef<'_> {
+impl CheckBoxDef<'_> {
     pub fn set_default(&mut self, v: bool) -> &mut Self {
         self.def.dephault = if v { 1 } else { 0 };
         self
@@ -900,8 +900,8 @@ impl<'p> ParamDef<'p> {
         }
 
         // For some reason the checked out param_type is 0 so we need to override using the info we have from params map.
-        if index > 0 && expected_type.is_some() {
-            param_def.param_type = expected_type.unwrap().into();
+        if index > 0 && let Some(expected_type) = expected_type {
+            param_def.param_type = expected_type.into();
         }
 
         Ok(Self {
@@ -1214,6 +1214,9 @@ impl<P: Eq + PartialEq + Hash + Copy + Debug> Default for Parameters<'_, P> {
 impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     pub fn len(&self) -> usize {
         self.map.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
     }
     pub fn set_in_data(&mut self, in_data: *const ae_sys::PF_InData) {
         self.in_data = in_data;

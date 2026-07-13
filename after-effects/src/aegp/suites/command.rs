@@ -42,9 +42,9 @@ pub enum MenuOrder {
     Other(i32),
 }
 
-impl Into<i32> for MenuOrder {
-    fn into(self) -> i32 {
-        match self {
+impl From<MenuOrder> for i32 {
+    fn from(order: MenuOrder) -> i32 {
+        match order {
             MenuOrder::Sorted => -2,
             MenuOrder::Top => -1,
             MenuOrder::Bottom => 0,
