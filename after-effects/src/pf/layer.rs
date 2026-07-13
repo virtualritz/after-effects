@@ -214,6 +214,10 @@ impl Layer {
                 }
     }
 
+    // `mut_from_ref` is expected: the returned `&mut` points into the host-owned
+    // `PF_EffectWorld` pixel buffer reached through a raw data pointer, not into
+    // `self`, so handing it out from a shared borrow aliases no Rust-owned data.
+    #[allow(clippy::mut_from_ref)]
     pub fn as_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
         debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
         unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel8).offset(x as isize) }
@@ -223,6 +227,10 @@ impl Layer {
         self.as_pixel8_mut(x, y)
     }
 
+    // `mut_from_ref` is expected: the returned `&mut` points into the host-owned
+    // `PF_EffectWorld` pixel buffer reached through a raw data pointer, not into
+    // `self`, so handing it out from a shared borrow aliases no Rust-owned data.
+    #[allow(clippy::mut_from_ref)]
     pub fn as_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
         debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
         unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel16).offset(x as isize) }
@@ -232,6 +240,10 @@ impl Layer {
         self.as_pixel16_mut(x, y)
     }
 
+    // `mut_from_ref` is expected: the returned `&mut` points into the host-owned
+    // `PF_EffectWorld` pixel buffer reached through a raw data pointer, not into
+    // `self`, so handing it out from a shared borrow aliases no Rust-owned data.
+    #[allow(clippy::mut_from_ref)]
     pub fn as_pixel32_mut(&self, x: usize, y: usize) -> &mut PixelF32 {
         debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
         unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut PixelF32).add(x) }

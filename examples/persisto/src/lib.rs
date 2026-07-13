@@ -145,10 +145,10 @@ fn demonstrate_persistence_features(
     persistent_suite.set_long(blob, demo_section, "counter", 100)?;
 
     // Set a float value
-    persistent_suite.set_fp_long(blob, demo_section, "precision", 3.14159)?;
+    persistent_suite.set_fp_long(blob, demo_section, "precision", 1.2345)?;
     let float = persistent_suite.set_fp_long(blob, demo_section, "precision", 3.50)?;
 
-    log::debug!("Inserted float with value `3.14159` retrieved from `precision`: {float:?}");
+    log::debug!("Inserted float with value `1.2345` retrieved from `precision`: {float:?}");
 
     // Set a string value
     persistent_suite.set_string(blob, demo_section, "name", "Persisto Demo")?;

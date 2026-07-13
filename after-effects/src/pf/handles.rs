@@ -294,6 +294,10 @@ impl<'a> FlatHandle<'a> {
         }
     }
 
+    // `mut_from_ref` is expected: the returned `&mut` points into the host-owned
+    // `PF_Handle` allocation reached through a raw pointer, not into `self`, so
+    // handing it out from a shared borrow aliases no Rust-owned data.
+    #[allow(clippy::mut_from_ref)]
     #[inline]
     pub fn as_slice_mut(&'a self) -> Option<&'a mut [u8]> {
         let ptr = unsafe { *(self.handle as *const *mut u8) };
