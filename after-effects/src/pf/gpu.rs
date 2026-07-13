@@ -71,6 +71,8 @@ impl GpuDeviceSetdownExtra {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).device_index as usize }
     }
+    /// # Panics
+    /// Panics if the stored GPU data is not of type `T`.
     pub fn gpu_data_mut<'a, T: Any>(&'a mut self) -> &'a mut T {
         assert!(!self.as_ref().input.is_null());
         let data =
@@ -81,6 +83,8 @@ impl GpuDeviceSetdownExtra {
             None => panic!("Invalid type for gpu_data"),
         }
     }
+    /// # Panics
+    /// Panics if the stored GPU data is not of type `T`.
     pub fn gpu_data<'a, T: Any>(&'a self) -> &'a T {
         assert!(!self.as_ref().input.is_null());
         let data =
@@ -91,6 +95,8 @@ impl GpuDeviceSetdownExtra {
             None => panic!("Invalid type for gpu_data"),
         }
     }
+    /// # Panics
+    /// Panics if the stored GPU data is not of type `T`.
     pub fn destroy_gpu_data<T: Any>(&mut self) {
         assert!(!self.as_ref().input.is_null());
         unsafe {

@@ -188,6 +188,8 @@ impl SmartRenderExtra {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).bitdepth }
     }
+    /// # Panics
+    /// Panics if the stored GPU data is not of type `T` (a plugin bug).
     pub fn gpu_data<T: Any>(&self) -> Option<&T> {
         assert!(!self.as_ref().input.is_null());
         if unsafe { (*(*self.ptr).input).gpu_data.is_null() } {
@@ -201,6 +203,8 @@ impl SmartRenderExtra {
             None => panic!("Invalid type for gpu_data"),
         }
     }
+    /// # Panics
+    /// Panics if the stored pre-render data is not of type `T` (a plugin bug).
     pub fn pre_render_data<T: Any>(&self) -> Option<&T> {
         assert!(!self.as_ref().input.is_null());
         if unsafe { (*(*self.ptr).input).pre_render_data.is_null() } {
@@ -215,6 +219,8 @@ impl SmartRenderExtra {
             None => panic!("Invalid type for pre_render_data"),
         }
     }
+    /// # Panics
+    /// Panics if the stored pre-render data is not of type `T` (a plugin bug).
     pub fn pre_render_data_mut<T: Any>(&mut self) -> Option<&mut T> {
         assert!(!self.as_ref().input.is_null());
         if unsafe { (*(*self.ptr).input).pre_render_data.is_null() } {

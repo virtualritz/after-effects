@@ -239,6 +239,8 @@ impl EventExtra {
         unsafe { self.as_ref().u.do_click.last_time != 0 }
     }
 
+    /// # Panics
+    /// Panics unless the event is `Click`, `Drag`, `AdjustCursor` or `Keydown`.
     pub fn screen_point(&self) -> Point {
         match self.as_ref().e_type {
             ae_sys::PF_Event_DO_CLICK | ae_sys::PF_Event_DRAG => {
