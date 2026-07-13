@@ -108,7 +108,7 @@ impl AppSuite {
     ///
     /// Will return `Error::InterruptCancel` if user cancels dialog. Returned color is in the project's working color space.
     pub fn color_picker_dialog(&self, dialog_title: Option<&str>, sample_color: &pf::PixelF32, use_ws_to_monitor_xform: bool) -> Result<pf::PixelF32, Error> {
-        let dialog_title = dialog_title.map(|s| CString::new(s).unwrap());
+        let dialog_title = dialog_title.map(CString::new).transpose().map_err(|_| Error::InvalidParms)?;
         call_suite_fn_single!(self, PF_AppColorPickerDialog -> ae_sys::PF_PixelFloat, dialog_title.as_ref().map_or(std::ptr::null(), |x| x.as_ptr()), sample_color, use_ws_to_monitor_xform as _)
     }
 
@@ -144,8 +144,8 @@ impl AppSuite {
     /// It won't open the dialog unless it detects a slow render. (2 seconds timeout).
     pub fn create_progress_dialog(&self, title: &str, cancel_str: Option<&str>, indeterminate: bool) -> Result<AppProgressDialog, Error> {
         let v6 = AppSuite6::new()?;
-        let title = widestring::U16CString::from_str(title).unwrap();
-        let cancel_str = cancel_str.map(|s| widestring::U16CString::from_str(s).unwrap());
+        let title = widestring::U16CString::from_str(title).map_err(|_| Error::InvalidParms)?;
+        let cancel_str = cancel_str.map(widestring::U16CString::from_str).transpose().map_err(|_| Error::InvalidParms)?;
         let mut ptr = std::ptr::null_mut();
         call_suite_fn!(v6, PF_CreateNewAppProgressDialog, title.as_ptr(), cancel_str.map_or(std::ptr::null(), |x| x.as_ptr()), indeterminate as _, &mut ptr)?;
         Ok(AppProgressDialog {
@@ -204,8 +204,8 @@ impl AdvAppSuite {
 
     /// Writes text into the After Effects info palette.
     pub fn info_draw_text(&self, line1: &str, line2: &str) -> Result<(), Error> {
-        let line1 = CString::new(line1).unwrap();
-        let line2 = CString::new(line2).unwrap();
+        let line1 = CString::new(line1).map_err(|_| Error::InvalidParms)?;
+        let line2 = CString::new(line2).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, PF_InfoDrawText, line1.as_ptr(), line2.as_ptr())
     }
 
@@ -216,25 +216,25 @@ impl AdvAppSuite {
 
     /// Writes three lines of text into the After Effects info palette.
     pub fn info_draw_text3(&self, line1: &str, line2: &str, line3: &str) -> Result<(), Error> {
-        let line1 = CString::new(line1).unwrap();
-        let line2 = CString::new(line2).unwrap();
-        let line3 = CString::new(line3).unwrap();
+        let line1 = CString::new(line1).map_err(|_| Error::InvalidParms)?;
+        let line2 = CString::new(line2).map_err(|_| Error::InvalidParms)?;
+        let line3 = CString::new(line3).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, PF_InfoDrawText3, line1.as_ptr(), line2.as_ptr(), line3.as_ptr())
     }
 
     /// Writes three lines of text into the After Effects info palette, with portions of the second and third lines left and right justified.
     pub fn info_draw_text3_plus(&self, line1: &str, line2_jr: &str, line2_jl: &str, line3_jr: &str, line3_jl: &str) -> Result<(), Error> {
-        let line1 = CString::new(line1).unwrap();
-        let line2_jr = CString::new(line2_jr).unwrap();
-        let line2_jl = CString::new(line2_jl).unwrap();
-        let line3_jr = CString::new(line3_jr).unwrap();
-        let line3_jl = CString::new(line3_jl).unwrap();
+        let line1 = CString::new(line1).map_err(|_| Error::InvalidParms)?;
+        let line2_jr = CString::new(line2_jr).map_err(|_| Error::InvalidParms)?;
+        let line2_jl = CString::new(line2_jl).map_err(|_| Error::InvalidParms)?;
+        let line3_jr = CString::new(line3_jr).map_err(|_| Error::InvalidParms)?;
+        let line3_jl = CString::new(line3_jl).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, PF_InfoDrawText3Plus, line1.as_ptr(), line2_jr.as_ptr(), line2_jl.as_ptr(), line3_jr.as_ptr(), line3_jl.as_ptr())
     }
 
     /// Appends characters to the currently-displayed info text.
     pub fn append_info_text(&self, append: &str) -> Result<(), Error> {
-        let append = CString::new(append).unwrap();
+        let append = CString::new(append).map_err(|_| Error::InvalidParms)?;
         call_suite_fn!(self, PF_AppendInfoText, append.as_ptr())
     }
 }
@@ -507,6 +507,9 @@ impl AppProgressDialog {
 }
 impl Drop for AppProgressDialog {
     fn drop(&mut self) {
-        call_suite_fn!(self, PF_DisposeAppProgressDialog, self.ptr).unwrap();
+        // `Drop::drop` cannot return a `Result`, so a real FFI error here cannot
+        // be propagated. Ignore it rather than `.unwrap()`, which would panic
+        // (potentially during unwinding, aborting the process).
+        let _ = call_suite_fn!(self, PF_DisposeAppProgressDialog, self.ptr);
     }
 }
