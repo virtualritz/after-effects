@@ -254,14 +254,14 @@ impl From<pr_sys::PrParam> for Param {
         }
     }
 }
-impl Into<pr_sys::PrParam> for Param {
-    fn into(self) -> pr_sys::PrParam {
+impl From<Param> for pr_sys::PrParam {
+    fn from(val: Param) -> Self {
         use pr_sys::*;
         let mut param = PrParam {
             mType: PrParamType_kPrParamType_MaxSize,
             __bindgen_anon_1: PrParam__bindgen_ty_1 { mInt8: 0 },
         };
-        match self {
+        match val {
             Param::Int8     (value) => { param.mType = PrParamType_kPrParamType_Int8;        param.__bindgen_anon_1.mInt8 = value; },
             Param::Int16    (value) => { param.mType = PrParamType_kPrParamType_Int16;       param.__bindgen_anon_1.mInt16 = value; },
             Param::Int32    (value) => { param.mType = PrParamType_kPrParamType_Int32;       param.__bindgen_anon_1.mInt32 = value; },

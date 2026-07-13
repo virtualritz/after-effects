@@ -38,8 +38,8 @@ impl WorldSuite {
     pub fn size(&self, world: impl AsPtr<AEGP_WorldH>) -> Result<(i32, i32), Error> {
         let (width, height) = call_suite_fn_double!(self, AEGP_GetSize -> ae_sys::A_long, ae_sys::A_long, world.as_ptr())?;
         Ok((
-            width as i32,
-            height as i32
+            width,
+            height
         ))
     }
 
@@ -163,7 +163,7 @@ impl World {
         let suite = WorldSuite::new()?;
         Ok(Self {
             handle: suite.new_world(plugin_id, world_type, width, height)?,
-            suite: once_cell::sync::Lazy::new(|| WorldSuite::new()),
+            suite: once_cell::sync::Lazy::new(WorldSuite::new),
             is_owned: true,
         })
     }

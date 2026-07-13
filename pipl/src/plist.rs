@@ -18,11 +18,8 @@ pub(crate) fn produce_plist(path: String, kind: &PIPLType, name: &str) {
         Value::String(String::from_utf8_lossy(&kind.as_bytes()).to_string()),
     );
 
-    match kind {
-        PIPLType::AEGP => {
-            dict.insert("LSRequiresCarbon".to_string(), Value::Boolean(true));
-        }
-        _ => {}
+    if let PIPLType::AEGP = kind {
+        dict.insert("LSRequiresCarbon".to_string(), Value::Boolean(true));
     };
 
     Value::from(dict).to_file_xml(path).unwrap();

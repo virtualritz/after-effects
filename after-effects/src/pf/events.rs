@@ -278,7 +278,7 @@ pub struct EventCallbacks<'a> {
 impl<'a> EventCallbacks<'a> {
     pub fn layer_to_comp(&self, curr_time: i32, time_scale: u32, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
         let ret = unsafe {
-            ((*self.ptr).layer_to_comp.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, pt)
+            (self.ptr.layer_to_comp.unwrap())(self.ptr.refcon, self.ctx, curr_time, time_scale as _, pt)
         };
         match ret {
             0 => Ok(()),
@@ -288,7 +288,7 @@ impl<'a> EventCallbacks<'a> {
 
     pub fn comp_to_layer(&self, curr_time: i32, time_scale: u32, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
         let ret = unsafe {
-            ((*self.ptr).comp_to_layer.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, pt)
+            (self.ptr.comp_to_layer.unwrap())(self.ptr.refcon, self.ctx, curr_time, time_scale as _, pt)
         };
         match ret {
             0 => Ok(()),
@@ -298,7 +298,7 @@ impl<'a> EventCallbacks<'a> {
 
     pub fn source_to_frame(&self, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
         let ret = unsafe {
-            ((*self.ptr).source_to_frame.unwrap())((*self.ptr).refcon, self.ctx, pt)
+            (self.ptr.source_to_frame.unwrap())(self.ptr.refcon, self.ctx, pt)
         };
         match ret {
             0 => Ok(()),
@@ -308,7 +308,7 @@ impl<'a> EventCallbacks<'a> {
 
     pub fn frame_to_source(&self, pt: &mut ae_sys::PF_FixedPoint) -> Result<(), Error> {
         let ret = unsafe {
-            ((*self.ptr).frame_to_source.unwrap())((*self.ptr).refcon, self.ctx, pt)
+            (self.ptr.frame_to_source.unwrap())(self.ptr.refcon, self.ctx, pt)
         };
         match ret {
             0 => Ok(()),
@@ -320,7 +320,7 @@ impl<'a> EventCallbacks<'a> {
         let mut exists: ae_sys::A_long = 0;
         let mut matrix: ae_sys::PF_FloatMatrix = unsafe { std::mem::zeroed() };
         let ret = unsafe {
-            ((*self.ptr).get_comp2layer_xform.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, &mut exists, &mut matrix)
+            (self.ptr.get_comp2layer_xform.unwrap())(self.ptr.refcon, self.ctx, curr_time, time_scale as _, &mut exists, &mut matrix)
         };
         match ret {
             0 => Ok(if exists == 1 { Some(unsafe { std::mem::transmute(matrix) }) } else { None }),
@@ -331,7 +331,7 @@ impl<'a> EventCallbacks<'a> {
     pub fn layer2comp_xform(&self, curr_time: i32, time_scale: u32) -> Result<Matrix3, Error> {
         let mut matrix: ae_sys::PF_FloatMatrix = unsafe { std::mem::zeroed() };
         let ret = unsafe {
-            ((*self.ptr).get_layer2comp_xform.unwrap())((*self.ptr).refcon, self.ctx, curr_time, time_scale as _, &mut matrix)
+            (self.ptr.get_layer2comp_xform.unwrap())(self.ptr.refcon, self.ctx, curr_time, time_scale as _, &mut matrix)
         };
         match ret {
             0 => Ok(unsafe { std::mem::transmute(matrix) }),
@@ -341,7 +341,7 @@ impl<'a> EventCallbacks<'a> {
 
     pub fn info_draw_color(&self, color: Pixel8) -> Result<(), Error> {
         let ret = unsafe {
-            ((*self.ptr).info_draw_color.unwrap())((*self.ptr).refcon, color)
+            (self.ptr.info_draw_color.unwrap())(self.ptr.refcon, color)
         };
         match ret {
             0 => Ok(()),
@@ -353,7 +353,7 @@ impl<'a> EventCallbacks<'a> {
         let text1 = std::ffi::CString::new(text1).unwrap();
         let text2 = std::ffi::CString::new(text2).unwrap();
         let ret = unsafe {
-            ((*self.ptr).info_draw_text.unwrap())((*self.ptr).refcon, text1.as_ptr(), text2.as_ptr())
+            (self.ptr.info_draw_text.unwrap())(self.ptr.refcon, text1.as_ptr(), text2.as_ptr())
         };
         match ret {
             0 => Ok(()),

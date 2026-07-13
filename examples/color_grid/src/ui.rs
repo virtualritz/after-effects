@@ -62,8 +62,8 @@ fn get_grid_rect(origin: &ae::Point, current_frame: &ae::Rect) -> ae::Rect {
     ae::Rect {
         left:   origin.h,
         top:    origin.v,
-        right:  origin.h + grid_width as i32,
-        bottom: origin.v + grid_height as i32,
+        right:  origin.h + grid_width,
+        bottom: origin.v + grid_height,
     }
 }
 
@@ -71,7 +71,7 @@ pub fn colorgrid_get_new_color(in_data: &ae::InData, hpos: usize, vpos: usize, a
     let pos = vpos * BOXES_ACROSS + hpos;
 
     if hpos < BOXES_ACROSS && vpos < BOXES_DOWN {
-        let box_color = &mut arb_data.colors[pos as usize];
+        let box_color = &mut arb_data.colors[pos];
 
         // Premiere Pro/Elements don't support the color picker dialog
         if !in_data.is_premiere() {

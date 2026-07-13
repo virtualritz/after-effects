@@ -230,9 +230,9 @@ impl From<ae_sys::AEGP_InstalledEffectKey> for InstalledEffectKey {
         }
     }
 }
-impl Into<ae_sys::AEGP_InstalledEffectKey> for InstalledEffectKey {
-    fn into(self) -> ae_sys::AEGP_InstalledEffectKey {
-        match self {
+impl From<InstalledEffectKey> for ae_sys::AEGP_InstalledEffectKey {
+    fn from(val: InstalledEffectKey) -> Self {
+        match val {
             InstalledEffectKey::None     => ae_sys::AEGP_InstalledEffectKey_NONE as ae_sys::AEGP_InstalledEffectKey,
             InstalledEffectKey::Key(key) => key as ae_sys::AEGP_InstalledEffectKey,
         }

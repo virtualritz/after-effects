@@ -22,9 +22,9 @@ enum Flavor {
     Filler2,
     Sherbet,
 }
-impl Into<Flavor> for i32 {
-    fn into(self) -> Flavor {
-        match self {
+impl From<i32> for Flavor {
+    fn from(val: i32) -> Self {
+        match val {
             1 => Flavor::Chocolate,
             3 => Flavor::Strawberry,
             5 => Flavor::Sherbet,

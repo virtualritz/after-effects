@@ -81,7 +81,7 @@ impl AdobePluginGlobal for Plugin {
                         row_bytes.chunks_mut(bytes_per_pixel).enumerate().for_each(|(x, pix_chunk)| { // iterator over row pixels
                             match out_pixel_format {
                                 pr::PixelFormat::Bgra4444_8u => {
-                                    let pixel = unsafe { &mut *(in_data.as_ptr().add(y as usize * in_stride) as *mut PixelBGRA8u).add(x) };
+                                    let pixel = unsafe { &mut *(in_data.as_ptr().add(y * in_stride) as *mut PixelBGRA8u).add(x) };
                                     let out_pixel = unsafe { &mut *(pix_chunk as *mut _ as *mut PixelBGRA8u) };
 
                                     let temp = (fastrand::u8(..) as f32 * value) as u8;
@@ -91,7 +91,7 @@ impl AdobePluginGlobal for Plugin {
                                     out_pixel.blue  = (pixel.blue .saturating_add(temp)).min(ae::MAX_CHANNEL8 as u8);
                                 },
                                 pr::PixelFormat::Vuya4444_8u => {
-                                    let pixel = unsafe { &mut *(in_data.as_ptr().add(y as usize * in_stride) as *mut PixelVUYA8u).add(x) };
+                                    let pixel = unsafe { &mut *(in_data.as_ptr().add(y * in_stride) as *mut PixelVUYA8u).add(x) };
                                     let out_pixel = unsafe { &mut *(pix_chunk as *mut _ as *mut PixelVUYA8u) };
 
                                     let temp = (fastrand::u8(..) as f32 * value) as u8;
@@ -101,7 +101,7 @@ impl AdobePluginGlobal for Plugin {
                                     out_pixel.luma = (pixel.luma.saturating_add(temp)).min(ae::MAX_CHANNEL8 as u8);
                                 },
                                 pr::PixelFormat::Bgra4444_32f => {
-                                    let pixel = unsafe { &mut *(in_data.as_ptr().add(y as usize * in_stride) as *mut PixelBGRA32f).add(x) };
+                                    let pixel = unsafe { &mut *(in_data.as_ptr().add(y * in_stride) as *mut PixelBGRA32f).add(x) };
                                     let out_pixel = unsafe { &mut *(pix_chunk as *mut _ as *mut PixelBGRA32f) };
 
                                     let temp = fastrand::f32() * value;
@@ -111,7 +111,7 @@ impl AdobePluginGlobal for Plugin {
                                     out_pixel.blue  = (pixel.blue  + temp).min(1.0);
                                 },
                                 pr::PixelFormat::Vuya4444_32f => {
-                                    let pixel = unsafe { &mut *(in_data.as_ptr().add(y as usize * in_stride) as *mut PixelVUYA32f).add(x) };
+                                    let pixel = unsafe { &mut *(in_data.as_ptr().add(y * in_stride) as *mut PixelVUYA32f).add(x) };
                                     let out_pixel = unsafe { &mut *(pix_chunk as *mut _ as *mut PixelVUYA32f) };
 
                                     let temp = fastrand::f32() * value;

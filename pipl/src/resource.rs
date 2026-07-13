@@ -1,7 +1,7 @@
 use byteorder::{BigEndian, WriteBytesExt};
 use std::io::Result;
 
-pub fn produce_resource(pipl: &[u8], _macos_rsrc_path: Option<&str>) {
+pub fn produce_resource(_pipl: &[u8], _macos_rsrc_path: Option<&str>) {
     #[cfg(target_os = "windows")]
     {
         fn to_seq(bytes: &[u8]) -> String {
@@ -14,7 +14,7 @@ pub fn produce_resource(pipl: &[u8], _macos_rsrc_path: Option<&str>) {
         let mut res = winres::WindowsResource::new();
         res.append_rc_content(&format!(
             "16000 PiPL DISCARDABLE BEGIN \"{}\" END",
-            to_seq(pipl)
+            to_seq(_pipl)
         ));
         res.compile().unwrap();
     }

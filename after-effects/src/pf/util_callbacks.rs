@@ -163,7 +163,7 @@ macro_rules! define_iterate_lut_and_generic {
     }
 }
 
-pub const ONCE_PER_PROCESSOR: i32 = ae_sys::PF_Iterations_ONCE_PER_PROCESSOR as i32;
+pub const ONCE_PER_PROCESSOR: i32 = ae_sys::PF_Iterations_ONCE_PER_PROCESSOR;
 
 pub struct UtilCallbacks(*const ae_sys::PF_InData);
 
@@ -267,7 +267,7 @@ impl UtilCallbacks {
             quality: quality.into(),
             mode_flags: mode_flags.into(),
         };
-        let _ = call_fn!(self, begin_sampling, quality.into(), mode_flags.into(), &mut params.params)?;
+        call_fn!(self, begin_sampling, quality.into(), mode_flags.into(), &mut params.params)?;
         Ok(params)
     }
 
@@ -338,7 +338,7 @@ impl UtilCallbacks {
     pub fn new_world(&self, width: usize, height: usize, flags: NewWorldFlags) -> Result<Layer, Error> {
         let mut world = unsafe { std::mem::zeroed() };
         call_fn!(self, new_world, width as _, height as _, flags.bits() as _, &mut world)?;
-        Ok(Layer::from_owned(world, self.0.clone(), |self_layer| {
+        Ok(Layer::from_owned(world, self.0, |self_layer| {
             UtilCallbacks::new(self_layer.in_data_ptr).dispose_world(self_layer.as_mut_ptr()).unwrap();
         }))
     }

@@ -62,7 +62,7 @@ impl PrStringSuite {
                 buffer.resize(buffer_size as usize - 1, 0u8);
                 String::from_utf8(buffer).map_err(|_| Error::InvalidParms)
             }
-            Err(e) => Err(Error::from(e))
+            Err(e) => Err(e)
         }
     }
 }

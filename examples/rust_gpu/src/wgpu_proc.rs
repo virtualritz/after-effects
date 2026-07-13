@@ -64,7 +64,7 @@ impl<T: Sized> WgpuProcessing<T> {
         let shader = device.create_shader_module(ShaderModuleDescriptor {
             label: None,
             source: match shader {
-                ProcShaderSource::SpirV(bytes) => util::make_spirv(&bytes),
+                ProcShaderSource::SpirV(bytes) => util::make_spirv(bytes),
                 ProcShaderSource::Wgsl(wgsl)   => ShaderSource::Wgsl(std::borrow::Cow::Borrowed(wgsl)),
             }
         });
@@ -107,7 +107,7 @@ impl<T: Sized> WgpuProcessing<T> {
         let (iw, ih, _)  = (in_size.0  as u32, in_size.1  as u32, in_size.2  as u32);
         let (ow, oh, os) = (out_size.0 as u32, out_size.1 as u32, out_size.2 as u32);
 
-        let align = COPY_BYTES_PER_ROW_ALIGNMENT as u32;
+        let align = COPY_BYTES_PER_ROW_ALIGNMENT;
         let padding = (align - os % align) % align;
         let padded_out_stride = os + padding;
         let staging_size = padded_out_stride * oh;
@@ -191,7 +191,7 @@ impl<T: Sized> WgpuProcessing<T> {
                 if x.len() > max {
                     // Remove least recently used buffers
                     let mut keys = x.iter().map(|(k, v)| (*k, v.last_access.load(std::sync::atomic::Ordering::Relaxed))).collect::<Vec<_>>();
-                    keys.sort_by(|a, b| a.1.cmp(&b.1));
+                    keys.sort_by_key(|a| a.1);
                     for (k, _) in keys.iter().take(x.len() - max) {
                         log::info!("Removing {k:?}");
                         x.remove(k);
@@ -242,7 +242,7 @@ impl<T: Sized> WgpuProcessing<T> {
         encoder.copy_texture_to_buffer(
             TexelCopyTextureInfo { texture: &state.out_texture, mip_level: 0, origin: Origin3d::ZERO, aspect: TextureAspect::All },
             TexelCopyBufferInfo { buffer: &state.staging_buffer, layout: TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(state.padded_out_stride), rows_per_image: None } },
-            Extent3d { width: width as u32, height: height as u32, depth_or_array_layers: 1 }
+            Extent3d { width, height, depth_or_array_layers: 1 }
         );
 
         self.queue.submit(Some(encoder.finish()));
@@ -264,7 +264,7 @@ impl<T: Sized> WgpuProcessing<T> {
             let data = buffer_slice.get_mapped_range().unwrap();
             if state.padded_out_stride == out_stride as u32 {
                 // Fast path
-                (&mut out_buffer[..height as usize * out_stride]).copy_from_slice(data.as_ref());
+                out_buffer[..height as usize * out_stride].copy_from_slice(data.as_ref());
             } else {
                 data.as_ref()
                     .chunks(state.padded_out_stride as usize)

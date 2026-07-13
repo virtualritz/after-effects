@@ -82,17 +82,17 @@ impl AdobePluginGlobal for Plugin {
             ae::Command::FrameSetup { .. } => {
                 out_data.set_frame_data::<KernelParams>(KernelParams::from_params(params)?);
             },
-            ae::Command::FrameSetdown { .. } => {
+            ae::Command::FrameSetdown => {
                 in_data.destroy_frame_data::<KernelParams>();
             },
             ae::Command::Render { in_layer, mut out_layer } => {
-                let in_size  = (in_layer.width()  as usize, in_layer.height()  as usize, in_layer.buffer_stride());
-                let out_size = (out_layer.width() as usize, out_layer.height() as usize, out_layer.buffer_stride());
+                let in_size  = (in_layer.width(), in_layer.height(), in_layer.buffer_stride());
+                let out_size = (out_layer.width(), out_layer.height(), out_layer.buffer_stride());
 
                 let _time = std::time::Instant::now();
 
                 let params = in_data.frame_data::<KernelParams>().unwrap();
-                self.wgpu.run_compute(&params, in_size, out_size, in_layer.buffer(), out_layer.buffer_mut());
+                self.wgpu.run_compute(params, in_size, out_size, in_layer.buffer(), out_layer.buffer_mut());
 
                 log::warn!("Render time: {:.3} ms", _time.elapsed().as_micros() as f64 / 1000.0);
 
@@ -114,13 +114,13 @@ impl AdobePluginGlobal for Plugin {
                 };
 
                 if let Ok(Some(mut out_layer)) = cb.checkout_output() {
-                    let in_size  = (in_layer.width()  as usize, in_layer.height()  as usize, in_layer.buffer_stride());
-                    let out_size = (out_layer.width() as usize, out_layer.height() as usize, out_layer.buffer_stride());
+                    let in_size  = (in_layer.width(), in_layer.height(), in_layer.buffer_stride());
+                    let out_size = (out_layer.width(), out_layer.height(), out_layer.buffer_stride());
 
                     let _time = std::time::Instant::now();
 
                     let params = extra.pre_render_data::<KernelParams>().unwrap();
-                    self.wgpu.run_compute(&params, in_size, out_size, in_layer.buffer(), out_layer.buffer_mut());
+                    self.wgpu.run_compute(params, in_size, out_size, in_layer.buffer(), out_layer.buffer_mut());
 
                     log::warn!("Smart render time: {:.3} ms", _time.elapsed().as_micros() as f64 / 1000.0);
                 }

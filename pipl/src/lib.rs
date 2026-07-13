@@ -705,7 +705,7 @@ pub enum Property {
 
 pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
     #[rustfmt::skip]
-    fn padding_4(x: u32) -> u32 { if x % 4 != 0 { 4 - x % 4 } else { 0 } }
+    fn padding_4(x: u32) -> u32 { if !x.is_multiple_of(4) { 4 - x % 4 } else { 0 } }
 
     fn write(
         buffer: &mut Vec<u8>,
@@ -1245,7 +1245,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                     buffer.write_u32::<ByteOrder>(spec_version_minor)?;
                     buffer.write_u32::<ByteOrder>(filter_params_version)?;
                     #[rustfmt::skip]
-                    let flags: u32 = if randomness               { 1u32 << 0 } else { 0 } |  // ANIM_FF_HAS_RANDOMNESS (AE only)
+                    let flags: u32 = (if randomness               { 1u32 << 0 } else { 0 } |  // ANIM_FF_HAS_RANDOMNESS (AE only)
                                      if !geometric               { 1u32 << 1 } else { 0 } |  // ANIM_FF_NON_GEOMETRIC (AE only)
                                      if fg_animatable            { 1u32 << 2 } else { 0 } |  // ANIM_FF_FG_ANIMATABLE (AE only)
                                      if bg_animatable            { 1u32 << 3 } else { 0 } |  // ANIM_FF_BG_ANIMATABLE (AE only)
@@ -1255,12 +1255,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                                      if params_handle            { 1u32 << 7 } else { 0 } |  // ANIM_FF_PARAMS_ARE_HANDLE (AE only)
                                      if params_pointer           { 1u32 << 8 } else { 0 } |  // ANIM_FF_PARAMS_ARE PTR (AE only)
                                      if !needs_dialog            { 1u32 << 9 } else { 0 } |  // ANIM_FF_DOESNT_NEED_DLOG (AE only)
-                                     if !drive_me                { 1u32 << 10 } else { 0 } | // ANIM_FF_DONT_DRIVE_ME (AE only)
-                                     if false                    { 1u32 << 11 } else { 0 } | // ANIM_FF_RESERVED0 (AE only)
-                                     if false                    { 1u32 << 12 } else { 0 } | // ANIM_FF_RESERVED1 (AE only)
-                                     if false                    { 1u32 << 13 } else { 0 } | // ANIM_FF_RESERVED2 (spare)
-                                     if false                    { 1u32 << 14 } else { 0 } | // ANIM_FF_RESERVED3 (spare)
-                                     if false                    { 1u32 << 15 } else { 0 } | // ANIM_FF_RESERVED4 (spare)
+                                     if !drive_me                { 1u32 << 10 } else { 0 }) | // ANIM_FF_RESERVED4 (spare)
                                      if any_pixel_aspect_ratio   { 1u32 << 16 } else { 0 } | // ANIM_FF_ANY_PAR
                                      if unity_pixel_aspec_tratio { 1u32 << 17 } else { 0 }; // ANIM_FF_UNITY_PAR
 

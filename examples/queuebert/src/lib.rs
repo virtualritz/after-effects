@@ -115,7 +115,7 @@ fn handle_queuebert_command() -> Result<(), Error> {
 
     // Get the composition from the first render queue item
     let first_item = rq_item_suite.item_by_index(0)?;
-    let comp = rq_item_suite.comp(&first_item)?;
+    let comp = rq_item_suite.comp(first_item)?;
 
     // Add the composition to the render queue multiple times (like the original sample)
     for i in 0..6 {
@@ -125,7 +125,7 @@ fn handle_queuebert_command() -> Result<(), Error> {
         #[cfg(not(target_os = "windows"))]
         let output_path = format!("/tmp/queuebert_output_{}.mov", i);
 
-        if let Err(e) = rq_suite.add_comp_to_render_queue(&comp, &output_path) {
+        if let Err(e) = rq_suite.add_comp_to_render_queue(comp, &output_path) {
             log::warn!("Failed to add comp to render queue: {:?}", e);
         }
     }
@@ -136,23 +136,23 @@ fn handle_queuebert_command() -> Result<(), Error> {
     // Now work with the first render queue item
     if rq_item_count > 0 {
         let rq_item = rq_item_suite.item_by_index(0)?;
-        let outmod_count = rq_item_suite.num_output_modules(&rq_item)?;
+        let outmod_count = rq_item_suite.num_output_modules(rq_item)?;
 
         log::info!("QueueBert: First item has {} output modules", outmod_count);
 
         if outmod_count > 0 {
             // Get and set log type
-            let log_type = rq_item_suite.log_type(&rq_item)?;
+            let log_type = rq_item_suite.log_type(rq_item)?;
             log::info!("QueueBert: Current log type: {:?}", log_type);
-            rq_item_suite.set_log_type(&rq_item, LogType::PlusSettings)?;
+            rq_item_suite.set_log_type(rq_item, LogType::PlusSettings)?;
 
             // Get and set render state
-            let status = rq_item_suite.render_state(&rq_item)?;
+            let status = rq_item_suite.render_state(rq_item)?;
             log::info!("QueueBert: Current render state: {:?}", status);
 
             // Get timing info
-            let started_time = rq_item_suite.started_time(&rq_item)?;
-            let elapsed_time = rq_item_suite.elapsed_time(&rq_item)?;
+            let started_time = rq_item_suite.started_time(rq_item)?;
+            let elapsed_time = rq_item_suite.elapsed_time(rq_item)?;
             log::info!(
                 "QueueBert: Started: {:?}, Elapsed: {:?}",
                 started_time,
@@ -160,27 +160,27 @@ fn handle_queuebert_command() -> Result<(), Error> {
             );
 
             // Now work with the first output module
-            let output_module = output_module_suite.output_module_by_index(&rq_item, 0)?;
+            let output_module = output_module_suite.output_module_by_index(rq_item, 0)?;
 
             // Enable both video and audio output
-            let current_outputs = output_module_suite.enabled_outputs(&rq_item, &output_module)?;
+            let current_outputs = output_module_suite.enabled_outputs(rq_item, output_module)?;
             log::info!("QueueBert: Current enabled outputs: {:?}", current_outputs);
 
             let new_outputs = OutputTypes::VIDEO | OutputTypes::AUDIO;
-            output_module_suite.set_enabled_outputs(&rq_item, &output_module, new_outputs)?;
+            output_module_suite.set_enabled_outputs(rq_item, output_module, new_outputs)?;
 
             // Set output channels to RGBA
-            let vid_channels = output_module_suite.output_channels(&rq_item, &output_module)?;
+            let vid_channels = output_module_suite.output_channels(rq_item, output_module)?;
             log::info!("QueueBert: Current video channels: {:?}", vid_channels);
             output_module_suite.set_output_channels(
-                &rq_item,
-                &output_module,
+                rq_item,
+                output_module,
                 VideoChannels::Rgba,
             )?;
 
             // Get and set stretch info
             let (stretch_enabled, stretch_qual, locked) =
-                output_module_suite.stretch_info(&rq_item, &output_module)?;
+                output_module_suite.stretch_info(rq_item, output_module)?;
             log::info!(
                 "QueueBert: Stretch - enabled: {}, quality: {:?}, locked: {}",
                 stretch_enabled,
@@ -188,15 +188,15 @@ fn handle_queuebert_command() -> Result<(), Error> {
                 locked
             );
             output_module_suite.set_stretch_info(
-                &rq_item,
-                &output_module,
+                rq_item,
+                output_module,
                 true,
                 StretchQuality::High,
             )?;
 
             // Get and set crop info
             let (crop_enabled, crop_rect) =
-                output_module_suite.crop_info(&rq_item, &output_module)?;
+                output_module_suite.crop_info(rq_item, output_module)?;
             log::info!(
                 "QueueBert: Crop - enabled: {}, rect: {:?}",
                 crop_enabled,
@@ -210,11 +210,11 @@ fn handle_queuebert_command() -> Result<(), Error> {
                 right: 200,
                 bottom: 100,
             };
-            output_module_suite.set_crop_info(&rq_item, &output_module, true, new_crop_rect)?;
+            output_module_suite.set_crop_info(rq_item, output_module, true, new_crop_rect)?;
 
             // Get and set sound format info
             let (sound_format, audio_enabled) =
-                output_module_suite.sound_format_info(&rq_item, &output_module)?;
+                output_module_suite.sound_format_info(rq_item, output_module)?;
             log::info!(
                 "QueueBert: Audio - enabled: {}, sample_rate: {}, channels: {}, bytes_per_sample: {}",
                 audio_enabled,
@@ -232,34 +232,34 @@ fn handle_queuebert_command() -> Result<(), Error> {
                     num_channelsL: 1,
                 };
                 output_module_suite.set_sound_format_info(
-                    &rq_item,
-                    &output_module,
+                    rq_item,
+                    output_module,
                     new_sound_format,
                     true,
                 )?;
             }
 
             // Get and set embed options
-            let embed_type = output_module_suite.embed_options(&rq_item, &output_module)?;
+            let embed_type = output_module_suite.embed_options(rq_item, output_module)?;
             log::info!("QueueBert: Embed type: {:?}", embed_type);
             output_module_suite.set_embed_options(
-                &rq_item,
-                &output_module,
+                rq_item,
+                output_module,
                 EmbeddingType::LinkAndCopy,
             )?;
 
             // Get and set post-render action
-            let post_action = output_module_suite.post_render_action(&rq_item, &output_module)?;
+            let post_action = output_module_suite.post_render_action(rq_item, output_module)?;
             log::info!("QueueBert: Post-render action: {:?}", post_action);
             output_module_suite.set_post_render_action(
-                &rq_item,
-                &output_module,
+                rq_item,
+                output_module,
                 PostRenderAction::ImportAndReplace,
             )?;
 
             // Add a new default output module
-            let new_outmod = output_module_suite.add_default_output_module(&rq_item)?;
-            let new_outmod_count = rq_item_suite.num_output_modules(&rq_item)?;
+            let new_outmod = output_module_suite.add_default_output_module(rq_item)?;
+            let new_outmod_count = rq_item_suite.num_output_modules(rq_item)?;
             log::info!(
                 "QueueBert: Added new output module, now have {} modules",
                 new_outmod_count
@@ -271,11 +271,11 @@ fn handle_queuebert_command() -> Result<(), Error> {
             #[cfg(not(target_os = "windows"))]
             let output_path = "/tmp/queuebert_new_output.mov";
 
-            output_module_suite.set_output_file_path(&rq_item, &new_outmod, output_path)?;
+            output_module_suite.set_output_file_path(rq_item, new_outmod, output_path)?;
 
             // Get extra output module info
             if let Ok((format, info, is_sequence, multi_frame)) =
-                output_module_suite.extra_output_module_info(&rq_item, &output_module)
+                output_module_suite.extra_output_module_info(rq_item, output_module)
             {
                 log::info!(
                     "QueueBert: Format: {}, Info: {}, Sequence: {}, Multi-frame: {}",
@@ -287,10 +287,10 @@ fn handle_queuebert_command() -> Result<(), Error> {
             }
 
             // Set a comment on the render queue item
-            rq_item_suite.set_comment(&rq_item, "That's pronounced cue-BARE!")?;
+            rq_item_suite.set_comment(rq_item, "That's pronounced cue-BARE!")?;
 
             // Read the comment back
-            let comment = rq_item_suite.comment(&rq_item)?;
+            let comment = rq_item_suite.comment(rq_item)?;
             log::info!("QueueBert: Item comment: {}", comment);
         }
     }

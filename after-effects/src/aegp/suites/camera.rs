@@ -145,7 +145,7 @@ impl Camera {
         let suite = CameraSuite::new()?;
         let handle = suite.camera(render_context_handle, time)?;
         Ok(Self {
-            suite: once_cell::sync::Lazy::new(|| CameraSuite::new()),
+            suite: once_cell::sync::Lazy::new(CameraSuite::new),
             handle,
             is_owned: false
         })

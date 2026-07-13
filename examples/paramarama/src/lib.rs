@@ -164,15 +164,14 @@ impl AdobePluginGlobal for Plugin {
                     }
                 }
             }
-            ae::Command::UserChangedParam { param_index } => {
-                if params.type_at(param_index) == Params::Button {
+            ae::Command::UserChangedParam { param_index }
+                if params.type_at(param_index) == Params::Button => {
                     out_data.set_return_msg("Paramarama button hit!");
 
                     if !in_data.is_premiere() {
                         out_data.set_out_flag(ae::OutFlags::DisplayErrorMessage, true);
                     }
                 }
-            }
             _ => {}
         }
         Ok(())

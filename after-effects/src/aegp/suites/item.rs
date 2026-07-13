@@ -207,7 +207,7 @@ impl ItemSuite {
     ///
     /// The view can be used with two calls in the [`suites::ColorSettings`](aegp::suites::ColorSettings), to perform a color transform on a pixel buffer from working to view color space.
     pub fn item_mru_view(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<ae_sys::AEGP_ItemViewP, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetItemMRUView -> ae_sys::AEGP_ItemViewP, item_handle.as_ptr())?.into())
+        Ok(call_suite_fn_single!(self, AEGP_GetItemMRUView -> ae_sys::AEGP_ItemViewP, item_handle.as_ptr())?)
     }
 }
 

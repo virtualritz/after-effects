@@ -82,7 +82,7 @@ impl EffectCustomUIOverlayThemeSuite {
 
     /// Get the preferred shadow offset.
     pub fn preferred_shadow_offset(&self) -> Result<ae_sys::A_LPoint, Error> {
-        Ok(call_suite_fn_single!(self, PF_GetPreferredShadowOffset -> ae_sys::A_LPoint)?.into())
+        Ok(call_suite_fn_single!(self, PF_GetPreferredShadowOffset -> ae_sys::A_LPoint)?)
     }
 
     /// Stoke the path with the overlay theme foreground color.
@@ -129,6 +129,12 @@ impl ContextHandle {
 #[derive(Copy, Clone, Debug)]
 #[repr(transparent)]
 pub struct CustomUIInfo(ae_sys::PF_CustomUIInfo);
+
+impl Default for CustomUIInfo {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl CustomUIInfo {
     pub fn new() -> Self {

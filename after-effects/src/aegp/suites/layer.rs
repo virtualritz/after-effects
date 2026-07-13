@@ -184,7 +184,7 @@ impl LayerSuite {
 
     /// Get transfer mode of a layer.
     pub fn layer_transfer_mode(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<ae_sys::AEGP_LayerTransferMode, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetLayerTransferMode -> ae_sys::AEGP_LayerTransferMode, layer_handle.as_ptr())?.into())
+        Ok(call_suite_fn_single!(self, AEGP_GetLayerTransferMode -> ae_sys::AEGP_LayerTransferMode, layer_handle.as_ptr())?)
     }
 
     /// Set transfer mode of a layer. Undoable.
@@ -269,7 +269,7 @@ impl LayerSuite {
 
     /// Used by the dancing dissolve transfer function.
     pub fn layer_dancing_rand_value(&self, layer_handle: impl AsPtr<AEGP_LayerH>, time: Time) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetLayerDancingRandValue -> ae_sys::A_long, layer_handle.as_ptr(), &time.into() as *const _)?.into())
+        Ok(call_suite_fn_single!(self, AEGP_GetLayerDancingRandValue -> ae_sys::A_long, layer_handle.as_ptr(), &time.into() as *const _)?)
     }
 
     /// Supplies the layer's unique ID. This ID never changes during the lifetime of the project.

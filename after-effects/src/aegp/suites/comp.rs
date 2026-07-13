@@ -40,7 +40,7 @@ impl CompSuite {
     ///
     /// Users can choose a custom downsample factor with independent X and Y.
     pub fn comp_downsample_factor(&self, comp_handle: impl AsPtr<AEGP_CompH>) -> Result<ae_sys::AEGP_DownsampleFactor, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetCompDownsampleFactor -> ae_sys::AEGP_DownsampleFactor, comp_handle.as_ptr())?.into())
+        Ok(call_suite_fn_single!(self, AEGP_GetCompDownsampleFactor -> ae_sys::AEGP_DownsampleFactor, comp_handle.as_ptr())?)
     }
 
     /// Sets the composition's downsample factor.

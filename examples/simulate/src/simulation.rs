@@ -117,13 +117,12 @@ where
             step: SimStep(Vec::new()),
         };
 
-        if let Some(receipt) = cache.checkout_cached(&CACHE_ID, &mut opts).ok().flatten() {
-            if let Ok(step) = cache.receipt_compute_value::<SimStep>(&receipt) {
+        if let Some(receipt) = cache.checkout_cached(&CACHE_ID, &mut opts).ok().flatten()
+            && let Ok(step) = cache.receipt_compute_value::<SimStep>(&receipt) {
                 let result = step.clone();
                 let _ = cache.check_in_compute_receipt(receipt);
                 return Some((frame, result));
             }
-        }
     }
     None
 }

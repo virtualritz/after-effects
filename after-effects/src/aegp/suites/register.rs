@@ -169,7 +169,7 @@ impl RegisterSuite {
 
             match callback(global, refcon, window_type.into()) {
                 Ok(_) => Error::None,
-                Err(e) => e.into(),
+                Err(e) => e,
             }
             .into()
         }
@@ -242,7 +242,7 @@ impl RegisterSuite {
             };
 
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (VersionHook<P, T>, T)) };
-            let pf_version = unsafe { &mut (*pf_version_p as u32) };
+            let pf_version = unsafe { &mut { *pf_version_p } };
 
             match cb(global, refcon, pf_version) {
                 Ok(_) => Error::None,
@@ -504,7 +504,7 @@ impl RegisterNonAegpSuite {
 
             match callback(refcon, window_type.into()) {
                 Ok(_) => Error::None,
-                Err(e) => e.into(),
+                Err(e) => e,
             }
             .into()
         }
@@ -566,7 +566,7 @@ impl RegisterNonAegpSuite {
             );
 
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpVersionHook<T>, T)) };
-            let pf_version = unsafe { &mut (*pf_version_p as u32) };
+            let pf_version = unsafe { &mut { *pf_version_p } };
 
             match cb(refcon, pf_version) {
                 Ok(_) => Error::None,

@@ -166,7 +166,7 @@ impl AdobePluginGlobal for Plugin {
                         .as_float_slider()?
                         .value() as f32;
                     Ok((
-                        [gravity_point.0 as f32 / w, gravity_point.1 as f32 / h],
+                        [gravity_point.0 / w, gravity_point.1 / h],
                         strength,
                     ))
                 };
