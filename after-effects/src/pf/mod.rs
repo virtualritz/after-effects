@@ -1,96 +1,110 @@
 use crate::*;
 use bitflags::bitflags;
-use std::{
-    fmt::Debug,
-    marker::PhantomData,
-};
+use std::{fmt::Debug, marker::PhantomData};
 
-mod command;    pub use command::*;
-mod events;     pub use events::*;
-mod gpu;        pub use gpu::*;
-mod handles;    pub use handles::*;
-mod in_data;    pub use in_data::*;
-mod layer;      pub use layer::*;
-mod out_data;   pub use out_data::*;
-mod parameters; pub use parameters::*;
-mod pixel;      pub use pixel::*;
-mod render;     pub use render::*;
-mod effect;     pub use effect::*;
-mod interact_callbacks;    pub use interact_callbacks::*;
-mod util_callbacks;        pub use util_callbacks::*;
-mod external_dependencies; pub use external_dependencies::*;
+mod command;
+pub use command::*;
+mod events;
+pub use events::*;
+mod gpu;
+pub use gpu::*;
+mod handles;
+pub use handles::*;
+mod in_data;
+pub use in_data::*;
+mod layer;
+pub use layer::*;
+mod out_data;
+pub use out_data::*;
+mod parameters;
+pub use parameters::*;
+mod pixel;
+pub use pixel::*;
+mod render;
+pub use render::*;
+mod effect;
+pub use effect::*;
+mod interact_callbacks;
+pub use interact_callbacks::*;
+mod util_callbacks;
+pub use util_callbacks::*;
+mod external_dependencies;
+pub use external_dependencies::*;
 
 pub mod suites {
-    pub(crate) mod adv_item;              pub use adv_item            ::AdvItemSuite               as AdvItem;
-    pub(crate) mod background_frame;      pub use background_frame    ::BackgroundFrameSuite       as BackgroundFrame;
-    pub(crate) mod cache_on_load;         pub use cache_on_load       ::CacheOnLoadSuite           as CacheOnLoad;
-    pub(crate) mod channel;               pub use channel             ::ChannelSuite               as Channel;
-    pub(crate) mod color_callbacks;       pub use color_callbacks     ::{ ColorCallbacksSuite      as ColorCallbacks,
-                                                                          ColorCallbacks16Suite    as ColorCallbacks16,
-                                                                          ColorCallbacksFloatSuite as ColorCallbacksFloat };
-    pub(crate) mod effect_sequence_data;  pub use effect_sequence_data::EffectSequenceDataSuite    as EffectSequenceData;
-    pub(crate) mod effect_ui;             pub use effect_ui           ::EffectUISuite              as EffectUI;
-    pub(crate) mod app;                   pub use app                 ::{ AppSuite                 as App,
-                                                                          AdvAppSuite              as AdvApp };
-    pub(crate) mod custom_ui;             pub use custom_ui           ::{ EffectCustomUISuite      as EffectCustomUI,
-                                                                          EffectCustomUIOverlayThemeSuite as EffectCustomUIOverlayTheme };
-    pub(crate) mod iterate;               pub use iterate             ::{ Iterate8Suite            as Iterate8,
-                                                                          Iterate16Suite           as Iterate16,
-                                                                          IterateFloatSuite        as IterateFloat };
-    pub(crate) mod pixel_data;            pub use pixel_data          ::PixelDataSuite             as PixelData;
-    pub(crate) mod pixel_format;          pub use pixel_format        ::PixelFormatSuite           as PixelFormat;
-    pub(crate) mod source_settings;       pub use source_settings     ::SourceSettingsSuite        as SourceSettings;
-    pub(crate) mod transition;            pub use transition          ::TransitionSuite            as Transition;
-    pub(crate) mod utility;               pub use utility             ::UtilitySuite               as Utility;
-    pub(crate) mod world;                 pub use world               ::WorldSuite                 as World;
-    pub(crate) mod world_transform;       pub use world_transform     ::WorldTransformSuite        as WorldTransform;
-    pub(crate) mod handle;                pub use handle              ::HandleSuite                as Handle;
-    pub(crate) mod helper;                pub use helper              ::{ HelperSuite              as Helper,
-                                                                          HelperSuite2             as Helper2 };
-    pub(crate) mod param_utils;           pub use param_utils         ::{ ParamUtilsSuite          as ParamUtils,
-                                                                          AngleParamSuite          as AngleParam,
-                                                                          ColorParamSuite          as ColorParam,
-                                                                          PointParamSuite          as PointParam };
-    pub(crate) mod gpu_device;            pub use gpu_device          ::GPUDeviceSuite             as GPUDevice;
-    pub(crate) mod fill_matte;            pub use fill_matte          ::FillMatteSuite             as FillMatte;
-    pub(crate) mod path;                  pub use path                ::{ PathQuerySuite           as PathQuery,
-                                                                          PathDataSuite            as PathData };
+    pub(crate) mod adv_item;
+    pub use adv_item::AdvItemSuite as AdvItem;
+    pub(crate) mod background_frame;
+    pub use background_frame::BackgroundFrameSuite as BackgroundFrame;
+    pub(crate) mod cache_on_load;
+    pub use cache_on_load::CacheOnLoadSuite as CacheOnLoad;
+    pub(crate) mod channel;
+    pub use channel::ChannelSuite as Channel;
+    pub(crate) mod color_callbacks;
+    pub use color_callbacks::{
+        ColorCallbacks16Suite as ColorCallbacks16, ColorCallbacksFloatSuite as ColorCallbacksFloat,
+        ColorCallbacksSuite as ColorCallbacks,
+    };
+    pub(crate) mod effect_sequence_data;
+    pub use effect_sequence_data::EffectSequenceDataSuite as EffectSequenceData;
+    pub(crate) mod effect_ui;
+    pub use effect_ui::EffectUISuite as EffectUI;
+    pub(crate) mod app;
+    pub use app::{AdvAppSuite as AdvApp, AppSuite as App};
+    pub(crate) mod custom_ui;
+    pub use custom_ui::{
+        EffectCustomUIOverlayThemeSuite as EffectCustomUIOverlayTheme,
+        EffectCustomUISuite as EffectCustomUI,
+    };
+    pub(crate) mod iterate;
+    pub use iterate::{
+        Iterate8Suite as Iterate8, Iterate16Suite as Iterate16, IterateFloatSuite as IterateFloat,
+    };
+    pub(crate) mod pixel_data;
+    pub use pixel_data::PixelDataSuite as PixelData;
+    pub(crate) mod pixel_format;
+    pub use pixel_format::PixelFormatSuite as PixelFormat;
+    pub(crate) mod source_settings;
+    pub use source_settings::SourceSettingsSuite as SourceSettings;
+    pub(crate) mod transition;
+    pub use transition::TransitionSuite as Transition;
+    pub(crate) mod utility;
+    pub use utility::UtilitySuite as Utility;
+    pub(crate) mod world;
+    pub use world::WorldSuite as World;
+    pub(crate) mod world_transform;
+    pub use world_transform::WorldTransformSuite as WorldTransform;
+    pub(crate) mod handle;
+    pub use handle::HandleSuite as Handle;
+    pub(crate) mod helper;
+    pub use helper::{HelperSuite as Helper, HelperSuite2 as Helper2};
+    pub(crate) mod param_utils;
+    pub use param_utils::{
+        AngleParamSuite as AngleParam, ColorParamSuite as ColorParam,
+        ParamUtilsSuite as ParamUtils, PointParamSuite as PointParam,
+    };
+    pub(crate) mod gpu_device;
+    pub use gpu_device::GPUDeviceSuite as GPUDevice;
+    pub(crate) mod fill_matte;
+    pub use fill_matte::FillMatteSuite as FillMatte;
+    pub(crate) mod path;
+    pub use path::{PathDataSuite as PathData, PathQuerySuite as PathQuery};
 }
 
 pub use suites::adv_item::Step;
 pub use suites::app::{
-    AppColorType,
-    AppPersonalTextInfo,
-    AppProgressDialog,
-    CursorType,
-    EyeDropperSampleMode,
+    AppColorType, AppPersonalTextInfo, AppProgressDialog, CursorType, EyeDropperSampleMode,
     FontStyleSheet,
 };
-pub use suites::custom_ui::{
-    ContextHandle,
-    CustomUIInfo,
-};
-pub use suites::channel::{
-    DataType,
-    ChannelType,
-};
-pub use suites::helper::{
-    SuiteTool,
-    ExtendedSuiteTool
-};
+pub use suites::channel::{ChannelType, DataType};
+pub use suites::custom_ui::{ContextHandle, CustomUIInfo};
+pub use suites::helper::{ExtendedSuiteTool, SuiteTool};
 pub use suites::param_utils::{
-    PARAM_INDEX_NONE,
-    PARAM_INDEX_CHECK_ALL,
-    PARAM_INDEX_CHECK_ALL_EXCEPT_LAYER_PARAMS,
-    PARAM_INDEX_CHECK_ALL_HONOR_EXCLUDE,
-    TimeDir,
+    PARAM_INDEX_CHECK_ALL, PARAM_INDEX_CHECK_ALL_EXCEPT_LAYER_PARAMS,
+    PARAM_INDEX_CHECK_ALL_HONOR_EXCLUDE, PARAM_INDEX_NONE, TimeDir,
 };
+pub use suites::path::{MaskMode, PathOutline, PathSegPrep};
 pub use suites::pixel_format::PixelFormat;
-pub use suites::path::{
-    MaskMode,
-    PathOutline,
-    PathSegPrep,
-};
 
 define_enum! {
     ae_sys::PF_XferMode,
@@ -200,9 +214,7 @@ define_struct! {
     }
 }
 impl Point {
-    pub fn empty() -> Self {
-        Self { h: 0, v: 0 }
-    }
+    pub fn empty() -> Self { Self { h: 0, v: 0 } }
 }
 
 define_struct! {
@@ -215,7 +227,10 @@ define_struct! {
 }
 impl RationalScale {
     pub fn inv(&self) -> RationalScale {
-        RationalScale { num: self.den as _, den: self.num as _ }
+        RationalScale {
+            num: self.den as _,
+            den: self.num as _,
+        }
     }
 }
 
@@ -392,28 +407,20 @@ bitflags! {
 #[repr(transparent)]
 pub struct Fixed(ae_sys::PF_Fixed);
 impl Fixed {
-    pub const ONE: Self = Self(0x00010000);
     pub const HALF: Self = Self(0x00008000);
+    pub const ONE: Self = Self(0x00010000);
 
-    pub fn to_int(self) -> i32 {
-        self.0 as ae_sys::A_long >> 16
-    }
-    pub fn to_int_rounded(self) -> i32 {
-        (self.0 as ae_sys::A_long + 32768) >> 16
-    }
-    pub fn from_int(value: i32) -> Self {
-        Self(value << 16)
-    }
-    pub fn as_f32(&self) -> f32 {
-        self.0 as f32 / 65536.0
-    }
+    pub fn to_int(self) -> i32 { self.0 as ae_sys::A_long >> 16 }
 
-    pub fn as_fixed(&self) -> ae_sys::PF_Fixed {
-        self.0
-    }
-    pub fn from_fixed(value: ae_sys::PF_Fixed) -> Self {
-        Self(value)
-    }
+    pub fn to_int_rounded(self) -> i32 { (self.0 as ae_sys::A_long + 32768) >> 16 }
+
+    pub fn from_int(value: i32) -> Self { Self(value << 16) }
+
+    pub fn as_f32(&self) -> f32 { self.0 as f32 / 65536.0 }
+
+    pub fn as_fixed(&self) -> ae_sys::PF_Fixed { self.0 }
+
+    pub fn from_fixed(value: ae_sys::PF_Fixed) -> Self { Self(value) }
 }
 impl From<f32> for Fixed {
     fn from(value: f32) -> Self {
@@ -421,12 +428,8 @@ impl From<f32> for Fixed {
     }
 }
 impl From<Fixed> for f32 {
-    fn from(val: Fixed) -> Self {
-        val.0 as f32 / 65536.0
-    }
+    fn from(val: Fixed) -> Self { val.0 as f32 / 65536.0 }
 }
 impl From<Fixed> for f64 {
-    fn from(val: Fixed) -> Self {
-        val.0 as f64 / 65536.0
-    }
+    fn from(val: Fixed) -> Self { val.0 as f64 / 65536.0 }
 }

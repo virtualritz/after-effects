@@ -15,9 +15,7 @@ define_suite!(
 impl TimeSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Get the current ticks per second. This is guaranteed to be constant for the duration of runtime.
     ///
@@ -32,7 +30,10 @@ impl TimeSuite {
     /// * `frame_rate` - an enum value for a video frame rate.
     ///
     /// Returns the number of time ticks per frame.
-    pub fn ticks_per_video_frame(&self, frame_rate: crate::VideoFrameRates) -> Result<pr_sys::PrTime, Error> {
+    pub fn ticks_per_video_frame(
+        &self,
+        frame_rate: crate::VideoFrameRates,
+    ) -> Result<pr_sys::PrTime, Error> {
         call_suite_fn_single!(self, GetTicksPerVideoFrame -> pr_sys::PrTime, frame_rate.into())
     }
 

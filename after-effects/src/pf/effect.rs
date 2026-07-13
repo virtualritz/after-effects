@@ -1,5 +1,5 @@
 use crate::*;
-use ae_sys::{ PF_TimeDisplay, prFieldType, PrTime, PrTimelineID, A_long };
+use ae_sys::{A_long, PF_TimeDisplay, PrTime, PrTimelineID, prFieldType};
 
 register_handle!(PF_ProgPtr);
 define_handle_wrapper!(EffectHandle, PF_ProgPtr);
@@ -239,7 +239,11 @@ define_suite_item_wrapper!(
 impl Effect {
     /// Obtain the camera (if any) being used by After Effects to view the effect's layer.
     pub fn camera(&self, time: Time) -> Result<Option<aegp::Layer>, Error> {
-        let Ok(ref suite) = *self.pf_interface else { return Err(Error::MissingSuite); };
-        suite.effect_camera(self.handle.as_ptr(), time).map(|x| x.map(Into::into))
+        let Ok(ref suite) = *self.pf_interface else {
+            return Err(Error::MissingSuite);
+        };
+        suite
+            .effect_camera(self.handle.as_ptr(), time)
+            .map(|x| x.map(Into::into))
     }
 }

@@ -67,9 +67,7 @@ impl CommandSuite {
     ///
     /// Note: On occasion After Effects will send command 0 (zero), so don't use that as part of your command handling logic.
     #[deprecated(since = "0.5.0", note = "renamed to `unique_command`")]
-    pub fn get_unique_command(&self) -> Result<AEGP_Command, Error> {
-        self.unique_command()
-    }
+    pub fn get_unique_command(&self) -> Result<AEGP_Command, Error> { self.unique_command() }
 
     /// Set menu name of a command.
     pub fn set_command_name(&self, command_name: &str, command: AEGP_Command) -> Result<(), Error> {

@@ -19,9 +19,7 @@ define_suite!(
 impl RenderQueueSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /*
         AEGP_AddCompToRenderQueue(

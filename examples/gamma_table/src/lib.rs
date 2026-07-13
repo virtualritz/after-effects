@@ -6,10 +6,10 @@ use after_effects as ae;
 //  - a Float Slider control
 //  - the Extent Hint rectangle (from the InData structure)
 
-const GAMMA_MIN:     f32 = 0.0;
-const GAMMA_MAX:     f32 = 2.0;
+const GAMMA_MIN: f32 = 0.0;
+const GAMMA_MAX: f32 = 2.0;
 const GAMMA_BIG_MAX: f32 = 2.0;
-const GAMMA_DFLT:    f64 = 1.0;
+const GAMMA_DFLT: f64 = 1.0;
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
 enum Params {
@@ -17,7 +17,7 @@ enum Params {
 }
 
 #[derive(Default)]
-struct Plugin { }
+struct Plugin {}
 
 struct GammaTable {
     gamma_val: f32,
@@ -41,18 +41,33 @@ impl Default for GammaTable {
 }
 
 impl AdobePluginGlobal for Plugin {
-    fn params_setup(&self, params: &mut ae::Parameters<Params>, _: InData, _: OutData) -> Result<(), Error> {
-        params.add(Params::Gamma, "Gamma", ae::FloatSliderDef::setup(|f| {
-            f.set_slider_min(GAMMA_MIN);
-            f.set_slider_max(GAMMA_MAX);
-            f.set_valid_min(GAMMA_MIN);
-            f.set_valid_max(GAMMA_BIG_MAX);
-            f.set_default(GAMMA_DFLT);
-            f.set_precision(1);
-        }))
+    fn params_setup(
+        &self,
+        params: &mut ae::Parameters<Params>,
+        _: InData,
+        _: OutData,
+    ) -> Result<(), Error> {
+        params.add(
+            Params::Gamma,
+            "Gamma",
+            ae::FloatSliderDef::setup(|f| {
+                f.set_slider_min(GAMMA_MIN);
+                f.set_slider_max(GAMMA_MAX);
+                f.set_valid_min(GAMMA_MIN);
+                f.set_valid_max(GAMMA_BIG_MAX);
+                f.set_default(GAMMA_DFLT);
+                f.set_precision(1);
+            }),
+        )
     }
 
-    fn handle_command(&self, cmd: ae::Command, _in_data: InData, mut out_data: OutData, _params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
+    fn handle_command(
+        &self,
+        cmd: ae::Command,
+        _in_data: InData,
+        mut out_data: OutData,
+        _params: &mut ae::Parameters<Params>,
+    ) -> Result<(), ae::Error> {
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("Gamma_Table v2.1\rPerform simple image gamma correction. Copyright 1994-2023 Adobe Inc.");
@@ -69,6 +84,7 @@ impl AdobePluginInstance for GammaTable {
         data.extend_from_slice(&f32::to_le_bytes(self.gamma_val));
         Ok((1, data))
     }
+
     fn unflatten(_version: u16, bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() < 256 + 4 {
             return Ok(Self::default());
@@ -83,13 +99,22 @@ impl AdobePluginInstance for GammaTable {
         })
     }
 
-    fn render(&self, _: &mut PluginState, _: &Layer, _: &mut Layer) -> Result<(), ae::Error> { Ok(()) }
+    fn render(&self, _: &mut PluginState, _: &Layer, _: &mut Layer) -> Result<(), ae::Error> {
+        Ok(())
+    }
 
-    fn handle_command(&mut self, plugin: &mut PluginState, cmd: ae::Command) -> Result<(), ae::Error> {
+    fn handle_command(
+        &mut self,
+        plugin: &mut PluginState,
+        cmd: ae::Command,
+    ) -> Result<(), ae::Error> {
         let in_data = &plugin.in_data;
 
         match cmd {
-            ae::Command::Render { in_layer, mut out_layer } => {
+            ae::Command::Render {
+                in_layer,
+                mut out_layer,
+            } => {
                 let gamma = plugin.params.get(Params::Gamma)?.as_float_slider()?.value() as f32;
 
                 // If the gamma factor is exactly 1.0 just make a direct copy.
@@ -136,7 +161,7 @@ impl AdobePluginInstance for GammaTable {
                     })?;
                 }
             }
-            _ => { }
+            _ => {}
         }
         Ok(())
     }

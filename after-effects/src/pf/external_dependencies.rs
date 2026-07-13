@@ -3,9 +3,7 @@ use crate::*;
 define_struct_wrapper!(ExternalDependenciesExtra, PF_ExtDependenciesExtra);
 
 impl ExternalDependenciesExtra {
-    pub fn check_type(&self) -> DepCheckType {
-        unsafe { (*self.0).check_type.into() }
-    }
+    pub fn check_type(&self) -> DepCheckType { unsafe { (*self.0).check_type.into() } }
 
     pub fn set_dependencies_str(&mut self, text: &str) -> Result<(), Error> {
         let suite = pf::suites::Handle::new()?;

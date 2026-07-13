@@ -81,20 +81,35 @@ fn detect_host(in_data: ae::InData) -> String {
 }
 
 impl AdobePluginGlobal for Plugin {
-    fn params_setup(&self, params: &mut ae::Parameters<Params>, _in_data: InData, _out_data: OutData) -> Result<(), Error> {
-        params.add(Params::MixChannels, "Mix channels", ae::FloatSliderDef::setup(|f| {
-            f.set_valid_min(0.0);
-            f.set_slider_min(0.0);
-            f.set_valid_max(200.0);
-            f.set_slider_max(200.0);
-            f.set_value(10.0);
-            f.set_default(10.0);
-            f.set_precision(1);
-            f.set_display_flags(ae::ValueDisplayFlag::PERCENT);
-        }))
+    fn params_setup(
+        &self,
+        params: &mut ae::Parameters<Params>,
+        _in_data: InData,
+        _out_data: OutData,
+    ) -> Result<(), Error> {
+        params.add(
+            Params::MixChannels,
+            "Mix channels",
+            ae::FloatSliderDef::setup(|f| {
+                f.set_valid_min(0.0);
+                f.set_slider_min(0.0);
+                f.set_valid_max(200.0);
+                f.set_slider_max(200.0);
+                f.set_value(10.0);
+                f.set_default(10.0);
+                f.set_precision(1);
+                f.set_display_flags(ae::ValueDisplayFlag::PERCENT);
+            }),
+        )
     }
 
-    fn handle_command(&self, cmd: ae::Command, in_data: ae::InData, mut out_data: ae::OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
+    fn handle_command(
+        &self,
+        cmd: ae::Command,
+        in_data: ae::InData,
+        mut out_data: ae::OutData,
+        params: &mut ae::Parameters<Params>,
+    ) -> Result<(), ae::Error> {
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("Portable, v3.3\rThis example shows how to detect and respond to different hosts.\rCopyright 2007-2023 Adobe Inc.");
@@ -102,8 +117,12 @@ impl AdobePluginGlobal for Plugin {
             ae::Command::SequenceSetup => {
                 out_data.set_return_msg(&detect_host(in_data));
             }
-            ae::Command::Render { in_layer, mut out_layer } => {
-                let slider_value = params.get(Params::MixChannels)?.as_float_slider()?.value() as f32;
+            ae::Command::Render {
+                in_layer,
+                mut out_layer,
+            } => {
+                let slider_value =
+                    params.get(Params::MixChannels)?.as_float_slider()?.value() as f32;
 
                 // If the slider is 0 just make a direct copy.
                 if slider_value < 0.001 {

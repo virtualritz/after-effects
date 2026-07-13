@@ -1,28 +1,34 @@
 use super::*;
 
-pub fn histogrid_get_box_in_grid(origin: &ae::Point, grid_width: usize, grid_height: usize, box_across: usize, box_down: usize) -> ae::Rect {
-    let box_width  = (grid_width  / BOXES_ACROSS) as usize;
-    let box_height = (grid_height / BOXES_DOWN)   as usize;
+pub fn histogrid_get_box_in_grid(
+    origin: &ae::Point,
+    grid_width: usize,
+    grid_height: usize,
+    box_across: usize,
+    box_down: usize,
+) -> ae::Rect {
+    let box_width = (grid_width / BOXES_ACROSS) as usize;
+    let box_height = (grid_height / BOXES_DOWN) as usize;
 
     // Given the grid h+w and the box coord (0,0 through BOXES_ACROSS,BOXES_DOWN) return the rect of the box
 
-    let left = (box_width  * box_across) as i32 + origin.h;
-    let top  = (box_height * box_down)   as i32 + origin.v;
+    let left = (box_width * box_across) as i32 + origin.h;
+    let top = (box_height * box_down) as i32 + origin.v;
 
     ae::Rect {
         left,
         top,
-        right:  left + box_width as i32,
-        bottom: top  + box_height as i32,
+        right: left + box_width as i32,
+        bottom: top + box_height as i32,
     }
 }
 
 pub fn pf_to_drawbot_rect(in_rect: &ae::Rect) -> ae::drawbot::RectF32 {
     ae::drawbot::RectF32 {
-        left:   in_rect.left as f32 + 0.5,
-        top:    in_rect.top  as f32 + 0.5,
-        width:  (in_rect.right - in_rect.left) as f32,
-        height: (in_rect.bottom - in_rect.top) as f32
+        left: in_rect.left as f32 + 0.5,
+        top: in_rect.top as f32 + 0.5,
+        width: (in_rect.right - in_rect.left) as f32,
+        height: (in_rect.bottom - in_rect.top) as f32,
     }
 }
 
@@ -31,23 +37,25 @@ pub fn qd_to_drawbot_color(c: &ae::sys::PF_App_Color) -> ae::drawbot::ColorRgba 
     let inv_sixty_five_k = 1.0 / MAX_SHORT_COLOR;
 
     ae::drawbot::ColorRgba {
-        red:   c.red   as f32 * inv_sixty_five_k,
+        red: c.red as f32 * inv_sixty_five_k,
         green: c.green as f32 * inv_sixty_five_k,
-        blue:  c.blue  as f32 * inv_sixty_five_k,
+        blue: c.blue as f32 * inv_sixty_five_k,
         alpha: 1.0,
     }
 }
 
 pub fn acquire_background_color() -> Result<ae::drawbot::ColorRgba, ae::Error> {
     Ok(qd_to_drawbot_color(
-        &ae::pf::suites::App::new()?
-            .bg_color()?
+        &ae::pf::suites::App::new()?.bg_color()?,
     ))
 }
 
 // EXAMPLE: This requests the upstream input frame for lightweight preview purposes, but highly downsampled for speed
 // The frame may not be immediately available. PF_Event_DRAW will get triggered again when async render completes
-pub fn request_async_frame_for_preview(in_data: &ae::InData, event: &ae::EventExtra) -> Result<ae::sys::AEGP_FrameReceiptH, ae::Error> {
+pub fn request_async_frame_for_preview(
+    in_data: &ae::InData,
+    event: &ae::EventExtra,
+) -> Result<ae::sys::AEGP_FrameReceiptH, ae::Error> {
     let aegp_plugin_id = unsafe { super::AEGP_PLUGIN_ID };
 
     // get render options description of upstream input frame to effect
@@ -67,12 +75,16 @@ pub fn request_async_frame_for_preview(in_data: &ae::InData, event: &ae::EventEx
     Ok(async_mgr.checkout_or_render_layer_frame_async_manager(PURPOSE1, layer_rops)?)
 }
 
-pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra) -> Result<(), ae::Error> {
+pub fn draw(
+    seq: &mut Instance,
+    in_data: &ae::InData,
+    event: &mut ae::EventExtra,
+) -> Result<(), ae::Error> {
     let mut origin = ae::Point { v: 0, h: 0 };
-    let mut grid_width  = 0;
+    let mut grid_width = 0;
     let mut grid_height = 0;
-    let mut box_across  = 0;
-    let mut box_down    = 0;
+    let mut box_across = 0;
+    let mut box_down = 0;
 
     let drawbot = event.context_handle().drawing_reference()?;
     let supplier = drawbot.supplier()?;
@@ -84,10 +96,10 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
         let current_frame = event.current_frame();
         // Use to fill background with AE's BG color
         let onscreen_rect = ae::drawbot::RectF32 {
-            left:   current_frame.left   as f32,
-            top:    current_frame.top    as f32,
-            width:  current_frame.right  as f32 - current_frame.left as f32,
-            height: current_frame.bottom as f32 - current_frame.top  as f32 + 1.0,
+            left: current_frame.left as f32,
+            top: current_frame.top as f32,
+            width: current_frame.right as f32 - current_frame.left as f32,
+            height: current_frame.bottom as f32 - current_frame.top as f32 + 1.0,
         };
         origin = ae::Point {
             v: onscreen_rect.top as _,
@@ -96,7 +108,7 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
 
         // Calculate the space taken up by the grid
         // Allow the width to scale horizontally, but not too much
-        grid_width  = onscreen_rect.width as _;
+        grid_width = onscreen_rect.width as _;
         grid_height = onscreen_rect.height as _;
         if (grid_width as f32) < UI_GRID_WIDTH as f32 / 1.5 {
             grid_width = (UI_GRID_WIDTH as f32 / 1.5) as _;
@@ -115,8 +127,12 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
                 let r_suite = ae::aegp::suites::Render::new()?;
 
                 let world = r_suite.receipt_world(frame_receipt)?;
-                if !world.is_null() { // receipt could be valid but empty
-                    seq.color_cache.compute_color_grid_from_frame(&ae::Layer::from_aegp_world(in_data, world)?)?;
+                if !world.is_null() {
+                    // receipt could be valid but empty
+                    seq.color_cache
+                        .compute_color_grid_from_frame(&ae::Layer::from_aegp_world(
+                            in_data, world,
+                        )?)?;
                     seq.valid = true;
                 }
                 r_suite.checkin_frame(frame_receipt)?;
@@ -129,19 +145,21 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
 
     // Draw the color grid using the cached color preview (if valid)
     if seq.valid {
-        let mut pixel_colr: [ae::drawbot::ColorRgba; CACHE_ELEMENTS] = unsafe { std::mem::zeroed() };
+        let mut pixel_colr: [ae::drawbot::ColorRgba; CACHE_ELEMENTS] =
+            unsafe { std::mem::zeroed() };
         let colors = &seq.color_cache.color;
 
         for i in 0..CACHE_ELEMENTS {
-            pixel_colr[i].red   = colors[i].red;
+            pixel_colr[i].red = colors[i].red;
             pixel_colr[i].green = colors[i].green;
-            pixel_colr[i].blue  = colors[i].blue;
+            pixel_colr[i].blue = colors[i].blue;
             pixel_colr[i].alpha = 1.0;
         }
 
         for i in 0..BOXES_PER_GRID {
             // Fill in our grid
-            let box_rect = histogrid_get_box_in_grid(&origin, grid_width, grid_height, box_across, box_down);
+            let box_rect =
+                histogrid_get_box_in_grid(&origin, grid_width, grid_height, box_across, box_down);
 
             let mut path = supplier.new_path()?;
             path.add_rounded_rect(&pf_to_drawbot_rect(&box_rect), 5.0)?;
@@ -158,13 +176,19 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
         }
     }
 
-    let black_color = ae::drawbot::ColorRgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 1.0 };
+    let black_color = ae::drawbot::ColorRgba {
+        red: 0.0,
+        green: 0.0,
+        blue: 0.0,
+        alpha: 1.0,
+    };
     let pen = supplier.new_pen(&black_color, 1.0)?;
 
     // Draw the grid - outline
     for box_down in 0..BOXES_DOWN {
         for box_across in 0..BOXES_ACROSS {
-            let box_rect = histogrid_get_box_in_grid(&origin, grid_width, grid_height, box_across, box_down);
+            let box_rect =
+                histogrid_get_box_in_grid(&origin, grid_width, grid_height, box_across, box_down);
 
             let mut path = supplier.new_path()?;
             path.add_rounded_rect(&pf_to_drawbot_rect(&box_rect), 5.0)?;

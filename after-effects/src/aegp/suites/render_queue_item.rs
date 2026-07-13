@@ -1,5 +1,5 @@
-use crate::*;
 use crate::aegp::*;
+use crate::*;
 
 define_suite!(
     /// Render Queue Item Suite provides information about items in the render queue.
@@ -15,9 +15,7 @@ define_suite!(
 impl RenderQueueItemSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Returns the number of items currently in the render queue.
     pub fn num_items(&self) -> Result<i32, Error> {
@@ -27,15 +25,19 @@ impl RenderQueueItemSuite {
     /// Retrieves a render queue item by index.
     pub fn item_by_index(&self, index: i32) -> Result<RQItemRefHandle, Error> {
         Ok(RQItemRefHandle::from_raw(
-            call_suite_fn_single!(self, AEGP_GetRQItemByIndex -> ae_sys::AEGP_RQItemRefH, index as ae_sys::A_long)?
+            call_suite_fn_single!(self, AEGP_GetRQItemByIndex -> ae_sys::AEGP_RQItemRefH, index as ae_sys::A_long)?,
         ))
     }
 
     /// Retrieves the next render queue item.
     /// Pass `None` for `current_item` to get the first item.
-    pub fn next_item(&self, current_item: Option<RQItemRefHandle>) -> Result<Option<RQItemRefHandle>, Error> {
+    pub fn next_item(
+        &self,
+        current_item: Option<RQItemRefHandle>,
+    ) -> Result<Option<RQItemRefHandle>, Error> {
         let current = current_item.map_or(std::ptr::null_mut(), |h| h.as_ptr());
-        let next = call_suite_fn_single!(self, AEGP_GetNextRQItem -> ae_sys::AEGP_RQItemRefH, current)?;
+        let next =
+            call_suite_fn_single!(self, AEGP_GetNextRQItem -> ae_sys::AEGP_RQItemRefH, current)?;
         if next.is_null() {
             Ok(None)
         } else {
@@ -44,12 +46,21 @@ impl RenderQueueItemSuite {
     }
 
     /// Returns the number of output modules attached to the given render queue item.
-    pub fn num_output_modules(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetNumOutputModulesForRQItem -> ae_sys::A_long, rq_item.as_ptr())? as i32)
+    pub fn num_output_modules(
+        &self,
+        rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
+    ) -> Result<i32, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetNumOutputModulesForRQItem -> ae_sys::A_long, rq_item.as_ptr())?
+                as i32,
+        )
     }
 
     /// Returns the render state of the given render queue item.
-    pub fn render_state(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>) -> Result<RenderItemStatus, Error> {
+    pub fn render_state(
+        &self,
+        rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
+    ) -> Result<RenderItemStatus, Error> {
         Ok(
             call_suite_fn_single!(self, AEGP_GetRenderState -> ae_sys::AEGP_RenderItemStatusType, rq_item.as_ptr())?
                 .into()
@@ -63,25 +74,35 @@ impl RenderQueueItemSuite {
     /// Returns `Err_RANGE` if you pass a status that is illegal in any case.
     /// Returns `Err_PARAMETER` if you try to pass a status that doesn't make sense
     /// (e.g., trying to queue something for which you haven't set the output path).
-    pub fn set_render_state(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>, status: RenderItemStatus) -> Result<(), Error> {
+    pub fn set_render_state(
+        &self,
+        rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
+        status: RenderItemStatus,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetRenderState, rq_item.as_ptr(), status.into())
     }
 
     /// Returns the time at which the given render queue item started rendering.
     /// Returns `Time { value: 0, scale: 1 }` if not started.
-    pub fn started_time(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>) -> Result<Time, Error> {
+    pub fn started_time(
+        &self,
+        rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
+    ) -> Result<Time, Error> {
         Ok(
             call_suite_fn_single!(self, AEGP_GetStartedTime -> ae_sys::A_Time, rq_item.as_ptr())?
-                .into()
+                .into(),
         )
     }
 
     /// Returns the elapsed rendering time for the given render queue item.
     /// Returns `Time { value: 0, scale: 1 }` if not rendered.
-    pub fn elapsed_time(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>) -> Result<Time, Error> {
+    pub fn elapsed_time(
+        &self,
+        rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
+    ) -> Result<Time, Error> {
         Ok(
             call_suite_fn_single!(self, AEGP_GetElapsedTime -> ae_sys::A_Time, rq_item.as_ptr())?
-                .into()
+                .into(),
         )
     }
 
@@ -89,12 +110,16 @@ impl RenderQueueItemSuite {
     pub fn log_type(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>) -> Result<LogType, Error> {
         Ok(
             call_suite_fn_single!(self, AEGP_GetLogType -> ae_sys::AEGP_LogType, rq_item.as_ptr())?
-                .into()
+                .into(),
         )
     }
 
     /// Sets the log type for the given render queue item.
-    pub fn set_log_type(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>, log_type: LogType) -> Result<(), Error> {
+    pub fn set_log_type(
+        &self,
+        rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
+        log_type: LogType,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetLogType, rq_item.as_ptr(), log_type.into())
     }
 
@@ -104,7 +129,12 @@ impl RenderQueueItemSuite {
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
         output_module: impl AsPtr<ae_sys::AEGP_OutputModuleRefH>,
     ) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_RemoveOutputModule, rq_item.as_ptr(), output_module.as_ptr())
+        call_suite_fn!(
+            self,
+            AEGP_RemoveOutputModule,
+            rq_item.as_ptr(),
+            output_module.as_ptr()
+        )
     }
 
     /// Retrieves the comment for the given render queue item.
@@ -113,21 +143,30 @@ impl RenderQueueItemSuite {
         unsafe {
             Ok(
                 U16CString::from_ptr_str(MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr())
-                    .to_string_lossy()
+                    .to_string_lossy(),
             )
         }
     }
 
     /// Sets the comment for the given render queue item.
-    pub fn set_comment(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>, comment: &str) -> Result<(), Error> {
+    pub fn set_comment(
+        &self,
+        rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
+        comment: &str,
+    ) -> Result<(), Error> {
         let comment_utf16 = U16CString::from_str(comment).map_err(|_| Error::InvalidParms)?;
-        call_suite_fn!(self, AEGP_SetComment, rq_item.as_ptr(), comment_utf16.as_ptr())
+        call_suite_fn!(
+            self,
+            AEGP_SetComment,
+            rq_item.as_ptr(),
+            comment_utf16.as_ptr()
+        )
     }
 
     /// Retrieves the composition associated with the given render queue item.
     pub fn comp(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>) -> Result<CompHandle, Error> {
         Ok(CompHandle::from_raw(
-            call_suite_fn_single!(self, AEGP_GetCompFromRQItem -> ae_sys::AEGP_CompH, rq_item.as_ptr())?
+            call_suite_fn_single!(self, AEGP_GetCompFromRQItem -> ae_sys::AEGP_CompH, rq_item.as_ptr())?,
         ))
     }
 

@@ -14,12 +14,13 @@ define_suite!(
 impl SoundDataSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Creates a new [`SoundDataHandle`]. It's disposed on drop.
-    pub fn new_sound_data(&self, sound_format: &AEGP_SoundDataFormat) -> Result<SoundDataHandle, Error> {
+    pub fn new_sound_data(
+        &self,
+        sound_format: &AEGP_SoundDataFormat,
+    ) -> Result<SoundDataHandle, Error> {
         Ok(SoundDataHandle::from_raw_owned(
             call_suite_fn_single!(self, AEGP_NewSoundData -> AEGP_SoundDataH, sound_format)?,
         ))
@@ -31,17 +32,26 @@ impl SoundDataSuite {
     }
 
     /// Obtains information about the format of a given [`SoundDataHandle`].
-    pub fn sound_data_format(&self, sound_data: impl AsPtr<AEGP_SoundDataH>) -> Result<AEGP_SoundDataFormat, Error> {
+    pub fn sound_data_format(
+        &self,
+        sound_data: impl AsPtr<AEGP_SoundDataH>,
+    ) -> Result<AEGP_SoundDataFormat, Error> {
         call_suite_fn_single!(self, AEGP_GetSoundDataFormat -> AEGP_SoundDataFormat, sound_data.as_ptr())
     }
 
     /// Locks the [`SoundDataHandle`] in memory
-    pub fn lock_sound_data_samples(&self, sound_data: impl AsPtr<AEGP_SoundDataH>) -> Result<*mut std::ffi::c_void, Error> {
+    pub fn lock_sound_data_samples(
+        &self,
+        sound_data: impl AsPtr<AEGP_SoundDataH>,
+    ) -> Result<*mut std::ffi::c_void, Error> {
         call_suite_fn_single!(self, AEGP_LockSoundDataSamples -> *mut std::ffi::c_void, sound_data.as_ptr())
     }
 
     /// Unlocks an [`SoundDataHandle`].
-    pub fn unlock_sound_data_samples(&self, sound_data: impl AsPtr<AEGP_SoundDataH>) -> Result<(), Error> {
+    pub fn unlock_sound_data_samples(
+        &self,
+        sound_data: impl AsPtr<AEGP_SoundDataH>,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_UnlockSoundDataSamples, sound_data.as_ptr())
     }
 

@@ -14,14 +14,10 @@ pub struct OutData {
 }
 
 impl AsRef<ae_sys::PF_OutData> for OutData {
-    fn as_ref(&self) -> &ae_sys::PF_OutData {
-        unsafe { &*self.ptr }
-    }
+    fn as_ref(&self) -> &ae_sys::PF_OutData { unsafe { &*self.ptr } }
 }
 impl AsMut<ae_sys::PF_OutData> for OutData {
-    fn as_mut(&mut self) -> &mut ae_sys::PF_OutData {
-        unsafe { &mut *self.ptr }
-    }
+    fn as_mut(&mut self) -> &mut ae_sys::PF_OutData { unsafe { &mut *self.ptr } }
 }
 
 impl OutData {
@@ -30,39 +26,25 @@ impl OutData {
         Self { ptr }
     }
 
-    pub fn as_ptr(&self) -> *const ae_sys::PF_OutData {
-        self.ptr
-    }
+    pub fn as_ptr(&self) -> *const ae_sys::PF_OutData { self.ptr }
 
-    pub fn width(&self) -> u32 {
-        self.as_ref().width as u32
-    }
+    pub fn width(&self) -> u32 { self.as_ref().width as u32 }
 
     /// Set during [`Command::FrameSetup`] if the output image size differs from the input. width and height are the size of the output buffer, and origin is the point the input should map to in the output.
     /// To create a 5-pixel drop shadow up and left, set origin to (5, 5).
-    pub fn set_width(&mut self, width: u32) {
-        self.as_mut().width = width as ae_sys::A_long;
-    }
+    pub fn set_width(&mut self, width: u32) { self.as_mut().width = width as ae_sys::A_long; }
 
-    pub fn height(&self) -> u32 {
-        self.as_ref().height as u32
-    }
+    pub fn height(&self) -> u32 { self.as_ref().height as u32 }
 
     /// Set during [`Command::FrameSetup`] if the output image size differs from the input. width and height are the size of the output buffer, and origin is the point the input should map to in the output.
     /// To create a 5-pixel drop shadow up and left, set origin to (5, 5).
-    pub fn set_height(&mut self, height: u32) {
-        self.as_mut().height = height as ae_sys::A_long;
-    }
+    pub fn set_height(&mut self, height: u32) { self.as_mut().height = height as ae_sys::A_long; }
 
-    pub fn origin(&self) -> Point {
-        self.as_ref().origin.into()
-    }
+    pub fn origin(&self) -> Point { self.as_ref().origin.into() }
 
     /// Set during [`Command::FrameSetup`] if the output image size differs from the input. width and height are the size of the output buffer, and origin is the point the input should map to in the output.
     /// To create a 5-pixel drop shadow up and left, set origin to (5, 5).
-    pub fn set_origin(&mut self, origin: Point) {
-        self.as_mut().origin = origin.into();
-    }
+    pub fn set_origin(&mut self, origin: Point) { self.as_mut().origin = origin.into(); }
 
     /// After Effects displays any string you put here (checked and cleared after every command selector).
     pub fn set_return_msg(&mut self, msg: &str) {
@@ -74,9 +56,7 @@ impl OutData {
     }
 
     /// Whether the plug-in already supplied a message for the current command.
-    pub fn has_return_msg(&self) -> bool {
-        self.as_ref().return_msg[0] != 0
-    }
+    pub fn has_return_msg(&self) -> bool { self.as_ref().return_msg[0] != 0 }
 
     /// After Effects displays any string you put here as an error (checked and cleared after every command selector).
     pub fn set_error_msg(&mut self, msg: &str) {
@@ -85,19 +65,13 @@ impl OutData {
     }
 
     /// Set this flag to the version of your plug-in code. After Effects uses this data to decide which of duplicate effects to load.
-    pub fn set_version(&mut self, v: u32) {
-        self.as_mut().my_version = v as ae_sys::A_u_long;
-    }
+    pub fn set_version(&mut self, v: u32) { self.as_mut().my_version = v as ae_sys::A_u_long; }
 
     /// Send messages to After Effects. OR together multiple values.
-    pub fn set_out_flags(&mut self, v: OutFlags) {
-        self.as_mut().out_flags = v.into();
-    }
+    pub fn set_out_flags(&mut self, v: OutFlags) { self.as_mut().out_flags = v.into(); }
 
     /// Send messages to After Effects. OR together multiple values.
-    pub fn set_out_flags2(&mut self, v: OutFlags2) {
-        self.as_mut().out_flags2 = v.into();
-    }
+    pub fn set_out_flags2(&mut self, v: OutFlags2) { self.as_mut().out_flags2 = v.into(); }
 
     /// Send messages to After Effects. OR together multiple values.
     pub fn set_out_flag(&mut self, flag: OutFlags, enabled: bool) {
@@ -118,9 +92,7 @@ impl OutData {
     }
 
     /// Set the [`OutFlags::ForceRerender`] flag
-    pub fn set_force_rerender(&mut self) {
-        self.set_out_flag(OutFlags::ForceRerender, true);
-    }
+    pub fn set_force_rerender(&mut self) { self.set_out_flag(OutFlags::ForceRerender, true); }
 
     /// Data you (might have) allocated during [`Command::FrameSetup`].
     /// This is never written to disk; it was used to pass information from your [`Command::FrameSetup`] response to your [`Command::Render`] or [`Command::FrameSetdown`]
@@ -191,7 +163,6 @@ define_enum! {
         AudioEffectOnly              = ae_sys::PF_OutFlag_AUDIO_EFFECT_ONLY,
     }
 }
-
 
 define_enum! {
     ae_sys::PF_OutFlags2,

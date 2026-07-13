@@ -1,6 +1,6 @@
 use crate::*;
-use widestring::U16CString;
 use ae_sys::AEIO_InSpecH;
+use widestring::U16CString;
 
 define_suite!(
     /// These functions manage an input specification, After Effects' internal representation of data gathered from any source.
@@ -15,14 +15,16 @@ define_suite!(
 impl IOInSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Retrieves the options data (created by your AEIO) for the given [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_options_handle(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<aeio::Handle, Error> {
+    pub fn in_spec_options_handle(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<aeio::Handle, Error> {
         Ok(aeio::Handle::from_raw(
-            call_suite_fn_single!(self, AEGP_GetInSpecOptionsHandle -> *mut std::ffi::c_void, in_spec_handle.as_ptr())? as _
+            call_suite_fn_single!(self, AEGP_GetInSpecOptionsHandle -> *mut std::ffi::c_void, in_spec_handle.as_ptr())?
+                as _,
         ))
     }
 
@@ -31,30 +33,56 @@ impl IOInSuite {
     /// Must be allocated using the [`suites::Memory`](aegp::suites::Memory).
     ///
     /// Returns the old options handle.
-    pub fn set_in_spec_options_handle(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, options: &aeio::Handle) -> Result<aeio::Handle, Error> {
+    pub fn set_in_spec_options_handle(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        options: &aeio::Handle,
+    ) -> Result<aeio::Handle, Error> {
         Ok(aeio::Handle::from_raw(
-            call_suite_fn_single!(self, AEGP_SetInSpecOptionsHandle -> *mut std::ffi::c_void, in_spec_handle.as_ptr(), options.as_ptr() as *mut _)? as _
+            call_suite_fn_single!(self, AEGP_SetInSpecOptionsHandle -> *mut std::ffi::c_void, in_spec_handle.as_ptr(), options.as_ptr() as *mut _)?
+                as _,
         ))
     }
 
     /// Retrieves the file path for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_file_path(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<String, Error> {
+    pub fn in_spec_file_path(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<String, Error> {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetInSpecFilePath -> ae_sys::AEGP_MemHandle, in_spec_handle.as_ptr())?;
         Ok(unsafe {
             U16CString::from_ptr_str(
-                aegp::MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr(),
-            ).to_string_lossy()
+                aegp::MemHandle::<u16>::from_raw(mem_handle)?
+                    .lock()?
+                    .as_ptr(),
+            )
+            .to_string_lossy()
         })
     }
 
     /// Retrieves the frame rate of the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_native_fps(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetInSpecNativeFPS -> ae_sys::A_Fixed, in_spec_handle.as_ptr())? as i32)
+    pub fn in_spec_native_fps(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<i32, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetInSpecNativeFPS -> ae_sys::A_Fixed, in_spec_handle.as_ptr())?
+                as i32,
+        )
     }
 
     /// Sets the frame rate of the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_native_fps(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, native_fps: i32) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecNativeFPS, in_spec_handle.as_ptr(), native_fps as _)
+    pub fn set_in_spec_native_fps(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        native_fps: i32,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecNativeFPS,
+            in_spec_handle.as_ptr(),
+            native_fps as _
+        )
     }
 
     /// Retrieves the bit depth of the image data in the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
@@ -63,7 +91,11 @@ impl IOInSuite {
     }
 
     /// Indicates to After Effects the bit depth of the image data in the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_depth(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, depth: i16) -> Result<(), Error> {
+    pub fn set_in_spec_depth(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        depth: i16,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetInSpecDepth, in_spec_handle.as_ptr(), depth)
     }
 
@@ -73,32 +105,63 @@ impl IOInSuite {
     }
 
     /// Indicates to After Effects the size (in bytes) of the data referenced by the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_size(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, size: u64) -> Result<(), Error> {
+    pub fn set_in_spec_size(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        size: u64,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetInSpecSize, in_spec_handle.as_ptr(), size)
     }
 
     /// Retrieves field information for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_interlace_label(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<ae_sys::FIEL_Label, Error> {
+    pub fn in_spec_interlace_label(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<ae_sys::FIEL_Label, Error> {
         call_suite_fn_single!(self, AEGP_GetInSpecInterlaceLabel -> ae_sys::FIEL_Label, in_spec_handle.as_ptr())
     }
 
     /// Specifies field information for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_interlace_label(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, interlace_label: &ae_sys::FIEL_Label) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecInterlaceLabel, in_spec_handle.as_ptr(), interlace_label)
+    pub fn set_in_spec_interlace_label(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        interlace_label: &ae_sys::FIEL_Label,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecInterlaceLabel,
+            in_spec_handle.as_ptr(),
+            interlace_label
+        )
     }
 
     /// Retrieves alpha channel interpretation information for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_alpha_label(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<ae_sys::AEIO_AlphaLabel, Error> {
+    pub fn in_spec_alpha_label(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<ae_sys::AEIO_AlphaLabel, Error> {
         call_suite_fn_single!(self, AEGP_GetInSpecAlphaLabel -> ae_sys::AEIO_AlphaLabel, in_spec_handle.as_ptr())
     }
 
     /// Sets alpha channel interpretation information for the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_alpha_label(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, alpha_label: &ae_sys::AEIO_AlphaLabel) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecAlphaLabel, in_spec_handle.as_ptr(), alpha_label)
+    pub fn set_in_spec_alpha_label(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        alpha_label: &ae_sys::AEIO_AlphaLabel,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecAlphaLabel,
+            in_spec_handle.as_ptr(),
+            alpha_label
+        )
     }
 
     /// Retrieves the duration of the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_duration(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<Time, Error> {
+    pub fn in_spec_duration(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetInSpecDuration -> ae_sys::A_Time, in_spec_handle.as_ptr())?.into())
     }
 
@@ -108,31 +171,62 @@ impl IOInSuite {
     /// If you don't set the `A_Time.scale` to something other than zero, your file(s) will not import.
     ///
     /// This will be fixed in future versions.
-    pub fn set_in_spec_duration(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, duration: Time) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecDuration, in_spec_handle.as_ptr(), &duration.into() as *const _)
+    pub fn set_in_spec_duration(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        duration: Time,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecDuration,
+            in_spec_handle.as_ptr(),
+            &duration.into() as *const _
+        )
     }
 
     /// Retrieves the width and height of the image data in the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_dimensions(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<(i32, i32), Error> {
+    pub fn in_spec_dimensions(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<(i32, i32), Error> {
         let (width, height) = call_suite_fn_double!(self, AEGP_GetInSpecDimensions -> ae_sys::A_long, ae_sys::A_long, in_spec_handle.as_ptr())?;
-        Ok((
-            width as i32,
-            height as i32
-        ))
+        Ok((width as i32, height as i32))
     }
 
     /// Indicates to After Effects the width and height of the image data in the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_dimensions(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, width: i32, height: i32) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecDimensions, in_spec_handle.as_ptr(), width, height)
+    pub fn set_in_spec_dimensions(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        width: i32,
+        height: i32,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecDimensions,
+            in_spec_handle.as_ptr(),
+            width,
+            height
+        )
     }
 
     /// Retrieves the width, height, bounding rect, and scaling factor applied to an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_rational_dimensions(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<(ae_sys::AEIO_RationalScale, i32, i32, Rect), Error> {
+    pub fn in_spec_rational_dimensions(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<(ae_sys::AEIO_RationalScale, i32, i32, Rect), Error> {
         let mut rs: ae_sys::AEIO_RationalScale = unsafe { std::mem::zeroed() };
         let mut width = 0;
         let mut height = 0;
         let mut rect: ae_sys::A_Rect = unsafe { std::mem::zeroed() };
-        call_suite_fn!(self, AEGP_InSpecGetRationalDimensions, in_spec_handle.as_ptr(), &mut rs, &mut width, &mut height, &mut rect)?;
+        call_suite_fn!(
+            self,
+            AEGP_InSpecGetRationalDimensions,
+            in_spec_handle.as_ptr(),
+            &mut rs,
+            &mut width,
+            &mut height,
+            &mut rect
+        )?;
         Ok((rs, width, height, rect.into()))
     }
 
@@ -142,55 +236,118 @@ impl IOInSuite {
     }
 
     /// Sets the horizontal scaling factor of an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_hsf(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, hsf: Ratio) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecHSF, in_spec_handle.as_ptr(), &hsf.into() as *const _)
+    pub fn set_in_spec_hsf(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        hsf: Ratio,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecHSF,
+            in_spec_handle.as_ptr(),
+            &hsf.into() as *const _
+        )
     }
 
     /// Obtains the sampling rate (in samples per second) for the audio data referenced by the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_sound_rate(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<f64, Error> {
+    pub fn in_spec_sound_rate(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<f64, Error> {
         call_suite_fn_single!(self, AEGP_GetInSpecSoundRate -> f64, in_spec_handle.as_ptr())
     }
 
     /// Sets the sampling rate (in samples per second) for the audio data referenced by the [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_sound_rate(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, rate: f64) -> Result<(), Error> {
+    pub fn set_in_spec_sound_rate(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        rate: f64,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetInSpecSoundRate, in_spec_handle.as_ptr(), rate)
     }
 
     /// Obtains the encoding method (signed PCM, unsigned PCM, or floating point) from an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_sound_encoding(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<aeio::SoundEncoding, Error> {
+    pub fn in_spec_sound_encoding(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<aeio::SoundEncoding, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetInSpecSoundEncoding -> ae_sys::AEIO_SndEncoding, in_spec_handle.as_ptr())?.into())
     }
 
     /// Sets the encoding method of an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_sound_encoding(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, encoding: aeio::SoundEncoding) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecSoundEncoding, in_spec_handle.as_ptr(), encoding.into())
+    pub fn set_in_spec_sound_encoding(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        encoding: aeio::SoundEncoding,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecSoundEncoding,
+            in_spec_handle.as_ptr(),
+            encoding.into()
+        )
     }
 
     /// Retrieves the bytes-per-sample (1,2, or 4) from an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn in_spec_sound_sample_size(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<aeio::SoundSampleSize, Error> {
+    pub fn in_spec_sound_sample_size(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<aeio::SoundSampleSize, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetInSpecSoundSampleSize -> ae_sys::AEIO_SndSampleSize, in_spec_handle.as_ptr())?.into())
     }
 
     /// Set the bytes per sample of an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
-    pub fn set_in_spec_sound_sample_size(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, bytes_per_sample: aeio::SoundSampleSize) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecSoundSampleSize, in_spec_handle.as_ptr(), bytes_per_sample.into())
+    pub fn set_in_spec_sound_sample_size(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        bytes_per_sample: aeio::SoundSampleSize,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecSoundSampleSize,
+            in_spec_handle.as_ptr(),
+            bytes_per_sample.into()
+        )
     }
 
     /// Determines whether the audio in the [`aeio::SoundChannels`] is mono or stereo.
-    pub fn in_spec_sound_channels(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<aeio::SoundChannels, Error> {
+    pub fn in_spec_sound_channels(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<aeio::SoundChannels, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetInSpecSoundChannels -> ae_sys::AEIO_SndChannels, in_spec_handle.as_ptr())?.into())
     }
 
     /// Sets the audio in an [`aeio::SoundChannels`] to mono or stereo.
-    pub fn set_in_spec_sound_channels(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, num_channels: aeio::SoundChannels) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecSoundChannels, in_spec_handle.as_ptr(), num_channels.into())
+    pub fn set_in_spec_sound_channels(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        num_channels: aeio::SoundChannels,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecSoundChannels,
+            in_spec_handle.as_ptr(),
+            num_channels.into()
+        )
     }
 
     /// If your file format has auxiliary files which you want to prevent users from opening directly,
     /// pass it's extension, file type and creator to this function to keep it from appearing in input dialogs.
-    pub fn add_aux_ext_map(&self, extension: &str, file_type: aeio::FileType, creator: i32) -> Result<(), Error> {
+    pub fn add_aux_ext_map(
+        &self,
+        extension: &str,
+        file_type: aeio::FileType,
+        creator: i32,
+    ) -> Result<(), Error> {
         let extension = std::ffi::CString::new(extension).map_err(|_| Error::InvalidParms)?;
-        call_suite_fn!(self, AEGP_AddAuxExtMap, extension.as_ptr(), file_type as _, creator)
+        call_suite_fn!(
+            self,
+            AEGP_AddAuxExtMap,
+            extension.as_ptr(),
+            file_type as _,
+            creator
+        )
     }
 
     /// In case of RGB data, if there is an embedded icc profile, build an `AEGP_ColorProfile` out of
@@ -204,53 +361,139 @@ impl IOInSuite {
     /// If you are unpacking non-RGB data into specific RGB color space, you must pass the profile describing this space to [`set_in_spec_assigned_color_profile()`](Self::set_in_spec_assigned_color_profile) below.
     /// Otherwise, your RGB data will be incorrectly interpreted as being in working space.
     /// Either color profile or profile description should be NULL in this function. You cannot use both.
-    pub fn set_in_spec_embedded_color_profile(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, color_profile: Option<ae_sys::AEGP_ConstColorProfileP>, profile_desc: Option<&str>) -> Result<(), Error> {
+    pub fn set_in_spec_embedded_color_profile(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        color_profile: Option<ae_sys::AEGP_ConstColorProfileP>,
+        profile_desc: Option<&str>,
+    ) -> Result<(), Error> {
         let profile_desc = if let Some(profile_desc) = profile_desc {
             Some(widestring::U16CString::from_str(profile_desc).map_err(|_| Error::InvalidParms)?)
         } else {
             None
         };
 
-        call_suite_fn!(self, AEGP_SetInSpecEmbeddedColorProfile, in_spec_handle.as_ptr(), color_profile.unwrap_or(core::ptr::null_mut()), profile_desc.as_ref().map_or(std::ptr::null(), |pd| pd.as_ptr()))
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecEmbeddedColorProfile,
+            in_spec_handle.as_ptr(),
+            color_profile.unwrap_or(core::ptr::null_mut()),
+            profile_desc
+                .as_ref()
+                .map_or(std::ptr::null(), |pd| pd.as_ptr())
+        )
     }
 
     /// Assign a valid RGB color profile to the footage.
-    pub fn set_in_spec_assigned_color_profile(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, color_profile: ae_sys::AEGP_ConstColorProfileP) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecAssignedColorProfile, in_spec_handle.as_ptr(), color_profile)
+    pub fn set_in_spec_assigned_color_profile(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        color_profile: ae_sys::AEGP_ConstColorProfileP,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecAssignedColorProfile,
+            in_spec_handle.as_ptr(),
+            color_profile
+        )
     }
 
     /// New in CC. Retrieves the native start time of the footage.
-    pub fn in_spec_native_start_time(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<Time, Error> {
+    pub fn in_spec_native_start_time(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<Time, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetInSpecNativeStartTime -> ae_sys::A_Time, in_spec_handle.as_ptr())?.into())
     }
 
     /// New in CC. Assign a native start time to the footage.
-    pub fn set_in_spec_native_start_time(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, start_time: Time) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecNativeStartTime, in_spec_handle.as_ptr(), &start_time.into() as *const _)
+    pub fn set_in_spec_native_start_time(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        start_time: Time,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecNativeStartTime,
+            in_spec_handle.as_ptr(),
+            &start_time.into() as *const _
+        )
     }
 
     /// New in CC. Clear the native start time of the footage.
     /// Setting the native start time to 0 using [`set_in_spec_native_start_time()`](Self::set_in_spec_native_start_time) doesn't do this.
     /// It still means there is a special native start time provided.
-    pub fn clear_in_spec_native_start_time(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_ClearInSpecNativeStartTime, in_spec_handle.as_ptr())
+    pub fn clear_in_spec_native_start_time(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_ClearInSpecNativeStartTime,
+            in_spec_handle.as_ptr()
+        )
     }
 
     /// New in CC. Retrieve the drop-frame setting of the footage.
-    pub fn in_spec_native_display_drop_frame(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetInSpecNativeDisplayDropFrame -> ae_sys::A_Boolean, in_spec_handle.as_ptr())? != 0)
+    pub fn in_spec_native_display_drop_frame(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+    ) -> Result<bool, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetInSpecNativeDisplayDropFrame -> ae_sys::A_Boolean, in_spec_handle.as_ptr())?
+                != 0,
+        )
     }
 
     /// New in CC. Assign the drop-frame setting of the footage.
-    pub fn set_in_spec_native_display_drop_frame(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, drop_frame: bool) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecNativeDisplayDropFrame, in_spec_handle.as_ptr(), drop_frame as _)
+    pub fn set_in_spec_native_display_drop_frame(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        drop_frame: bool,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecNativeDisplayDropFrame,
+            in_spec_handle.as_ptr(),
+            drop_frame as _
+        )
     }
+
     // v6
-    pub fn set_in_spec_still_sequence_native_fps(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, native_still_seq_fps: i32) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecStillSequenceNativeFPS, in_spec_handle.as_ptr(), native_still_seq_fps as _)
+    pub fn set_in_spec_still_sequence_native_fps(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        native_still_seq_fps: i32,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecStillSequenceNativeFPS,
+            in_spec_handle.as_ptr(),
+            native_still_seq_fps as _
+        )
     }
-    pub fn set_in_spec_color_space_from_cicp(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>, color_primaries_code: i32, transfer_characteristics_code: i32, matrix_coefficients_code: i32, full_range_video_flag: i32, bit_depth_l: i32, is_rgb: bool) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetInSpecColorSpaceFromCICP, in_spec_handle.as_ptr(), color_primaries_code as _, transfer_characteristics_code as _, matrix_coefficients_code as _, full_range_video_flag as _, bit_depth_l as _, is_rgb as _)
+
+    pub fn set_in_spec_color_space_from_cicp(
+        &self,
+        in_spec_handle: impl AsPtr<AEIO_InSpecH>,
+        color_primaries_code: i32,
+        transfer_characteristics_code: i32,
+        matrix_coefficients_code: i32,
+        full_range_video_flag: i32,
+        bit_depth_l: i32,
+        is_rgb: bool,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetInSpecColorSpaceFromCICP,
+            in_spec_handle.as_ptr(),
+            color_primaries_code as _,
+            transfer_characteristics_code as _,
+            matrix_coefficients_code as _,
+            full_range_video_flag as _,
+            bit_depth_l as _,
+            is_rgb as _
+        )
     }
 }
 
@@ -396,7 +639,11 @@ define_suite_item_wrapper!(
 impl InputSpecification {
     /// If your file format has auxiliary files which you want to prevent users from opening directly,
     /// pass it's extension, file type and creator to this function to keep it from appearing in input dialogs.
-    pub fn add_aux_ext_map(extension: &str, file_type: aeio::FileType, creator: i32) -> Result<(), Error> {
+    pub fn add_aux_ext_map(
+        extension: &str,
+        file_type: aeio::FileType,
+        creator: i32,
+    ) -> Result<(), Error> {
         IOInSuite::new()?.add_aux_ext_map(extension, file_type, creator)
     }
 }

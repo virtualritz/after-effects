@@ -1,4 +1,4 @@
-use crate::{ae_sys, borrow_pica_basic_as_ptr, pr, Error, Matrix4, Suite, Time, WorldHandle};
+use crate::{Error, Matrix4, Suite, Time, WorldHandle, ae_sys, borrow_pica_basic_as_ptr, pr};
 
 // TDOO: finish wrapping the entire scene 3d
 
@@ -62,14 +62,10 @@ impl Scene3D {
     }
 
     #[inline]
-    pub fn scene3d_ptr(&self) -> *mut ae_sys::AEGP_Scene3D {
-        self.scene3d_ptr
-    }
+    pub fn scene3d_ptr(&self) -> *mut ae_sys::AEGP_Scene3D { self.scene3d_ptr }
 
     #[inline]
-    pub fn scene3d_suite_ptr(&self) -> *const ae_sys::AEGP_Scene3DSuite2 {
-        self
-    }
+    pub fn scene3d_suite_ptr(&self) -> *const ae_sys::AEGP_Scene3DSuite2 { self }
 
     #[inline]
     pub fn setup_motion_blur_samples(
@@ -243,9 +239,7 @@ impl Scene3DLayerHandle {
     }
 
     #[inline]
-    pub fn as_ptr(&self) -> *const ae_sys::AEGP_Scene3DLayer {
-        self.scene3d_layer_ptr
-    }
+    pub fn as_ptr(&self) -> *const ae_sys::AEGP_Scene3DLayer { self.scene3d_layer_ptr }
 }
 
 pub struct Scene3DTextureCacheHandle {

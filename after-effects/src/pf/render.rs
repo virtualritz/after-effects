@@ -39,14 +39,10 @@ pub struct PreRenderExtra {
     pub(crate) ptr: *mut ae_sys::PF_PreRenderExtra,
 }
 impl AsRef<ae_sys::PF_PreRenderExtra> for PreRenderExtra {
-    fn as_ref(&self) -> &ae_sys::PF_PreRenderExtra {
-        unsafe { &*self.ptr }
-    }
+    fn as_ref(&self) -> &ae_sys::PF_PreRenderExtra { unsafe { &*self.ptr } }
 }
 impl AsMut<ae_sys::PF_PreRenderExtra> for PreRenderExtra {
-    fn as_mut(&mut self) -> &mut ae_sys::PF_PreRenderExtra {
-        unsafe { &mut *self.ptr }
-    }
+    fn as_mut(&mut self) -> &mut ae_sys::PF_PreRenderExtra { unsafe { &mut *self.ptr } }
 }
 impl PreRenderExtra {
     pub fn from_raw(
@@ -57,21 +53,24 @@ impl PreRenderExtra {
         assert!(!ptr.is_null());
         Self { in_data_ptr, ptr }
     }
-    pub fn as_ptr(&self) -> *mut ae_sys::PF_PreRenderExtra {
-        self.ptr
-    }
+
+    pub fn as_ptr(&self) -> *mut ae_sys::PF_PreRenderExtra { self.ptr }
+
     pub fn what_gpu(&self) -> GpuFramework {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).what_gpu.into() }
     }
+
     pub fn bit_depth(&self) -> i16 {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).bitdepth as i16 }
     }
+
     pub fn device_index(&self) -> usize {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).device_index as usize }
     }
+
     pub fn set_pre_render_data<T: Any>(&mut self, val: T) {
         let boxed: Box<Box<dyn Any>> = Box::new(Box::new(val));
         unsafe {
@@ -82,6 +81,7 @@ impl PreRenderExtra {
             (*self.as_mut().output).delete_pre_render_data_func = Some(delete_pre_render_data);
         }
     }
+
     pub fn callbacks(&self) -> PreRenderCallbacks {
         unsafe { PreRenderCallbacks::from_raw(self.in_data_ptr, (*self.ptr).cb) }
     }
@@ -90,6 +90,7 @@ impl PreRenderExtra {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).output_request }
     }
+
     pub fn set_gpu_render_possible(&mut self, val: bool) {
         assert!(!self.as_mut().output.is_null());
         unsafe {
@@ -102,6 +103,7 @@ impl PreRenderExtra {
             }
         }
     }
+
     pub fn set_returns_extra_pixels(&mut self, val: bool) {
         assert!(!self.as_mut().output.is_null());
         unsafe {
@@ -119,27 +121,32 @@ impl PreRenderExtra {
         assert!(!self.as_ref().output.is_null());
         unsafe { (*self.as_ref().output).result_rect.into() }
     }
+
     pub fn max_result_rect(&self) -> Rect {
         assert!(!self.as_ref().output.is_null());
         unsafe { (*self.as_ref().output).max_result_rect.into() }
     }
+
     pub fn set_result_rect(&mut self, rect: Rect) {
         assert!(!self.as_mut().output.is_null());
         unsafe {
             (*self.as_mut().output).result_rect = rect.into();
         }
     }
+
     pub fn set_max_result_rect(&mut self, rect: Rect) {
         assert!(!self.as_mut().output.is_null());
         unsafe {
             (*self.as_mut().output).max_result_rect = rect.into();
         }
     }
+
     pub fn union_result_rect(&mut self, rect: Rect) -> Rect {
         let rect = *self.result_rect().union(&rect);
         self.set_result_rect(rect);
         rect
     }
+
     pub fn union_max_result_rect(&mut self, rect: Rect) -> Rect {
         let rect = *self.max_result_rect().union(&rect);
         self.set_max_result_rect(rect);
@@ -158,9 +165,7 @@ pub struct SmartRenderExtra {
     pub(crate) ptr: *mut ae_sys::PF_SmartRenderExtra,
 }
 impl AsRef<ae_sys::PF_SmartRenderExtra> for SmartRenderExtra {
-    fn as_ref(&self) -> &ae_sys::PF_SmartRenderExtra {
-        unsafe { &*self.ptr }
-    }
+    fn as_ref(&self) -> &ae_sys::PF_SmartRenderExtra { unsafe { &*self.ptr } }
 }
 impl SmartRenderExtra {
     pub fn from_raw(
@@ -170,24 +175,28 @@ impl SmartRenderExtra {
         assert!(!ptr.is_null());
         Self { in_data_ptr, ptr }
     }
-    pub fn as_ptr(&self) -> *mut ae_sys::PF_SmartRenderExtra {
-        self.ptr
-    }
+
+    pub fn as_ptr(&self) -> *mut ae_sys::PF_SmartRenderExtra { self.ptr }
+
     pub fn callbacks(&self) -> SmartRenderCallbacks {
         unsafe { SmartRenderCallbacks::from_raw(self.in_data_ptr, (*self.ptr).cb) }
     }
+
     pub fn what_gpu(&self) -> GpuFramework {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).what_gpu.into() }
     }
+
     pub fn device_index(&self) -> usize {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).device_index as usize }
     }
+
     pub fn bit_depth(&self) -> i16 {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).bitdepth }
     }
+
     /// # Panics
     /// Panics if the stored GPU data is not of type `T` (a plugin bug).
     pub fn gpu_data<T: Any>(&self) -> Option<&T> {
@@ -203,6 +212,7 @@ impl SmartRenderExtra {
             None => panic!("Invalid type for gpu_data"),
         }
     }
+
     /// # Panics
     /// Panics if the stored pre-render data is not of type `T` (a plugin bug).
     pub fn pre_render_data<T: Any>(&self) -> Option<&T> {
@@ -219,6 +229,7 @@ impl SmartRenderExtra {
             None => panic!("Invalid type for pre_render_data"),
         }
     }
+
     /// # Panics
     /// Panics if the stored pre-render data is not of type `T` (a plugin bug).
     pub fn pre_render_data_mut<T: Any>(&mut self) -> Option<&mut T> {
@@ -254,14 +265,9 @@ impl PreRenderCallbacks {
         }
     }
 
-    pub fn as_ptr(&self) -> *const ae_sys::PF_PreRenderCallbacks {
-        self.rc_ptr
-    }
+    pub fn as_ptr(&self) -> *const ae_sys::PF_PreRenderCallbacks { self.rc_ptr }
 
-    pub fn guid_mix_in_ptr<T>(
-        &self,
-        buf: &T,
-    ) -> Result<(), Error> {
+    pub fn guid_mix_in_ptr<T>(&self, buf: &T) -> Result<(), Error> {
         let buf_ptr: *const std::ffi::c_void = buf as *const _ as *const std::ffi::c_void;
         if buf_ptr.is_null() {
             return Err(Error::InvalidCallback);
@@ -273,7 +279,9 @@ impl PreRenderCallbacks {
         }
 
         if let Some(guid_mix_in_ptr) = unsafe { *self.rc_ptr }.GuidMixInPtr {
-            match unsafe { guid_mix_in_ptr((*self.in_data_ptr).effect_ref, buf_size as u32, buf_ptr) } {
+            match unsafe {
+                guid_mix_in_ptr((*self.in_data_ptr).effect_ref, buf_size as u32, buf_ptr)
+            } {
                 0 => Ok(()),
                 e => Err(Error::from(e)),
             }
@@ -333,9 +341,7 @@ impl SmartRenderCallbacks {
         }
     }
 
-    pub fn as_ptr(&self) -> *const ae_sys::PF_SmartRenderCallbacks {
-        self.rc_ptr
-    }
+    pub fn as_ptr(&self) -> *const ae_sys::PF_SmartRenderCallbacks { self.rc_ptr }
 
     /// Check out a layer corresponding to the ID you checked it out with in SmartPreRender.
     /// Note that the resulting layer may be None even if the ID is valid--for example, if the target layer is an
@@ -344,13 +350,16 @@ impl SmartRenderCallbacks {
         if let Some(checkout_layer_pixels) = unsafe { *self.rc_ptr }.checkout_layer_pixels {
             let mut effect_world_ptr = std::ptr::null_mut();
 
-            match (unsafe {
-                checkout_layer_pixels(
-                    (*self.in_data_ptr).effect_ref,
-                    checkout_id as i32,
-                    &mut effect_world_ptr,
-                )
-            }, effect_world_ptr.is_null()) {
+            match (
+                unsafe {
+                    checkout_layer_pixels(
+                        (*self.in_data_ptr).effect_ref,
+                        checkout_id as i32,
+                        &mut effect_world_ptr,
+                    )
+                },
+                effect_world_ptr.is_null(),
+            ) {
                 (0, false) => Ok(Some(Layer::from_raw(
                     effect_world_ptr,
                     self.in_data_ptr,
@@ -383,12 +392,10 @@ impl SmartRenderCallbacks {
         if let Some(checkout_output) = unsafe { *self.rc_ptr }.checkout_output {
             let mut effect_world_ptr = std::ptr::null_mut();
 
-            match (unsafe {
-                checkout_output(
-                    (*self.in_data_ptr).effect_ref,
-                    &mut effect_world_ptr,
-                )
-            }, effect_world_ptr.is_null()) {
+            match (
+                unsafe { checkout_output((*self.in_data_ptr).effect_ref, &mut effect_world_ptr) },
+                effect_world_ptr.is_null(),
+            ) {
                 (0, false) => Ok(Some(Layer::from_raw(
                     effect_world_ptr,
                     self.in_data_ptr,

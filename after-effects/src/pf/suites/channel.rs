@@ -1,4 +1,3 @@
-
 use crate::*;
 use ae_sys::*;
 
@@ -13,25 +12,44 @@ define_suite!(
 impl ChannelSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Retrieves the number of auxiliary channels associated with the indexed layer.
     /// - `param_index` is the parameter index of the layer whose source you wish to interrogate
-    pub fn layer_channel_count(&self, effect_ref: impl AsPtr<PF_ProgPtr>, param_index: i32) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, PF_GetLayerChannelCount -> ae_sys::A_long, effect_ref.as_ptr(), param_index)? as _)
+    pub fn layer_channel_count(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        param_index: i32,
+    ) -> Result<i32, Error> {
+        Ok(
+            call_suite_fn_single!(self, PF_GetLayerChannelCount -> ae_sys::A_long, effect_ref.as_ptr(), param_index)?
+                as _,
+        )
     }
 
     /// Retrieves (by index) a reference to, and description of, the specified channel.
     /// Given a channel index return the opaque channelRef and a channel description.
     /// Channel index must lie between 0 and num_channels-1.
     /// You will use the channelRef in all subsequent calls
-    pub fn layer_channel_indexed_ref_and_desc(&self, effect_ref: impl AsPtr<PF_ProgPtr>, param_index: i32, channel_index: i32) -> Result<Option<(PF_ChannelRef, PF_ChannelDesc)>, Error> {
-        let mut found: PF_Boolean  = 0;
+    pub fn layer_channel_indexed_ref_and_desc(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        param_index: i32,
+        channel_index: i32,
+    ) -> Result<Option<(PF_ChannelRef, PF_ChannelDesc)>, Error> {
+        let mut found: PF_Boolean = 0;
         let mut channel_ref = unsafe { std::mem::zeroed() };
         let mut channel_desc = unsafe { std::mem::zeroed() };
-        call_suite_fn!(self, PF_GetLayerChannelIndexedRefAndDesc, effect_ref.as_ptr(), param_index, channel_index, &mut found, &mut channel_ref, &mut channel_desc)?;
+        call_suite_fn!(
+            self,
+            PF_GetLayerChannelIndexedRefAndDesc,
+            effect_ref.as_ptr(),
+            param_index,
+            channel_index,
+            &mut found,
+            &mut channel_ref,
+            &mut channel_desc
+        )?;
         if found == 1 {
             Ok(Some((channel_ref, channel_desc)))
         } else {
@@ -40,11 +58,25 @@ impl ChannelSuite {
     }
 
     /// Retrieves an auxiliary channel by type.
-    pub fn layer_channel_typed_ref_and_desc(&self, effect_ref: impl AsPtr<PF_ProgPtr>, param_index: i32, channel_type: ChannelType) -> Result<Option<(PF_ChannelRef, PF_ChannelDesc)>, Error> {
-        let mut found: PF_Boolean  = 0;
+    pub fn layer_channel_typed_ref_and_desc(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        param_index: i32,
+        channel_type: ChannelType,
+    ) -> Result<Option<(PF_ChannelRef, PF_ChannelDesc)>, Error> {
+        let mut found: PF_Boolean = 0;
         let mut channel_ref = unsafe { std::mem::zeroed() };
         let mut channel_desc = unsafe { std::mem::zeroed() };
-        call_suite_fn!(self, PF_GetLayerChannelTypedRefAndDesc, effect_ref.as_ptr(), param_index, channel_type.into(), &mut found, &mut channel_ref, &mut channel_desc)?;
+        call_suite_fn!(
+            self,
+            PF_GetLayerChannelTypedRefAndDesc,
+            effect_ref.as_ptr(),
+            param_index,
+            channel_type.into(),
+            &mut found,
+            &mut channel_ref,
+            &mut channel_desc
+        )?;
         if found == 1 {
             Ok(Some((channel_ref, channel_desc)))
         } else {
@@ -55,13 +87,34 @@ impl ChannelSuite {
     /// Retrieves the ``PF_ChannelChunk`` containing the data associated with the given ``PF_ChannelRefPtr``.
     /// The data chunk is allocated is of the type requested.
     /// The data is in chunky format.
-    pub fn checkout_layer_channel(&self, effect_ref: impl AsPtr<PF_ProgPtr>, channel_ref: &PF_ChannelRef, what_time: i32, duration: i32, time_scale: u32, data_type: DataType) -> Result<ChannelChunk, Error> {
-        Ok(ChannelChunk(call_suite_fn_single!(self, PF_CheckoutLayerChannel -> PF_ChannelChunk, effect_ref.as_ptr(), channel_ref as *const _ as _, what_time, duration, time_scale, data_type.into())?))
+    pub fn checkout_layer_channel(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        channel_ref: &PF_ChannelRef,
+        what_time: i32,
+        duration: i32,
+        time_scale: u32,
+        data_type: DataType,
+    ) -> Result<ChannelChunk, Error> {
+        Ok(ChannelChunk(
+            call_suite_fn_single!(self, PF_CheckoutLayerChannel -> PF_ChannelChunk, effect_ref.as_ptr(), channel_ref as *const _ as _, what_time, duration, time_scale, data_type.into())?,
+        ))
     }
 
     /// The checked out channel must be checked in to avoid memory leaks.
-    pub fn checkin_layer_channel(&self, effect_ref: impl AsPtr<PF_ProgPtr>, channel_ref: &PF_ChannelRef, channel_chunk: &ChannelChunk) -> Result<(), Error> {
-        call_suite_fn!(self, PF_CheckinLayerChannel, effect_ref.as_ptr(), channel_ref as *const _ as _, channel_chunk as *const _ as _)
+    pub fn checkin_layer_channel(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        channel_ref: &PF_ChannelRef,
+        channel_chunk: &ChannelChunk,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_CheckinLayerChannel,
+            effect_ref.as_ptr(),
+            channel_ref as *const _ as _,
+            channel_chunk as *const _ as _
+        )
     }
 }
 
@@ -114,29 +167,29 @@ define_enum! {
     }
 }
 
-const PF_CHANNELTYPE_DEPTH:        i32 = i32::from_be_bytes(*b"DPTH");
-const PF_CHANNELTYPE_DEPTHAA:      i32 = i32::from_be_bytes(*b"DPAA"); // since 16.0 for 3D Precomp in some Artisans
-const PF_CHANNELTYPE_NORMALS:      i32 = i32::from_be_bytes(*b"NRML");
-const PF_CHANNELTYPE_OBJECTID:     i32 = i32::from_be_bytes(*b"OBID");
+const PF_CHANNELTYPE_DEPTH: i32 = i32::from_be_bytes(*b"DPTH");
+const PF_CHANNELTYPE_DEPTHAA: i32 = i32::from_be_bytes(*b"DPAA"); // since 16.0 for 3D Precomp in some Artisans
+const PF_CHANNELTYPE_NORMALS: i32 = i32::from_be_bytes(*b"NRML");
+const PF_CHANNELTYPE_OBJECTID: i32 = i32::from_be_bytes(*b"OBID");
 const PF_CHANNELTYPE_MOTIONVECTOR: i32 = i32::from_be_bytes(*b"MTVR");
-const PF_CHANNELTYPE_BK_COLOR:     i32 = i32::from_be_bytes(*b"BKCR");
-const PF_CHANNELTYPE_TEXTURE:      i32 = i32::from_be_bytes(*b"TEXR");
-const PF_CHANNELTYPE_COVERAGE:     i32 = i32::from_be_bytes(*b"COVR");
-const PF_CHANNELTYPE_NODE:         i32 = i32::from_be_bytes(*b"NODE");
-const PF_CHANNELTYPE_MATERIAL:     i32 = i32::from_be_bytes(*b"MATR");
-const PF_CHANNELTYPE_UNCLAMPED:    i32 = i32::from_be_bytes(*b"UNCP");
-const PF_CHANNELTYPE_UNKNOWN:      i32 = i32::from_be_bytes(*b"UNKN");
+const PF_CHANNELTYPE_BK_COLOR: i32 = i32::from_be_bytes(*b"BKCR");
+const PF_CHANNELTYPE_TEXTURE: i32 = i32::from_be_bytes(*b"TEXR");
+const PF_CHANNELTYPE_COVERAGE: i32 = i32::from_be_bytes(*b"COVR");
+const PF_CHANNELTYPE_NODE: i32 = i32::from_be_bytes(*b"NODE");
+const PF_CHANNELTYPE_MATERIAL: i32 = i32::from_be_bytes(*b"MATR");
+const PF_CHANNELTYPE_UNCLAMPED: i32 = i32::from_be_bytes(*b"UNCP");
+const PF_CHANNELTYPE_UNKNOWN: i32 = i32::from_be_bytes(*b"UNKN");
 
-const PF_DATATYPE_FLOAT:         i32 = i32::from_be_bytes(*b"FLT4"); // 4 byte
-const PF_DATATYPE_DOUBLE:        i32 = i32::from_be_bytes(*b"DBL8"); // 8 byte
-const PF_DATATYPE_LONG:          i32 = i32::from_be_bytes(*b"LON4"); // 4 bytes
-const PF_DATATYPE_SHORT:         i32 = i32::from_be_bytes(*b"SHT2"); // 2 bytes
-const PF_DATATYPE_FIXED_16_16:   i32 = i32::from_be_bytes(*b"FIX4"); // 4 bytes
-const PF_DATATYPE_CHAR:          i32 = i32::from_be_bytes(*b"CHR1"); // 1 byte
-const PF_DATATYPE_U_BYTE:        i32 = i32::from_be_bytes(*b"UBT1"); // 1 byte
-const PF_DATATYPE_U_SHORT:       i32 = i32::from_be_bytes(*b"UST2"); // 2 bytes
+const PF_DATATYPE_FLOAT: i32 = i32::from_be_bytes(*b"FLT4"); // 4 byte
+const PF_DATATYPE_DOUBLE: i32 = i32::from_be_bytes(*b"DBL8"); // 8 byte
+const PF_DATATYPE_LONG: i32 = i32::from_be_bytes(*b"LON4"); // 4 bytes
+const PF_DATATYPE_SHORT: i32 = i32::from_be_bytes(*b"SHT2"); // 2 bytes
+const PF_DATATYPE_FIXED_16_16: i32 = i32::from_be_bytes(*b"FIX4"); // 4 bytes
+const PF_DATATYPE_CHAR: i32 = i32::from_be_bytes(*b"CHR1"); // 1 byte
+const PF_DATATYPE_U_BYTE: i32 = i32::from_be_bytes(*b"UBT1"); // 1 byte
+const PF_DATATYPE_U_SHORT: i32 = i32::from_be_bytes(*b"UST2"); // 2 bytes
 const PF_DATATYPE_U_FIXED_16_16: i32 = i32::from_be_bytes(*b"UFX4"); // 4 bytes
-const PF_DATATYPE_RGB:           i32 = i32::from_be_bytes(*b"RBG "); // 3 bytes
+const PF_DATATYPE_RGB: i32 = i32::from_be_bytes(*b"RBG "); // 3 bytes
 
 /// the channel data parallels the image data in size and shape.
 /// the width is the number of pixels, the height is the number of scanlines
@@ -152,6 +205,7 @@ const PF_DATATYPE_RGB:           i32 = i32::from_be_bytes(*b"RBG "); // 3 bytes
 pub struct ChannelChunk(ae_sys::PF_ChannelChunk);
 impl std::ops::Deref for ChannelChunk {
     type Target = ae_sys::PF_ChannelChunk;
+
     fn deref(&self) -> &Self::Target { &self.0 }
 }
 
@@ -172,19 +226,20 @@ pub enum ChannelDataType {
 impl ChannelChunk {
     pub fn channel_data(&self) -> ChannelDataType {
         match self.0.data_type {
-            PF_DATATYPE_FLOAT         => ChannelDataType::Float(      self.0.dataPV as *mut _),
-            PF_DATATYPE_DOUBLE        => ChannelDataType::Double(     self.0.dataPV as *mut _),
-            PF_DATATYPE_LONG          => ChannelDataType::Long(       self.0.dataPV as *mut _),
-            PF_DATATYPE_SHORT         => ChannelDataType::Short(      self.0.dataPV as *mut _),
-            PF_DATATYPE_FIXED_16_16   => ChannelDataType::Fixed16_16( self.0.dataPV as *mut _),
-            PF_DATATYPE_CHAR          => ChannelDataType::Char(       self.0.dataPV as *mut _),
-            PF_DATATYPE_U_BYTE        => ChannelDataType::UByte(      self.0.dataPV as *mut _),
-            PF_DATATYPE_U_SHORT       => ChannelDataType::UShort(     self.0.dataPV as *mut _),
+            PF_DATATYPE_FLOAT => ChannelDataType::Float(self.0.dataPV as *mut _),
+            PF_DATATYPE_DOUBLE => ChannelDataType::Double(self.0.dataPV as *mut _),
+            PF_DATATYPE_LONG => ChannelDataType::Long(self.0.dataPV as *mut _),
+            PF_DATATYPE_SHORT => ChannelDataType::Short(self.0.dataPV as *mut _),
+            PF_DATATYPE_FIXED_16_16 => ChannelDataType::Fixed16_16(self.0.dataPV as *mut _),
+            PF_DATATYPE_CHAR => ChannelDataType::Char(self.0.dataPV as *mut _),
+            PF_DATATYPE_U_BYTE => ChannelDataType::UByte(self.0.dataPV as *mut _),
+            PF_DATATYPE_U_SHORT => ChannelDataType::UShort(self.0.dataPV as *mut _),
             PF_DATATYPE_U_FIXED_16_16 => ChannelDataType::UFixed16_16(self.0.dataPV as *mut _),
-            PF_DATATYPE_RGB           => ChannelDataType::Rgb(        self.0.dataPV as *mut _),
+            PF_DATATYPE_RGB => ChannelDataType::Rgb(self.0.dataPV as *mut _),
             _ => unreachable!(),
         }
     }
+
     /// # Panics
     /// Panics if `row` is out of range (`0..height`).
     pub fn channel_row_data(&self, row: i32) -> ChannelDataType {
@@ -193,16 +248,36 @@ impl ChannelChunk {
         }
         let offset = row as isize * self.0.row_bytesL as isize;
         match self.0.data_type {
-            PF_DATATYPE_FLOAT         => ChannelDataType::Float(      unsafe { (self.0.dataPV as *mut f32).byte_offset(offset) }),
-            PF_DATATYPE_DOUBLE        => ChannelDataType::Double(     unsafe { (self.0.dataPV as *mut f64).byte_offset(offset) }),
-            PF_DATATYPE_LONG          => ChannelDataType::Long(       unsafe { (self.0.dataPV as *mut i32).byte_offset(offset) }),
-            PF_DATATYPE_SHORT         => ChannelDataType::Short(      unsafe { (self.0.dataPV as *mut i16).byte_offset(offset) }),
-            PF_DATATYPE_FIXED_16_16   => ChannelDataType::Fixed16_16( unsafe { (self.0.dataPV as *mut i32).byte_offset(offset) }),
-            PF_DATATYPE_CHAR          => ChannelDataType::Char(       unsafe { (self.0.dataPV as *mut i8 ).byte_offset(offset) }),
-            PF_DATATYPE_U_BYTE        => ChannelDataType::UByte(      unsafe { (self.0.dataPV as *mut u8 ).byte_offset(offset) }),
-            PF_DATATYPE_U_SHORT       => ChannelDataType::UShort(     unsafe { (self.0.dataPV as *mut u16).byte_offset(offset) }),
-            PF_DATATYPE_U_FIXED_16_16 => ChannelDataType::UFixed16_16(unsafe { (self.0.dataPV as *mut u32).byte_offset(offset) }),
-            PF_DATATYPE_RGB           => ChannelDataType::Rgb(        unsafe { (self.0.dataPV as *mut u8 ).byte_offset(offset) }),
+            PF_DATATYPE_FLOAT => {
+                ChannelDataType::Float(unsafe { (self.0.dataPV as *mut f32).byte_offset(offset) })
+            }
+            PF_DATATYPE_DOUBLE => {
+                ChannelDataType::Double(unsafe { (self.0.dataPV as *mut f64).byte_offset(offset) })
+            }
+            PF_DATATYPE_LONG => {
+                ChannelDataType::Long(unsafe { (self.0.dataPV as *mut i32).byte_offset(offset) })
+            }
+            PF_DATATYPE_SHORT => {
+                ChannelDataType::Short(unsafe { (self.0.dataPV as *mut i16).byte_offset(offset) })
+            }
+            PF_DATATYPE_FIXED_16_16 => ChannelDataType::Fixed16_16(unsafe {
+                (self.0.dataPV as *mut i32).byte_offset(offset)
+            }),
+            PF_DATATYPE_CHAR => {
+                ChannelDataType::Char(unsafe { (self.0.dataPV as *mut i8).byte_offset(offset) })
+            }
+            PF_DATATYPE_U_BYTE => {
+                ChannelDataType::UByte(unsafe { (self.0.dataPV as *mut u8).byte_offset(offset) })
+            }
+            PF_DATATYPE_U_SHORT => {
+                ChannelDataType::UShort(unsafe { (self.0.dataPV as *mut u16).byte_offset(offset) })
+            }
+            PF_DATATYPE_U_FIXED_16_16 => ChannelDataType::UFixed16_16(unsafe {
+                (self.0.dataPV as *mut u32).byte_offset(offset)
+            }),
+            PF_DATATYPE_RGB => {
+                ChannelDataType::Rgb(unsafe { (self.0.dataPV as *mut u8).byte_offset(offset) })
+            }
             _ => unreachable!(),
         }
     }
@@ -219,16 +294,56 @@ impl ChannelChunk {
         let row_offset = row as isize * self.0.row_bytesL as isize;
         let col_offset = col as isize * self.0.dimensionL as isize;
         match self.0.data_type {
-            PF_DATATYPE_FLOAT         => ChannelDataType::Float(      unsafe { (self.0.dataPV as *mut f32).byte_offset(row_offset).offset(col_offset) }),
-            PF_DATATYPE_DOUBLE        => ChannelDataType::Double(     unsafe { (self.0.dataPV as *mut f64).byte_offset(row_offset).offset(col_offset) }),
-            PF_DATATYPE_LONG          => ChannelDataType::Long(       unsafe { (self.0.dataPV as *mut i32).byte_offset(row_offset).offset(col_offset) }),
-            PF_DATATYPE_SHORT         => ChannelDataType::Short(      unsafe { (self.0.dataPV as *mut i16).byte_offset(row_offset).offset(col_offset) }),
-            PF_DATATYPE_FIXED_16_16   => ChannelDataType::Fixed16_16( unsafe { (self.0.dataPV as *mut i32).byte_offset(row_offset).offset(col_offset) }),
-            PF_DATATYPE_CHAR          => ChannelDataType::Char(       unsafe { (self.0.dataPV as *mut i8 ).byte_offset(row_offset).offset(col_offset) }),
-            PF_DATATYPE_U_BYTE        => ChannelDataType::UByte(      unsafe { (self.0.dataPV as *mut u8 ).byte_offset(row_offset).offset(col_offset) }),
-            PF_DATATYPE_U_SHORT       => ChannelDataType::UShort(     unsafe { (self.0.dataPV as *mut u16).byte_offset(row_offset).offset(col_offset) }),
-            PF_DATATYPE_U_FIXED_16_16 => ChannelDataType::UFixed16_16(unsafe { (self.0.dataPV as *mut u32).byte_offset(row_offset).offset(col_offset) }),
-            PF_DATATYPE_RGB           => ChannelDataType::Rgb(        unsafe { (self.0.dataPV as *mut u8 ).byte_offset(row_offset).offset(col_offset) }),
+            PF_DATATYPE_FLOAT => ChannelDataType::Float(unsafe {
+                (self.0.dataPV as *mut f32)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
+            PF_DATATYPE_DOUBLE => ChannelDataType::Double(unsafe {
+                (self.0.dataPV as *mut f64)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
+            PF_DATATYPE_LONG => ChannelDataType::Long(unsafe {
+                (self.0.dataPV as *mut i32)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
+            PF_DATATYPE_SHORT => ChannelDataType::Short(unsafe {
+                (self.0.dataPV as *mut i16)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
+            PF_DATATYPE_FIXED_16_16 => ChannelDataType::Fixed16_16(unsafe {
+                (self.0.dataPV as *mut i32)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
+            PF_DATATYPE_CHAR => ChannelDataType::Char(unsafe {
+                (self.0.dataPV as *mut i8)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
+            PF_DATATYPE_U_BYTE => ChannelDataType::UByte(unsafe {
+                (self.0.dataPV as *mut u8)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
+            PF_DATATYPE_U_SHORT => ChannelDataType::UShort(unsafe {
+                (self.0.dataPV as *mut u16)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
+            PF_DATATYPE_U_FIXED_16_16 => ChannelDataType::UFixed16_16(unsafe {
+                (self.0.dataPV as *mut u32)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
+            PF_DATATYPE_RGB => ChannelDataType::Rgb(unsafe {
+                (self.0.dataPV as *mut u8)
+                    .byte_offset(row_offset)
+                    .offset(col_offset)
+            }),
             _ => unreachable!(),
         }
     }

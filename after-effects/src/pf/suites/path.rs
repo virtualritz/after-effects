@@ -12,9 +12,7 @@ define_suite!(
 impl PathQuerySuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Retrieves the number of paths associated with the effect’s source layer.
     pub fn num_paths(&self, effect_ref: impl AsPtr<PF_ProgPtr>) -> Result<i32, Error> {
@@ -22,14 +20,25 @@ impl PathQuerySuite {
     }
 
     /// Retrieves the `PF_PathID` for the specified path.
-    pub fn path_info(&self, effect_ref: impl AsPtr<PF_ProgPtr>, index: i32) -> Result<PF_PathID, Error> {
+    pub fn path_info(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        index: i32,
+    ) -> Result<PF_PathID, Error> {
         call_suite_fn_single!(self, PF_PathInfo -> PF_PathID, effect_ref.as_ptr(), index)
     }
 
     /// Acquires the [`PathOutline`] for the path at the specified time.
     /// `PathOutline` automatically calls `checkin_path` on drop.
     /// Note the result may be `None` even if `unique_id != PF_PathID_NONE` (the path may have been deleted).
-    pub fn checkout_path(&self, effect_ref: impl AsPtr<PF_ProgPtr>, unique_id: PF_PathID, what_time: i32, time_step: i32, time_scale: u32) -> Result<Option<PathOutline>, Error> {
+    pub fn checkout_path(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        unique_id: PF_PathID,
+        what_time: i32,
+        time_step: i32,
+        time_scale: u32,
+    ) -> Result<Option<PathOutline>, Error> {
         let effect_ref = effect_ref.as_ptr();
         let path = call_suite_fn_single!(self, PF_CheckoutPath -> PF_PathOutlinePtr, effect_ref, unique_id, what_time, time_step, time_scale)?;
         PathOutline::from_raw(effect_ref, unique_id, path)
@@ -38,8 +47,21 @@ impl PathQuerySuite {
     /// Releases the path back to After Effects. Always do this, regardless of any error conditions
     /// encountered. Every checkout must be balanced by a checkin, or pain will ensue. This function
     /// is automatically called in `PathOutline`'s `Drop` implementation.
-    pub fn checkin_path(&self, effect_ref: impl AsPtr<PF_ProgPtr>, unique_id: PF_PathID, changed: bool, path: PF_PathOutlinePtr) -> Result<(), Error> {
-        call_suite_fn!(self, PF_CheckinPath, effect_ref.as_ptr(), unique_id, changed as _, path)
+    pub fn checkin_path(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        unique_id: PF_PathID,
+        changed: bool,
+        path: PF_PathOutlinePtr,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_CheckinPath,
+            effect_ref.as_ptr(),
+            unique_id,
+            changed as _,
+            path
+        )
     }
 }
 
@@ -54,43 +76,76 @@ define_suite!(
 impl PathDataSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Returns `true` if the path is not closed (if the beginning and end vertex are not identical).
-    pub fn path_is_open(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, PF_PathIsOpen -> PF_Boolean, effect_ref.as_ptr(), path)? != 0)
+    pub fn path_is_open(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        path: PF_PathOutlinePtr,
+    ) -> Result<bool, Error> {
+        Ok(
+            call_suite_fn_single!(self, PF_PathIsOpen -> PF_Boolean, effect_ref.as_ptr(), path)?
+                != 0,
+        )
     }
 
     /// Retrieves the number of segments in the path. N segments means there are segments `[0.N-1]`;
     /// segment J is defined by vertex `J` and `J+1`.
-    pub fn path_num_segments(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr) -> Result<i32, Error> {
+    pub fn path_num_segments(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        path: PF_PathOutlinePtr,
+    ) -> Result<i32, Error> {
         call_suite_fn_single!(self, PF_PathNumSegments -> A_long, effect_ref.as_ptr(), path)
     }
 
     /// Retrieves the `PF_PathVertex` for the specified path. The range of points is `[0.num_segments]`;
     /// for closed paths, `vertex[0] == vertex[num_segments]`.
-    pub fn path_vertex_info(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr, which_point: i32) -> Result<PF_PathVertex, Error> {
+    pub fn path_vertex_info(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        path: PF_PathOutlinePtr,
+        which_point: i32,
+    ) -> Result<PF_PathVertex, Error> {
         call_suite_fn_single!(self, PF_PathVertexInfo -> PF_PathVertex, effect_ref.as_ptr(), path, which_point)
     }
 
     /// This fairly counter-intuitive function informs After Effects that you’re going to ask for the
     /// length of a segment (using `path_get_seg_length` below), and it’d better get ready. `frequency`
     /// indicates how many times you’d like us to sample the length; our internal effects use 100.
-    pub fn path_prepare_seg_length(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr, which_seg: i32, frequency: i32) -> Result<PF_PathSegPrepPtr, Error> {
+    pub fn path_prepare_seg_length(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        path: PF_PathOutlinePtr,
+        which_seg: i32,
+        frequency: i32,
+    ) -> Result<PF_PathSegPrepPtr, Error> {
         call_suite_fn_single!(self, PF_PathPrepareSegLength -> PF_PathSegPrepPtr, effect_ref.as_ptr(), path, which_seg, frequency)
     }
 
     /// Retrieves the length of the given segment.
-    pub fn path_get_seg_length(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr, which_seg: i32, length_prep: &mut PF_PathSegPrepPtr) -> Result<f64, Error> {
+    pub fn path_get_seg_length(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        path: PF_PathOutlinePtr,
+        which_seg: i32,
+        length_prep: &mut PF_PathSegPrepPtr,
+    ) -> Result<f64, Error> {
         call_suite_fn_single!(self, PF_PathGetSegLength -> PF_FpLong, effect_ref.as_ptr(), path, which_seg, length_prep)
     }
 
     /// Retrieves the location of a point `length` along the given path segment.
     ///
     /// Returns a tuple containing `(x, y)`
-    pub fn path_eval_seg_length(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr, length_prep: &mut PF_PathSegPrepPtr, which_seg: i32, length: f64) -> Result<(f64, f64), Error> {
+    pub fn path_eval_seg_length(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        path: PF_PathOutlinePtr,
+        length_prep: &mut PF_PathSegPrepPtr,
+        which_seg: i32,
+        length: f64,
+    ) -> Result<(f64, f64), Error> {
         call_suite_fn_double!(self, PF_PathEvalSegLength -> PF_FpLong, PF_FpLong, effect_ref.as_ptr(), path, length_prep, which_seg, length)
     }
 
@@ -98,36 +153,91 @@ impl PathDataSuite {
     /// If you’re not sure why you’d ever need this, don’t use it. Math is hard.
     ///
     /// Returns a tuple containing `(x, y, deriv1x, deriv1y)`
-    pub fn path_eval_seg_length_deriv1(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr, length_prep: &mut PF_PathSegPrepPtr, which_seg: i32, length: f64) -> Result<(f64, f64, f64, f64), Error> {
+    pub fn path_eval_seg_length_deriv1(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        path: PF_PathOutlinePtr,
+        length_prep: &mut PF_PathSegPrepPtr,
+        which_seg: i32,
+        length: f64,
+    ) -> Result<(f64, f64, f64, f64), Error> {
         let mut x = 0.0;
         let mut y = 0.0;
         let mut deriv1x = 0.0;
         let mut deriv1y = 0.0;
-        call_suite_fn!(self, PF_PathEvalSegLengthDeriv1, effect_ref.as_ptr(), path, length_prep, which_seg, length, &mut x, &mut y, &mut deriv1x, &mut deriv1y)?;
+        call_suite_fn!(
+            self,
+            PF_PathEvalSegLengthDeriv1,
+            effect_ref.as_ptr(),
+            path,
+            length_prep,
+            which_seg,
+            length,
+            &mut x,
+            &mut y,
+            &mut deriv1x,
+            &mut deriv1y
+        )?;
         Ok((x, y, deriv1x, deriv1y))
     }
 
     /// Call this when you’re finished evaluating that segment length, so After Effects
     /// can properly clean up the `PF_PathSegPrepPtr`.
-    pub fn path_cleanup_seg_length(&self, effect_ref: impl AsPtr<PF_ProgPtr>, path: PF_PathOutlinePtr, which_seg: i32, length_prep: &mut PF_PathSegPrepPtr) -> Result<(), Error> {
-        call_suite_fn!(self, PF_PathCleanupSegLength, effect_ref.as_ptr(), path, which_seg, length_prep)
+    pub fn path_cleanup_seg_length(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        path: PF_PathOutlinePtr,
+        which_seg: i32,
+        length_prep: &mut PF_PathSegPrepPtr,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_PathCleanupSegLength,
+            effect_ref.as_ptr(),
+            path,
+            which_seg,
+            length_prep
+        )
     }
 
     /// Returns `true` if the path is inverted.
-    pub fn path_is_inverted(&self, effect_ref: impl AsPtr<PF_ProgPtr>, unique_id: PF_PathID) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, PF_PathIsInverted -> PF_Boolean, effect_ref.as_ptr(), unique_id)? != 0)
+    pub fn path_is_inverted(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        unique_id: PF_PathID,
+    ) -> Result<bool, Error> {
+        Ok(
+            call_suite_fn_single!(self, PF_PathIsInverted -> PF_Boolean, effect_ref.as_ptr(), unique_id)?
+                != 0,
+        )
     }
 
     /// Retrieves the mode for the given path.
-    pub fn path_get_mask_mode(&self, effect_ref: impl AsPtr<PF_ProgPtr>, unique_id: PF_PathID) -> Result<MaskMode, Error> {
+    pub fn path_get_mask_mode(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        unique_id: PF_PathID,
+    ) -> Result<MaskMode, Error> {
         Ok(call_suite_fn_single!(self, PF_PathGetMaskMode -> PF_MaskMode, effect_ref.as_ptr(), unique_id)?.into())
     }
 
     /// Retrieves the name of the path.
-    pub fn path_get_name(&self, effect_ref: impl AsPtr<PF_ProgPtr>, unique_id: PF_PathID) -> Result<String, Error> {
+    pub fn path_get_name(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        unique_id: PF_PathID,
+    ) -> Result<String, Error> {
         let mut name = [0; PF_MAX_PATH_NAME_LEN as usize + 1];
-        call_suite_fn!(self, PF_PathGetName, effect_ref.as_ptr(), unique_id, name.as_mut_ptr())?;
-        Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }.to_string_lossy().into_owned())
+        call_suite_fn!(
+            self,
+            PF_PathGetName,
+            effect_ref.as_ptr(),
+            unique_id,
+            name.as_mut_ptr()
+        )?;
+        Ok(unsafe { std::ffi::CStr::from_ptr(name.as_ptr()) }
+            .to_string_lossy()
+            .into_owned())
     }
 }
 
@@ -174,13 +284,15 @@ impl std::fmt::Debug for PathOutline {
 }
 
 impl AsPtr<PF_PathOutlinePtr> for PathOutline {
-    fn as_ptr(&self) -> PF_PathOutlinePtr {
-        self.path
-    }
+    fn as_ptr(&self) -> PF_PathOutlinePtr { self.path }
 }
 
 impl PathOutline {
-    pub fn from_raw(effect_ref: PF_ProgPtr, unique_id: PF_PathID, path: PF_PathOutlinePtr) -> Result<Option<Self>, Error> {
+    pub fn from_raw(
+        effect_ref: PF_ProgPtr,
+        unique_id: PF_PathID,
+        path: PF_PathOutlinePtr,
+    ) -> Result<Option<Self>, Error> {
         if path.is_null() {
             Ok(None)
         } else {
@@ -194,9 +306,7 @@ impl PathOutline {
     }
 
     /// Returns the ID of the path.
-    pub fn id(&self) -> PF_PathID {
-        self.unique_id
-    }
+    pub fn id(&self) -> PF_PathID { self.unique_id }
 
     /// Returns `true` if the path is not closed (if the beginning and end vertex are not identical).
     pub fn is_open(&self) -> Result<bool, Error> {
@@ -212,17 +322,27 @@ impl PathOutline {
     /// Retrieves the `PF_PathVertex` for the specified path. The range of points is `[0.num_segments]`;
     /// for closed paths, `vertex[0] == vertex[num_segments]`.
     pub fn vertex(&self, which_point: i32) -> Result<PF_PathVertex, Error> {
-        self.suite.path_vertex_info(self.effect_ref, self.path, which_point)
+        self.suite
+            .path_vertex_info(self.effect_ref, self.path, which_point)
     }
 
     /// This fairly counter-intuitive function informs After Effects that you’re going to ask for the
     /// length of a segment (using [`PathSegPrep::length`]), and it’d better get ready. `frequency`
     /// indicates how many times you’d like us to sample the length; our internal effects use 100.
-    pub fn prepare_seg_length(&self, which_seg: i32, frequency: i32) -> Result<PathSegPrep<'_>, Error> {
+    pub fn prepare_seg_length(
+        &self,
+        which_seg: i32,
+        frequency: i32,
+    ) -> Result<PathSegPrep<'_>, Error> {
         Ok(PathSegPrep {
             path: self,
             which_seg,
-            length_prep: self.suite.path_prepare_seg_length(self.effect_ref, self.path, which_seg, frequency)?,
+            length_prep: self.suite.path_prepare_seg_length(
+                self.effect_ref,
+                self.path,
+                which_seg,
+                frequency,
+            )?,
         })
     }
 
@@ -233,7 +353,8 @@ impl PathOutline {
 
     /// Retrieves the mode for the path.
     pub fn mask_mode(&self) -> Result<MaskMode, Error> {
-        self.suite.path_get_mask_mode(self.effect_ref, self.unique_id)
+        self.suite
+            .path_get_mask_mode(self.effect_ref, self.unique_id)
     }
 
     /// Retrieves the name of the path.
@@ -261,14 +382,25 @@ pub struct PathSegPrep<'a> {
 impl<'a> PathSegPrep<'a> {
     /// Retrieves the length of the segment.
     pub fn length(&mut self) -> Result<f64, Error> {
-        self.path.suite.path_get_seg_length(self.path.effect_ref, self.path.path, self.which_seg, &mut self.length_prep)
+        self.path.suite.path_get_seg_length(
+            self.path.effect_ref,
+            self.path.path,
+            self.which_seg,
+            &mut self.length_prep,
+        )
     }
 
     /// Retrieves the location of a point `length` along the segment.
     ///
     /// Returns a tuple containing `(x, y)`
     pub fn eval(&mut self, length: f64) -> Result<(f64, f64), Error> {
-        self.path.suite.path_eval_seg_length(self.path.effect_ref, self.path.path, &mut self.length_prep, self.which_seg, length)
+        self.path.suite.path_eval_seg_length(
+            self.path.effect_ref,
+            self.path.path,
+            &mut self.length_prep,
+            self.which_seg,
+            length,
+        )
     }
 
     /// Retrieves the location, and the first derivative, of a point `length` along the segment.
@@ -276,7 +408,13 @@ impl<'a> PathSegPrep<'a> {
     ///
     /// Returns a tuple containing `(x, y, deriv1x, deriv1y)`
     pub fn eval_deriv1(&mut self, length: f64) -> Result<(f64, f64, f64, f64), Error> {
-        self.path.suite.path_eval_seg_length_deriv1(self.path.effect_ref, self.path.path, &mut self.length_prep, self.which_seg, length)
+        self.path.suite.path_eval_seg_length_deriv1(
+            self.path.effect_ref,
+            self.path.path,
+            &mut self.length_prep,
+            self.which_seg,
+            length,
+        )
     }
 }
 
@@ -284,7 +422,12 @@ impl<'a> Drop for PathSegPrep<'a> {
     fn drop(&mut self) {
         self.path
             .suite
-            .path_cleanup_seg_length(self.path.effect_ref, self.path.path, self.which_seg, &mut self.length_prep)
+            .path_cleanup_seg_length(
+                self.path.effect_ref,
+                self.path.path,
+                self.which_seg,
+                &mut self.length_prep,
+            )
             .expect("Failed to clean up PF_PathSegPrepPtr");
     }
 }

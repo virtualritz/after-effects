@@ -1,6 +1,6 @@
-use crate::*;
 use crate::aegp::*;
-use ae_sys::{ AEGP_MemHandle, AEGP_MemSize };
+use crate::*;
+use ae_sys::{AEGP_MemHandle, AEGP_MemSize};
 
 define_suite!(
     /// Use the AEGP Memory Suite to manage memory used by the AEGP.
@@ -17,9 +17,7 @@ define_suite!(
 impl MemorySuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Create a new memory handle.
     /// This memory is guaranteed to be 16-byte aligned.
@@ -27,7 +25,12 @@ impl MemorySuite {
     ///
     /// Use `name` to identify the memory you are asking for.
     /// After Effects uses the string to display any related error messages.
-    pub fn new_mem_handle(&self, plugin_id: PluginId, name: &str, size: usize) -> Result<AEGP_MemHandle, Error> {
+    pub fn new_mem_handle(
+        &self,
+        plugin_id: PluginId,
+        name: &str,
+        size: usize,
+    ) -> Result<AEGP_MemHandle, Error> {
         let name = CString::new(name).unwrap();
         call_suite_fn_single!(self, AEGP_NewMemHandle -> AEGP_MemHandle, plugin_id, name.as_ptr(), size as u32, 0)
     }
@@ -39,7 +42,10 @@ impl MemorySuite {
 
     /// Locks the handle into memory (cannot be moved by OS).
     /// Use this function prior to using memory allocated by [`new_mem_handle()`](Self::new_mem_handle). Can be nested.
-    pub fn lock_mem_handle(&self, mem_handle: AEGP_MemHandle) -> Result<*mut std::ffi::c_void, Error> {
+    pub fn lock_mem_handle(
+        &self,
+        mem_handle: AEGP_MemHandle,
+    ) -> Result<*mut std::ffi::c_void, Error> {
         call_suite_fn_single!(self, AEGP_LockMemHandle -> *mut std::ffi::c_void, mem_handle)
     }
 
@@ -50,13 +56,27 @@ impl MemorySuite {
 
     /// Returns the allocated size of the handle.
     pub fn mem_handle_size(&self, mem_handle: AEGP_MemHandle) -> Result<usize, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMemHandleSize -> AEGP_MemSize, mem_handle)? as usize)
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMemHandleSize -> AEGP_MemSize, mem_handle)?
+                as usize,
+        )
     }
 
     /// Changes the allocated size of the handle.
-    pub fn resize_mem_handle(&self, what: &str, new_size: usize, mem_handle: AEGP_MemHandle) -> Result<(), Error> {
+    pub fn resize_mem_handle(
+        &self,
+        what: &str,
+        new_size: usize,
+        mem_handle: AEGP_MemHandle,
+    ) -> Result<(), Error> {
         let what = CString::new(what).unwrap();
-        call_suite_fn!(self, AEGP_ResizeMemHandle, what.as_ptr(), new_size as AEGP_MemSize, mem_handle)
+        call_suite_fn!(
+            self,
+            AEGP_ResizeMemHandle,
+            what.as_ptr(),
+            new_size as AEGP_MemSize,
+            mem_handle
+        )
     }
 
     /// If After Effects runs into problems with the memory handling, the error should be reported to the user.
@@ -74,10 +94,7 @@ impl MemorySuite {
     /// so for example memory allocated using [`suites::Handle`](crate::suites::Handle) will not be reported here.
     pub fn mem_stats(&self, plugin_id: PluginId) -> Result<(i32, i32), Error> {
         let (count, size) = call_suite_fn_double!(self, AEGP_GetMemStats -> ae_sys::A_long, ae_sys::A_long, plugin_id)?;
-        Ok((
-            count as _,
-            size as _
-        ))
+        Ok((count as _, size as _))
     }
 }
 
@@ -106,9 +123,7 @@ impl<'a, T: 'a> MemHandle<'a, T> {
         Ok(handle)
     }
 
-    pub fn len(&self) -> Result<usize, Error> {
-        self.suite.mem_handle_size(self.handle)
-    }
+    pub fn len(&self) -> Result<usize, Error> { self.suite.mem_handle_size(self.handle) }
 
     #[inline]
     pub fn lock(&self) -> Result<MemHandleLock<'_, T>, Error> {
@@ -121,9 +136,7 @@ impl<'a, T: 'a> MemHandle<'a, T> {
 
     /// Only call this if you know what you're doing.
     #[inline]
-    pub(crate) fn unlock(&self) -> Result<(), Error> {
-        self.suite.unlock_mem_handle(self.handle)
-    }
+    pub(crate) fn unlock(&self) -> Result<(), Error> { self.suite.unlock_mem_handle(self.handle) }
 
     pub fn from_raw(handle: ae_sys::AEGP_MemHandle) -> Result<MemHandle<'a, T>, Error> {
         Ok(Self {
@@ -155,9 +168,7 @@ impl<'a, T: 'a> MemHandle<'a, T> {
     }
 
     /// Returns the raw handle.
-    pub fn as_raw(&self) -> ae_sys::AEGP_MemHandle {
-        self.handle
-    }
+    pub fn as_raw(&self) -> ae_sys::AEGP_MemHandle { self.handle }
 }
 
 impl<'a, T: 'a> Drop for MemHandle<'a, T> {
@@ -194,13 +205,9 @@ impl<'a, T> MemHandleLock<'a, T> {
         }
     }
 
-    pub fn as_ptr(&self) -> *mut T {
-        self.ptr
-    }
+    pub fn as_ptr(&self) -> *mut T { self.ptr }
 }
 
 impl<'a, T> Drop for MemHandleLock<'a, T> {
-    fn drop(&mut self) {
-        self.parent_handle.unlock().unwrap();
-    }
+    fn drop(&mut self) { self.parent_handle.unlock().unwrap(); }
 }

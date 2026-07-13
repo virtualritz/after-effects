@@ -12,9 +12,14 @@ macro_rules! ae_acquire_suite_ptr {
             {
                 after_effects_sys::kSPNoError => Ok(suite_ptr.assume_init()),
                 _ => {
-                    log::error!("Suite not found: {} {} {}", stringify!($type), stringify!($name), stringify!($version));
+                    log::error!(
+                        "Suite not found: {} {} {}",
+                        stringify!($type),
+                        stringify!($name),
+                        stringify!($version)
+                    );
                     Err($crate::Error::MissingSuite)
-                },
+                }
             }
         }
     }};
@@ -130,9 +135,7 @@ macro_rules! define_handle_wrapper_v2 {
 macro_rules! register_handle {
     ($data_type:ident) => {
         impl AsPtr<after_effects_sys::$data_type> for after_effects_sys::$data_type {
-            fn as_ptr(&self) -> after_effects_sys::$data_type {
-                *self
-            }
+            fn as_ptr(&self) -> after_effects_sys::$data_type { *self }
         }
     };
 }
@@ -142,34 +145,22 @@ macro_rules! define_handle_wrapper {
         pub struct $wrapper_pretty_name(pub(crate) after_effects_sys::$data_type);
 
         impl $wrapper_pretty_name {
-            pub fn from_raw(raw_handle: after_effects_sys::$data_type) -> Self {
-                Self(raw_handle)
-            }
+            pub fn from_raw(raw_handle: after_effects_sys::$data_type) -> Self { Self(raw_handle) }
 
-            pub fn is_null(&self) -> bool {
-                self.0.is_null()
-            }
+            pub fn is_null(&self) -> bool { self.0.is_null() }
         }
 
         impl From<$wrapper_pretty_name> for after_effects_sys::$data_type {
-            fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
-                handle_wrapper.as_ptr()
-            }
+            fn from(handle_wrapper: $wrapper_pretty_name) -> Self { handle_wrapper.as_ptr() }
         }
         impl AsRef<after_effects_sys::$data_type> for $wrapper_pretty_name {
-            fn as_ref(&self) -> &after_effects_sys::$data_type {
-                &self.0
-            }
+            fn as_ref(&self) -> &after_effects_sys::$data_type { &self.0 }
         }
         impl AsPtr<after_effects_sys::$data_type> for $wrapper_pretty_name {
-            fn as_ptr(&self) -> after_effects_sys::$data_type {
-                self.0
-            }
+            fn as_ptr(&self) -> after_effects_sys::$data_type { self.0 }
         }
         impl AsPtr<after_effects_sys::$data_type> for &$wrapper_pretty_name {
-            fn as_ptr(&self) -> after_effects_sys::$data_type {
-                self.0
-            }
+            fn as_ptr(&self) -> after_effects_sys::$data_type { self.0 }
         }
     };
 }
@@ -186,24 +177,16 @@ macro_rules! define_struct_wrapper {
             }
         }
         impl AsRef<after_effects_sys::$data_type> for $wrapper_pretty_name {
-            fn as_ref(&self) -> &after_effects_sys::$data_type {
-                unsafe { &*self.0 }
-            }
+            fn as_ref(&self) -> &after_effects_sys::$data_type { unsafe { &*self.0 } }
         }
         impl AsMut<after_effects_sys::$data_type> for $wrapper_pretty_name {
-            fn as_mut(&mut self) -> &mut after_effects_sys::$data_type {
-                unsafe { &mut *self.0 }
-            }
+            fn as_mut(&mut self) -> &mut after_effects_sys::$data_type { unsafe { &mut *self.0 } }
         }
         impl AsPtr<*mut after_effects_sys::$data_type> for $wrapper_pretty_name {
-            fn as_ptr(&self) -> *mut after_effects_sys::$data_type {
-                self.0
-            }
+            fn as_ptr(&self) -> *mut after_effects_sys::$data_type { self.0 }
         }
         impl AsPtr<*mut after_effects_sys::$data_type> for &$wrapper_pretty_name {
-            fn as_ptr(&self) -> *mut after_effects_sys::$data_type {
-                self.0
-            }
+            fn as_ptr(&self) -> *mut after_effects_sys::$data_type { self.0 }
         }
     };
 }
@@ -217,42 +200,29 @@ macro_rules! define_owned_handle_wrapper {
             pub fn from_raw(raw_handle: after_effects_sys::$data_type) -> Self {
                 Self(raw_handle, false)
             }
+
             pub fn from_raw_owned(raw_handle: after_effects_sys::$data_type) -> Self {
                 Self(raw_handle, true)
             }
 
-            pub fn as_ptr(&self) -> after_effects_sys::$data_type {
-                self.0
-            }
+            pub fn as_ptr(&self) -> after_effects_sys::$data_type { self.0 }
 
-            pub fn set_owned(&mut self, is_owned: bool) {
-                self.1 = is_owned;
-            }
+            pub fn set_owned(&mut self, is_owned: bool) { self.1 = is_owned; }
 
-            pub fn is_owned(&self) -> bool {
-                self.1
-            }
+            pub fn is_owned(&self) -> bool { self.1 }
         }
 
         impl From<$wrapper_pretty_name> for after_effects_sys::$data_type {
-            fn from(handle_wrapper: $wrapper_pretty_name) -> Self {
-                handle_wrapper.as_ptr()
-            }
+            fn from(handle_wrapper: $wrapper_pretty_name) -> Self { handle_wrapper.as_ptr() }
         }
         impl AsRef<after_effects_sys::$data_type> for $wrapper_pretty_name {
-            fn as_ref(&self) -> &after_effects_sys::$data_type {
-                &self.0
-            }
+            fn as_ref(&self) -> &after_effects_sys::$data_type { &self.0 }
         }
         impl AsPtr<after_effects_sys::$data_type> for $wrapper_pretty_name {
-            fn as_ptr(&self) -> after_effects_sys::$data_type {
-                self.0
-            }
+            fn as_ptr(&self) -> after_effects_sys::$data_type { self.0 }
         }
         impl AsPtr<after_effects_sys::$data_type> for &$wrapper_pretty_name {
-            fn as_ptr(&self) -> after_effects_sys::$data_type {
-                self.0
-            }
+            fn as_ptr(&self) -> after_effects_sys::$data_type { self.0 }
         }
     };
 }
@@ -613,23 +583,15 @@ macro_rules! define_ptr_wrapper {
         pub struct $wrapper_pretty_name(pub(crate) *const after_effects_sys::$data_type);
 
         impl $wrapper_pretty_name {
-            pub fn from_raw(raw_ptr: *const after_effects_sys::$data_type) -> Self {
-                Self(raw_ptr)
-            }
+            pub fn from_raw(raw_ptr: *const after_effects_sys::$data_type) -> Self { Self(raw_ptr) }
 
-            pub fn as_ptr(&self) -> *const after_effects_sys::$data_type {
-                self.0
-            }
+            pub fn as_ptr(&self) -> *const after_effects_sys::$data_type { self.0 }
 
-            pub fn is_null(&self) -> bool {
-                self.0.is_null()
-            }
+            pub fn is_null(&self) -> bool { self.0.is_null() }
         }
 
         impl From<$wrapper_pretty_name> for *const after_effects_sys::$data_type {
-            fn from(ptr_wrapper: $wrapper_pretty_name) -> Self {
-                ptr_wrapper.as_ptr()
-            }
+            fn from(ptr_wrapper: $wrapper_pretty_name) -> Self { ptr_wrapper.as_ptr() }
         }
     };
 }

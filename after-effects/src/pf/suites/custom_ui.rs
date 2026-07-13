@@ -20,23 +20,28 @@ define_suite!(
 impl EffectCustomUISuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Obtain [`Drawbot`](drawbot::Drawbot) for the provided context handle.
-    pub fn drawing_reference(&self, context_handle: impl AsPtr<ae_sys::PF_ContextH>) -> Result<drawbot::Drawbot, Error> {
+    pub fn drawing_reference(
+        &self,
+        context_handle: impl AsPtr<ae_sys::PF_ContextH>,
+    ) -> Result<drawbot::Drawbot, Error> {
         Ok(drawbot::Drawbot {
             suite: crate::Suite::new()?,
-            handle: call_suite_fn_single!(self, PF_GetDrawingReference -> ae_sys::DRAWBOT_DrawRef, context_handle.as_ptr())?
+            handle: call_suite_fn_single!(self, PF_GetDrawingReference -> ae_sys::DRAWBOT_DrawRef, context_handle.as_ptr())?,
         })
     }
 
     /// Obtain the [`aegp::AsyncManager`].
-    pub fn context_async_manager(&self, in_data: impl AsPtr<*const ae_sys::PF_InData>, extra: impl AsPtr<*mut ae_sys::PF_EventExtra>) -> Result<aegp::AsyncManager, Error> {
+    pub fn context_async_manager(
+        &self,
+        in_data: impl AsPtr<*const ae_sys::PF_InData>,
+        extra: impl AsPtr<*mut ae_sys::PF_EventExtra>,
+    ) -> Result<aegp::AsyncManager, Error> {
         let v2suite = EffectCustomUISuite2::new()?;
         Ok(aegp::AsyncManager::from_raw(
-            call_suite_fn_single!(v2suite, PF_GetContextAsyncManager -> ae_sys::PF_AsyncManagerP, in_data.as_ptr() as *mut _, extra.as_ptr())?
+            call_suite_fn_single!(v2suite, PF_GetContextAsyncManager -> ae_sys::PF_AsyncManagerP, in_data.as_ptr() as *mut _, extra.as_ptr())?,
         ))
     }
 }
@@ -56,9 +61,7 @@ define_suite!(
 impl EffectCustomUIOverlayThemeSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Get the preferred foreground color.
     pub fn preferred_foreground_color(&self) -> Result<drawbot::ColorRgba, Error> {
@@ -90,20 +93,53 @@ impl EffectCustomUIOverlayThemeSuite {
     /// Optionally draw the shadow using the overlay theme shadow color.
     ///
     /// Uses overlay theme stroke width for stroking foreground and shadow strokes.
-    pub fn stroke_path(&self, drawbot: impl AsPtr<ae_sys::DRAWBOT_DrawRef>, path: impl AsPtr<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
-        call_suite_fn!(self, PF_StrokePath, drawbot.as_ptr(), path.as_ptr(), draw_shadow as _)
+    pub fn stroke_path(
+        &self,
+        drawbot: impl AsPtr<ae_sys::DRAWBOT_DrawRef>,
+        path: impl AsPtr<ae_sys::DRAWBOT_PathRef>,
+        draw_shadow: bool,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_StrokePath,
+            drawbot.as_ptr(),
+            path.as_ptr(),
+            draw_shadow as _
+        )
     }
 
     /// Fills the path with overlay theme foreground color.
     ///
     /// Optionally draw the shadow using the overlay theme shadow color.
-    pub fn fill_path(&self, drawbot: impl AsPtr<ae_sys::DRAWBOT_DrawRef>, path: impl AsPtr<ae_sys::DRAWBOT_PathRef>, draw_shadow: bool) -> Result<(), Error> {
-        call_suite_fn!(self, PF_FillPath, drawbot.as_ptr(), path.as_ptr(), draw_shadow as _)
+    pub fn fill_path(
+        &self,
+        drawbot: impl AsPtr<ae_sys::DRAWBOT_DrawRef>,
+        path: impl AsPtr<ae_sys::DRAWBOT_PathRef>,
+        draw_shadow: bool,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_FillPath,
+            drawbot.as_ptr(),
+            path.as_ptr(),
+            draw_shadow as _
+        )
     }
 
     /// Fills a square vertex around the center point using the overlay theme foreground color and vertex size.
-    pub fn fill_vertex(&self, drawbot: impl AsPtr<ae_sys::DRAWBOT_DrawRef>, center_point: FloatPoint, draw_shadow: bool) -> Result<(), Error> {
-        call_suite_fn!(self, PF_FillVertex, drawbot.as_ptr(), &center_point.into(), draw_shadow as _)
+    pub fn fill_vertex(
+        &self,
+        drawbot: impl AsPtr<ae_sys::DRAWBOT_DrawRef>,
+        center_point: FloatPoint,
+        draw_shadow: bool,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_FillVertex,
+            drawbot.as_ptr(),
+            &center_point.into(),
+            draw_shadow as _
+        )
     }
 }
 
@@ -131,13 +167,9 @@ impl ContextHandle {
 pub struct CustomUIInfo(ae_sys::PF_CustomUIInfo);
 
 impl CustomUIInfo {
-    pub fn new() -> Self {
-        Self(unsafe { std::mem::zeroed() })
-    }
+    pub fn new() -> Self { Self(unsafe { std::mem::zeroed() }) }
 
-    pub fn as_ptr(&self) -> *const ae_sys::PF_CustomUIInfo {
-        &self.0
-    }
+    pub fn as_ptr(&self) -> *const ae_sys::PF_CustomUIInfo { &self.0 }
 
     pub fn events(mut self, events: CustomEventFlags) -> Self {
         self.0.events = events.bits() as _;

@@ -253,7 +253,13 @@ impl PersistentDataSuite {
         default: &str,
         max_result_length: usize,
     ) -> Result<String, Error> {
-        self.string(blob_handle, section_key, value_key, default, max_result_length)
+        self.string(
+            blob_handle,
+            section_key,
+            value_key,
+            default,
+            max_result_length,
+        )
     }
 
     pub fn long(

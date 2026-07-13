@@ -18,9 +18,7 @@ define_suite!(
 impl HandleSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Create a new handle of the given size.
     pub fn new_handle(&self, size: A_HandleSize) -> PF_Handle {

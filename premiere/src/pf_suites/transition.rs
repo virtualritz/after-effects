@@ -1,4 +1,3 @@
-
 use crate::*;
 use pr_sys::*;
 
@@ -31,23 +30,48 @@ define_suite!(
 impl TransitionSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Register an effect as a transition using the passed in input layer as the outgoing clip.
     /// When registered the effect will be available to be dragged directly onto clip ends rather than only applied to layers.
-    pub fn register_transition_input_param(&self, effect_ref: impl AsPtr<PF_ProgPtr>, index: i32) -> Result<(), Error> {
-        call_suite_fn!(self, RegisterTransitionInputParam, effect_ref.as_ptr(), index as _)
+    pub fn register_transition_input_param(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        index: i32,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            RegisterTransitionInputParam,
+            effect_ref.as_ptr(),
+            index as _
+        )
     }
 
     /// Register a PF_ADD_FLOAT_SLIDER parameter to receive changes to the start of the transition region through the `Command::UserChangedParam` command.
-    pub fn register_transition_start_param(&self, effect_ref: impl AsPtr<PF_ProgPtr>, index: i32) -> Result<(), Error> {
-        call_suite_fn!(self, RegisterTransitionStartParam, effect_ref.as_ptr(), index as _)
+    pub fn register_transition_start_param(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        index: i32,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            RegisterTransitionStartParam,
+            effect_ref.as_ptr(),
+            index as _
+        )
     }
 
     /// Register a PF_ADD_FLOAT_SLIDER parameter to receive changes to the end of the transition region through the `Command::UserChangedParam` command.
-    pub fn register_transition_end_param(&self, effect_ref: impl AsPtr<PF_ProgPtr>, index: i32) -> Result<(), Error> {
-        call_suite_fn!(self, RegisterTransitionEndParam, effect_ref.as_ptr(), index as _)
+    pub fn register_transition_end_param(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        index: i32,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            RegisterTransitionEndParam,
+            effect_ref.as_ptr(),
+            index as _
+        )
     }
 }

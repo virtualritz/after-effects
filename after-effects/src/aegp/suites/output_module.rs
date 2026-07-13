@@ -1,5 +1,5 @@
-use crate::*;
 use crate::aegp::*;
+use crate::*;
 
 define_suite!(
     /// Output Module Suite provides information about and control over output modules
@@ -16,9 +16,7 @@ define_suite!(
 impl OutputModuleSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Retrieves an output module by index from a render queue item.
     pub fn output_module_by_index(
@@ -26,14 +24,12 @@ impl OutputModuleSuite {
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
         index: i32,
     ) -> Result<OutputModuleRefHandle, Error> {
-        Ok(OutputModuleRefHandle::from_raw(
-            call_suite_fn_single!(
-                self,
-                AEGP_GetOutputModuleByIndex -> ae_sys::AEGP_OutputModuleRefH,
-                rq_item.as_ptr(),
-                index as ae_sys::A_long
-            )?
-        ))
+        Ok(OutputModuleRefHandle::from_raw(call_suite_fn_single!(
+            self,
+            AEGP_GetOutputModuleByIndex -> ae_sys::AEGP_OutputModuleRefH,
+            rq_item.as_ptr(),
+            index as ae_sys::A_long
+        )?))
     }
 
     /// Retrieves the embedding options for an output module.
@@ -42,15 +38,13 @@ impl OutputModuleSuite {
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
         output_module: impl AsPtr<ae_sys::AEGP_OutputModuleRefH>,
     ) -> Result<EmbeddingType, Error> {
-        Ok(
-            call_suite_fn_single!(
-                self,
-                AEGP_GetEmbedOptions -> ae_sys::AEGP_EmbeddingType,
-                rq_item.as_ptr(),
-                output_module.as_ptr()
-            )?
-            .into()
-        )
+        Ok(call_suite_fn_single!(
+            self,
+            AEGP_GetEmbedOptions -> ae_sys::AEGP_EmbeddingType,
+            rq_item.as_ptr(),
+            output_module.as_ptr()
+        )?
+        .into())
     }
 
     /// Sets the embedding options for an output module.
@@ -75,15 +69,13 @@ impl OutputModuleSuite {
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
         output_module: impl AsPtr<ae_sys::AEGP_OutputModuleRefH>,
     ) -> Result<PostRenderAction, Error> {
-        Ok(
-            call_suite_fn_single!(
-                self,
-                AEGP_GetPostRenderAction -> ae_sys::AEGP_PostRenderAction,
-                rq_item.as_ptr(),
-                output_module.as_ptr()
-            )?
-            .into()
-        )
+        Ok(call_suite_fn_single!(
+            self,
+            AEGP_GetPostRenderAction -> ae_sys::AEGP_PostRenderAction,
+            rq_item.as_ptr(),
+            output_module.as_ptr()
+        )?
+        .into())
     }
 
     /// Sets the post-render action for an output module.
@@ -108,14 +100,12 @@ impl OutputModuleSuite {
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
         output_module: impl AsPtr<ae_sys::AEGP_OutputModuleRefH>,
     ) -> Result<OutputTypes, Error> {
-        Ok(OutputTypes::from_bits_truncate(
-            call_suite_fn_single!(
-                self,
-                AEGP_GetEnabledOutputs -> ae_sys::AEGP_OutputTypes,
-                rq_item.as_ptr(),
-                output_module.as_ptr()
-            )?
-        ))
+        Ok(OutputTypes::from_bits_truncate(call_suite_fn_single!(
+            self,
+            AEGP_GetEnabledOutputs -> ae_sys::AEGP_OutputTypes,
+            rq_item.as_ptr(),
+            output_module.as_ptr()
+        )?))
     }
 
     /// Sets which output types (video, audio) are enabled for an output module.
@@ -140,15 +130,13 @@ impl OutputModuleSuite {
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
         output_module: impl AsPtr<ae_sys::AEGP_OutputModuleRefH>,
     ) -> Result<VideoChannels, Error> {
-        Ok(
-            call_suite_fn_single!(
-                self,
-                AEGP_GetOutputChannels -> ae_sys::AEGP_VideoChannels,
-                rq_item.as_ptr(),
-                output_module.as_ptr()
-            )?
-            .into()
-        )
+        Ok(call_suite_fn_single!(
+            self,
+            AEGP_GetOutputChannels -> ae_sys::AEGP_VideoChannels,
+            rq_item.as_ptr(),
+            output_module.as_ptr()
+        )?
+        .into())
     }
 
     /// Sets the output channels for an output module.
@@ -308,7 +296,7 @@ impl OutputModuleSuite {
         unsafe {
             Ok(
                 U16CString::from_ptr_str(MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr())
-                    .to_string_lossy()
+                    .to_string_lossy(),
             )
         }
     }
@@ -337,13 +325,11 @@ impl OutputModuleSuite {
         &self,
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
     ) -> Result<OutputModuleRefHandle, Error> {
-        Ok(OutputModuleRefHandle::from_raw(
-            call_suite_fn_single!(
-                self,
-                AEGP_AddDefaultOutputModule -> ae_sys::AEGP_OutputModuleRefH,
-                rq_item.as_ptr()
-            )?
-        ))
+        Ok(OutputModuleRefHandle::from_raw(call_suite_fn_single!(
+            self,
+            AEGP_AddDefaultOutputModule -> ae_sys::AEGP_OutputModuleRefH,
+            rq_item.as_ptr()
+        )?))
     }
 
     /// Retrieves extra information about an output module.
@@ -372,12 +358,13 @@ impl OutputModuleSuite {
 
         unsafe {
             let format = U16CString::from_ptr_str(
-                MemHandle::<u16>::from_raw(format_handle)?.lock()?.as_ptr()
-            ).to_string_lossy();
+                MemHandle::<u16>::from_raw(format_handle)?.lock()?.as_ptr(),
+            )
+            .to_string_lossy();
 
-            let info = U16CString::from_ptr_str(
-                MemHandle::<u16>::from_raw(info_handle)?.lock()?.as_ptr()
-            ).to_string_lossy();
+            let info =
+                U16CString::from_ptr_str(MemHandle::<u16>::from_raw(info_handle)?.lock()?.as_ptr())
+                    .to_string_lossy();
 
             Ok((format, info, is_sequence != 0, multi_frame != 0))
         }

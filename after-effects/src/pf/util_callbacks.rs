@@ -1,6 +1,6 @@
 use crate::*;
+use ae_sys::{_PF_UtilCallbacks, PF_EffectWorld, PF_FloatMatrix, PF_Pixel, PF_Pixel16, PF_ProgPtr};
 use std::ffi::c_void;
-use ae_sys::{ PF_ProgPtr, PF_EffectWorld, _PF_UtilCallbacks, PF_Pixel, PF_Pixel16, PF_FloatMatrix };
 
 macro_rules! call_fn {
     ($self:ident, $fn:ident, $($args:expr),*) => {
@@ -168,6 +168,20 @@ pub const ONCE_PER_PROCESSOR: i32 = ae_sys::PF_Iterations_ONCE_PER_PROCESSOR as 
 pub struct UtilCallbacks(*const ae_sys::PF_InData);
 
 impl UtilCallbacks {
+    define_iterate!(iterate, Pixel8, PF_Pixel);
+
+    define_iterate!(iterate16, Pixel16, PF_Pixel16);
+
+    define_iterate!(iterate_origin,                Pixel8,  PF_Pixel,   origin: Option<Point>);
+
+    define_iterate!(iterate_origin16,              Pixel16, PF_Pixel16, origin: Option<Point>);
+
+    define_iterate!(iterate_origin_non_clip_src,   Pixel8,  PF_Pixel,   origin: Option<Point>);
+
+    define_iterate!(iterate_origin_non_clip_src16, Pixel16, PF_Pixel16, origin: Option<Point>);
+
+    define_iterate_lut_and_generic!();
+
     pub fn new(in_data: impl AsPtr<*const ae_sys::PF_InData>) -> Self {
         assert!(!in_data.as_ptr().is_null());
         Self(in_data.as_ptr())
@@ -180,16 +194,57 @@ impl UtilCallbacks {
     /// * `dest_x`, `dest_y` - upper left-hand corner of src rect in composite image
     /// * `field` - which scanlines to render ([`Field::Frame`], [`Field::Upper`] or [`Field::Lower`])
     /// * `transfer_mode` - can be [`TransferMode::Copy`], [`TransferMode::Behind`] or [`TransferMode::InFront`]
-    pub fn composite_rect(&self, src_rect: Option<Rect>, src_opacity: i32, src: impl AsPtr<*const PF_EffectWorld>, dest_x: i32, dest_y: i32, field: Field, transfer_mode: TransferMode, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, composite_rect, src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x), src_opacity, src.as_ptr() as _, dest_x, dest_y, field.into(), transfer_mode.into(), dst.as_mut_ptr())
+    pub fn composite_rect(
+        &self,
+        src_rect: Option<Rect>,
+        src_opacity: i32,
+        src: impl AsPtr<*const PF_EffectWorld>,
+        dest_x: i32,
+        dest_y: i32,
+        field: Field,
+        transfer_mode: TransferMode,
+        mut dst: impl AsMutPtr<*mut PF_EffectWorld>,
+    ) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
+        call_fn!(
+            self,
+            composite_rect,
+            src_rect
+                .map(Into::into)
+                .as_mut()
+                .map_or(std::ptr::null_mut(), |x| x),
+            src_opacity,
+            src.as_ptr() as _,
+            dest_x,
+            dest_y,
+            field.into(),
+            transfer_mode.into(),
+            dst.as_mut_ptr()
+        )
     }
 
     /// Blends two images, alpha-weighted. Does not deal with different-sized sources, though the destination may be either `PF_EffectWorld`.
     /// - `ratio` should be between 0.0 and 1.0
-    pub fn blend(&self, src1: impl AsPtr<*const PF_EffectWorld>, src2: impl AsPtr<*const PF_EffectWorld>, ratio: f32, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src1.as_ptr().is_null() || src2.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, blend, src1.as_ptr(), src2.as_ptr(), Fixed::from(ratio).as_fixed(), dst.as_mut_ptr())
+    pub fn blend(
+        &self,
+        src1: impl AsPtr<*const PF_EffectWorld>,
+        src2: impl AsPtr<*const PF_EffectWorld>,
+        ratio: f32,
+        mut dst: impl AsMutPtr<*mut PF_EffectWorld>,
+    ) -> Result<(), Error> {
+        if src1.as_ptr().is_null() || src2.as_ptr().is_null() || dst.as_mut_ptr().is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
+        call_fn!(
+            self,
+            blend,
+            src1.as_ptr(),
+            src2.as_ptr(),
+            Fixed::from(ratio).as_fixed(),
+            dst.as_mut_ptr()
+        )
     }
 
     /// Convolve an image with an arbitrary size kernel on each of the a, r, g, and b channels separately.
@@ -207,9 +262,36 @@ impl UtilCallbacks {
     ///
     /// Note: some 2D convolutions are seperable and can be implemented with a horizontal 1D convolve and a vertical 1D convolve.
     /// This filter may have different high and low quality versions.
-    pub fn convolve(&self, src: impl AsPtr<*const PF_EffectWorld>, area: Option<Rect>, flags: KernelFlags, kernel_size: i32, a_kernel: *mut c_void, r_kernel: *mut c_void, g_kernel: *mut c_void, b_kernel: *mut c_void, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, convolve, src.as_ptr() as _, area.map(Into::into).as_ref().map_or(std::ptr::null_mut(), |x| x), flags.bits() as _, kernel_size, a_kernel, r_kernel, g_kernel, b_kernel, dst.as_mut_ptr())
+    pub fn convolve(
+        &self,
+        src: impl AsPtr<*const PF_EffectWorld>,
+        area: Option<Rect>,
+        flags: KernelFlags,
+        kernel_size: i32,
+        a_kernel: *mut c_void,
+        r_kernel: *mut c_void,
+        g_kernel: *mut c_void,
+        b_kernel: *mut c_void,
+        mut dst: impl AsMutPtr<*mut PF_EffectWorld>,
+    ) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
+        call_fn!(
+            self,
+            convolve,
+            src.as_ptr() as _,
+            area.map(Into::into)
+                .as_ref()
+                .map_or(std::ptr::null_mut(), |x| x),
+            flags.bits() as _,
+            kernel_size,
+            a_kernel,
+            r_kernel,
+            g_kernel,
+            b_kernel,
+            dst.as_mut_ptr()
+        )
     }
 
     /// Generate a kernel with a Gaussian distribution of values.
@@ -224,16 +306,37 @@ impl UtilCallbacks {
     /// * Use longs-chars-fixeds
     ///
     /// This filter will be the same high and low quality.
-    pub fn gaussian_kernel(&self, radius: f64, flags: KernelFlags, multiplier: f64, diameter: &mut i32, kernel: *mut c_void) -> Result<(), Error> {
-        call_fn!(self, gaussian_kernel, radius, flags.bits() as _, multiplier, diameter, kernel)
+    pub fn gaussian_kernel(
+        &self,
+        radius: f64,
+        flags: KernelFlags,
+        multiplier: f64,
+        diameter: &mut i32,
+        kernel: *mut c_void,
+    ) -> Result<(), Error> {
+        call_fn!(
+            self,
+            gaussian_kernel,
+            radius,
+            flags.bits() as _,
+            multiplier,
+            diameter,
+            kernel
+        )
     }
 
     /// Converts to (and from) r, g, and b color values pre-multiplied with black to represent the alpha channel.
     /// * `forward` - `true` means convert non-premultiplied to pre-multiplied; `false` means un-pre-multiply.
     ///
     /// Quality independent.
-    pub fn premultiply(&self, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
+    pub fn premultiply(
+        &self,
+        forward: bool,
+        mut dst: impl AsMutPtr<*mut PF_EffectWorld>,
+    ) -> Result<(), Error> {
+        if dst.as_mut_ptr().is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
         call_fn!(self, premultiply, forward as _, dst.as_mut_ptr())
     }
 
@@ -242,9 +345,24 @@ impl UtilCallbacks {
     /// * `forward` - `true` means convert non-premultiplied to pre-multiplied; `false` means un-pre-multiply.
     ///
     /// To convert between premul and straight pixel buffers where the color channels were matted with a color other than black.
-    pub fn premultiply_color(&self, src: impl AsPtr<*const PF_EffectWorld>, color: &Pixel8, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, premultiply_color, src.as_ptr() as _, color, forward as _, dst.as_mut_ptr())
+    pub fn premultiply_color(
+        &self,
+        src: impl AsPtr<*const PF_EffectWorld>,
+        color: &Pixel8,
+        forward: bool,
+        mut dst: impl AsMutPtr<*mut PF_EffectWorld>,
+    ) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
+        call_fn!(
+            self,
+            premultiply_color,
+            src.as_ptr() as _,
+            color,
+            forward as _,
+            dst.as_mut_ptr()
+        )
     }
 
     /// Converts to (and from) having r, g, and b color values premultiplied with any color to represent the alpha channel.
@@ -252,22 +370,47 @@ impl UtilCallbacks {
     /// * `forward` - `true` means convert non-premultiplied to pre-multiplied; `false` means un-pre-multiply.
     ///
     /// To convert between premul and straight pixel buffers where the color channels were matted with a color other than black.
-    pub fn premultiply_color16(&self, src: impl AsPtr<*const PF_EffectWorld>, color: &Pixel16, forward: bool, mut dst: impl AsMutPtr<*mut PF_EffectWorld>) -> Result<(), Error> {
-        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, premultiply_color16, src.as_ptr() as _, color, forward as _, dst.as_mut_ptr())
+    pub fn premultiply_color16(
+        &self,
+        src: impl AsPtr<*const PF_EffectWorld>,
+        color: &Pixel16,
+        forward: bool,
+        mut dst: impl AsMutPtr<*mut PF_EffectWorld>,
+    ) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
+        call_fn!(
+            self,
+            premultiply_color16,
+            src.as_ptr() as _,
+            color,
+            forward as _,
+            dst.as_mut_ptr()
+        )
     }
 
     /// Call this routine before you plan to perform a large number of image resamplings.
     /// Depending on platform, this routine could start up the DSP chip, compute an index table to each scanline
     /// of the buffer, or whatever might be needed to speed up image resampling.
-    pub fn begin_sampling(&self, quality: Quality, mode_flags: ModeFlags) -> Result<Sampling, Error> {
+    pub fn begin_sampling(
+        &self,
+        quality: Quality,
+        mode_flags: ModeFlags,
+    ) -> Result<Sampling, Error> {
         let mut params = Sampling {
             in_data_ptr: self.0.as_ptr(),
             params: unsafe { std::mem::zeroed() },
             quality: quality.into(),
             mode_flags: mode_flags.into(),
         };
-        let _ = call_fn!(self, begin_sampling, quality.into(), mode_flags.into(), &mut params.params)?;
+        let _ = call_fn!(
+            self,
+            begin_sampling,
+            quality.into(),
+            mode_flags.into(),
+            &mut params.params
+        )?;
         Ok(params)
     }
 
@@ -275,39 +418,87 @@ impl UtilCallbacks {
     /// Setting `color` to `None` will fill the rectangle with black.
     /// Setting `rect` to `None` will fill the entire image.
     /// Quality setting doesn't matter.
-    pub fn fill(&self, mut world: impl AsMutPtr<*mut PF_EffectWorld>, color: Option<Pixel8>, rect: Option<Rect>) -> Result<(), Error> {
-        if world.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, fill, color.as_ref().map_or(std::ptr::null(), |x| x), rect.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x), world.as_mut_ptr())
+    pub fn fill(
+        &self,
+        mut world: impl AsMutPtr<*mut PF_EffectWorld>,
+        color: Option<Pixel8>,
+        rect: Option<Rect>,
+    ) -> Result<(), Error> {
+        if world.as_mut_ptr().is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
+        call_fn!(
+            self,
+            fill,
+            color.as_ref().map_or(std::ptr::null(), |x| x),
+            rect.map(Into::into)
+                .as_ref()
+                .map_or(std::ptr::null(), |x| x),
+            world.as_mut_ptr()
+        )
     }
 
     /// This fills a rectangle in the 8-bit image with the given color.
     /// Setting `color` to `None` will fill the rectangle with black.
     /// Setting `rect` to `None` will fill the entire image.
     /// Quality setting doesn't matter.
-    pub fn fill16(&self, mut world: impl AsMutPtr<*mut PF_EffectWorld>, color: Option<Pixel16>, rect: Option<Rect>) -> Result<(), Error> {
-        if world.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, fill16, color.as_ref().map_or(std::ptr::null(), |x| x), rect.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x), world.as_mut_ptr())
+    pub fn fill16(
+        &self,
+        mut world: impl AsMutPtr<*mut PF_EffectWorld>,
+        color: Option<Pixel16>,
+        rect: Option<Rect>,
+    ) -> Result<(), Error> {
+        if world.as_mut_ptr().is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
+        call_fn!(
+            self,
+            fill16,
+            color.as_ref().map_or(std::ptr::null(), |x| x),
+            rect.map(Into::into)
+                .as_ref()
+                .map_or(std::ptr::null(), |x| x),
+            world.as_mut_ptr()
+        )
     }
 
     /// This blits a region from one PF_EffectWorld to another.
     /// This is an alpha-preserving (unlike CopyBits), 32-bit only, non-antialiased stretch blit.
     /// The high qual version does an anti-aliased blit (ie. it interpolates).
-    pub fn copy(&self, src: impl AsPtr<*const PF_EffectWorld>, mut dst: impl AsMutPtr<*mut PF_EffectWorld>, src_rect: Option<Rect>, dst_rect: Option<Rect>) -> Result<(), Error> {
-        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() { return Err(Error::BadCallbackParameter); }
-        call_fn!(self, copy, src.as_ptr() as *mut _, dst.as_mut_ptr(), src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x), dst_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x))
+    pub fn copy(
+        &self,
+        src: impl AsPtr<*const PF_EffectWorld>,
+        mut dst: impl AsMutPtr<*mut PF_EffectWorld>,
+        src_rect: Option<Rect>,
+        dst_rect: Option<Rect>,
+    ) -> Result<(), Error> {
+        if src.as_ptr().is_null() || dst.as_mut_ptr().is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
+        call_fn!(
+            self,
+            copy,
+            src.as_ptr() as *mut _,
+            dst.as_mut_ptr(),
+            src_rect
+                .map(Into::into)
+                .as_mut()
+                .map_or(std::ptr::null_mut(), |x| x),
+            dst_rect
+                .map(Into::into)
+                .as_mut()
+                .map_or(std::ptr::null_mut(), |x| x)
+        )
     }
 
     // Helpers for the define_iterate macros
-    #[inline(always)] fn get_in_data(&self) -> *const ae_sys::PF_InData { self.0.as_ptr() }
-    #[inline(always)] fn get_funcs_ptr(&self) -> *mut ae_sys::_PF_UtilCallbacks { unsafe { (*self.0.as_ptr()).utils } }
+    #[inline(always)]
+    fn get_in_data(&self) -> *const ae_sys::PF_InData { self.0.as_ptr() }
 
-    define_iterate!(iterate,                       Pixel8,  PF_Pixel);
-    define_iterate!(iterate16,                     Pixel16, PF_Pixel16);
-    define_iterate!(iterate_origin,                Pixel8,  PF_Pixel,   origin: Option<Point>);
-    define_iterate!(iterate_origin16,              Pixel16, PF_Pixel16, origin: Option<Point>);
-    define_iterate!(iterate_origin_non_clip_src,   Pixel8,  PF_Pixel,   origin: Option<Point>);
-    define_iterate!(iterate_origin_non_clip_src16, Pixel16, PF_Pixel16, origin: Option<Point>);
-    define_iterate_lut_and_generic!();
+    #[inline(always)]
+    fn get_funcs_ptr(&self) -> *mut ae_sys::_PF_UtilCallbacks {
+        unsafe { (*self.0.as_ptr()).utils }
+    }
 
     pub fn host_new_handle(&self, size: usize) -> Result<RawHandle, Error> {
         unsafe {
@@ -315,7 +506,9 @@ impl UtilCallbacks {
             if size == 0 || in_data.utils.is_null() {
                 return Err(Error::BadCallbackParameter);
             }
-            let new = (*in_data.utils).host_new_handle.ok_or(Error::BadCallbackParameter)?;
+            let new = (*in_data.utils)
+                .host_new_handle
+                .ok_or(Error::BadCallbackParameter)?;
             let ptr = new(size as _);
             if ptr.is_null() {
                 return Err(Error::OutOfMemory);
@@ -329,17 +522,31 @@ impl UtilCallbacks {
             }
             Ok(RawHandle {
                 utils_ptr: in_data.utils,
-                handle: ptr
+                handle: ptr,
             })
         }
     }
 
     /// This creates a new [`Layer`] for scratch for you. You must dispose of it. This is quality independent.
-    pub fn new_world(&self, width: usize, height: usize, flags: NewWorldFlags) -> Result<Layer, Error> {
+    pub fn new_world(
+        &self,
+        width: usize,
+        height: usize,
+        flags: NewWorldFlags,
+    ) -> Result<Layer, Error> {
         let mut world = unsafe { std::mem::zeroed() };
-        call_fn!(self, new_world, width as _, height as _, flags.bits() as _, &mut world)?;
+        call_fn!(
+            self,
+            new_world,
+            width as _,
+            height as _,
+            flags.bits() as _,
+            &mut world
+        )?;
         Ok(Layer::from_owned(world, self.0.clone(), |self_layer| {
-            UtilCallbacks::new(self_layer.in_data_ptr).dispose_world(self_layer.as_mut_ptr()).unwrap();
+            UtilCallbacks::new(self_layer.in_data_ptr)
+                .dispose_world(self_layer.as_mut_ptr())
+                .unwrap();
         }))
     }
 
@@ -349,20 +556,41 @@ impl UtilCallbacks {
     }
 
     /// Blends using a transfer mode, with an optional mask.
-    pub fn transfer_rect(&self, quality: Quality, flags: ModeFlags, field: Field, src_rect: Option<Rect>, src: *const PF_EffectWorld, comp_mode: CompositeMode, mask_world: Option<MaskWorld>, dest_x: i32, dest_y: i32, dst: *mut PF_EffectWorld) -> Result<(), Error> {
-        if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
+    pub fn transfer_rect(
+        &self,
+        quality: Quality,
+        flags: ModeFlags,
+        field: Field,
+        src_rect: Option<Rect>,
+        src: *const PF_EffectWorld,
+        comp_mode: CompositeMode,
+        mask_world: Option<MaskWorld>,
+        dest_x: i32,
+        dest_y: i32,
+        dst: *mut PF_EffectWorld,
+    ) -> Result<(), Error> {
+        if src.is_null() || dst.is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
 
         let comp_mode: ae_sys::PF_CompositeMode = comp_mode.into();
 
-        call_fn!(self,
+        call_fn!(
+            self,
             transfer_rect,
             quality.into(),
             flags.into(),
             field.into(),
-            src_rect.map(Into::into).as_mut().map_or(std::ptr::null_mut(), |x| x),
+            src_rect
+                .map(Into::into)
+                .as_mut()
+                .map_or(std::ptr::null_mut(), |x| x),
             src,
             &comp_mode,
-            mask_world.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
+            mask_world
+                .map(Into::into)
+                .as_ref()
+                .map_or(std::ptr::null(), |x| x),
             dest_x,
             dest_y,
             dst
@@ -374,25 +602,47 @@ impl UtilCallbacks {
     /// The matrices pointer points to a matrix array used for motion-blur.
     ///
     /// When is a transform not a transform? A Z-scale transform is not a transform, unless the transformed layer is a parent of other layers that do not all lie in the z=0 plane.
-    pub fn transform_world(&self, quality: Quality, mode_flags: ModeFlags, field: Field, src: *const PF_EffectWorld, comp_mode: CompositeMode, mask_world: Option<MaskWorld>, matrices: &[Matrix3], src2dst_matrix: bool, dest_rect: Option<Rect>, dst: *mut PF_EffectWorld) -> Result<(), Error> {
-        if src.is_null() || dst.is_null() { return Err(Error::BadCallbackParameter); }
+    pub fn transform_world(
+        &self,
+        quality: Quality,
+        mode_flags: ModeFlags,
+        field: Field,
+        src: *const PF_EffectWorld,
+        comp_mode: CompositeMode,
+        mask_world: Option<MaskWorld>,
+        matrices: &[Matrix3],
+        src2dst_matrix: bool,
+        dest_rect: Option<Rect>,
+        dst: *mut PF_EffectWorld,
+    ) -> Result<(), Error> {
+        if src.is_null() || dst.is_null() {
+            return Err(Error::BadCallbackParameter);
+        }
 
-        const _: () = assert!(std::mem::size_of::<PF_FloatMatrix>() == std::mem::size_of::<Matrix3>());
+        const _: () =
+            assert!(std::mem::size_of::<PF_FloatMatrix>() == std::mem::size_of::<Matrix3>());
 
         let comp_mode: ae_sys::PF_CompositeMode = comp_mode.into();
 
-        call_fn!(self,
+        call_fn!(
+            self,
             transform_world,
             quality.into(),
             mode_flags.into(),
             field.into(),
             src,
             &comp_mode,
-            mask_world.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
+            mask_world
+                .map(Into::into)
+                .as_ref()
+                .map_or(std::ptr::null(), |x| x),
             matrices.as_ptr() as *const _,
             matrices.len() as _,
             src2dst_matrix as _,
-            dest_rect.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x),
+            dest_rect
+                .map(Into::into)
+                .as_ref()
+                .map_or(std::ptr::null(), |x| x),
             dst
         )
     }
@@ -401,29 +651,62 @@ impl UtilCallbacks {
         match type_ {
             PlatformDataType::MainWnd => {
                 let mut hwnd: usize = 0;
-                call_fn!(self, get_platform_data, type_.into(), &mut hwnd as *mut _ as *mut c_void)?;
+                call_fn!(
+                    self,
+                    get_platform_data,
+                    type_.into(),
+                    &mut hwnd as *mut _ as *mut c_void
+                )?;
                 Ok(PlatformData::MainWnd(hwnd as _))
-            },
+            }
             PlatformDataType::ResDllinstance => {
                 let mut handle = std::ptr::null_mut();
-                call_fn!(self, get_platform_data, type_.into(), &mut handle as *mut _ as *mut c_void)?;
+                call_fn!(
+                    self,
+                    get_platform_data,
+                    type_.into(),
+                    &mut handle as *mut _ as *mut c_void
+                )?;
                 Ok(PlatformData::ResDllinstance(handle))
-            },
+            }
             PlatformDataType::BundleRef => {
                 let mut handle = std::ptr::null_mut();
-                call_fn!(self, get_platform_data, type_.into(), &mut handle as *mut _ as *mut c_void)?;
+                call_fn!(
+                    self,
+                    get_platform_data,
+                    type_.into(),
+                    &mut handle as *mut _ as *mut c_void
+                )?;
                 Ok(PlatformData::BundleRef(handle))
-            },
+            }
             PlatformDataType::ExeFilePath => {
                 let mut path = [0u16; 260]; // AEFX_MAX_PATH
-                call_fn!(self, get_platform_data, type_.into(), path.as_mut_ptr() as *mut c_void)?;
-                Ok(PlatformData::ExeFilePath(String::from_utf16_lossy(&path).trim_end_matches('\0').to_string()))
-            },
+                call_fn!(
+                    self,
+                    get_platform_data,
+                    type_.into(),
+                    path.as_mut_ptr() as *mut c_void
+                )?;
+                Ok(PlatformData::ExeFilePath(
+                    String::from_utf16_lossy(&path)
+                        .trim_end_matches('\0')
+                        .to_string(),
+                ))
+            }
             PlatformDataType::ResFilePath => {
                 let mut path = [0u16; 260]; // AEFX_MAX_PATH
-                call_fn!(self, get_platform_data, type_.into(), path.as_mut_ptr() as *mut c_void)?;
-                Ok(PlatformData::ResFilePath(String::from_utf16_lossy(&path).trim_end_matches('\0').to_string()))
-            },
+                call_fn!(
+                    self,
+                    get_platform_data,
+                    type_.into(),
+                    path.as_mut_ptr() as *mut c_void
+                )?;
+                Ok(PlatformData::ResFilePath(
+                    String::from_utf16_lossy(&path)
+                        .trim_end_matches('\0')
+                        .to_string(),
+                ))
+            }
         }
     }
 
@@ -432,45 +715,58 @@ impl UtilCallbacks {
     /// It will return [`Error::BadCallbackParameter`] if the world is not 8-bpc.
     ///
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
-    pub fn pixel_data8(&self, world: *mut PF_EffectWorld, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel8, Error> {
+    pub fn pixel_data8(
+        &self,
+        world: *mut PF_EffectWorld,
+        pixels: Option<*mut Pixel8>,
+    ) -> Result<*mut Pixel8, Error> {
         let mut ret = std::ptr::null_mut();
         unsafe {
             let in_data = &(*self.0.as_ptr());
             if in_data.utils.is_null() || in_data.effect_ref.is_null() || world.is_null() {
                 return Err(Error::BadCallbackParameter);
             }
-            let f = (*in_data.utils).get_pixel_data8.ok_or(Error::BadCallbackParameter)?;
+            let f = (*in_data.utils)
+                .get_pixel_data8
+                .ok_or(Error::BadCallbackParameter)?;
             match f(world, pixels.unwrap_or(std::ptr::null_mut()), &mut ret) {
                 0 => {
                     if ret.is_null() {
                         return Err(Error::BadCallbackParameter);
                     }
                     Ok(ret)
-                },
+                }
                 e => Err(e.into()),
             }
         }
     }
+
     /// Obtain a pointer to a 16-bpc pixel within the specified world.
     ///
     /// It will return [`Error::BadCallbackParameter`] if the world is not 16-bpc.
     ///
     /// The second parameter is optional; if it is `Some`, the returned pixel will be an interpretation of the values in the passed-in pixel, as if it were in the specified PF_EffectWorld.
-    pub fn pixel_data16(&self, world: *mut PF_EffectWorld, pixels: Option<*mut Pixel8>) -> Result<*mut Pixel16, Error> {
+    pub fn pixel_data16(
+        &self,
+        world: *mut PF_EffectWorld,
+        pixels: Option<*mut Pixel8>,
+    ) -> Result<*mut Pixel16, Error> {
         let mut ret = std::ptr::null_mut();
         unsafe {
             let in_data = &(*self.0.as_ptr());
             if in_data.utils.is_null() || in_data.effect_ref.is_null() || world.is_null() {
                 return Err(Error::BadCallbackParameter);
             }
-            let f = (*in_data.utils).get_pixel_data16.ok_or(Error::BadCallbackParameter)?;
+            let f = (*in_data.utils)
+                .get_pixel_data16
+                .ok_or(Error::BadCallbackParameter)?;
             match f(world, pixels.unwrap_or(std::ptr::null_mut()), &mut ret) {
                 0 => {
                     if ret.is_null() {
                         return Err(Error::BadCallbackParameter);
                     }
                     Ok(ret)
-                },
+                }
                 e => Err(e.into()),
             }
         }
@@ -483,7 +779,7 @@ impl UtilCallbacks {
             assert!(!in_data.utils.is_null() && !in_data.effect_ref.is_null());
             ColorCallbacks {
                 effect_ref: in_data.effect_ref,
-                utils: in_data.utils
+                utils: in_data.utils,
             }
         }
     }
@@ -519,8 +815,15 @@ impl ColorCallbacks {
     pub fn rgb_to_hls(&self, rgb: &Pixel8) -> Result<HLSPixel, Error> {
         let mut hls = HLSPixel::default();
         unsafe {
-            let f = (*self.utils).colorCB.RGBtoHLS.ok_or(Error::BadCallbackParameter)?;
-            match f(self.effect_ref, rgb as *const _ as *mut _, &mut hls as *mut _ as *mut _) {
+            let f = (*self.utils)
+                .colorCB
+                .RGBtoHLS
+                .ok_or(Error::BadCallbackParameter)?;
+            match f(
+                self.effect_ref,
+                rgb as *const _ as *mut _,
+                &mut hls as *mut _ as *mut _,
+            ) {
                 0 => Ok(hls),
                 e => Err(e.into()),
             }
@@ -531,7 +834,10 @@ impl ColorCallbacks {
     pub fn hls_to_rgb(&self, hls: &HLSPixel) -> Result<Pixel8, Error> {
         unsafe {
             let mut rgb = std::mem::zeroed();
-            let f = (*self.utils).colorCB.HLStoRGB.ok_or(Error::BadCallbackParameter)?;
+            let f = (*self.utils)
+                .colorCB
+                .HLStoRGB
+                .ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, hls as *const _ as *mut _, &mut rgb) {
                 0 => Ok(rgb),
                 e => Err(e.into()),
@@ -544,8 +850,15 @@ impl ColorCallbacks {
     pub fn rgb_to_yiq(&self, rgb: &Pixel8) -> Result<YIQPixel, Error> {
         let mut yiq = YIQPixel::default();
         unsafe {
-            let f = (*self.utils).colorCB.RGBtoYIQ.ok_or(Error::BadCallbackParameter)?;
-            match f(self.effect_ref, rgb as *const _ as *mut _, &mut yiq as *mut _ as *mut _) {
+            let f = (*self.utils)
+                .colorCB
+                .RGBtoYIQ
+                .ok_or(Error::BadCallbackParameter)?;
+            match f(
+                self.effect_ref,
+                rgb as *const _ as *mut _,
+                &mut yiq as *mut _ as *mut _,
+            ) {
                 0 => Ok(yiq),
                 e => Err(e.into()),
             }
@@ -556,7 +869,10 @@ impl ColorCallbacks {
     pub fn yiq_to_rgb(&self, yiq: &YIQPixel) -> Result<Pixel8, Error> {
         unsafe {
             let mut rgb = std::mem::zeroed();
-            let f = (*self.utils).colorCB.YIQtoRGB.ok_or(Error::BadCallbackParameter)?;
+            let f = (*self.utils)
+                .colorCB
+                .YIQtoRGB
+                .ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, yiq as *const _ as *mut _, &mut rgb) {
                 0 => Ok(rgb),
                 e => Err(e.into()),
@@ -568,7 +884,10 @@ impl ColorCallbacks {
     pub fn luminance(&self, rgb: &Pixel8) -> Result<i32, Error> {
         let mut x = 0;
         unsafe {
-            let f = (*self.utils).colorCB.Luminance.ok_or(Error::BadCallbackParameter)?;
+            let f = (*self.utils)
+                .colorCB
+                .Luminance
+                .ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut x) {
                 0 => Ok(x),
                 e => Err(e.into()),
@@ -580,7 +899,10 @@ impl ColorCallbacks {
     pub fn hue(&self, rgb: &Pixel8) -> Result<i32, Error> {
         let mut x = 0;
         unsafe {
-            let f = (*self.utils).colorCB.Hue.ok_or(Error::BadCallbackParameter)?;
+            let f = (*self.utils)
+                .colorCB
+                .Hue
+                .ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut x) {
                 0 => Ok(x),
                 e => Err(e.into()),
@@ -592,7 +914,10 @@ impl ColorCallbacks {
     pub fn lightness(&self, rgb: &Pixel8) -> Result<i32, Error> {
         let mut x = 0;
         unsafe {
-            let f = (*self.utils).colorCB.Lightness.ok_or(Error::BadCallbackParameter)?;
+            let f = (*self.utils)
+                .colorCB
+                .Lightness
+                .ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut x) {
                 0 => Ok(x),
                 e => Err(e.into()),
@@ -604,7 +929,10 @@ impl ColorCallbacks {
     pub fn saturation(&self, rgb: &Pixel8) -> Result<i32, Error> {
         let mut x = 0;
         unsafe {
-            let f = (*self.utils).colorCB.Saturation.ok_or(Error::BadCallbackParameter)?;
+            let f = (*self.utils)
+                .colorCB
+                .Saturation
+                .ok_or(Error::BadCallbackParameter)?;
             match f(self.effect_ref, rgb as *const _ as *mut _, &mut x) {
                 0 => Ok(x),
                 e => Err(e.into()),
@@ -689,9 +1017,8 @@ pub struct RawHandle {
     handle: ae_sys::PF_Handle,
 }
 impl RawHandle {
-    pub fn as_raw(&self) -> ae_sys::PF_Handle {
-        self.handle
-    }
+    pub fn as_raw(&self) -> ae_sys::PF_Handle { self.handle }
+
     /// Returns a guard exposing a pointer to the handle's data.
     ///
     /// `host_lock_handle` has been a no-op in After Effects since CS6, so we no
@@ -708,16 +1035,22 @@ impl RawHandle {
             _marker: std::marker::PhantomData,
         })
     }
+
     pub fn size(&self) -> Result<usize, Error> {
         unsafe {
-            let get_size = (*self.utils_ptr).host_get_handle_size.ok_or(Error::BadCallbackParameter)?;
+            let get_size = (*self.utils_ptr)
+                .host_get_handle_size
+                .ok_or(Error::BadCallbackParameter)?;
             let size = get_size(self.handle);
             Ok(size as _)
         }
     }
+
     pub fn resize(&mut self, new_size: usize) -> Result<(), Error> {
         unsafe {
-            let resize = (*self.utils_ptr).host_resize_handle.ok_or(Error::BadCallbackParameter)?;
+            let resize = (*self.utils_ptr)
+                .host_resize_handle
+                .ok_or(Error::BadCallbackParameter)?;
             match resize(new_size as _, &mut self.handle) {
                 0 => Ok(()),
                 e => Err(e.into()),
@@ -741,9 +1074,7 @@ pub struct RawHandleLock<'a> {
     _marker: std::marker::PhantomData<&'a RawHandle>,
 }
 impl<'a> RawHandleLock<'a> {
-    pub fn as_ptr(&self) -> *mut c_void {
-        self.ptr
-    }
+    pub fn as_ptr(&self) -> *mut c_void { self.ptr }
 }
 
 pub struct Sampling {
@@ -758,8 +1089,16 @@ impl Sampling {
     pub fn subpixel_sample(&self, x: f32, y: f32) -> Result<Pixel8, Error> {
         unsafe {
             let mut pixel = std::mem::zeroed();
-            let f = (*(*self.in_data_ptr).utils).subpixel_sample.ok_or(Error::BadCallbackParameter)?;
-            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).as_fixed(), Fixed::from(y).as_fixed(), &self.params, &mut pixel) {
+            let f = (*(*self.in_data_ptr).utils)
+                .subpixel_sample
+                .ok_or(Error::BadCallbackParameter)?;
+            match f(
+                (*self.in_data_ptr).effect_ref,
+                Fixed::from(x).as_fixed(),
+                Fixed::from(y).as_fixed(),
+                &self.params,
+                &mut pixel,
+            ) {
                 0 => Ok(pixel),
                 e => Err(e.into()),
             }
@@ -771,12 +1110,19 @@ impl Sampling {
     pub fn subpixel_sample16(&self, x: f32, y: f32) -> Result<Pixel16, Error> {
         unsafe {
             let mut pixel = std::mem::zeroed();
-            let f = (*(*self.in_data_ptr).utils).subpixel_sample16.ok_or(Error::BadCallbackParameter)?;
-            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).as_fixed(), Fixed::from(y).as_fixed(), &self.params, &mut pixel) {
+            let f = (*(*self.in_data_ptr).utils)
+                .subpixel_sample16
+                .ok_or(Error::BadCallbackParameter)?;
+            match f(
+                (*self.in_data_ptr).effect_ref,
+                Fixed::from(x).as_fixed(),
+                Fixed::from(y).as_fixed(),
+                &self.params,
+                &mut pixel,
+            ) {
                 0 => Ok(pixel),
                 e => Err(e.into()),
             }
-
         }
     }
 
@@ -786,8 +1132,16 @@ impl Sampling {
     pub fn area_sample(&self, x: f32, y: f32) -> Result<Pixel8, Error> {
         unsafe {
             let mut pixel = std::mem::zeroed();
-            let f = (*(*self.in_data_ptr).utils).area_sample.ok_or(Error::BadCallbackParameter)?;
-            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).as_fixed(), Fixed::from(y).as_fixed(), &self.params, &mut pixel) {
+            let f = (*(*self.in_data_ptr).utils)
+                .area_sample
+                .ok_or(Error::BadCallbackParameter)?;
+            match f(
+                (*self.in_data_ptr).effect_ref,
+                Fixed::from(x).as_fixed(),
+                Fixed::from(y).as_fixed(),
+                &self.params,
+                &mut pixel,
+            ) {
                 0 => Ok(pixel),
                 e => Err(e.into()),
             }
@@ -800,8 +1154,16 @@ impl Sampling {
     pub fn area_sample16(&self, x: f32, y: f32) -> Result<Pixel16, Error> {
         unsafe {
             let mut pixel = std::mem::zeroed();
-            let f = (*(*self.in_data_ptr).utils).area_sample16.ok_or(Error::BadCallbackParameter)?;
-            match f((*self.in_data_ptr).effect_ref, Fixed::from(x).as_fixed(), Fixed::from(y).as_fixed(), &self.params, &mut pixel) {
+            let f = (*(*self.in_data_ptr).utils)
+                .area_sample16
+                .ok_or(Error::BadCallbackParameter)?;
+            match f(
+                (*self.in_data_ptr).effect_ref,
+                Fixed::from(x).as_fixed(),
+                Fixed::from(y).as_fixed(),
+                &self.params,
+                &mut pixel,
+            ) {
                 0 => Ok(pixel),
                 e => Err(e.into()),
             }
@@ -816,7 +1178,12 @@ impl Drop for Sampling {
                 return;
             }
             let end_sampling = (*in_data.utils).end_sampling.unwrap(); // We're safe to unwrap because begin_sampling was successful
-            let _ = end_sampling(in_data.effect_ref, self.quality, self.mode_flags, &mut self.params);
+            let _ = end_sampling(
+                in_data.effect_ref,
+                self.quality,
+                self.mode_flags,
+                &mut self.params,
+            );
         }
     }
 }

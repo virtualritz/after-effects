@@ -13,12 +13,15 @@ fn main() {
         return;
     }
 
-    let pr_sdk_path = &env::var("PRSDK_ROOT").ok().filter(|x| !x.is_empty()).expect(
-        "PRSDK_ROOT environment variable not set – cannot find Adobe Premiere SDK.\n\
+    let pr_sdk_path = &env::var("PRSDK_ROOT")
+        .ok()
+        .filter(|x| !x.is_empty())
+        .expect(
+            "PRSDK_ROOT environment variable not set – cannot find Adobe Premiere SDK.\n\
         Please set PRSDK_ROOT to the root folder of your Adobe Premiere SDK\n\
         installation (this folder contains the Examples folder & the SDK\n\
         Guide PDF).",
-    );
+        );
 
     if !Path::new(pr_sdk_path).exists() {
         panic!("PRSDK_ROOT environment variable points to non-existent path: {pr_sdk_path}");
@@ -57,14 +60,15 @@ fn main() {
     }
 
     if let Ok(ae_sdk) = env::var("AESDK_ROOT") {
-        pr_bindings = pr_bindings.clang_arg(format!(
-            "-I{}",
-            Path::new(&ae_sdk)
-                .join("Examples")
-                .join("Headers")
-                .display()
-        ))
-        .clang_arg("--define-macro=HAS_AE_SDK");
+        pr_bindings = pr_bindings
+            .clang_arg(format!(
+                "-I{}",
+                Path::new(&ae_sdk)
+                    .join("Examples")
+                    .join("Headers")
+                    .display()
+            ))
+            .clang_arg("--define-macro=HAS_AE_SDK");
     }
 
     if cfg!(target_os = "macos") {

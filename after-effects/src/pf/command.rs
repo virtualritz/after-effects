@@ -172,7 +172,9 @@ pub enum Command {
     ///
     GetFlattenedSequenceData,
     ///
-    TranslateParamsToPrefs { extra: *mut ae_sys::PF_TranslateParamsToPrefsExtra },
+    TranslateParamsToPrefs {
+        extra: *mut ae_sys::PF_TranslateParamsToPrefsExtra,
+    },
     /// GPU equivalent to the existing [`Command::SmartRender`] selector.
     ///
     /// At render time, either the [`Command::SmartRender`] or the [`Command::SmartRenderGpu`] selector will be called, depending on whether the effect is expected to produce a CPU or GPU frame as output.
@@ -277,7 +279,9 @@ impl Command {
                 extra: EventExtra::from_raw(extra as *mut ae_sys::PF_EventExtra),
             },
             RawCommand::GetExternalDependencies => Command::GetExternalDependencies {
-                extra: ExternalDependenciesExtra::from_raw(extra as *mut ae_sys::PF_ExtDependenciesExtra),
+                extra: ExternalDependenciesExtra::from_raw(
+                    extra as *mut ae_sys::PF_ExtDependenciesExtra,
+                ),
             },
             RawCommand::CompletelyGeneral => Command::CompletelyGeneral,
             RawCommand::QueryDynamicFlags => Command::QueryDynamicFlags,
@@ -305,7 +309,7 @@ impl Command {
             },
             RawCommand::GpuDeviceSetdown => Command::GpuDeviceSetdown {
                 extra: GpuDeviceSetdownExtra::from_raw(extra as *mut _),
-            }
+            },
         }
     }
 
