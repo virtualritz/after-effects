@@ -6,3 +6,6 @@ sdk/
 
 # Cargo.lock should be ignored for libraries
 Cargo.lock
+
+# Coding-standards baseline, cloned locally -- not part of the project.
+.blueprint/
