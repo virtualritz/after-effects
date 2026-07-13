@@ -131,7 +131,7 @@ impl PersistentDataSuite {
         buffer_to_string(out_data)
     }
 
-    pub fn get_data_handle<'a, T>(
+    pub fn data_handle<'a, T>(
         &self,
         plugin_id: PluginId,
         blob_handle: PersistentBlobHandle,
@@ -152,8 +152,20 @@ impl PersistentDataSuite {
         MemHandle::from_raw(handle)
     }
 
+    #[deprecated(since = "0.5.0", note = "renamed to `data_handle`")]
+    pub fn get_data_handle<'a, T>(
+        &self,
+        plugin_id: PluginId,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: MemHandle<'a, T>,
+    ) -> Result<MemHandle<'_, T>, Error> {
+        self.data_handle(plugin_id, blob_handle, section_key, value_key, default)
+    }
+
     /// Obtains the data located at a given section's value.
-    pub fn get_data(
+    pub fn data(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -180,11 +192,24 @@ impl PersistentDataSuite {
         Ok(ptr)
     }
 
+    /// Obtains the data located at a given section's value.
+    #[deprecated(since = "0.5.0", note = "renamed to `data`")]
+    pub fn get_data(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        data_size: u32,
+        default: *const c_void,
+    ) -> Result<*mut c_void, Error> {
+        self.data(blob_handle, section_key, value_key, data_size, default)
+    }
+
     /// Obtains the string for a given section key's value
     ///
     /// Note: This interperets all stored strings as UTF-8. This is safe if you are retrieving
     /// strings stored from rust, which must be UTF-8.
-    pub fn get_string(
+    pub fn string(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -215,7 +240,23 @@ impl PersistentDataSuite {
         buffer_to_string(out_data)
     }
 
-    pub fn get_long(
+    /// Obtains the string for a given section key's value
+    ///
+    /// Note: This interperets all stored strings as UTF-8. This is safe if you are retrieving
+    /// strings stored from rust, which must be UTF-8.
+    #[deprecated(since = "0.5.0", note = "renamed to `string`")]
+    pub fn get_string(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: &str,
+        max_result_length: usize,
+    ) -> Result<String, Error> {
+        self.string(blob_handle, section_key, value_key, default, max_result_length)
+    }
+
+    pub fn long(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -235,7 +276,18 @@ impl PersistentDataSuite {
         )
     }
 
-    pub fn get_fp_long(
+    #[deprecated(since = "0.5.0", note = "renamed to `long`")]
+    pub fn get_long(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: i32,
+    ) -> Result<i32, Error> {
+        self.long(blob_handle, section_key, value_key, default)
+    }
+
+    pub fn fp_long(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -255,7 +307,18 @@ impl PersistentDataSuite {
         )
     }
 
-    pub fn get_time(
+    #[deprecated(since = "0.5.0", note = "renamed to `fp_long`")]
+    pub fn get_fp_long(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: f64,
+    ) -> Result<f64, Error> {
+        self.fp_long(blob_handle, section_key, value_key, default)
+    }
+
+    pub fn time(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -281,7 +344,18 @@ impl PersistentDataSuite {
         .map(|t| t.into())
     }
 
-    pub fn get_argb(
+    #[deprecated(since = "0.5.0", note = "renamed to `time`")]
+    pub fn get_time(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: Time,
+    ) -> Result<Time, Error> {
+        self.time(blob_handle, section_key, value_key, default)
+    }
+
+    pub fn argb(
         &self,
         blob_handle: PersistentBlobHandle,
         section_key: &str,
@@ -299,6 +373,17 @@ impl PersistentDataSuite {
             value_key.as_ptr(),
             &default
         )
+    }
+
+    #[deprecated(since = "0.5.0", note = "renamed to `argb`")]
+    pub fn get_argb(
+        &self,
+        blob_handle: PersistentBlobHandle,
+        section_key: &str,
+        value_key: &str,
+        default: PF_PixelFloat,
+    ) -> Result<PF_PixelFloat, Error> {
+        self.argb(blob_handle, section_key, value_key, default)
     }
 
     // Sets the given section key's value to the handle passed in.

@@ -60,10 +60,16 @@ impl RenderQueueSuite {
             AEGP_RenderQueueState  *stateP);
     */
     /// Obtains the current render queue state.
-    pub fn get_render_queue_state(&self) -> Result<RenderQueueState, Error> {
+    pub fn render_queue_state(&self) -> Result<RenderQueueState, Error> {
         Ok(
             call_suite_fn_single!(self, AEGP_GetRenderQueueState -> ae_sys::AEGP_RenderQueueState)?
                 .into(),
         )
+    }
+
+    /// Obtains the current render queue state.
+    #[deprecated(since = "0.5.0", note = "renamed to `render_queue_state`")]
+    pub fn get_render_queue_state(&self) -> Result<RenderQueueState, Error> {
+        self.render_queue_state()
     }
 }

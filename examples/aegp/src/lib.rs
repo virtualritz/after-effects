@@ -29,7 +29,7 @@ impl AegpPlugin for Grabber {
         let res: Result<(), Error> = (|| {
             let command_suite = Command::new()?;
             let register_suite = Register::new()?;
-            let grabba_cmd = command_suite.get_unique_command()?;
+            let grabba_cmd = command_suite.unique_command()?;
 
             command_suite.insert_command(
                 "Grabber",
