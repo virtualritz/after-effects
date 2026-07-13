@@ -36,7 +36,7 @@ impl AegpPlugin for Persisto {
         let register_suite = Register::new()?;
 
         // Get unique command ID
-        let persisto_cmd = command_suite.get_unique_command()?;
+        let persisto_cmd = command_suite.unique_command()?;
 
         // Insert menu command
         command_suite.insert_command(MENU_ITEM, persisto_cmd, MenuId::File, MenuOrder::Sorted)?;
@@ -106,7 +106,7 @@ fn handle_persisto_command(plugin_id: AEGP_PluginID) -> Result<(), Error> {
     let found_my_stuff = persistent_suite.does_key_exist(blob, SECTION_KEY, VALUE_KEY_1)?;
 
     // Get or set the float value
-    let value = persistent_suite.get_fp_long(blob, SECTION_KEY, VALUE_KEY_1, DEFAULT_FUZZINESS)?;
+    let value = persistent_suite.fp_long(blob, SECTION_KEY, VALUE_KEY_1, DEFAULT_FUZZINESS)?;
 
     // Report status to user
     let message = if found_my_stuff && (value - DEFAULT_FUZZINESS).abs() < 0.0001 {
@@ -121,7 +121,7 @@ fn handle_persisto_command(plugin_id: AEGP_PluginID) -> Result<(), Error> {
 
     let buffer_size = 256;
     let string_value =
-        persistent_suite.get_string(blob, SECTION_KEY, VALUE_KEY_2, DEFAULT_STRING, buffer_size)?;
+        persistent_suite.string(blob, SECTION_KEY, VALUE_KEY_2, DEFAULT_STRING, buffer_size)?;
 
     log::debug!("String value: {}", string_value);
 
@@ -157,11 +157,11 @@ fn demonstrate_persistence_features(
 
     // Get String
     let string =
-        persistent_suite.get_string(blob, demo_section, "name", "Error - Key should exist", 256)?;
+        persistent_suite.string(blob, demo_section, "name", "Error - Key should exist", 256)?;
 
     log::debug!("Inserted string `Persisto Demo` into `name` --- retrieved: {string}");
 
-    let string = persistent_suite.get_string(
+    let string = persistent_suite.string(
         blob,
         demo_section,
         "utf-8",
@@ -171,7 +171,7 @@ fn demonstrate_persistence_features(
 
     log::debug!("Inserted string `utf-8 牛奶` into key `utf-8` --- retrieved: {string}");
 
-    let string = persistent_suite.get_string(
+    let string = persistent_suite.string(
         blob,
         demo_section,
         "whitespace",

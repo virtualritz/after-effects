@@ -33,7 +33,7 @@ impl AegpPlugin for QueueBert {
         let res: Result<(), Error> = (|| {
             let command_suite = Command::new()?;
             let register_suite = Register::new()?;
-            let queuebert_cmd = command_suite.get_unique_command()?;
+            let queuebert_cmd = command_suite.unique_command()?;
 
             command_suite.insert_command(
                 "QueueBert",
@@ -296,7 +296,7 @@ fn handle_queuebert_command() -> Result<(), Error> {
     }
 
     // Log the current render queue state
-    let rq_state = rq_suite.get_render_queue_state()?;
+    let rq_state = rq_suite.render_queue_state()?;
     log::info!("QueueBert: Render queue state: {:?}", rq_state);
 
     log::info!("QueueBert: Command completed successfully");

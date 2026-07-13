@@ -17,8 +17,15 @@ impl WindowSuite {
 
     /// Returns a handle to the main application window-- a `HWND` on Windows and a `*mut NSView` on macOS.
     /// These correspond to the `Win32WindowHandle` and `AppKitWindowHandle` types in the `raw-window-handle` crate.
-    pub fn get_main_window(&self) -> prWnd {
+    pub fn main_window(&self) -> prWnd {
         call_suite_fn_no_err!(self, GetMainWindow, )
+    }
+
+    /// Returns a handle to the main application window-- a `HWND` on Windows and a `*mut NSView` on macOS.
+    /// These correspond to the `Win32WindowHandle` and `AppKitWindowHandle` types in the `raw-window-handle` crate.
+    #[deprecated(since = "0.5.0", note = "renamed to `main_window`")]
+    pub fn get_main_window(&self) -> prWnd {
+        self.main_window()
     }
 
     /// Updates all windows. Windows only, doesn’t work on Mac OS.
