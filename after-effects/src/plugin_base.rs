@@ -511,11 +511,7 @@ macro_rules! define_effect {
 
                         if e != Error::InterruptCancel && !out_data_ptr.is_null() {
                             let mut out_data = $crate::OutData::from_raw(out_data_ptr);
-                            if !out_data.has_return_msg() {
-                                out_data.set_error_msg(&format!("EffectMain returned error: {e:?}"));
-                            } else {
-                                out_data.set_out_flag($crate::OutFlags::DisplayErrorMessage, true);
-                            }
+                            out_data.set_error_msg_if_empty(&format!("EffectMain returned error: {e:?}"));
                         }
 
                         e as $crate::sys::PF_Err
@@ -662,17 +658,5 @@ mod tests {
         assert!(body.contains("const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;"));
         assert!(body.contains("AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,"));
         assert!(!body.contains("env!(\"PIPL_AE_RESERVED\")"));
-    }
-
-    #[test]
-    fn effect_main_preserves_plugin_return_message_on_error() {
-        let source = include_str!("plugin_base.rs");
-        let error_branch = source
-            .split("Ok(Err(e)) =>")
-            .nth(1)
-            .and_then(|tail| tail.split("Err(e) =>").next())
-            .expect("caught EffectMain error branch");
-
-        assert!(error_branch.contains("!out_data.has_return_msg()"));
     }
 }

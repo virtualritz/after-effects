@@ -84,6 +84,15 @@ impl OutData {
         self.set_out_flag(OutFlags::DisplayErrorMessage, true);
     }
 
+    /// Sets an error message only if the plug-in has not already supplied one.
+    pub fn set_error_msg_if_empty(&mut self, msg: &str) {
+        if self.has_return_msg() {
+            self.set_out_flag(OutFlags::DisplayErrorMessage, true);
+        } else {
+            self.set_error_msg(msg);
+        }
+    }
+
     /// Set this flag to the version of your plug-in code. After Effects uses this data to decide which of duplicate effects to load.
     pub fn set_version(&mut self, v: u32) {
         self.as_mut().my_version = v as ae_sys::A_u_long;
@@ -135,6 +144,12 @@ impl OutData {
 mod tests {
     use super::*;
 
+    fn return_msg(raw: &ae_sys::PF_OutData) -> &str {
+        unsafe { std::ffi::CStr::from_ptr(raw.return_msg.as_ptr()) }
+            .to_str()
+            .unwrap()
+    }
+
     #[test]
     fn return_message_is_nul_terminated_and_detectable() {
         let mut raw: ae_sys::PF_OutData = unsafe { std::mem::zeroed() };
@@ -153,6 +168,26 @@ mod tests {
         let out = OutData::from_raw(&mut raw);
 
         assert!(!out.has_return_msg());
+    }
+
+    #[test]
+    fn error_fallback_preserves_existing_message_and_fills_empty_buffer() {
+        let display_error: ae_sys::PF_OutFlags = OutFlags::DisplayErrorMessage.into();
+
+        let mut existing: ae_sys::PF_OutData = unsafe { std::mem::zeroed() };
+        let mut out = OutData::from_raw(&mut existing);
+        out.set_return_msg("custom error");
+        out.set_error_msg_if_empty("fallback");
+
+        assert_eq!(return_msg(&existing), "custom error");
+        assert_ne!(existing.out_flags & display_error, 0);
+
+        let mut empty: ae_sys::PF_OutData = unsafe { std::mem::zeroed() };
+        let mut out = OutData::from_raw(&mut empty);
+        out.set_error_msg_if_empty("fallback");
+
+        assert_eq!(return_msg(&empty), "fallback");
+        assert_ne!(empty.out_flags & display_error, 0);
     }
 }
 
