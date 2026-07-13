@@ -4,7 +4,7 @@ use ae_sys::PF_LayerDef;
 pub struct Layer {
     pub(crate) in_data_ptr: *const ae_sys::PF_InData,
     pub(crate) layer: PointerOwnership<PF_LayerDef>,
-    drop_fn: Option<fn(&mut Self)>
+    drop_fn: Option<fn(&mut Self)>,
 }
 
 impl Debug for Layer {
@@ -33,42 +33,58 @@ impl Debug for Layer {
 //pub dephault: A_long,
 
 impl Layer {
-    pub fn from_aegp_world(in_data: impl AsPtr<*const ae_sys::PF_InData>, world_handle: impl AsPtr<ae_sys::AEGP_WorldH>) -> Result<Self, crate::Error> {
+    pub fn from_aegp_world(
+        in_data: impl AsPtr<*const ae_sys::PF_InData>,
+        world_handle: impl AsPtr<ae_sys::AEGP_WorldH>,
+    ) -> Result<Self, crate::Error> {
         let mut layer: PF_LayerDef = unsafe { std::mem::zeroed() };
 
-        aegp::suites::World::new()?
-            .fill_out_pf_effect_world(world_handle.as_ptr(), &mut layer)?;
+        aegp::suites::World::new()?.fill_out_pf_effect_world(world_handle.as_ptr(), &mut layer)?;
 
-        Ok(Self { in_data_ptr: in_data.as_ptr(), layer: PointerOwnership::Rust(layer), drop_fn: None })
+        Ok(Self {
+            in_data_ptr: in_data.as_ptr(),
+            layer: PointerOwnership::Rust(layer),
+            drop_fn: None,
+        })
     }
 
-    pub fn from_owned(layer: PF_LayerDef, in_data: impl AsPtr<*const ae_sys::PF_InData>, drop_fn: fn(&mut Self)) -> Self {
-        Self { in_data_ptr: in_data.as_ptr(), layer: PointerOwnership::Rust(layer), drop_fn: Some(drop_fn) }
+    pub fn from_owned(
+        layer: PF_LayerDef,
+        in_data: impl AsPtr<*const ae_sys::PF_InData>,
+        drop_fn: fn(&mut Self),
+    ) -> Self {
+        Self {
+            in_data_ptr: in_data.as_ptr(),
+            layer: PointerOwnership::Rust(layer),
+            drop_fn: Some(drop_fn),
+        }
     }
 
-    pub fn from_raw(layer_ptr: *mut PF_LayerDef, in_data: impl AsPtr<*const ae_sys::PF_InData>, drop_fn: Option<fn(&mut Self)>) -> Self {
+    pub fn from_raw(
+        layer_ptr: *mut PF_LayerDef,
+        in_data: impl AsPtr<*const ae_sys::PF_InData>,
+        drop_fn: Option<fn(&mut Self)>,
+    ) -> Self {
         assert!(!layer_ptr.is_null());
-        Self { in_data_ptr: in_data.as_ptr(), layer: PointerOwnership::AfterEffects(layer_ptr), drop_fn }
+        Self {
+            in_data_ptr: in_data.as_ptr(),
+            layer: PointerOwnership::AfterEffects(layer_ptr),
+            drop_fn,
+        }
     }
 
-    pub fn width(&self) -> usize {
-        self.layer.width as usize
-    }
-    pub fn height(&self) -> usize {
-        self.layer.height as usize
-    }
-    pub fn buffer_stride(&self) -> usize {
-        self.layer.rowbytes.abs() as usize
-    }
-    pub fn row_bytes(&self) -> isize {
-        self.layer.rowbytes as isize
-    }
-    pub fn extent_hint(&self) -> Rect {
-        self.layer.extent_hint.into()
-    }
-    pub fn pix_aspect_ratio(&self) -> RationalScale {
-        self.layer.pix_aspect_ratio.into()
-    }
+    pub fn width(&self) -> usize { self.layer.width as usize }
+
+    pub fn height(&self) -> usize { self.layer.height as usize }
+
+    pub fn buffer_stride(&self) -> usize { self.layer.rowbytes.abs() as usize }
+
+    pub fn row_bytes(&self) -> isize { self.layer.rowbytes as isize }
+
+    pub fn extent_hint(&self) -> Rect { self.layer.extent_hint.into() }
+
+    pub fn pix_aspect_ratio(&self) -> RationalScale { self.layer.pix_aspect_ratio.into() }
+
     pub fn origin(&self) -> Point {
         Point {
             h: self.layer.origin_x.into(),
@@ -92,6 +108,7 @@ impl Layer {
             )
         }
     }
+
     pub fn buffer_mut(&mut self) -> &mut [u8] {
         // Stride can be negative, so we need to offset the pointer to get to the real beginning of the buffer
         let offset = if self.row_bytes() < 0 {
@@ -109,20 +126,31 @@ impl Layer {
         }
     }
 
-    pub fn copy_from(&mut self, src: &Self, src_rect: Option<Rect>, dst_rect: Option<Rect>) -> Result<(), Error> {
+    pub fn copy_from(
+        &mut self,
+        src: &Self,
+        src_rect: Option<Rect>,
+        dst_rect: Option<Rect>,
+    ) -> Result<(), Error> {
         self.utils().copy(src, self, src_rect, dst_rect)
     }
 
-    pub fn utils(&self) -> UtilCallbacks {
-        UtilCallbacks::new(self.in_data_ptr)
-    }
+    pub fn utils(&self) -> UtilCallbacks { UtilCallbacks::new(self.in_data_ptr) }
 
     fn clamp_rect(&self, rect: &mut Option<Rect>) {
         if let Some(rect) = rect {
-            if rect.left < 0 { rect.left = 0; }
-            if rect.top  < 0 { rect.top  = 0; }
-            if rect.width()  > self.width()  as i32 { rect.set_width(self.width() as i32); }
-            if rect.height() > self.height() as i32 { rect.set_height(self.height() as i32); }
+            if rect.left < 0 {
+                rect.left = 0;
+            }
+            if rect.top < 0 {
+                rect.top = 0;
+            }
+            if rect.width() > self.width() as i32 {
+                rect.set_width(self.width() as i32);
+            }
+            if rect.height() > self.height() as i32 {
+                rect.set_height(self.height() as i32);
+            }
         }
     }
 
@@ -131,24 +159,46 @@ impl Layer {
         if self.bit_depth() == 16 {
             return self.fill16(color.map(pixel8_to_16), rect);
         }
-        if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
+        if !self.in_data_ptr.is_null()
+            && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") }
+        {
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
-                return fill_suite.fill(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
+                return fill_suite.fill(
+                    unsafe { (*self.in_data_ptr).effect_ref },
+                    self,
+                    color,
+                    rect,
+                );
             }
         }
         self.utils().fill(self, color, rect)
     }
+
     pub fn fill16(&mut self, color: Option<Pixel16>, mut rect: Option<Rect>) -> Result<(), Error> {
         self.clamp_rect(&mut rect);
-        if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
+        if !self.in_data_ptr.is_null()
+            && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") }
+        {
             if let Ok(fill_suite) = pf::suites::FillMatte::new() {
-                return fill_suite.fill16(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
+                return fill_suite.fill16(
+                    unsafe { (*self.in_data_ptr).effect_ref },
+                    self,
+                    color,
+                    rect,
+                );
             }
         }
         self.utils().fill16(self, color, rect)
     }
 
-    pub fn iterate_with<F>(&self, output: &mut Self, progress_base: i32, progress_final: i32, area: Option<Rect>, cb: F) -> Result<(), Error>
+    pub fn iterate_with<F>(
+        &self,
+        output: &mut Self,
+        progress_base: i32,
+        progress_final: i32,
+        area: Option<Rect>,
+        cb: F,
+    ) -> Result<(), Error>
     where
         F: Fn(i32, i32, GenericPixel, GenericPixelMut) -> Result<(), Error>,
     {
@@ -156,51 +206,106 @@ impl Layer {
 
         let self_ptr = Some(self.as_ptr());
         match self.bit_depth() {
-            8 => self.utils().iterate(self_ptr, output.as_mut_ptr(), progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
-                cb(x, y, GenericPixel::Pixel8(in_pixel), GenericPixelMut::Pixel8(out_pixel))
-            }),
-            16 => self.utils().iterate16(self_ptr, output.as_mut_ptr(), progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
-                cb(x, y, GenericPixel::Pixel16(in_pixel), GenericPixelMut::Pixel16(out_pixel))
-            }),
+            8 => self.utils().iterate(
+                self_ptr,
+                output.as_mut_ptr(),
+                progress_base,
+                progress_final,
+                area,
+                move |x, y, in_pixel, out_pixel| {
+                    cb(
+                        x,
+                        y,
+                        GenericPixel::Pixel8(in_pixel),
+                        GenericPixelMut::Pixel8(out_pixel),
+                    )
+                },
+            ),
+            16 => self.utils().iterate16(
+                self_ptr,
+                output.as_mut_ptr(),
+                progress_base,
+                progress_final,
+                area,
+                move |x, y, in_pixel, out_pixel| {
+                    cb(
+                        x,
+                        y,
+                        GenericPixel::Pixel16(in_pixel),
+                        GenericPixelMut::Pixel16(out_pixel),
+                    )
+                },
+            ),
             32 => {
                 let suite = pf::suites::IterateFloat::new()?;
-                suite.iterate(self.in_data_ptr, self_ptr, output.as_mut_ptr(), progress_base, progress_final, area, move |x, y, in_pixel, out_pixel| {
-                    cb(x, y, GenericPixel::PixelF32(in_pixel), GenericPixelMut::PixelF32(out_pixel))
-                })
-            },
+                suite.iterate(
+                    self.in_data_ptr,
+                    self_ptr,
+                    output.as_mut_ptr(),
+                    progress_base,
+                    progress_final,
+                    area,
+                    move |x, y, in_pixel, out_pixel| {
+                        cb(
+                            x,
+                            y,
+                            GenericPixel::PixelF32(in_pixel),
+                            GenericPixelMut::PixelF32(out_pixel),
+                        )
+                    },
+                )
+            }
             _ => Err(Error::BadCallbackParameter),
         }
     }
 
-    pub fn iterate<F>(&mut self, progress_base: i32, progress_final: i32, area: Option<Rect>, cb: F) -> Result<(), Error>
+    pub fn iterate<F>(
+        &mut self,
+        progress_base: i32,
+        progress_final: i32,
+        area: Option<Rect>,
+        cb: F,
+    ) -> Result<(), Error>
     where
         F: Fn(i32, i32, GenericPixelMut) -> Result<(), Error>,
     {
         let self_ptr = self.as_mut_ptr();
         match self.bit_depth() {
-            8 => self.utils().iterate(None, self_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
-                cb(x, y, GenericPixelMut::Pixel8(out_pixel))
-            }),
-            16 => self.utils().iterate16(None, self_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
-                cb(x, y, GenericPixelMut::Pixel16(out_pixel))
-            }),
+            8 => self.utils().iterate(
+                None,
+                self_ptr,
+                progress_base,
+                progress_final,
+                area,
+                move |x, y, _, out_pixel| cb(x, y, GenericPixelMut::Pixel8(out_pixel)),
+            ),
+            16 => self.utils().iterate16(
+                None,
+                self_ptr,
+                progress_base,
+                progress_final,
+                area,
+                move |x, y, _, out_pixel| cb(x, y, GenericPixelMut::Pixel16(out_pixel)),
+            ),
             32 => {
                 let suite = pf::suites::IterateFloat::new()?;
-                suite.iterate(self.in_data_ptr, None, self_ptr, progress_base, progress_final, area, move |x, y, _, out_pixel| {
-                    cb(x, y, GenericPixelMut::PixelF32(out_pixel))
-                })
-            },
+                suite.iterate(
+                    self.in_data_ptr,
+                    None,
+                    self_ptr,
+                    progress_base,
+                    progress_final,
+                    area,
+                    move |x, y, _, out_pixel| cb(x, y, GenericPixelMut::PixelF32(out_pixel)),
+                )
+            }
             _ => Err(Error::BadCallbackParameter),
         }
     }
 
-    pub unsafe fn data_ptr(&self) -> *const u8 {
-        self.layer.data as *const u8
-    }
+    pub unsafe fn data_ptr(&self) -> *const u8 { self.layer.data as *const u8 }
 
-    pub unsafe fn data_ptr_mut(&self) -> *mut u8 {
-        self.layer.data as *mut u8
-    }
+    pub unsafe fn data_ptr_mut(&self) -> *mut u8 { self.layer.data as *mut u8 }
 
     pub fn row_padding_bytes(&self) -> usize {
         self.buffer_stride()
@@ -219,39 +324,51 @@ impl Layer {
     // `self`, so handing it out from a shared borrow aliases no Rust-owned data.
     #[allow(clippy::mut_from_ref)]
     pub fn as_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
-        debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
-        unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel8).offset(x as isize) }
+        debug_assert!(
+            x < self.width() && y < self.height(),
+            "Coordinate is outside EffectWorld bounds."
+        );
+        unsafe {
+            &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel8)
+                .offset(x as isize)
+        }
     }
 
-    pub fn as_pixel8(&self, x: usize, y: usize) -> &Pixel8 {
-        self.as_pixel8_mut(x, y)
-    }
+    pub fn as_pixel8(&self, x: usize, y: usize) -> &Pixel8 { self.as_pixel8_mut(x, y) }
 
     // `mut_from_ref` is expected: the returned `&mut` points into the host-owned
     // `PF_EffectWorld` pixel buffer reached through a raw data pointer, not into
     // `self`, so handing it out from a shared borrow aliases no Rust-owned data.
     #[allow(clippy::mut_from_ref)]
     pub fn as_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
-        debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
-        unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel16).offset(x as isize) }
+        debug_assert!(
+            x < self.width() && y < self.height(),
+            "Coordinate is outside EffectWorld bounds."
+        );
+        unsafe {
+            &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel16)
+                .offset(x as isize)
+        }
     }
 
-    pub fn as_pixel16(&self, x: usize, y: usize) -> &Pixel16 {
-        self.as_pixel16_mut(x, y)
-    }
+    pub fn as_pixel16(&self, x: usize, y: usize) -> &Pixel16 { self.as_pixel16_mut(x, y) }
 
     // `mut_from_ref` is expected: the returned `&mut` points into the host-owned
     // `PF_EffectWorld` pixel buffer reached through a raw data pointer, not into
     // `self`, so handing it out from a shared borrow aliases no Rust-owned data.
     #[allow(clippy::mut_from_ref)]
     pub fn as_pixel32_mut(&self, x: usize, y: usize) -> &mut PixelF32 {
-        debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
-        unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut PixelF32).add(x) }
+        debug_assert!(
+            x < self.width() && y < self.height(),
+            "Coordinate is outside EffectWorld bounds."
+        );
+        unsafe {
+            &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut PixelF32)
+                .add(x)
+        }
     }
 
-    pub fn as_pixel32(&self, x: usize, y: usize) -> &PixelF32 {
-        self.as_pixel32_mut(x, y)
-    }
+    pub fn as_pixel32(&self, x: usize, y: usize) -> &PixelF32 { self.as_pixel32_mut(x, y) }
 
     pub fn world_type(&self) -> aegp::WorldType {
         let flags = WorldFlags::from_bits(self.layer.world_flags as _).unwrap();
@@ -274,47 +391,46 @@ impl Layer {
         } else {
             if InData::from_raw(self.in_data_ptr).is_premiere() {
                 match self.pr_pixel_format() {
-                    Ok(pr::PixelFormat::Rgb444_10u) |
-                    Ok(pr::PixelFormat::V210422_10u601) |
-                    Ok(pr::PixelFormat::V210422_10u709) => { 10 }
-                    Ok(pr::PixelFormat::Rgb444_12uPq709) |
-                    Ok(pr::PixelFormat::Rgb444_12uPqP3) |
-                    Ok(pr::PixelFormat::Rgb444_12uPq2020) => { 12 }
-                    Ok(pr::PixelFormat::Bgra4444_16u) |
-                    Ok(pr::PixelFormat::Vuya4444_16u) |
-                    Ok(pr::PixelFormat::Argb4444_16u) |
-                    Ok(pr::PixelFormat::Bgrx4444_16u) |
-                    Ok(pr::PixelFormat::Xrgb4444_16u) |
-                    Ok(pr::PixelFormat::Bgrp4444_16u) |
-                    Ok(pr::PixelFormat::Prgb4444_16u) => { 16 }
-                    Ok(pr::PixelFormat::Bgra4444_32f) |
-                    Ok(pr::PixelFormat::Vuya4444_32f) |
-                    Ok(pr::PixelFormat::Vuya4444_32f709) |
-                    Ok(pr::PixelFormat::Argb4444_32f) |
-                    Ok(pr::PixelFormat::Bgrx4444_32f) |
-                    Ok(pr::PixelFormat::Vuyx4444_32f) |
-                    Ok(pr::PixelFormat::Vuyx4444_32f709) |
-                    Ok(pr::PixelFormat::Xrgb4444_32f) |
-                    Ok(pr::PixelFormat::Bgrp4444_32f) |
-                    Ok(pr::PixelFormat::Vuyp4444_32f) |
-                    Ok(pr::PixelFormat::Vuyp4444_32f709) |
-                    Ok(pr::PixelFormat::Prgb4444_32f) |
-                    Ok(pr::PixelFormat::Uyvy422_32f601) |
-                    Ok(pr::PixelFormat::Uyvy422_32f709) |
-                    Ok(pr::PixelFormat::Bgra4444_32fLinear) |
-                    Ok(pr::PixelFormat::Bgrp4444_32fLinear) |
-                    Ok(pr::PixelFormat::Bgrx4444_32fLinear) |
-                    Ok(pr::PixelFormat::Argb4444_32fLinear) |
-                    Ok(pr::PixelFormat::Prgb4444_32fLinear) |
-                    Ok(pr::PixelFormat::Xrgb4444_32fLinear) => { 32 }
-                    _ => { 8 }
+                    Ok(pr::PixelFormat::Rgb444_10u)
+                    | Ok(pr::PixelFormat::V210422_10u601)
+                    | Ok(pr::PixelFormat::V210422_10u709) => 10,
+                    Ok(pr::PixelFormat::Rgb444_12uPq709)
+                    | Ok(pr::PixelFormat::Rgb444_12uPqP3)
+                    | Ok(pr::PixelFormat::Rgb444_12uPq2020) => 12,
+                    Ok(pr::PixelFormat::Bgra4444_16u)
+                    | Ok(pr::PixelFormat::Vuya4444_16u)
+                    | Ok(pr::PixelFormat::Argb4444_16u)
+                    | Ok(pr::PixelFormat::Bgrx4444_16u)
+                    | Ok(pr::PixelFormat::Xrgb4444_16u)
+                    | Ok(pr::PixelFormat::Bgrp4444_16u)
+                    | Ok(pr::PixelFormat::Prgb4444_16u) => 16,
+                    Ok(pr::PixelFormat::Bgra4444_32f)
+                    | Ok(pr::PixelFormat::Vuya4444_32f)
+                    | Ok(pr::PixelFormat::Vuya4444_32f709)
+                    | Ok(pr::PixelFormat::Argb4444_32f)
+                    | Ok(pr::PixelFormat::Bgrx4444_32f)
+                    | Ok(pr::PixelFormat::Vuyx4444_32f)
+                    | Ok(pr::PixelFormat::Vuyx4444_32f709)
+                    | Ok(pr::PixelFormat::Xrgb4444_32f)
+                    | Ok(pr::PixelFormat::Bgrp4444_32f)
+                    | Ok(pr::PixelFormat::Vuyp4444_32f)
+                    | Ok(pr::PixelFormat::Vuyp4444_32f709)
+                    | Ok(pr::PixelFormat::Prgb4444_32f)
+                    | Ok(pr::PixelFormat::Uyvy422_32f601)
+                    | Ok(pr::PixelFormat::Uyvy422_32f709)
+                    | Ok(pr::PixelFormat::Bgra4444_32fLinear)
+                    | Ok(pr::PixelFormat::Bgrp4444_32fLinear)
+                    | Ok(pr::PixelFormat::Bgrx4444_32fLinear)
+                    | Ok(pr::PixelFormat::Argb4444_32fLinear)
+                    | Ok(pr::PixelFormat::Prgb4444_32fLinear)
+                    | Ok(pr::PixelFormat::Xrgb4444_32fLinear) => 32,
+                    _ => 8,
                 }
             } else {
                 match self.pixel_format() {
-                    Ok(PixelFormat::Argb64) => { 16 }
-                    Ok(PixelFormat::Argb128) |
-                    Ok(PixelFormat::GpuBgra128) => { 32 }
-                    _ => { 8 }
+                    Ok(PixelFormat::Argb64) => 16,
+                    Ok(PixelFormat::Argb128) | Ok(PixelFormat::GpuBgra128) => 32,
+                    _ => 8,
                 }
             }
         }
@@ -338,29 +454,18 @@ impl Drop for Layer {
 }
 
 impl AsPtr<*const ae_sys::PF_EffectWorld> for Layer {
-    fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
-        &*self.layer
-    }
+    fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld { &*self.layer }
 }
 impl AsPtr<*const ae_sys::PF_EffectWorld> for &Layer {
-    fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
-        &*self.layer
-    }
+    fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld { &*self.layer }
 }
 impl AsPtr<*const ae_sys::PF_EffectWorld> for *const ae_sys::PF_EffectWorld {
-    fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld {
-        *self
-    }
+    fn as_ptr(&self) -> *const ae_sys::PF_EffectWorld { *self }
 }
 
 impl AsMutPtr<*mut ae_sys::PF_EffectWorld> for Layer {
-    fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
-        &mut *self.layer
-    }
+    fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld { &mut *self.layer }
 }
 impl AsMutPtr<*mut ae_sys::PF_EffectWorld> for &mut Layer {
-    fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld {
-        &mut *self.layer
-    }
+    fn as_mut_ptr(&mut self) -> *mut ae_sys::PF_EffectWorld { &mut *self.layer }
 }
-

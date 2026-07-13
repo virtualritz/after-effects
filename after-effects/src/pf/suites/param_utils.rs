@@ -42,9 +42,7 @@ define_suite!(
 impl ParamUtilsSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Force After Effects to refresh the parameter's UI, in the effect controls palette.
     ///
@@ -69,8 +67,19 @@ impl ParamUtilsSuite {
     ///         slider_min, slider_max, precision, display_flags of any slider type
     /// For `PF_PUI_STD_CONTROL_ONLY` params, you can also change the value field by setting `PF_ChangeFlag_CHANGED_VALUE` before returning.
     /// But you are not allowed to change the value during `PF_Cmd_UPDATE_PARAMS_UI`.
-    pub fn update_param_ui(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, param_def: &ParamDef) -> Result<(), Error> {
-        call_suite_fn!(self, PF_UpdateParamUI, effect_ref.as_ptr(), param_index, param_def.as_ref())
+    pub fn update_param_ui(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        param_index: i32,
+        param_def: &ParamDef,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_UpdateParamUI,
+            effect_ref.as_ptr(),
+            param_index,
+            param_def.as_ref()
+        )
     }
 
     /// This API, combined with [`are_states_identical()`](Self::are_states_identical) below, lets you determine if a set of inputs (either layers, other properties, or both)
@@ -88,7 +97,13 @@ impl ParamUtilsSuite {
     /// it will be expanded to include any times needed to produce that range.
     ///
     /// Populates a `PF_State`, an opaque data type used as a receipt for the current state of the effect's parameters (the `PF_State` is used in our internal frame caching database).
-    pub fn current_state(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, start: Option<Time>, duration: Option<Time>) -> Result<ae_sys::PF_State, Error> {
+    pub fn current_state(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        param_index: i32,
+        start: Option<Time>,
+        duration: Option<Time>,
+    ) -> Result<ae_sys::PF_State, Error> {
         call_suite_fn_single!(self,
             PF_GetCurrentState -> ae_sys::PF_State,
             effect_ref.as_ptr(),
@@ -99,42 +114,94 @@ impl ParamUtilsSuite {
     }
 
     /// New in CS6. Compare two different states, retrieved using `PF_GetCurrentState`, above.
-    pub fn are_states_identical(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, state1: &ae_sys::PF_State, state2: &ae_sys::PF_State) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, PF_AreStatesIdentical -> ae_sys::A_Boolean, effect_ref.as_ptr(), state1, state2)? != 0)
+    pub fn are_states_identical(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        state1: &ae_sys::PF_State,
+        state2: &ae_sys::PF_State,
+    ) -> Result<bool, Error> {
+        Ok(
+            call_suite_fn_single!(self, PF_AreStatesIdentical -> ae_sys::A_Boolean, effect_ref.as_ptr(), state1, state2)?
+                != 0,
+        )
     }
 
     /// Returns `true` if a parameter's value is the same at the two passed times.
     ///
     /// Note: the times need not be contiguous; there could be different intervening values.
-    pub fn is_identical_checkout(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, what_time1: i32, time_step1: i32, time_scale1: u32, what_time2: i32, time_step2: i32, time_scale2: u32) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, PF_IsIdenticalCheckout -> ae_sys::PF_Boolean, effect_ref.as_ptr(), param_index, what_time1, time_step1, time_scale1, what_time2, time_step2, time_scale2)? != 0)
+    pub fn is_identical_checkout(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        param_index: i32,
+        what_time1: i32,
+        time_step1: i32,
+        time_scale1: u32,
+        what_time2: i32,
+        time_step2: i32,
+        time_scale2: u32,
+    ) -> Result<bool, Error> {
+        Ok(
+            call_suite_fn_single!(self, PF_IsIdenticalCheckout -> ae_sys::PF_Boolean, effect_ref.as_ptr(), param_index, what_time1, time_step1, time_scale1, what_time2, time_step2, time_scale2)?
+                != 0,
+        )
     }
 
     /// Searches (in the specified direction) for the next keyframe in the parameter's stream. The last three parameters are optional.
     ///
     /// Returns a tuple containing: (found, key_index, key_time, key_timescale)
-    pub fn find_keyframe_time(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, what_time: i32, time_scale: u32, time_dir: TimeDir) -> Result<(bool, i32, i32, u32), Error> {
+    pub fn find_keyframe_time(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        param_index: i32,
+        what_time: i32,
+        time_scale: u32,
+        time_dir: TimeDir,
+    ) -> Result<(bool, i32, i32, u32), Error> {
         let mut found: ae_sys::PF_Boolean = 0;
         let mut key_index: ae_sys::PF_KeyIndex = 0;
         let mut key_time: ae_sys::A_long = 0;
         let mut key_timescale: ae_sys::A_u_long = 0;
-        call_suite_fn!(self, PF_FindKeyframeTime, effect_ref.as_ptr(), param_index, what_time, time_scale, time_dir.into(), &mut found, &mut key_index, &mut key_time, &mut key_timescale)?;
+        call_suite_fn!(
+            self,
+            PF_FindKeyframeTime,
+            effect_ref.as_ptr(),
+            param_index,
+            what_time,
+            time_scale,
+            time_dir.into(),
+            &mut found,
+            &mut key_index,
+            &mut key_time,
+            &mut key_timescale
+        )?;
 
         Ok((
             found != 0,
             key_index as i32,
             key_time as i32,
-            key_timescale as u32
+            key_timescale as u32,
         ))
     }
 
     /// Returns the number of keyframes in the parameter's stream.
-    pub fn keyframe_count(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, PF_GetKeyframeCount -> ae_sys::PF_KeyIndex, effect_ref.as_ptr(), param_index)? as i32)
+    pub fn keyframe_count(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        param_index: i32,
+    ) -> Result<i32, Error> {
+        Ok(
+            call_suite_fn_single!(self, PF_GetKeyframeCount -> ae_sys::PF_KeyIndex, effect_ref.as_ptr(), param_index)?
+                as i32,
+        )
     }
 
     /// Checks a keyframe for the specified parameter out of our keyframe database. `param_index` is zero-based. You can request time, timescale, or neither; useful if you're performing your own motion blur.
-    pub fn checkout_keyframe(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, key_index: i32) -> Result<(i32, u32, ae_sys::PF_ParamDef), Error> {
+    pub fn checkout_keyframe(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        param_index: i32,
+        key_index: i32,
+    ) -> Result<(i32, u32, ae_sys::PF_ParamDef), Error> {
         let mut key_time: ae_sys::A_long = 0;
         let mut key_timescale: ae_sys::A_u_long = 0;
         let param = call_suite_fn_single!(self, PF_CheckoutKeyframe -> ae_sys::PF_ParamDef, effect_ref.as_ptr(), param_index, key_index, &mut key_time, &mut key_timescale)?;
@@ -142,17 +209,28 @@ impl ParamUtilsSuite {
     }
 
     /// All calls to `checkout_keyframe` must be balanced with this check-in, or pain will ensue.
-    pub fn checkin_keyframe(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, mut param: ae_sys::PF_ParamDef) -> Result<(), Error> {
-        call_suite_fn!(self, PF_CheckinKeyframe, effect_ref.as_ptr(), &mut param as *mut _)
+    pub fn checkin_keyframe(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        mut param: ae_sys::PF_ParamDef,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_CheckinKeyframe,
+            effect_ref.as_ptr(),
+            &mut param as *mut _
+        )
     }
 
     /// Returns the time (and timescale) of the specified keyframe.
-    pub fn key_index_to_time(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, key_index: i32) -> Result<(i32, u32), Error> {
+    pub fn key_index_to_time(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        param_index: i32,
+        key_index: i32,
+    ) -> Result<(i32, u32), Error> {
         let (time, timesale) = call_suite_fn_double!(self, PF_KeyIndexToTime -> ae_sys::A_long, ae_sys::A_u_long, effect_ref.as_ptr(), param_index, key_index)?;
-        Ok((
-            time as i32,
-            timesale as u32
-        ))
+        Ok((time as i32, timesale as u32))
     }
 }
 
@@ -166,11 +244,13 @@ define_suite!(
 impl AngleParamSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
-    pub fn floating_point_value_from_angle_def(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, angle_def: *const ae_sys::PF_ParamDef) -> Result<f64, Error> {
+    pub fn floating_point_value_from_angle_def(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        angle_def: *const ae_sys::PF_ParamDef,
+    ) -> Result<f64, Error> {
         call_suite_fn_single!(self, PF_GetFloatingPointValueFromAngleDef -> ae_sys::A_FpLong, effect_ref.as_ptr(), angle_def)
     }
 }
@@ -184,10 +264,13 @@ define_suite!(
 impl ColorParamSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
-    pub fn floating_point_value_from_color_def(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, color_def: *const ae_sys::PF_ParamDef) -> Result<PixelF32, Error> {
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
+
+    pub fn floating_point_value_from_color_def(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        color_def: *const ae_sys::PF_ParamDef,
+    ) -> Result<PixelF32, Error> {
         call_suite_fn_single!(self, PF_GetFloatingPointColorFromColorDef -> ae_sys::PF_PixelFloat, effect_ref.as_ptr(), color_def)
     }
 }
@@ -202,10 +285,13 @@ define_suite!(
 impl PointParamSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
-    pub fn floating_point_value_from_point_def(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, point_def: *const ae_sys::PF_ParamDef) -> Result<ae_sys::A_FloatPoint, Error> {
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
+
+    pub fn floating_point_value_from_point_def(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+        point_def: *const ae_sys::PF_ParamDef,
+    ) -> Result<ae_sys::A_FloatPoint, Error> {
         call_suite_fn_single!(self, PF_GetFloatingPointValueFromPointDef -> ae_sys::A_FloatPoint, effect_ref.as_ptr(), point_def)
     }
 }
@@ -218,7 +304,8 @@ pub const PARAM_INDEX_NONE: i32 = ae_sys::PF_ParamIndex_NONE;
 pub const PARAM_INDEX_CHECK_ALL: i32 = ae_sys::PF_ParamIndex_CHECK_ALL;
 
 /// omit all layers. Pass a specific layer parameter index to include that as the only layer parameter tested.
-pub const PARAM_INDEX_CHECK_ALL_EXCEPT_LAYER_PARAMS: i32 = ae_sys::PF_ParamIndex_CHECK_ALL_EXCEPT_LAYER_PARAMS;
+pub const PARAM_INDEX_CHECK_ALL_EXCEPT_LAYER_PARAMS: i32 =
+    ae_sys::PF_ParamIndex_CHECK_ALL_EXCEPT_LAYER_PARAMS;
 
 /// Similar to CHECK_ALL, but honor PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED.
 pub const PARAM_INDEX_CHECK_ALL_HONOR_EXCLUDE: i32 = ae_sys::PF_ParamIndex_CHECK_ALL_HONOR_EXCLUDE;

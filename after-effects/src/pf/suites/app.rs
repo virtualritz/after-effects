@@ -1,5 +1,5 @@
 use crate::*;
-use std::ffi::{ CStr, CString };
+use std::ffi::{CStr, CString};
 
 define_suite!(
     /// Roughly 437 years ago, when we released After Effects 5.0, we published some useful utility callbacks in PF_AppSuite. They're as useful today as they were then. After Effects has user-controllable UI brightness.
@@ -13,24 +13,21 @@ define_suite!(
     kPFAppSuiteVersion4
 );
 
-define_suite!(
-    AppSuite6,
-    PFAppSuite6,
-    kPFAppSuite,
-    kPFAppSuiteVersion6
-);
+define_suite!(AppSuite6, PFAppSuite6, kPFAppSuite, kPFAppSuiteVersion6);
 
 fn str_from_c(slice: &[i8]) -> Result<String, Error> {
-    let slice: &[u8] = unsafe { std::slice::from_raw_parts(slice.as_ptr() as *const u8, slice.len()) };
-    Ok(CStr::from_bytes_until_nul(slice).map_err(|_| Error::InvalidParms)?.to_string_lossy().into_owned())
+    let slice: &[u8] =
+        unsafe { std::slice::from_raw_parts(slice.as_ptr() as *const u8, slice.len()) };
+    Ok(CStr::from_bytes_until_nul(slice)
+        .map_err(|_| Error::InvalidParms)?
+        .to_string_lossy()
+        .into_owned())
 }
 
 impl AppSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Retrieves the current background color.
     pub fn bg_color(&self) -> Result<ae_sys::PF_App_Color, Error> {
@@ -63,10 +60,11 @@ impl AppSuite {
 
     /// Retrieves the user's registration information.
     pub fn personal_info(&self) -> Result<AppPersonalTextInfo, Error> {
-        let info = call_suite_fn_single!(self, PF_GetPersonalInfo -> ae_sys::PF_AppPersonalTextInfo)?;
+        let info =
+            call_suite_fn_single!(self, PF_GetPersonalInfo -> ae_sys::PF_AppPersonalTextInfo)?;
         Ok(AppPersonalTextInfo {
-            name:       str_from_c(&info.name)?,
-            org:        str_from_c(&info.org)?,
+            name: str_from_c(&info.name)?,
+            org: str_from_c(&info.org)?,
             serial_str: str_from_c(&info.serial_str)?,
         })
     }
@@ -76,18 +74,24 @@ impl AppSuite {
     /// Trivia: The font used in After Effects' UI starting in 15.0 is Adobe Clean. Before that, it was Tahoma on Windows and Lucida Grande on macOS X.
     ///
     /// Returns a tuple containing: (font name, font number, size, style),
-    pub fn font_style_sheet(&self, sheet: FontStyleSheet) -> Result<(String, i16, i16, i16), Error> {
+    pub fn font_style_sheet(
+        &self,
+        sheet: FontStyleSheet,
+    ) -> Result<(String, i16, i16, i16), Error> {
         let mut font_name: ae_sys::PF_FontName = unsafe { std::mem::zeroed() };
         let mut font_num = 0;
         let mut size = 0;
         let mut style = 0;
-        call_suite_fn!(self, PF_GetFontStyleSheet, sheet.into(), &mut font_name as *mut _, &mut font_num, &mut size, &mut style)?;
-        Ok((
-            str_from_c(&font_name.font_nameAC)?,
-            font_num,
-            size,
-            style,
-        ))
+        call_suite_fn!(
+            self,
+            PF_GetFontStyleSheet,
+            sheet.into(),
+            &mut font_name as *mut _,
+            &mut font_num,
+            &mut size,
+            &mut style
+        )?;
+        Ok((str_from_c(&font_name.font_nameAC)?, font_num, size, style))
     }
 
     /// Sets the cursor to any of After Effects' cursors. See [`CursorType`]` for a complete enumeration.
@@ -107,8 +111,16 @@ impl AppSuite {
     /// Displays the After Effects color picker dialog (which may be the system color picker, depending on the user's preferences).
     ///
     /// Will return `Error::InterruptCancel` if user cancels dialog. Returned color is in the project's working color space.
-    pub fn color_picker_dialog(&self, dialog_title: Option<&str>, sample_color: &pf::PixelF32, use_ws_to_monitor_xform: bool) -> Result<pf::PixelF32, Error> {
-        let dialog_title = dialog_title.map(CString::new).transpose().map_err(|_| Error::InvalidParms)?;
+    pub fn color_picker_dialog(
+        &self,
+        dialog_title: Option<&str>,
+        sample_color: &pf::PixelF32,
+        use_ws_to_monitor_xform: bool,
+    ) -> Result<pf::PixelF32, Error> {
+        let dialog_title = dialog_title
+            .map(CString::new)
+            .transpose()
+            .map_err(|_| Error::InvalidParms)?;
         call_suite_fn_single!(self, PF_AppColorPickerDialog -> ae_sys::PF_PixelFloat, dialog_title.as_ref().map_or(std::ptr::null(), |x| x.as_ptr()), sample_color, use_ws_to_monitor_xform as _)
     }
 
@@ -124,16 +136,35 @@ impl AppSuite {
     /// Specify `None` to invalidate the entire window. The redraw will happen at the next available idle moment after returning from the event.
     ///
     /// Set the `PF_EO_UPDATE_NOW` event outflag to update the window immediately after the event returns.
-    pub fn invalidate_rect(&self, context: impl AsPtr<ae_sys::PF_ContextH>, rect: Option<pf::Rect>) -> Result<(), Error> {
-        call_suite_fn!(self, PF_InvalidateRect, context.as_ptr(), rect.map(Into::into).as_ref().map_or(std::ptr::null(), |x| x))
+    pub fn invalidate_rect(
+        &self,
+        context: impl AsPtr<ae_sys::PF_ContextH>,
+        rect: Option<pf::Rect>,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_InvalidateRect,
+            context.as_ptr(),
+            rect.map(Into::into)
+                .as_ref()
+                .map_or(std::ptr::null(), |x| x)
+        )
     }
 
     /// Converts from the custom UI coordinate system to global screen coordinates. Use only during custom UI event handling.
-    pub fn convert_local_to_global(&self, local: &ae_sys::PF_Point) -> Result<ae_sys::PF_Point, Error> {
+    pub fn convert_local_to_global(
+        &self,
+        local: &ae_sys::PF_Point,
+    ) -> Result<ae_sys::PF_Point, Error> {
         call_suite_fn_single!(self, PF_ConvertLocalToGlobal -> ae_sys::PF_Point, local)
     }
 
-    pub fn color_at_global_point(&self, global: &ae_sys::PF_Point, eye_size: i16, mode: EyeDropperSampleMode) -> Result<pf::PixelF32, Error> {
+    pub fn color_at_global_point(
+        &self,
+        global: &ae_sys::PF_Point,
+        eye_size: i16,
+        mode: EyeDropperSampleMode,
+    ) -> Result<pf::PixelF32, Error> {
         call_suite_fn_single!(self, PF_GetColorAtGlobalPoint -> ae_sys::PF_PixelFloat, global, eye_size, mode.into())
     }
 
@@ -142,15 +173,30 @@ impl AppSuite {
     /// If `cancel_str` is `None`, the dialog will not have a cancel button.
     ///
     /// It won't open the dialog unless it detects a slow render. (2 seconds timeout).
-    pub fn create_progress_dialog(&self, title: &str, cancel_str: Option<&str>, indeterminate: bool) -> Result<AppProgressDialog, Error> {
+    pub fn create_progress_dialog(
+        &self,
+        title: &str,
+        cancel_str: Option<&str>,
+        indeterminate: bool,
+    ) -> Result<AppProgressDialog, Error> {
         let v6 = AppSuite6::new()?;
         let title = widestring::U16CString::from_str(title).map_err(|_| Error::InvalidParms)?;
-        let cancel_str = cancel_str.map(widestring::U16CString::from_str).transpose().map_err(|_| Error::InvalidParms)?;
+        let cancel_str = cancel_str
+            .map(widestring::U16CString::from_str)
+            .transpose()
+            .map_err(|_| Error::InvalidParms)?;
         let mut ptr = std::ptr::null_mut();
-        call_suite_fn!(v6, PF_CreateNewAppProgressDialog, title.as_ptr(), cancel_str.map_or(std::ptr::null(), |x| x.as_ptr()), indeterminate as _, &mut ptr)?;
+        call_suite_fn!(
+            v6,
+            PF_CreateNewAppProgressDialog,
+            title.as_ptr(),
+            cancel_str.map_or(std::ptr::null(), |x| x.as_ptr()),
+            indeterminate as _,
+            &mut ptr
+        )?;
         Ok(AppProgressDialog {
             suite_ptr: v6.suite_ptr,
-            ptr
+            ptr,
         })
     }
 }
@@ -166,9 +212,7 @@ define_suite!(
 impl AdvAppSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Tells After Effects that the project has been changed since it was last saved.
     pub fn set_project_dirty(&self) -> Result<(), Error> {
@@ -176,9 +220,7 @@ impl AdvAppSuite {
     }
 
     /// Saves the project to the current path. To save the project elsewhere, use [`aegp::suites::Project::save_project_to_path`].
-    pub fn save_project(&self) -> Result<(), Error> {
-        call_suite_fn!(self, PF_SaveProject,)
-    }
+    pub fn save_project(&self) -> Result<(), Error> { call_suite_fn!(self, PF_SaveProject,) }
 
     /// Stores the background state (After Effects' position in the stacking order of open applications and windows).
     pub fn save_background_state(&self) -> Result<(), Error> {
@@ -219,17 +261,38 @@ impl AdvAppSuite {
         let line1 = CString::new(line1).map_err(|_| Error::InvalidParms)?;
         let line2 = CString::new(line2).map_err(|_| Error::InvalidParms)?;
         let line3 = CString::new(line3).map_err(|_| Error::InvalidParms)?;
-        call_suite_fn!(self, PF_InfoDrawText3, line1.as_ptr(), line2.as_ptr(), line3.as_ptr())
+        call_suite_fn!(
+            self,
+            PF_InfoDrawText3,
+            line1.as_ptr(),
+            line2.as_ptr(),
+            line3.as_ptr()
+        )
     }
 
     /// Writes three lines of text into the After Effects info palette, with portions of the second and third lines left and right justified.
-    pub fn info_draw_text3_plus(&self, line1: &str, line2_jr: &str, line2_jl: &str, line3_jr: &str, line3_jl: &str) -> Result<(), Error> {
+    pub fn info_draw_text3_plus(
+        &self,
+        line1: &str,
+        line2_jr: &str,
+        line2_jl: &str,
+        line3_jr: &str,
+        line3_jl: &str,
+    ) -> Result<(), Error> {
         let line1 = CString::new(line1).map_err(|_| Error::InvalidParms)?;
         let line2_jr = CString::new(line2_jr).map_err(|_| Error::InvalidParms)?;
         let line2_jl = CString::new(line2_jl).map_err(|_| Error::InvalidParms)?;
         let line3_jr = CString::new(line3_jr).map_err(|_| Error::InvalidParms)?;
         let line3_jl = CString::new(line3_jl).map_err(|_| Error::InvalidParms)?;
-        call_suite_fn!(self, PF_InfoDrawText3Plus, line1.as_ptr(), line2_jr.as_ptr(), line2_jl.as_ptr(), line3_jr.as_ptr(), line3_jl.as_ptr())
+        call_suite_fn!(
+            self,
+            PF_InfoDrawText3Plus,
+            line1.as_ptr(),
+            line2_jr.as_ptr(),
+            line2_jl.as_ptr(),
+            line3_jr.as_ptr(),
+            line3_jl.as_ptr()
+        )
     }
 
     /// Appends characters to the currently-displayed info text.
@@ -492,7 +555,7 @@ define_enum! {
 pub struct AppPersonalTextInfo {
     pub name: String,
     pub org: String,
-    pub serial_str: String
+    pub serial_str: String,
 }
 
 pub struct AppProgressDialog {
@@ -502,7 +565,13 @@ pub struct AppProgressDialog {
 impl AppProgressDialog {
     /// Updates the progress dialog.
     pub fn update(&self, count: i32, total: i32) -> Result<(), Error> {
-        call_suite_fn!(self, PF_AppProgressDialogUpdate, self.ptr, count as _, total as _)
+        call_suite_fn!(
+            self,
+            PF_AppProgressDialogUpdate,
+            self.ptr,
+            count as _,
+            total as _
+        )
     }
 }
 impl Drop for AppProgressDialog {

@@ -6,95 +6,122 @@ const OVAL_PTS: usize = 64;
 const CCU_SLOP: i32 = 16;
 
 const CCU_RADIUS_BIG_MAX: f32 = 4000.0;
-const CCU_RADIUS_MAX    : f32 = 250.0;
-const CCU_RADIUS_MIN    : f32 = 0.0;
-const CCU_RADIUS_DFLT   : f64 = 50.0;
-const CCU_PTX_DFLT      : f32 = 50.0;
-const CCU_PTY_DFLT      : f32 = 50.0;
-const SLIDER_PRECISION  : i16 = 1;
+const CCU_RADIUS_MAX: f32 = 250.0;
+const CCU_RADIUS_MIN: f32 = 0.0;
+const CCU_RADIUS_DFLT: f64 = 50.0;
+const CCU_PTX_DFLT: f32 = 50.0;
+const CCU_PTY_DFLT: f32 = 50.0;
+const SLIDER_PRECISION: i16 = 1;
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Debug)]
 enum Params {
     XRadius,
     YRadius,
-    Point
+    Point,
 }
 
 enum Ccu {
     None,
-    Handles
+    Handles,
 }
 
 #[derive(Default)]
-struct Plugin { }
+struct Plugin {}
 
 ae::define_effect!(Plugin, (), Params);
 
 impl AdobePluginGlobal for Plugin {
-    fn params_setup(&self, params: &mut ae::Parameters<Params>, in_data: InData, _: OutData) -> Result<(), Error> {
-        params.add(Params::XRadius, "Horizontal Radius", ae::FloatSliderDef::setup(|f| {
-            f.set_valid_min(CCU_RADIUS_MIN);
-            f.set_valid_max(CCU_RADIUS_BIG_MAX);
-            f.set_slider_min(CCU_RADIUS_MIN);
-            f.set_slider_max(CCU_RADIUS_MAX);
-            f.set_default(CCU_RADIUS_DFLT);
-            f.set_precision(SLIDER_PRECISION);
-        }))?;
+    fn params_setup(
+        &self,
+        params: &mut ae::Parameters<Params>,
+        in_data: InData,
+        _: OutData,
+    ) -> Result<(), Error> {
+        params.add(
+            Params::XRadius,
+            "Horizontal Radius",
+            ae::FloatSliderDef::setup(|f| {
+                f.set_valid_min(CCU_RADIUS_MIN);
+                f.set_valid_max(CCU_RADIUS_BIG_MAX);
+                f.set_slider_min(CCU_RADIUS_MIN);
+                f.set_slider_max(CCU_RADIUS_MAX);
+                f.set_default(CCU_RADIUS_DFLT);
+                f.set_precision(SLIDER_PRECISION);
+            }),
+        )?;
 
-        params.add(Params::YRadius, "Vertical Radius", ae::FloatSliderDef::setup(|f| {
-            f.set_valid_min(CCU_RADIUS_MIN);
-            f.set_valid_max(CCU_RADIUS_BIG_MAX);
-            f.set_slider_min(CCU_RADIUS_MIN);
-            f.set_slider_max(CCU_RADIUS_MAX);
-            f.set_default(CCU_RADIUS_DFLT);
-            f.set_precision(SLIDER_PRECISION);
-        }))?;
+        params.add(
+            Params::YRadius,
+            "Vertical Radius",
+            ae::FloatSliderDef::setup(|f| {
+                f.set_valid_min(CCU_RADIUS_MIN);
+                f.set_valid_max(CCU_RADIUS_BIG_MAX);
+                f.set_slider_min(CCU_RADIUS_MIN);
+                f.set_slider_max(CCU_RADIUS_MAX);
+                f.set_default(CCU_RADIUS_DFLT);
+                f.set_precision(SLIDER_PRECISION);
+            }),
+        )?;
 
-        params.add(Params::Point, "Center", ae::PointDef::setup(|f| {
-            f.set_x_value(CCU_PTX_DFLT);
-            f.set_y_value(CCU_PTY_DFLT);
-            f.set_default_x(f.x_value());
-            f.set_default_y(f.y_value());
-            f.set_restrict_bounds(false);
-        }))?;
+        params.add(
+            Params::Point,
+            "Center",
+            ae::PointDef::setup(|f| {
+                f.set_x_value(CCU_PTX_DFLT);
+                f.set_y_value(CCU_PTY_DFLT);
+                f.set_default_x(f.x_value());
+                f.set_default_y(f.y_value());
+                f.set_restrict_bounds(false);
+            }),
+        )?;
 
         in_data.interact().register_ui(
-            CustomUIInfo::new()
-                .events(ae::CustomEventFlags::LAYER | ae::CustomEventFlags::COMP)
+            CustomUIInfo::new().events(ae::CustomEventFlags::LAYER | ae::CustomEventFlags::COMP),
         )?;
 
         Ok(())
     }
 
-    fn handle_command(&self, cmd: ae::Command, in_data: InData, mut out_data: OutData, params: &mut ae::Parameters<Params>) -> Result<(), ae::Error> {
+    fn handle_command(
+        &self,
+        cmd: ae::Command,
+        in_data: InData,
+        mut out_data: OutData,
+        params: &mut ae::Parameters<Params>,
+    ) -> Result<(), ae::Error> {
         match cmd {
             ae::Command::About => {
                 out_data.set_return_msg("Custom Comp UI, v3.3,\rManages a custom Comp (and Layer) window UI.\rCopyright 1994-2023\rAdobe Inc.");
             }
-            ae::Command::Event { mut extra } => {
-                match extra.event() {
-                    ae::Event::Click(_) => {
-                        if extra.send_drag() {
-                            ui::drag(&in_data, params, &mut extra)?;
-                        } else {
-                            ui::click(&in_data, params, &mut extra)?;
-                        }
+            ae::Command::Event { mut extra } => match extra.event() {
+                ae::Event::Click(_) => {
+                    if extra.send_drag() {
+                        ui::drag(&in_data, params, &mut extra)?;
+                    } else {
+                        ui::click(&in_data, params, &mut extra)?;
                     }
-                    ae::Event::Drag(_) => { ui::drag(&in_data, params, &mut extra)?; }
-                    ae::Event::Draw(_) => { ui::draw(&in_data, params, &mut extra)?; }
-                    _ => {}
                 }
-            }
-            ae::Command::Render { in_layer, mut out_layer } => {
+                ae::Event::Drag(_) => {
+                    ui::drag(&in_data, params, &mut extra)?;
+                }
+                ae::Event::Draw(_) => {
+                    ui::draw(&in_data, params, &mut extra)?;
+                }
+                _ => {}
+            },
+            ae::Command::Render {
+                in_layer,
+                mut out_layer,
+            } => {
                 let out_extent = out_layer.extent_hint();
-                let min_x      = out_extent.left;
-                let max_x      = out_extent.right;
-                let min_y      = out_extent.top;
-                let max_y      = out_extent.bottom;
-                let rad_x      = params.get(Params::XRadius)?.as_float_slider()?.value() as f32;
-                let rad_y      = params.get(Params::YRadius)?.as_float_slider()?.value() as f32;
-                let rad_x_sqr  = rad_x.powi(2);
-                let rad_y_sqr  = rad_y.powi(2);
+                let min_x = out_extent.left;
+                let max_x = out_extent.right;
+                let min_y = out_extent.top;
+                let max_y = out_extent.bottom;
+                let rad_x = params.get(Params::XRadius)?.as_float_slider()?.value() as f32;
+                let rad_y = params.get(Params::YRadius)?.as_float_slider()?.value() as f32;
+                let rad_x_sqr = rad_x.powi(2);
+                let rad_y_sqr = rad_y.powi(2);
                 let center = params.get(Params::Point)?.as_point()?.value();
 
                 let par = f32::from(in_data.pixel_aspect_ratio());
@@ -106,50 +133,88 @@ impl AdobePluginGlobal for Plugin {
                 if rad_x == 0.0 || rad_y == 0.0 {
                     // Premiere Pro/Elements doesn't support WorldTransformSuite1, but it does support many of the callbacks in utils
                     if in_data.quality() == ae::Quality::Hi && !in_data.is_premiere() {
-                        ae::pf::suites::WorldTransform::new()?.copy_hq(in_data.effect_ref(), in_layer, out_layer, None, None)?;
+                        ae::pf::suites::WorldTransform::new()?.copy_hq(
+                            in_data.effect_ref(),
+                            in_layer,
+                            out_layer,
+                            None,
+                            None,
+                        )?;
                     } else if !in_data.is_premiere() {
-                        ae::pf::suites::WorldTransform::new()?.copy(in_data.effect_ref(), in_layer, out_layer, None, None)?;
+                        ae::pf::suites::WorldTransform::new()?.copy(
+                            in_data.effect_ref(),
+                            in_layer,
+                            out_layer,
+                            None,
+                            None,
+                        )?;
                     } else {
                         out_layer.copy_from(&in_layer, None, None)?;
                     }
                 } else {
                     // iterate over image data.
-                    in_layer.iterate_with(&mut out_layer, 0, out_extent.height(), Some(out_extent), |x: i32, y: i32, pixel: ae::GenericPixel, out_pixel: ae::GenericPixelMut| -> Result<(), Error> {
-                        let in_ellipse = {
-                            let dy = (y as f32 - center.1) * downsample_y_inv;
-                            if dy > rad_y || dy < -rad_y || y < min_y || y > max_y {
-                                false
-                            } else {
-                                let dx = (x as f32 - center.0) * downsample_x_inv * par;
-                                // If the pixel is out of the visible x range covered by the circle
-                                if dx > rad_x || dx < -rad_x || x < min_x || x > max_x {
+                    in_layer.iterate_with(
+                        &mut out_layer,
+                        0,
+                        out_extent.height(),
+                        Some(out_extent),
+                        |x: i32,
+                         y: i32,
+                         pixel: ae::GenericPixel,
+                         out_pixel: ae::GenericPixelMut|
+                         -> Result<(), Error> {
+                            let in_ellipse = {
+                                let dy = (y as f32 - center.1) * downsample_y_inv;
+                                if dy > rad_y || dy < -rad_y || y < min_y || y > max_y {
                                     false
                                 } else {
-                                    // An ellipse centered at (0,0) has the equation:
-                                    // x^2 / a^2 + y^2 / b^2 = 1, where a is the width and b is the height of the ellipse
-                                    !(dx.powi(2) / rad_x_sqr + dy.powi(2) / rad_y_sqr >= 1.0)
+                                    let dx = (x as f32 - center.0) * downsample_x_inv * par;
+                                    // If the pixel is out of the visible x range covered by the circle
+                                    if dx > rad_x || dx < -rad_x || x < min_x || x > max_x {
+                                        false
+                                    } else {
+                                        // An ellipse centered at (0,0) has the equation:
+                                        // x^2 / a^2 + y^2 / b^2 = 1, where a is the width and b is the height of the ellipse
+                                        !(dx.powi(2) / rad_x_sqr + dy.powi(2) / rad_y_sqr >= 1.0)
+                                    }
                                 }
-                            }
-                        };
-                        match (pixel, out_pixel) {
-                            (ae::GenericPixel::Pixel8(pixel), ae::GenericPixelMut::Pixel8(out_pixel)) => {
-                                if in_ellipse {
-                                    *out_pixel = ae::Pixel8 { alpha: pixel.alpha, red: 0, green: ae::MAX_CHANNEL8 as u8, blue: 0 };
-                                } else {
-                                    *out_pixel = *pixel;
+                            };
+                            match (pixel, out_pixel) {
+                                (
+                                    ae::GenericPixel::Pixel8(pixel),
+                                    ae::GenericPixelMut::Pixel8(out_pixel),
+                                ) => {
+                                    if in_ellipse {
+                                        *out_pixel = ae::Pixel8 {
+                                            alpha: pixel.alpha,
+                                            red: 0,
+                                            green: ae::MAX_CHANNEL8 as u8,
+                                            blue: 0,
+                                        };
+                                    } else {
+                                        *out_pixel = *pixel;
+                                    }
                                 }
-                            }
-                            (ae::GenericPixel::Pixel16(pixel), ae::GenericPixelMut::Pixel16(out_pixel)) => {
-                                if in_ellipse {
-                                    *out_pixel = ae::Pixel16 { alpha: pixel.alpha, red: 0, green: ae::MAX_CHANNEL16 as u16, blue: 0 };
-                                } else {
-                                    *out_pixel = *pixel;
+                                (
+                                    ae::GenericPixel::Pixel16(pixel),
+                                    ae::GenericPixelMut::Pixel16(out_pixel),
+                                ) => {
+                                    if in_ellipse {
+                                        *out_pixel = ae::Pixel16 {
+                                            alpha: pixel.alpha,
+                                            red: 0,
+                                            green: ae::MAX_CHANNEL16 as u16,
+                                            blue: 0,
+                                        };
+                                    } else {
+                                        *out_pixel = *pixel;
+                                    }
                                 }
+                                _ => return Err(Error::BadCallbackParameter),
                             }
-                            _ => return Err(Error::BadCallbackParameter)
-                        }
-                        Ok(())
-                    })?;
+                            Ok(())
+                        },
+                    )?;
 
                     // Alternatively, you can loop manually through the data
                     /*unsafe {

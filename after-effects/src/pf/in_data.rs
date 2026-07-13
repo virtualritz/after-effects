@@ -19,9 +19,7 @@ pub struct InData {
 }
 
 impl AsRef<ae_sys::PF_InData> for InData {
-    fn as_ref(&self) -> &ae_sys::PF_InData {
-        unsafe { &*self.ptr }
-    }
+    fn as_ref(&self) -> &ae_sys::PF_InData { unsafe { &*self.ptr } }
 }
 
 impl InData {
@@ -30,9 +28,7 @@ impl InData {
         Self { ptr }
     }
 
-    pub fn as_ptr(&self) -> *const ae_sys::PF_InData {
-        self.ptr
-    }
+    pub fn as_ptr(&self) -> *const ae_sys::PF_InData { self.ptr }
 
     /// The identifier of the invoking application.
     /// If your plug-in is running in After Effects, appl_id contains the application creator code ‘FXTC’.
@@ -55,26 +51,18 @@ impl InData {
 
     /// The current quality setting, either PF_Quality_HI or PF_Quality_LO. Effects should perform faster in LO, and more accurately in HI.
     /// The graphics utility callbacks perform differently between LO and HI quality; so should your effect! This field is defined during all frame and sequence selectors.
-    pub fn quality(&self) -> Quality {
-        unsafe { (*self.ptr).quality.into() }
-    }
+    pub fn quality(&self) -> Quality { unsafe { (*self.ptr).quality.into() } }
 
     /// Valid only if PF_OutFlag_PIX_INDEPENDENT was set during [`Command::GlobalSetup`].
     /// Check this field to see if you can process just the upper or lower field.
-    pub fn field(&self) -> Field {
-        unsafe { (*self.ptr).field.into() }
-    }
+    pub fn field(&self) -> Field { unsafe { (*self.ptr).field.into() } }
 
     /// The intersection of the visible portions of the input and output layers; encloses the composition rectangle transformed into layer coordinates.
     /// Iterating over only this rectangle of pixels can speed your effect dramatically. See extent_hint Usage later in this chapter regarding proper usage.
-    pub fn extent_hint(&self) -> Rect {
-        Rect::from(unsafe { (*self.ptr).extent_hint })
-    }
+    pub fn extent_hint(&self) -> Rect { Rect::from(unsafe { (*self.ptr).extent_hint }) }
 
     /// Create the [`Effect`] instance to get access to various utility functions.
-    pub fn effect(&self) -> Effect {
-        Effect::from_raw(unsafe { (*self.ptr).effect_ref })
-    }
+    pub fn effect(&self) -> Effect { Effect::from_raw(unsafe { (*self.ptr).effect_ref }) }
 
     /// Opaque data that must be passed to most of the various callback routines.
     /// After Effects uses this to identify your plug-in.
@@ -89,15 +77,11 @@ impl InData {
 
     /// Width of the source layer, which are not necessarily the same as the width and height fields in the input image parameter.
     /// Buffer resizing effects can cause this difference. Not affected by downsampling.
-    pub fn width(&self) -> i32 {
-        unsafe { (*self.ptr).width }
-    }
+    pub fn width(&self) -> i32 { unsafe { (*self.ptr).width } }
 
     /// Height of the source layer, which are not necessarily the same as the width and height fields in the input image parameter.
     /// Buffer resizing effects can cause this difference. Not affected by downsampling.
-    pub fn height(&self) -> i32 {
-        unsafe { (*self.ptr).height }
-    }
+    pub fn height(&self) -> i32 { unsafe { (*self.ptr).height } }
 
     /// The frame number of the current frame being rendered, valid during [`Command::Render`].
     /// This is the current frame in the layer, not in any composition.
@@ -139,9 +123,7 @@ impl InData {
     /// To handle time stretching, composition frame rate changes, and time remapping, After Effects may ask effects to render at non-integral times (between two frames).
     /// Be prepared for this; don’t assume that you’ll only be asked for frames on frame boundaries.
     /// NOTE: As of CS3 (8.0), effects may be asked to render at negative current times. Deal!
-    pub fn current_time(&self) -> i32 {
-        unsafe { (*self.ptr).current_time }
-    }
+    pub fn current_time(&self) -> i32 { unsafe { (*self.ptr).current_time } }
 
     /// The duration of the current source frame being rendered. In several situations with nested compositions, this source frame duration may be
     /// different than the time span between frames in the layer (`local_time_step`).
@@ -153,25 +135,19 @@ impl InData {
     /// or time remapping is applied to the outer composition. This value will be 0 during [`Command::SequenceSetup`] if it is not constant for all frames.
     /// It will be set correctly during [`Command::FrameSetup`] and [`Command::FrameSetdown`] selectors.
     /// WARNING: This can be zero, so check it before you divide.
-    pub fn time_step(&self) -> i32 {
-        unsafe { (*self.ptr).time_step }
-    }
+    pub fn time_step(&self) -> i32 { unsafe { (*self.ptr).time_step } }
 
     /// Time difference between frames in the layer. Affected by any time stretch applied to a layer.
     /// Can be negative if the layer is time-reversed.
     /// Unlike time_step, this value is constant from one frame to the next.
     /// This value can be converted to seconds by dividing by `time_scale`.
     /// For a step value that is constant over the entire frame range of the layer, use `local_time_step`, which is based on the composition’s framerate and layer stretch.
-    pub fn local_time_step(&self) -> i32 {
-        unsafe { (*self.ptr).local_time_step }
-    }
+    pub fn local_time_step(&self) -> i32 { unsafe { (*self.ptr).local_time_step } }
 
     /// The units per second that `current_time`, `time_step`, `local_time_step` and `total_time` are in.
     /// If `time_scale` is 30, then the units of `current_time`, `time_step`, `local_time_step` and `total_time` are in 30ths of a second.
     /// The `time_step` might then be 3, indicating that the sequence is actually being rendered at 10 frames per second. `total_time` might be 105, indicating that the sequence is 3.5 seconds long.
-    pub fn time_scale(&self) -> u32 {
-        unsafe { (*self.ptr).time_scale }
-    }
+    pub fn time_scale(&self) -> u32 { unsafe { (*self.ptr).time_scale } }
 
     /// Origin of the source image in the input buffer.
     /// Valid only when sent with a frame selector.
@@ -203,17 +179,13 @@ impl InData {
     /// Effects need the downsampling factors to interpret scalar parameters representing pixel distances in the image (like sliders).
     /// For example, a blur of 4 pixels should be interpreted as a blur of 2 pixels if the downsample factor is 1/2 in each direction (downsample factors are represented as ratios.)
     /// Valid only during [`Command::SequenceSetup`], [`Command::SequenceResetup`], [`Command::FrameSetup`], [`Command::Render`]
-    pub fn downsample_x(&self) -> RationalScale {
-        unsafe { (*self.ptr).downsample_x.into() }
-    }
+    pub fn downsample_x(&self) -> RationalScale { unsafe { (*self.ptr).downsample_x.into() } }
 
     /// Point control parameters and layer parameter dimensions are automatically adjusted to compensate for a user telling After Effects to render only every nth pixel.
     /// Effects need the downsampling factors to interpret scalar parameters representing pixel distances in the image (like sliders).
     /// For example, a blur of 4 pixels should be interpreted as a blur of 2 pixels if the downsample factor is 1/2 in each direction (downsample factors are represented as ratios.)
     /// Valid only during [`Command::SequenceSetup`], [`Command::SequenceResetup`], [`Command::FrameSetup`], [`Command::Render`]
-    pub fn downsample_y(&self) -> RationalScale {
-        unsafe { (*self.ptr).downsample_y.into() }
-    }
+    pub fn downsample_y(&self) -> RationalScale { unsafe { (*self.ptr).downsample_y.into() } }
 
     /// Effects specification version, Indicate the version you need to run successfully during [`Command::GlobalSetup`].
     #[inline]
@@ -271,28 +243,18 @@ impl InData {
     }
 
     /// Allows access to functions in the [`InteractCallbacks`] struct.
-    pub fn interact(&self) -> InteractCallbacks {
-        InteractCallbacks::new(*self)
-    }
+    pub fn interact(&self) -> InteractCallbacks { InteractCallbacks::new(*self) }
 
     /// Allows access to functions in the [`UtilCallbacks`] struct.
-    pub fn utils(&self) -> UtilCallbacks {
-        UtilCallbacks::new(*self)
-    }
+    pub fn utils(&self) -> UtilCallbacks { UtilCallbacks::new(*self) }
 }
 
 impl AsPtr<*const ae_sys::PF_InData> for *const ae_sys::PF_InData {
-    fn as_ptr(&self) -> *const ae_sys::PF_InData {
-        *self
-    }
+    fn as_ptr(&self) -> *const ae_sys::PF_InData { *self }
 }
 impl AsPtr<*const ae_sys::PF_InData> for InData {
-    fn as_ptr(&self) -> *const ae_sys::PF_InData {
-        self.ptr
-    }
+    fn as_ptr(&self) -> *const ae_sys::PF_InData { self.ptr }
 }
 impl AsPtr<*const ae_sys::PF_InData> for &InData {
-    fn as_ptr(&self) -> *const ae_sys::PF_InData {
-        self.ptr
-    }
+    fn as_ptr(&self) -> *const ae_sys::PF_InData { self.ptr }
 }

@@ -10,9 +10,7 @@ define_suite!(
 impl MemoryManagerSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Set the memory reserve size in bytes for the plugin with the specified ID.
     /// * `plugin_id` - The ID of the plugin.
@@ -33,9 +31,15 @@ impl MemoryManagerSuite {
     /// * `purge_function` - The function that will be called to purge the item.
     ///
     /// Returns the id the host will use for this item.
-    pub fn add_block<F: FnOnce(u32) + Send + Sync + 'static>(&self, size: u64, purge_function: F) -> Result<u32, Error> {
+    pub fn add_block<F: FnOnce(u32) + Send + Sync + 'static>(
+        &self,
+        size: u64,
+        purge_function: F,
+    ) -> Result<u32, Error> {
         unsafe extern "C" fn purge_fn(data: *mut std::ffi::c_void, memory_id: u32) {
-            let cb = unsafe { Box::<Box<dyn FnOnce(u32) + Send + Sync + 'static>>::from_raw(data as *mut _) };
+            let cb = unsafe {
+                Box::<Box<dyn FnOnce(u32) + Send + Sync + 'static>>::from_raw(data as *mut _)
+            };
             cb(memory_id);
         }
         let cb = Box::new(Box::new(purge_function));
@@ -46,9 +50,7 @@ impl MemoryManagerSuite {
     /// Each time you use a block of memory, you should call this function. This pushes its
     /// priority up in the cache, making a purge less likely.
     /// * `id` - The id of the block to touch.
-    pub fn touch_block(&self, id: u32) -> Result<(), Error> {
-        call_suite_fn!(self, TouchBlock, id)
-    }
+    pub fn touch_block(&self, id: u32) -> Result<(), Error> { call_suite_fn!(self, TouchBlock, id) }
 
     /// You can manually expire an item from the cache with this function. Note that the purge function
     /// on the item will not be called.

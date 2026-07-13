@@ -1,4 +1,3 @@
-
 use crate::*;
 
 define_enum! {
@@ -240,16 +239,32 @@ impl From<pr_sys::PrParam> for Param {
         use pr_sys::*;
         #[allow(non_upper_case_globals)]
         match value.mType {
-            PrParamType_kPrParamType_Int8        => Param::Int8     (unsafe { value.__bindgen_anon_1.mInt8 }),
-            PrParamType_kPrParamType_Int16       => Param::Int16    (unsafe { value.__bindgen_anon_1.mInt16 }),
-            PrParamType_kPrParamType_Int32       => Param::Int32    (unsafe { value.__bindgen_anon_1.mInt32 }),
-            PrParamType_kPrParamType_Int64       => Param::Int64    (unsafe { value.__bindgen_anon_1.mInt64 }),
-            PrParamType_kPrParamType_Float32     => Param::Float32  (unsafe { value.__bindgen_anon_1.mFloat32 }),
-            PrParamType_kPrParamType_Float64     => Param::Float64  (unsafe { value.__bindgen_anon_1.mFloat64 }),
-            PrParamType_kPrParamType_Bool        => Param::Bool     (unsafe { value.__bindgen_anon_1.mBool == 1 }),
-            PrParamType_kPrParamType_Point       => Param::Point    (unsafe { value.__bindgen_anon_1.mPoint }),
-            PrParamType_kPrParamType_Guid        => Param::Guid     (unsafe { value.__bindgen_anon_1.mGuid }),
-            PrParamType_kPrParamType_PrMemoryPtr => Param::MemoryPtr(unsafe { value.__bindgen_anon_1.mMemoryPtr }),
+            PrParamType_kPrParamType_Int8 => Param::Int8(unsafe { value.__bindgen_anon_1.mInt8 }),
+            PrParamType_kPrParamType_Int16 => {
+                Param::Int16(unsafe { value.__bindgen_anon_1.mInt16 })
+            }
+            PrParamType_kPrParamType_Int32 => {
+                Param::Int32(unsafe { value.__bindgen_anon_1.mInt32 })
+            }
+            PrParamType_kPrParamType_Int64 => {
+                Param::Int64(unsafe { value.__bindgen_anon_1.mInt64 })
+            }
+            PrParamType_kPrParamType_Float32 => {
+                Param::Float32(unsafe { value.__bindgen_anon_1.mFloat32 })
+            }
+            PrParamType_kPrParamType_Float64 => {
+                Param::Float64(unsafe { value.__bindgen_anon_1.mFloat64 })
+            }
+            PrParamType_kPrParamType_Bool => {
+                Param::Bool(unsafe { value.__bindgen_anon_1.mBool == 1 })
+            }
+            PrParamType_kPrParamType_Point => {
+                Param::Point(unsafe { value.__bindgen_anon_1.mPoint })
+            }
+            PrParamType_kPrParamType_Guid => Param::Guid(unsafe { value.__bindgen_anon_1.mGuid }),
+            PrParamType_kPrParamType_PrMemoryPtr => {
+                Param::MemoryPtr(unsafe { value.__bindgen_anon_1.mMemoryPtr })
+            }
             _ => panic!("Invalid PrParamType"),
         }
     }
@@ -262,16 +277,46 @@ impl Into<pr_sys::PrParam> for Param {
             __bindgen_anon_1: PrParam__bindgen_ty_1 { mInt8: 0 },
         };
         match self {
-            Param::Int8     (value) => { param.mType = PrParamType_kPrParamType_Int8;        param.__bindgen_anon_1.mInt8 = value; },
-            Param::Int16    (value) => { param.mType = PrParamType_kPrParamType_Int16;       param.__bindgen_anon_1.mInt16 = value; },
-            Param::Int32    (value) => { param.mType = PrParamType_kPrParamType_Int32;       param.__bindgen_anon_1.mInt32 = value; },
-            Param::Int64    (value) => { param.mType = PrParamType_kPrParamType_Int64;       param.__bindgen_anon_1.mInt64 = value; },
-            Param::Float32  (value) => { param.mType = PrParamType_kPrParamType_Float32;     param.__bindgen_anon_1.mFloat32 = value; },
-            Param::Float64  (value) => { param.mType = PrParamType_kPrParamType_Float64;     param.__bindgen_anon_1.mFloat64 = value; },
-            Param::Bool     (value) => { param.mType = PrParamType_kPrParamType_Bool;        param.__bindgen_anon_1.mBool = if value { 1 } else { 0 }; },
-            Param::Point    (value) => { param.mType = PrParamType_kPrParamType_Point;       param.__bindgen_anon_1.mPoint = value; },
-            Param::Guid     (value) => { param.mType = PrParamType_kPrParamType_Guid;        param.__bindgen_anon_1.mGuid = value; },
-            Param::MemoryPtr(value) => { param.mType = PrParamType_kPrParamType_PrMemoryPtr; param.__bindgen_anon_1.mMemoryPtr = value; },
+            Param::Int8(value) => {
+                param.mType = PrParamType_kPrParamType_Int8;
+                param.__bindgen_anon_1.mInt8 = value;
+            }
+            Param::Int16(value) => {
+                param.mType = PrParamType_kPrParamType_Int16;
+                param.__bindgen_anon_1.mInt16 = value;
+            }
+            Param::Int32(value) => {
+                param.mType = PrParamType_kPrParamType_Int32;
+                param.__bindgen_anon_1.mInt32 = value;
+            }
+            Param::Int64(value) => {
+                param.mType = PrParamType_kPrParamType_Int64;
+                param.__bindgen_anon_1.mInt64 = value;
+            }
+            Param::Float32(value) => {
+                param.mType = PrParamType_kPrParamType_Float32;
+                param.__bindgen_anon_1.mFloat32 = value;
+            }
+            Param::Float64(value) => {
+                param.mType = PrParamType_kPrParamType_Float64;
+                param.__bindgen_anon_1.mFloat64 = value;
+            }
+            Param::Bool(value) => {
+                param.mType = PrParamType_kPrParamType_Bool;
+                param.__bindgen_anon_1.mBool = if value { 1 } else { 0 };
+            }
+            Param::Point(value) => {
+                param.mType = PrParamType_kPrParamType_Point;
+                param.__bindgen_anon_1.mPoint = value;
+            }
+            Param::Guid(value) => {
+                param.mType = PrParamType_kPrParamType_Guid;
+                param.__bindgen_anon_1.mGuid = value;
+            }
+            Param::MemoryPtr(value) => {
+                param.mType = PrParamType_kPrParamType_PrMemoryPtr;
+                param.__bindgen_anon_1.mMemoryPtr = value;
+            }
         }
         param
     }

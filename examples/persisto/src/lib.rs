@@ -161,13 +161,8 @@ fn demonstrate_persistence_features(
 
     log::debug!("Inserted string `Persisto Demo` into `name` --- retrieved: {string}");
 
-    let string = persistent_suite.string(
-        blob,
-        demo_section,
-        "utf-8",
-        "Error - Key should exist",
-        256,
-    )?;
+    let string =
+        persistent_suite.string(blob, demo_section, "utf-8", "Error - Key should exist", 256)?;
 
     log::debug!("Inserted string `utf-8 牛奶` into key `utf-8` --- retrieved: {string}");
 

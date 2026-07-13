@@ -1,4 +1,3 @@
-
 use crate::*;
 use ae_sys::*;
 
@@ -19,13 +18,20 @@ define_suite!(
 impl CacheOnLoadSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Pass a non-zero value if you want your effect to show up in the UI.
     /// Pass zero if loading failed, but you still want Premiere Pro to attempt to load it again on the next relaunch.
-    pub fn set_no_cache_on_load(&self, effect_ref: impl AsPtr<PF_ProgPtr>, effect_available: bool) -> Result<(), Error> {
-        call_suite_fn!(self, PF_SetNoCacheOnLoad, effect_ref.as_ptr(), effect_available as _)
+    pub fn set_no_cache_on_load(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        effect_available: bool,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PF_SetNoCacheOnLoad,
+            effect_ref.as_ptr(),
+            effect_available as _
+        )
     }
 }

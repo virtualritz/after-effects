@@ -29,26 +29,42 @@ impl ProjectSuite {
         ))
     }
 
-     /// Retrieves the current time display settings.
-    pub fn project_time_display_config(&self, proj_handle: ProjectHandle) -> Result<TimeDisplayConfig, Error> {
+    /// Retrieves the current time display settings.
+    pub fn project_time_display_config(
+        &self,
+        proj_handle: ProjectHandle,
+    ) -> Result<TimeDisplayConfig, Error> {
         Ok(call_suite_fn_single!( self, AEGP_GetProjectTimeDisplay -> AEGP_TimeDisplay3, proj_handle.into())?.into())
     }
 
-
-     /// Specified [sic] the settings to be used for displaying time.
-    pub fn set_project_time_display_config(&self, proj_handle: ProjectHandle, config: TimeDisplayConfig) -> Result<(), Error> {
+    /// Specified [sic] the settings to be used for displaying time.
+    pub fn set_project_time_display_config(
+        &self,
+        proj_handle: ProjectHandle,
+        config: TimeDisplayConfig,
+    ) -> Result<(), Error> {
         let config: AEGP_TimeDisplay3 = config.into();
-        call_suite_fn!( self, AEGP_SetProjectTimeDisplay, proj_handle.into(), &config)?;
+        call_suite_fn!(
+            self,
+            AEGP_SetProjectTimeDisplay,
+            proj_handle.into(),
+            &config
+        )?;
         Ok(())
     }
 
-
     /// Obtain the current project name
     pub fn project_name(&self, proj_handle: ProjectHandle) -> Result<String, Error> {
-
         let mut buffer = [0i8; (ae_sys::AEGP_MAX_PROJ_NAME_SIZE + 1) as _];
-        call_suite_fn!(self, AEGP_GetProjectName, proj_handle.into(), buffer.as_mut_ptr() as *mut _)?;
-        Ok(unsafe { std::ffi::CStr::from_ptr(buffer.as_ptr()) }.to_string_lossy().into_owned())
+        call_suite_fn!(
+            self,
+            AEGP_GetProjectName,
+            proj_handle.into(),
+            buffer.as_mut_ptr() as *mut _
+        )?;
+        Ok(unsafe { std::ffi::CStr::from_ptr(buffer.as_ptr()) }
+            .to_string_lossy()
+            .into_owned())
     }
 
     /// Get the path of the project (empty string the project hasn’t been saved yet). The path is a handle to a NULL-terminated A_UTF16Char string,
@@ -56,18 +72,32 @@ impl ProjectSuite {
         let mem_handle = call_suite_fn_single!(self, AEGP_GetProjectPath -> ae_sys::AEGP_MemHandle, proj_handle.into())?;
 
         Ok(unsafe {
-            U16CString::from_ptr_str(MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr()).to_string_lossy()
+            U16CString::from_ptr_str(MemHandle::<u16>::from_raw(mem_handle)?.lock()?.as_ptr())
+                .to_string_lossy()
         })
     }
+
     /// Returns TRUE if the project has been modified since it was opened.
     pub fn project_is_dirty(&self, proj_handle: ProjectHandle) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_ProjectIsDirty -> ae_sys::A_Boolean, proj_handle.into())? != 0)
+        Ok(
+            call_suite_fn_single!(self, AEGP_ProjectIsDirty -> ae_sys::A_Boolean, proj_handle.into())?
+                != 0,
+        )
     }
 
     /// Saves the entire project to the specified full path.
-    pub fn save_project_to_path(&self, proj_handle: ProjectHandle, path: &str) -> Result<(), Error> {
+    pub fn save_project_to_path(
+        &self,
+        proj_handle: ProjectHandle,
+        path: &str,
+    ) -> Result<(), Error> {
         let path = widestring::U16CString::from_str(path).map_err(|_| Error::InvalidParms)?;
-        call_suite_fn!(self, AEGP_SaveProjectToPath, proj_handle.into(), path.as_ptr())?;
+        call_suite_fn!(
+            self,
+            AEGP_SaveProjectToPath,
+            proj_handle.into(),
+            path.as_ptr()
+        )?;
         Ok(())
     }
 
@@ -91,19 +121,20 @@ impl ProjectSuite {
     /// NOTE: Will close the current project without saving it first!
     pub fn open_project_from_path(&self, path: &str) -> Result<ProjectHandle, Error> {
         let path = widestring::U16CString::from_str(path).map_err(|_| Error::InvalidParms)?;
-        Ok(ProjectHandle::from_raw(call_suite_fn_single!(self, AEGP_OpenProjectFromPath -> AEGP_ProjectH, path.as_ptr())?))
+        Ok(ProjectHandle::from_raw(
+            call_suite_fn_single!(self, AEGP_OpenProjectFromPath -> AEGP_ProjectH, path.as_ptr())?,
+        ))
     }
 
     /// Creates a new project. NOTE: Will close the current project without saving it first!
     pub fn new_project(&self) -> Result<ProjectHandle, Error> {
-        Ok(ProjectHandle::from_raw(call_suite_fn_single!(self, AEGP_NewProject -> AEGP_ProjectH)?))
+        Ok(ProjectHandle::from_raw(
+            call_suite_fn_single!(self, AEGP_NewProject -> AEGP_ProjectH)?,
+        ))
     }
 
     /// Retrieves the project bit depth.
-    pub fn project_bit_depth(
-        &self,
-        proj_handle: ProjectHandle,
-    ) -> Result<ProjectBitDepth, Error> {
+    pub fn project_bit_depth(&self, proj_handle: ProjectHandle) -> Result<ProjectBitDepth, Error> {
         Ok(call_suite_fn_single!( self, AEGP_GetProjectBitDepth -> ae_sys::A_char, proj_handle.into())?.into())
     }
 
@@ -113,9 +144,14 @@ impl ProjectSuite {
         proj_handle: ProjectHandle,
         bit_depth: ProjectBitDepth,
     ) -> Result<(), Error> {
-        Ok(call_suite_fn!(self, AEGP_SetProjectBitDepth, proj_handle.into(), bit_depth.into())?.into())
+        Ok(call_suite_fn!(
+            self,
+            AEGP_SetProjectBitDepth,
+            proj_handle.into(),
+            bit_depth.into()
+        )?
+        .into())
     }
-
 }
 
 register_handle!(AEGP_ProjectH);

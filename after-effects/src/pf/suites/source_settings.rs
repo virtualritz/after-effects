@@ -1,4 +1,3 @@
-
 use crate::*;
 use ae_sys::*;
 
@@ -51,12 +50,21 @@ define_suite!(
 impl SourceSettingsSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
-    pub fn perform_source_settings_command(&self, effect_ref: impl AsPtr<PF_ProgPtr>, command_struct: *mut std::ffi::c_void, data_size: usize) -> Result<(), Error> {
-        call_suite_fn!(self, PerformSourceSettingsCommand, effect_ref.as_ptr(), command_struct, data_size as _)
+    pub fn perform_source_settings_command(
+        &self,
+        effect_ref: impl AsPtr<PF_ProgPtr>,
+        command_struct: *mut std::ffi::c_void,
+        data_size: usize,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            PerformSourceSettingsCommand,
+            effect_ref.as_ptr(),
+            command_struct,
+            data_size as _
+        )
     }
 
     // pub fn set_is_source_settings_effect(&self, effect_ref: impl AsPtr<PF_ProgPtr>, value: bool) -> Result<(), Error> {

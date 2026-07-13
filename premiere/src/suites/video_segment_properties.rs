@@ -2,7 +2,10 @@
 
 use crate::*;
 use pr_sys::*;
-use std::{ops::{Deref, DerefMut}, str::FromStr};
+use std::{
+    ops::{Deref, DerefMut},
+    str::FromStr,
+};
 
 #[derive(Debug, Clone)]
 pub enum PropertyData {
@@ -23,14 +26,26 @@ pub enum PropertyData {
 
 // ------------------- Float point -------------------
 #[derive(Debug, Clone, Copy)]
-pub struct Point32 { pub x: f32, pub y: f32 }
+pub struct Point32 {
+    pub x: f32,
+    pub y: f32,
+}
 
 impl FromStr for Point32 {
     type Err = Error;
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.split_whitespace();
-        let x = parts.next().ok_or(Error::InvalidParms)?.parse::<f32>().map_err(|_| Error::InvalidParms)?;
-        let y = parts.next().ok_or(Error::InvalidParms)?.parse::<f32>().map_err(|_| Error::InvalidParms)?;
+        let x = parts
+            .next()
+            .ok_or(Error::InvalidParms)?
+            .parse::<f32>()
+            .map_err(|_| Error::InvalidParms)?;
+        let y = parts
+            .next()
+            .ok_or(Error::InvalidParms)?
+            .parse::<f32>()
+            .map_err(|_| Error::InvalidParms)?;
         Ok(Point32 { x, y })
     }
 }
@@ -40,13 +55,17 @@ impl FromStr for Point32 {
 pub struct Binary(Vec<u8>);
 impl FromStr for Binary {
     type Err = Error;
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use base64::prelude::*;
-        Ok(Binary(BASE64_STANDARD.decode(s).map_err(|_| Error::InvalidParms)?))
+        Ok(Binary(
+            BASE64_STANDARD.decode(s).map_err(|_| Error::InvalidParms)?,
+        ))
     }
 }
 impl Deref for Binary {
     type Target = Vec<u8>;
+
     fn deref(&self) -> &Self::Target { &self.0 }
 }
 impl DerefMut for Binary {
@@ -60,6 +79,7 @@ pub struct Keyframes(pub String); // TODO: not implemented
 
 impl FromStr for Keyframes {
     type Err = Error;
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(s.to_owned())) // TODO implement parsing this
     }

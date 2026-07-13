@@ -1,5 +1,5 @@
 use crate::*;
-use ae_sys::{ A_long, AEGP_LayerH, AEGP_MaskRefH, AEGP_MaskOutlineValH };
+use ae_sys::{A_long, AEGP_LayerH, AEGP_MaskOutlineValH, AEGP_MaskRefH};
 
 define_suite!(
     /// Access, manipulate, and delete a layer's masks.
@@ -12,9 +12,7 @@ define_suite!(
 impl MaskSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Counts the masks applied to a layer.
     pub fn layer_num_masks(&self, layer: impl AsPtr<AEGP_LayerH>) -> Result<i32, Error> {
@@ -22,9 +20,13 @@ impl MaskSuite {
     }
 
     /// Given a layer handle and mask index, returns a pointer to the mask handle.
-    pub fn layer_mask_by_index(&self, layer: impl AsPtr<AEGP_LayerH>, mask_index: i32) -> Result<MaskRefHandle, Error> {
+    pub fn layer_mask_by_index(
+        &self,
+        layer: impl AsPtr<AEGP_LayerH>,
+        mask_index: i32,
+    ) -> Result<MaskRefHandle, Error> {
         Ok(MaskRefHandle::from_raw_owned(
-            call_suite_fn_single!(self, AEGP_GetLayerMaskByIndex -> ae_sys::AEGP_MaskRefH, layer.as_ptr(), mask_index as _)?
+            call_suite_fn_single!(self, AEGP_GetLayerMaskByIndex -> ae_sys::AEGP_MaskRefH, layer.as_ptr(), mask_index as _)?,
         ))
     }
 
@@ -35,11 +37,18 @@ impl MaskSuite {
 
     /// Given a mask handle, determines if the mask is inverted or not.
     pub fn mask_invert(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskInvert -> ae_sys::A_Boolean, mask.as_ptr())? != 0)
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMaskInvert -> ae_sys::A_Boolean, mask.as_ptr())?
+                != 0,
+        )
     }
 
     /// Sets the inversion state of a mask.
-    pub fn set_mask_invert(&self, mask: impl AsPtr<AEGP_MaskRefH>, invert: bool) -> Result<(), Error> {
+    pub fn set_mask_invert(
+        &self,
+        mask: impl AsPtr<AEGP_MaskRefH>,
+        invert: bool,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetMaskInvert, mask.as_ptr(), invert as _)
     }
 
@@ -48,75 +57,138 @@ impl MaskSuite {
     /// * [`MaskMode::None`] does nothing.
     /// * [`MaskMode::Add`] is the default behavior.
     pub fn mask_mode(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<MaskMode, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskMode -> ae_sys::PF_MaskMode, mask.as_ptr())?.into())
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMaskMode -> ae_sys::PF_MaskMode, mask.as_ptr())?
+                .into(),
+        )
     }
 
     /// Sets the mode of the given mask.
-    pub fn set_mask_mode(&self, mask: impl AsPtr<AEGP_MaskRefH>, mode: MaskMode) -> Result<(), Error> {
+    pub fn set_mask_mode(
+        &self,
+        mask: impl AsPtr<AEGP_MaskRefH>,
+        mode: MaskMode,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetMaskMode, mask.as_ptr(), mode.into())
     }
 
     /// Retrieves the motion blur setting for the given mask.
-    pub fn mask_motion_blur_state(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<MaskMBlur, Error> {
+    pub fn mask_motion_blur_state(
+        &self,
+        mask: impl AsPtr<AEGP_MaskRefH>,
+    ) -> Result<MaskMBlur, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskMotionBlurState -> ae_sys::AEGP_MaskMBlur, mask.as_ptr())?.into())
     }
 
     /// New in CS6. Sets the motion blur setting for the given mask.
-    pub fn set_mask_motion_blur_state(&self, mask: impl AsPtr<AEGP_MaskRefH>, blur_state: MaskMBlur) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetMaskMotionBlurState, mask.as_ptr(), blur_state.into())
+    pub fn set_mask_motion_blur_state(
+        &self,
+        mask: impl AsPtr<AEGP_MaskRefH>,
+        blur_state: MaskMBlur,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetMaskMotionBlurState,
+            mask.as_ptr(),
+            blur_state.into()
+        )
     }
 
     /// New in CS6. Gets the type of feather falloff for the given mask, either
     /// [`MaskFeatherFalloff::Smooth`] or [`MaskFeatherFalloff::Linear`].
-    pub fn mask_feather_falloff(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<MaskFeatherFalloff, Error> {
+    pub fn mask_feather_falloff(
+        &self,
+        mask: impl AsPtr<AEGP_MaskRefH>,
+    ) -> Result<MaskFeatherFalloff, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetMaskFeatherFalloff -> ae_sys::AEGP_MaskFeatherFalloff, mask.as_ptr())?.into())
     }
 
     /// Sets the type of feather falloff for the given mask.
-    pub fn set_mask_feather_falloff(&self, mask: impl AsPtr<AEGP_MaskRefH>, falloff: MaskFeatherFalloff) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetMaskFeatherFalloff, mask.as_ptr(), falloff.into())
+    pub fn set_mask_feather_falloff(
+        &self,
+        mask: impl AsPtr<AEGP_MaskRefH>,
+        falloff: MaskFeatherFalloff,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetMaskFeatherFalloff,
+            mask.as_ptr(),
+            falloff.into()
+        )
     }
 
     /// Retrieves the color of the specified mask.
     pub fn mask_color(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<pf::PixelF64, Error> {
-        let color_val = call_suite_fn_single!(self, AEGP_GetMaskColor -> ae_sys::AEGP_ColorVal, mask.as_ptr())?;
+        let color_val =
+            call_suite_fn_single!(self, AEGP_GetMaskColor -> ae_sys::AEGP_ColorVal, mask.as_ptr())?;
         Ok(unsafe { std::mem::transmute(color_val) })
     }
 
     /// Sets the color of the specified mask.
-    pub fn set_mask_color(&self, mask: impl AsPtr<AEGP_MaskRefH>, color: pf::PixelF64) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetMaskColor, mask.as_ptr(), std::mem::transmute(&color))
+    pub fn set_mask_color(
+        &self,
+        mask: impl AsPtr<AEGP_MaskRefH>,
+        color: pf::PixelF64,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetMaskColor,
+            mask.as_ptr(),
+            std::mem::transmute(&color)
+        )
     }
 
     /// Retrieves the lock state of the specified mask.
     pub fn mask_lock_state(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskLockState -> ae_sys::A_Boolean, mask.as_ptr())? != 0)
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMaskLockState -> ae_sys::A_Boolean, mask.as_ptr())?
+                != 0,
+        )
     }
 
     /// Sets the lock state of the specified mask.
-    pub fn set_mask_lock_state(&self, mask: impl AsPtr<AEGP_MaskRefH>, lock: bool) -> Result<(), Error> {
+    pub fn set_mask_lock_state(
+        &self,
+        mask: impl AsPtr<AEGP_MaskRefH>,
+        lock: bool,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetMaskLockState, mask.as_ptr(), lock as _)
     }
 
     /// Returns whether or not the given mask is used as a rotobezier.
     pub fn mask_is_roto_bezier(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskIsRotoBezier -> ae_sys::A_Boolean, mask.as_ptr())? != 0)
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMaskIsRotoBezier -> ae_sys::A_Boolean, mask.as_ptr())?
+                != 0,
+        )
     }
 
     /// Sets whether a given mask is to be used as a rotobezier.
-    pub fn set_mask_is_roto_bezier(&self, mask: impl AsPtr<AEGP_MaskRefH>, is_roto_bezier: bool) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetMaskIsRotoBezier, mask.as_ptr(), is_roto_bezier as _)
+    pub fn set_mask_is_roto_bezier(
+        &self,
+        mask: impl AsPtr<AEGP_MaskRefH>,
+        is_roto_bezier: bool,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetMaskIsRotoBezier,
+            mask.as_ptr(),
+            is_roto_bezier as _
+        )
     }
 
     /// Duplicates a given mask.
     pub fn duplicate_mask(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<MaskRefHandle, Error> {
         Ok(MaskRefHandle::from_raw_owned(
-            call_suite_fn_single!(self, AEGP_DuplicateMask -> ae_sys::AEGP_MaskRefH, mask.as_ptr())?
+            call_suite_fn_single!(self, AEGP_DuplicateMask -> ae_sys::AEGP_MaskRefH, mask.as_ptr())?,
         ))
     }
 
     /// Creates a new mask on the referenced layer, with zero nodes. Returns new mask and its index.
-    pub fn create_new_mask(&self, layer: impl AsPtr<AEGP_LayerH>) -> Result<(MaskRefHandle, i32), Error> {
+    pub fn create_new_mask(
+        &self,
+        layer: impl AsPtr<AEGP_LayerH>,
+    ) -> Result<(MaskRefHandle, i32), Error> {
         let (mask, index) = call_suite_fn_double!(self, AEGP_CreateNewMask -> ae_sys::AEGP_MaskRefH, A_long, layer.as_ptr())?;
         Ok((MaskRefHandle::from_raw_owned(mask), index))
     }
@@ -128,7 +200,10 @@ impl MaskSuite {
 
     /// Retrieves the ``AEGP_MaskIDVal`` for the given [`MaskRefHandle`], for use in uniquely identifying the mask.
     pub fn mask_id(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskID -> ae_sys::AEGP_MaskIDVal, mask.as_ptr())? as i32)
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMaskID -> ae_sys::AEGP_MaskIDVal, mask.as_ptr())?
+                as i32,
+        )
     }
 }
 
@@ -170,68 +245,152 @@ define_suite!(
 impl MaskOutlineSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Given an mask outline pointer (obtainable through the [`suites::Stream`](aegp::suites::Stream), determines if the mask path is open or closed.
-    pub fn is_mask_outline_open(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_IsMaskOutlineOpen -> ae_sys::A_Boolean, mask_outline.as_ptr())? != 0)
+    pub fn is_mask_outline_open(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+    ) -> Result<bool, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_IsMaskOutlineOpen -> ae_sys::A_Boolean, mask_outline.as_ptr())?
+                != 0,
+        )
     }
 
     /// Sets the open state of the given mask outline.
-    pub fn set_mask_outline_open(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, open: bool) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetMaskOutlineOpen, mask_outline.as_ptr(), open as _)
+    pub fn set_mask_outline_open(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+        open: bool,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetMaskOutlineOpen,
+            mask_outline.as_ptr(),
+            open as _
+        )
     }
 
     /// Given a mask outline pointer, returns the number of segments in the path.
-    pub fn mask_outline_num_segments(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskOutlineNumSegments -> A_long, mask_outline.as_ptr())? as i32)
+    pub fn mask_outline_num_segments(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+    ) -> Result<i32, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMaskOutlineNumSegments -> A_long, mask_outline.as_ptr())?
+                as i32,
+        )
     }
 
     /// Given a mask outline pointer and a point between 0 and the total number of segments.
-    pub fn mask_outline_vertex_info(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, point: i32) -> Result<ae_sys::AEGP_MaskVertex, Error> {
+    pub fn mask_outline_vertex_info(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+        point: i32,
+    ) -> Result<ae_sys::AEGP_MaskVertex, Error> {
         call_suite_fn_single!(self, AEGP_GetMaskOutlineVertexInfo -> ae_sys::AEGP_MaskVertex, mask_outline.as_ptr(), point as _)
     }
 
     /// Sets the vertex information for a given index.
-    pub fn set_mask_outline_vertex_info(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, point: i32, vertex: &ae_sys::AEGP_MaskVertex) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetMaskOutlineVertexInfo, mask_outline.as_ptr(), point as _, vertex)
+    pub fn set_mask_outline_vertex_info(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+        point: i32,
+        vertex: &ae_sys::AEGP_MaskVertex,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetMaskOutlineVertexInfo,
+            mask_outline.as_ptr(),
+            point as _,
+            vertex
+        )
     }
 
     /// Creates a vertex at index position.
-    pub fn create_vertex(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, position: i32) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_CreateVertex, mask_outline.as_ptr(), position as _)
+    pub fn create_vertex(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+        position: i32,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_CreateVertex,
+            mask_outline.as_ptr(),
+            position as _
+        )
     }
 
     /// Removes a vertex from a mask.
-    pub fn delete_vertex(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, index: i32) -> Result<(), Error> {
+    pub fn delete_vertex(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+        index: i32,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_DeleteVertex, mask_outline.as_ptr(), index as _)
     }
 
     /// Given a mask outline pointer, returns the number of feathers in the path.
-    pub fn mask_outline_num_feathers(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskOutlineNumFeathers -> A_long, mask_outline.as_ptr())? as i32)
+    pub fn mask_outline_num_feathers(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+    ) -> Result<i32, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMaskOutlineNumFeathers -> A_long, mask_outline.as_ptr())?
+                as i32,
+        )
     }
 
     /// Given a mask outline pointer and a feather index, returns the feather information.
-    pub fn mask_outline_feather_info(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, feather_index: i32) -> Result<ae_sys::AEGP_MaskFeather, Error> {
+    pub fn mask_outline_feather_info(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+        feather_index: i32,
+    ) -> Result<ae_sys::AEGP_MaskFeather, Error> {
         call_suite_fn_single!(self, AEGP_GetMaskOutlineFeatherInfo -> ae_sys::AEGP_MaskFeather, mask_outline.as_ptr(), feather_index as _)
     }
 
     /// Sets the feather information for a given index. Feather must already exist; use [`create_mask_outline_feather()`](Self::create_mask_outline_feather) first, if needed.
-    pub fn set_mask_outline_feather_info(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, feather_index: i32, feather: &ae_sys::AEGP_MaskFeather) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetMaskOutlineFeatherInfo, mask_outline.as_ptr(), feather_index as _, feather)
+    pub fn set_mask_outline_feather_info(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+        feather_index: i32,
+        feather: &ae_sys::AEGP_MaskFeather,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetMaskOutlineFeatherInfo,
+            mask_outline.as_ptr(),
+            feather_index as _,
+            feather
+        )
     }
 
     /// Creates a feather at the given index. Returns the index of new feather.
-    pub fn create_mask_outline_feather(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, feather: Option<ae_sys::AEGP_MaskFeather>) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_CreateMaskOutlineFeather -> ae_sys::AEGP_FeatherIndex, mask_outline.as_ptr(), feather.as_ref().map_or(std::ptr::null_mut(), |t| t))? as i32)
+    pub fn create_mask_outline_feather(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+        feather: Option<ae_sys::AEGP_MaskFeather>,
+    ) -> Result<i32, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_CreateMaskOutlineFeather -> ae_sys::AEGP_FeatherIndex, mask_outline.as_ptr(), feather.as_ref().map_or(std::ptr::null_mut(), |t| t))?
+                as i32,
+        )
     }
 
     /// Deletes a feather from the mask.
-    pub fn delete_mask_outline_feather(&self, mask_outline: impl AsPtr<AEGP_MaskOutlineValH>, index: i32) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_DeleteMaskOutlineFeather, mask_outline.as_ptr(), index as _)
+    pub fn delete_mask_outline_feather(
+        &self,
+        mask_outline: impl AsPtr<AEGP_MaskOutlineValH>,
+        index: i32,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_DeleteMaskOutlineFeather,
+            mask_outline.as_ptr(),
+            index as _
+        )
     }
 }
 

@@ -4,7 +4,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(unused_attributes)]
-
 #![doc = include_str!("../README.md")]
 
 // Included bindings are generated from After Effects SDK 25.6 dated Sep 2025

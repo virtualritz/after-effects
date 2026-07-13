@@ -1,5 +1,5 @@
-use crate::ae_sys;
 use crate::AsPtr;
+use crate::ae_sys;
 
 register_handle!(AEIO_InSpecH);
 define_handle_wrapper!(InSpecHandle, AEIO_InSpecH);

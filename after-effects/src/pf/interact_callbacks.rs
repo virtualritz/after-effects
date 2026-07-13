@@ -14,9 +14,7 @@ use crate::*;
 pub struct InteractCallbacks(InData);
 
 impl InteractCallbacks {
-    pub fn new(in_data: InData) -> Self {
-        Self(in_data)
-    }
+    pub fn new(in_data: InData) -> Self { Self(in_data) }
 
     /// The checkout_param callback allows you to inquire param values at times other than the current one, and allows you to access layer params other
     /// than the default input layer and the output layer. See the notes on the "params" structure at the end of this file.
@@ -28,11 +26,26 @@ impl InteractCallbacks {
     /// IMPORTANT: Due to 13.5 threading changes, checking out a layer param that is not `<none>` inside of `UPDATE_PARAMS_UI` will return
     /// a frame with black pixels to avoid render requests and possible deadlock.
     /// In other selectors the actual render will be triggered as it did before.
-    pub fn checkout_param(&self, index: i32, what_time: i32, time_step: i32, time_scale: u32) -> Result<ae_sys::PF_ParamDef, Error> {
+    pub fn checkout_param(
+        &self,
+        index: i32,
+        what_time: i32,
+        time_step: i32,
+        time_scale: u32,
+    ) -> Result<ae_sys::PF_ParamDef, Error> {
         let in_data = unsafe { &(*self.0.as_ptr()) };
         let mut param: ae_sys::PF_ParamDef = unsafe { std::mem::zeroed() };
         param.param_type = ae_sys::PF_Param_RESERVED;
-        match unsafe { in_data.inter.checkout_param.unwrap()(in_data.effect_ref, index as _, what_time as _, time_step as _, time_scale as _, &mut param) } {
+        match unsafe {
+            in_data.inter.checkout_param.unwrap()(
+                in_data.effect_ref,
+                index as _,
+                what_time as _,
+                time_step as _,
+                time_scale as _,
+                &mut param,
+            )
+        } {
             0 => Ok(param),
             e => Err(Error::from(e)),
         }
@@ -43,7 +56,9 @@ impl InteractCallbacks {
     /// Once checked in, the fields in the `PF_ParamDef` will no longer be valid.
     pub fn checkin_param(&self, param: &ae_sys::PF_ParamDef) -> Result<(), Error> {
         let in_data = unsafe { &(*self.0.as_ptr()) };
-        match unsafe { in_data.inter.checkin_param.unwrap()(in_data.effect_ref, param as *const _ as *mut _) } {
+        match unsafe {
+            in_data.inter.checkin_param.unwrap()(in_data.effect_ref, param as *const _ as *mut _)
+        } {
             0 => Ok(()),
             e => Err(Error::from(e)),
         }
@@ -54,7 +69,13 @@ impl InteractCallbacks {
     /// Currently you can only add params at the end, and only at [`Command::ParamsSetup`] time.
     pub fn add_param(&self, index: i32, def: &ae_sys::PF_ParamDef) -> Result<(), Error> {
         let in_data = unsafe { &(*self.0.as_ptr()) };
-        match unsafe { in_data.inter.add_param.unwrap()(in_data.effect_ref, index as _, def as *const _ as *mut _) } {
+        match unsafe {
+            in_data.inter.add_param.unwrap()(
+                in_data.effect_ref,
+                index as _,
+                def as *const _ as *mut _,
+            )
+        } {
             0 => Ok(()),
             e => Err(Error::from(e)),
         }
@@ -83,7 +104,9 @@ impl InteractCallbacks {
     /// It is better to call it, say, once per scanline, unless your filter is really really slow.
     pub fn progress(&self, current: i32, total: i32) -> Result<(), Error> {
         let in_data = unsafe { &(*self.0.as_ptr()) };
-        match unsafe { in_data.inter.progress.unwrap()(in_data.effect_ref, current as _, total as _) } {
+        match unsafe {
+            in_data.inter.progress.unwrap()(in_data.effect_ref, current as _, total as _)
+        } {
             0 => Ok(()),
             e => Err(Error::from(e)),
         }
@@ -92,7 +115,9 @@ impl InteractCallbacks {
     /// Register a custom user interface element. See [Effect UI and events](https://ae-plugins.docsforadobe.dev/effect-ui-events/effect-ui-events.html). Note: The `PF_UIAlignment` flags are not honored.
     pub fn register_ui(&self, custom_ui_info: CustomUIInfo) -> Result<(), Error> {
         let in_data = unsafe { &(*self.0.as_ptr()) };
-        match unsafe { in_data.inter.register_ui.unwrap()(in_data.effect_ref, custom_ui_info.as_ptr() as _) } {
+        match unsafe {
+            in_data.inter.register_ui.unwrap()(in_data.effect_ref, custom_ui_info.as_ptr() as _)
+        } {
             0 => Ok(()),
             e => Err(Error::from(e)),
         }

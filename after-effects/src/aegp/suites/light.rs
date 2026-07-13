@@ -1,6 +1,6 @@
+use crate::aegp::LayerHandle;
 use crate::*;
 use ae_sys::AEGP_LayerH;
-use crate::aegp::LayerHandle;
 
 define_suite!(
     /// Get and set the type of lights in a composition.
@@ -29,13 +29,10 @@ define_suite!(
     kAEGPLightSuiteVersion3
 );
 
-
 impl LightSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Retrieves the [`LightType`] of the specified camera layer
     pub fn light_type(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LightType, Error> {
@@ -43,19 +40,41 @@ impl LightSuite {
     }
 
     /// Sets the [`LightType`] for the specified camera layer.
-    pub fn set_light_type(&self, layer_handle: impl AsPtr<AEGP_LayerH>, light_type: LightType) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetLightType, layer_handle.as_ptr(), light_type.into())
+    pub fn set_light_type(
+        &self,
+        layer_handle: impl AsPtr<AEGP_LayerH>,
+        light_type: LightType,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetLightType,
+            layer_handle.as_ptr(),
+            light_type.into()
+        )
     }
 
-    pub fn light_source(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LayerHandle, Error> {
+    pub fn light_source(
+        &self,
+        layer_handle: impl AsPtr<AEGP_LayerH>,
+    ) -> Result<LayerHandle, Error> {
         let v3 = LightSuite3::new()?;
         Ok(LayerHandle::from_raw(
-            call_suite_fn_single!(v3, AEGP_GetLightSource -> ae_sys::AEGP_LayerH, layer_handle.as_ptr())?
+            call_suite_fn_single!(v3, AEGP_GetLightSource -> ae_sys::AEGP_LayerH, layer_handle.as_ptr())?,
         ))
     }
-    pub fn set_light_source(&self, layer_handle: impl AsPtr<AEGP_LayerH>, light_source: impl AsPtr<AEGP_LayerH>) -> Result<(), Error> {
+
+    pub fn set_light_source(
+        &self,
+        layer_handle: impl AsPtr<AEGP_LayerH>,
+        light_source: impl AsPtr<AEGP_LayerH>,
+    ) -> Result<(), Error> {
         let v3 = LightSuite3::new()?;
-        call_suite_fn!(v3, AEGP_SetLightSource, layer_handle.as_ptr(), light_source.as_ptr())
+        call_suite_fn!(
+            v3,
+            AEGP_SetLightSource,
+            layer_handle.as_ptr(),
+            light_source.as_ptr()
+        )
     }
 }
 

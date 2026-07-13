@@ -1,6 +1,9 @@
-use crate::*;
 use crate::aegp::*;
-use ae_sys::{ AEGP_ItemH, AEGP_RenderOptionsH, A_Time, AEGP_WorldType, AEGP_MatteMode, PF_Field, AEGP_ChannelOrder, AEGP_ItemQuality, A_Boolean };
+use crate::*;
+use ae_sys::{
+    A_Boolean, A_Time, AEGP_ChannelOrder, AEGP_ItemH, AEGP_ItemQuality, AEGP_MatteMode,
+    AEGP_RenderOptionsH, AEGP_WorldType, PF_Field,
+};
 
 define_suite!(
     /// Since we introduced the AEGP API, we've been asked to provide functions for retrieving rendered frames.
@@ -19,25 +22,31 @@ define_suite!(
 impl RenderOptionsSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Returns the [`RenderOptionsHandle`] associated with a given [`aegp::Item`].
     /// If there are no options yet specified, After Effects passes back an [`RenderOptionsHandle`] with render time set to 0,
     /// time step set to the current frame duration, field render set to ``PF_Field_FRAME``, and the depth set to the highest resolution specified within the item.
     ///
     /// The returned object will be disposed on drop
-    pub fn new_from_item(&self, item: impl AsPtr<AEGP_ItemH>, plugin_id: aegp::PluginId) -> Result<RenderOptionsHandle, Error> {
+    pub fn new_from_item(
+        &self,
+        item: impl AsPtr<AEGP_ItemH>,
+        plugin_id: aegp::PluginId,
+    ) -> Result<RenderOptionsHandle, Error> {
         Ok(RenderOptionsHandle::from_raw_owned(
-            call_suite_fn_single!(self, AEGP_NewFromItem -> AEGP_RenderOptionsH, plugin_id, item.as_ptr())?
+            call_suite_fn_single!(self, AEGP_NewFromItem -> AEGP_RenderOptionsH, plugin_id, item.as_ptr())?,
         ))
     }
 
     /// Duplicates the given [`RenderOptionsHandle`].
-    pub fn duplicate(&self, options: impl AsPtr<AEGP_RenderOptionsH>, plugin_id: aegp::PluginId) -> Result<RenderOptionsHandle, Error> {
+    pub fn duplicate(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        plugin_id: aegp::PluginId,
+    ) -> Result<RenderOptionsHandle, Error> {
         Ok(RenderOptionsHandle::from_raw_owned(
-            call_suite_fn_single!(self, AEGP_Duplicate -> AEGP_RenderOptionsH, plugin_id, options.as_ptr())?
+            call_suite_fn_single!(self, AEGP_Duplicate -> AEGP_RenderOptionsH, plugin_id, options.as_ptr())?,
         ))
     }
 
@@ -47,7 +56,11 @@ impl RenderOptionsSuite {
     }
 
     /// Sets the render time of the given [`RenderOptionsHandle`].
-    pub fn set_time(&self, options: impl AsPtr<AEGP_RenderOptionsH>, time: Time) -> Result<(), Error> {
+    pub fn set_time(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        time: Time,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetTime, options.as_ptr(), time.into())
     }
 
@@ -57,7 +70,11 @@ impl RenderOptionsSuite {
     }
 
     /// Specifies the time step (duration of a frame) for the referenced [`RenderOptionsHandle`].
-    pub fn set_time_step(&self, options: impl AsPtr<AEGP_RenderOptionsH>, time_step: Time) -> Result<(), Error> {
+    pub fn set_time_step(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        time_step: Time,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetTimeStep, options.as_ptr(), time_step.into())
     }
 
@@ -67,42 +84,84 @@ impl RenderOptionsSuite {
     }
 
     /// Specifies the field settings for the given [`RenderOptionsHandle`].
-    pub fn set_field_render(&self, options: impl AsPtr<AEGP_RenderOptionsH>, field_render: pf::Field) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetFieldRender, options.as_ptr(), field_render.into())
+    pub fn set_field_render(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        field_render: pf::Field,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetFieldRender,
+            options.as_ptr(),
+            field_render.into()
+        )
     }
 
     /// Retrieves the field settings for the given [`RenderOptionsHandle`].
-    pub fn field_render(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<pf::Field, Error> {
+    pub fn field_render(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+    ) -> Result<pf::Field, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetFieldRender -> PF_Field, options.as_ptr())?.into())
     }
 
     /// Specifies the AEGP_WorldType of the output of a given [`RenderOptionsHandle`].
-    pub fn set_world_type(&self, options: impl AsPtr<AEGP_RenderOptionsH>, typ: aegp::WorldType) -> Result<(), Error> {
+    pub fn set_world_type(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        typ: aegp::WorldType,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetWorldType, options.as_ptr(), typ.into())
     }
 
     /// Retrieves the AEGP_WorldType of the given [`RenderOptionsHandle`].
-    pub fn world_type(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<aegp::WorldType, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetWorldType -> AEGP_WorldType, options.as_ptr())?.into())
+    pub fn world_type(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+    ) -> Result<aegp::WorldType, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetWorldType -> AEGP_WorldType, options.as_ptr())?
+                .into(),
+        )
     }
 
     /// Specifies the downsample factor (with independent horizontal and vertical settings) for the given [`RenderOptionsHandle`].
-    pub fn set_downsample_factor(&self, options: impl AsPtr<AEGP_RenderOptionsH>, x: i16, y: i16) -> Result<(), Error> {
+    pub fn set_downsample_factor(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        x: i16,
+        y: i16,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetDownsampleFactor, options.as_ptr(), x, y)
     }
 
     /// Retrieves the downsample factor for the given [`RenderOptionsHandle`].
-    pub fn downsample_factor(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<(i16, i16), Error> {
+    pub fn downsample_factor(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+    ) -> Result<(i16, i16), Error> {
         call_suite_fn_double!(self, AEGP_GetDownsampleFactor -> i16, i16, options.as_ptr())
     }
 
     /// Specifies the region of interest sub-rectangle for the given [`RenderOptionsHandle`].
-    pub fn set_region_of_interest(&self, options: impl AsPtr<AEGP_RenderOptionsH>, roi: Rect) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetRegionOfInterest, options.as_ptr(), &roi.into())
+    pub fn set_region_of_interest(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        roi: Rect,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetRegionOfInterest,
+            options.as_ptr(),
+            &roi.into()
+        )
     }
 
     /// Retrieves the region of interest sub-rectangle for the given [`RenderOptionsHandle`].
-    pub fn region_of_interest(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<Rect, Error> {
+    pub fn region_of_interest(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+    ) -> Result<Rect, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetRegionOfInterest -> ae_sys::A_LRect, options.as_ptr())?.into())
     }
 
@@ -111,47 +170,93 @@ impl RenderOptionsSuite {
     /// - [`MatteMode::Straight`]
     /// - [`MatteMode::PremulBlack`]
     /// - [`MatteMode::PremulBgColor`]
-    pub fn set_matte_mode(&self, options: impl AsPtr<AEGP_RenderOptionsH>, mode: MatteMode) -> Result<(), Error> {
+    pub fn set_matte_mode(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        mode: MatteMode,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetMatteMode, options.as_ptr(), mode.into())
     }
 
     /// Retrieves the matte mode for the given [`RenderOptionsHandle`].
     pub fn matte_mode(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<MatteMode, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMatteMode -> AEGP_MatteMode, options.as_ptr())?.into())
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMatteMode -> AEGP_MatteMode, options.as_ptr())?
+                .into(),
+        )
     }
 
     /// Specifies the [`ChannelOrder`] for the given [`RenderOptionsHandle`].
     ///
     /// Factoid: this was added to facilitate live linking with Premiere Pro.
-    pub fn set_channel_order(&self, options: impl AsPtr<AEGP_RenderOptionsH>, channel_order: ChannelOrder) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetChannelOrder, options.as_ptr(), channel_order.into())
+    pub fn set_channel_order(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        channel_order: ChannelOrder,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetChannelOrder,
+            options.as_ptr(),
+            channel_order.into()
+        )
     }
 
     /// Retrieves the [`ChannelOrder`] for the given [`RenderOptionsHandle`].
-    pub fn channel_order(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<ChannelOrder, Error> {
+    pub fn channel_order(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+    ) -> Result<ChannelOrder, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetChannelOrder -> AEGP_ChannelOrder, options.as_ptr())?.into())
     }
 
     /// Passes back a boolean that is true if the render guide layers setting is on.
-    pub fn render_guide_layers(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<bool, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetRenderGuideLayers -> A_Boolean, options.as_ptr())? != 0)
+    pub fn render_guide_layers(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+    ) -> Result<bool, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetRenderGuideLayers -> A_Boolean, options.as_ptr())?
+                != 0,
+        )
     }
 
     /// Specify whether or not to render guide layers.
-    pub fn set_render_guide_layers(&self, options: impl AsPtr<AEGP_RenderOptionsH>, render_them: bool) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetRenderGuideLayers, options.as_ptr(), render_them as _)
+    pub fn set_render_guide_layers(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        render_them: bool,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetRenderGuideLayers,
+            options.as_ptr(),
+            render_them as _
+        )
     }
 
     /// Get the render quality of the render queue item.
     /// Quality can be either [`ItemQuality::Draft`] or [`ItemQuality::Best`].
-    pub fn render_quality(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<ItemQuality, Error> {
+    pub fn render_quality(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+    ) -> Result<ItemQuality, Error> {
         Ok(call_suite_fn_single!(self, AEGP_GetRenderQuality -> AEGP_ItemQuality, options.as_ptr())?.into())
     }
 
     /// Set the render quality of the render queue item.
     /// Quality can be either [`ItemQuality::Draft`] or [`ItemQuality::Best`].
-    pub fn set_render_quality(&self, options: impl AsPtr<AEGP_RenderOptionsH>, quality: ItemQuality) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SetRenderQuality, options.as_ptr(), quality.into())
+    pub fn set_render_quality(
+        &self,
+        options: impl AsPtr<AEGP_RenderOptionsH>,
+        quality: ItemQuality,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            AEGP_SetRenderQuality,
+            options.as_ptr(),
+            quality.into()
+        )
     }
 }
 
@@ -162,7 +267,10 @@ define_owned_handle_wrapper!(RenderOptionsHandle, AEGP_RenderOptionsH);
 impl Drop for RenderOptionsHandle {
     fn drop(&mut self) {
         if self.is_owned() {
-            RenderOptionsSuite::new().unwrap().dispose(self.as_ptr()).unwrap();
+            RenderOptionsSuite::new()
+                .unwrap()
+                .dispose(self.as_ptr())
+                .unwrap();
         }
     }
 }
@@ -269,10 +377,15 @@ impl RenderOptions {
     /// time step set to the current frame duration, field render set to ``PF_Field_FRAME``, and the depth set to the highest resolution specified within the item.
     ///
     /// The returned object will be disposed on drop
-    pub fn from_item(layer: impl AsPtr<AEGP_ItemH>, plugin_id: aegp::PluginId) -> Result<Self, Error> {
+    pub fn from_item(
+        layer: impl AsPtr<AEGP_ItemH>,
+        plugin_id: aegp::PluginId,
+    ) -> Result<Self, Error> {
         Ok(Self::from_handle(
-            RenderOptionsSuite::new().unwrap().new_from_item(layer, plugin_id)?,
-            false
+            RenderOptionsSuite::new()
+                .unwrap()
+                .new_from_item(layer, plugin_id)?,
+            false,
         ))
     }
 }

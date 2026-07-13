@@ -1,5 +1,5 @@
-use crate::ae_sys;
 use crate::AsPtr;
+use crate::ae_sys;
 
 #[derive(Copy, Clone, Debug, Hash)]
 pub struct InDataHandle {
@@ -13,9 +13,7 @@ impl InDataHandle {
     }
 
     #[inline]
-    pub fn as_ptr(self) -> *const ae_sys::PR_InData {
-        self.in_data_ptr
-    }
+    pub fn as_ptr(self) -> *const ae_sys::PR_InData { self.in_data_ptr }
 
     #[inline]
     pub fn pica_basic_handle(self) -> crate::PicaBasicSuiteHandle {
@@ -23,9 +21,7 @@ impl InDataHandle {
     }
 
     #[inline]
-    pub fn plugin_id(self) -> i32 {
-        unsafe { (*self.in_data_ptr).aegp_plug_id }
-    }
+    pub fn plugin_id(self) -> i32 { unsafe { (*self.in_data_ptr).aegp_plug_id } }
 
     // Fixme: do we own this memory???!
     #[inline]

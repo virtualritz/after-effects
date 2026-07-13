@@ -376,27 +376,27 @@ bitflags::bitflags! {
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum FilterCaseInfoIn {
-    CantFilter = 0,
-    StraightData = 1,
-    BlackMat = 2,
-    GrayMat = 3,
-    WhiteMat = 4,
-    Defringe = 5,
-    BlackZap = 6,
-    GrayZap = 7,
-    WhiteZap = 8,
+    CantFilter    = 0,
+    StraightData  = 1,
+    BlackMat      = 2,
+    GrayMat       = 3,
+    WhiteMat      = 4,
+    Defringe      = 5,
+    BlackZap      = 6,
+    GrayZap       = 7,
+    WhiteZap      = 8,
     BackgroundZap = 10,
     ForegroundZap = 11,
 }
 #[repr(u8)]
 #[derive(Copy, Clone, Debug)]
 pub enum FilterCaseInfoOut {
-    CantFilter = 0,
+    CantFilter   = 0,
     StraightData = 1,
-    BlackMat = 2,
-    GrayMat = 3,
-    WhiteMat = 4,
-    FillMask = 9,
+    BlackMat     = 2,
+    GrayMat      = 3,
+    WhiteMat     = 4,
+    FillMask     = 9,
 }
 #[derive(Debug)]
 pub struct FilterCaseInfoStruct {
@@ -411,20 +411,20 @@ pub struct FilterCaseInfoStruct {
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 pub enum BitTypes {
-    None = 0x00,
-    Top = 0x01,
-    Right = 0x02,
-    Bottom = 0x04,
-    Left = 0x08,
+    None       = 0x00,
+    Top        = 0x01,
+    Right      = 0x02,
+    Bottom     = 0x04,
+    Left       = 0x08,
     UpperRight = 0x10,
     LowerRight = 0x20,
-    LowerLeft = 0x40,
-    UpperLeft = 0x80,
+    LowerLeft  = 0x40,
+    UpperLeft  = 0x80,
 }
 #[repr(u32)]
 #[derive(Debug, Clone, Copy)]
 pub enum PixelAspectRatio {
-    AnyPAR = 0x10000,
+    AnyPAR   = 0x10000,
     UnityPAR = 0x20000,
 }
 
@@ -1593,7 +1593,10 @@ pub fn plugin_build(properties: Vec<Property>) {
                 if x.contains(OutFlags::IDoDialog) {
                     println!("cargo:rustc-cfg=does_dialog");
                 }
-                if x.contains(OutFlags::IUseAudio) || x.contains(OutFlags::AudioEffectToo) || x.contains(OutFlags::AudioEffectOnly) {
+                if x.contains(OutFlags::IUseAudio)
+                    || x.contains(OutFlags::AudioEffectToo)
+                    || x.contains(OutFlags::AudioEffectOnly)
+                {
                     println!("cargo:rustc-cfg=uses_audio");
                 }
                 if x.contains(OutFlags::SendUpdateParamsUI) {
@@ -1615,7 +1618,9 @@ pub fn plugin_build(properties: Vec<Property>) {
                     println!("cargo:rustc-cfg=threaded_rendering");
 
                     if !x.contains(OutFlags2::SupportsGetFlattenedSequenceData) {
-                        println!("cargo:warning=Setting the SupportsThreadedRendering flag without the SupportsGetFlattenedSequenceData flag can cause plugins to fail to load in some older versions of After Effects.");
+                        println!(
+                            "cargo:warning=Setting the SupportsThreadedRendering flag without the SupportsGetFlattenedSequenceData flag can cause plugins to fail to load in some older versions of After Effects."
+                        );
                     }
                 }
                 println!("cargo:rustc-check-cfg=cfg(gpu_render)");
@@ -1641,14 +1646,22 @@ pub fn plugin_build(properties: Vec<Property>) {
     // output 8byte PkgInfo and the Info.plist
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
-        let pkginfo_path = format!("{}/../../../{}_PkgInfo", std::env::var("OUT_DIR").unwrap(), std::env::var("CARGO_PKG_NAME").unwrap());
+        let pkginfo_path = format!(
+            "{}/../../../{}_PkgInfo",
+            std::env::var("OUT_DIR").unwrap(),
+            std::env::var("CARGO_PKG_NAME").unwrap()
+        );
 
         let fxtc_tag = b"FXTC";
         let kind_tag = _kind.as_bytes();
         let pkginfo_bytes = [kind_tag, *fxtc_tag].concat();
         std::fs::write(pkginfo_path, &pkginfo_bytes).unwrap();
 
-        let plist_path = format!("{}/../../../{}_Info.plist", std::env::var("OUT_DIR").unwrap(), std::env::var("CARGO_PKG_NAME").unwrap());
+        let plist_path = format!(
+            "{}/../../../{}_Info.plist",
+            std::env::var("OUT_DIR").unwrap(),
+            std::env::var("CARGO_PKG_NAME").unwrap()
+        );
         plist::produce_plist(plist_path, _kind, _name);
     }
 

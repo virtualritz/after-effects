@@ -36,15 +36,16 @@ define_suite!(
 impl OpaqueEffectDataSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Acquire pointer to opaque effect data. This is reference counted meaning that
     /// [`acquire_opaque_effect_data()`](Self::acquire_opaque_effect_data) and [`release_opaque_effect_data()`](Self::release_opaque_effect_data) should always be called in pairs.
     /// If no opaque effect was registered for the given effect_ref [`acquire_opaque_effect_data()`](Self::acquire_opaque_effect_data)
     /// will return 0 and the reference count remains 0.
-    pub fn acquire_opaque_effect_data(&self, instance_id: i32) -> Result<*mut pr_sys::OpaqueEffectDataType, Error> {
+    pub fn acquire_opaque_effect_data(
+        &self,
+        instance_id: i32,
+    ) -> Result<*mut pr_sys::OpaqueEffectDataType, Error> {
         call_suite_fn_single!(self, AcquireOpaqueEffectData -> *mut pr_sys::OpaqueEffectDataType, instance_id)
     }
 
@@ -74,8 +75,17 @@ impl OpaqueEffectDataSuite {
     /// }
     /// // data now points to the right OpaqueEffectDataType object and we can start using it
     /// ```
-    pub fn register_opaque_effect_data(&self, instance_id: i32, opaque_effect_data: *mut *mut pr_sys::OpaqueEffectDataType) -> Result<(), Error> {
-        call_suite_fn!(self, RegisterOpaqueEffectData, instance_id, opaque_effect_data)
+    pub fn register_opaque_effect_data(
+        &self,
+        instance_id: i32,
+        opaque_effect_data: *mut *mut pr_sys::OpaqueEffectDataType,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            RegisterOpaqueEffectData,
+            instance_id,
+            opaque_effect_data
+        )
     }
 
     /// Release opaque effect data. This decrements the internal reference count.
@@ -85,7 +95,16 @@ impl OpaqueEffectDataSuite {
     ///
     /// If the internal reference count goes to 0 any calls made to [`acquire_opaque_effect_data()`](Self::acquire_opaque_effect_data)
     /// will return 0 until new opaque effect data is registered via [`register_opaque_effect_data()`](Self::register_opaque_effect_data).
-    pub fn release_opaque_effect_data(&self, instance_id: i32, out_dispose_opaque_effect_data: *mut *mut pr_sys::OpaqueEffectDataType) -> Result<(), Error> {
-        call_suite_fn!(self, ReleaseOpaqueEffectData, instance_id, out_dispose_opaque_effect_data)
+    pub fn release_opaque_effect_data(
+        &self,
+        instance_id: i32,
+        out_dispose_opaque_effect_data: *mut *mut pr_sys::OpaqueEffectDataType,
+    ) -> Result<(), Error> {
+        call_suite_fn!(
+            self,
+            ReleaseOpaqueEffectData,
+            instance_id,
+            out_dispose_opaque_effect_data
+        )
     }
 }

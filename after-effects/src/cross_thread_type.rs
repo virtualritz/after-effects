@@ -11,8 +11,8 @@
 ///
 /// Example usage:
 /// ```
-/// use serde::{Serialize, Deserialize};
 /// use after_effects as ae;
+/// use serde::{Deserialize, Serialize};
 ///
 /// #[derive(Default, Serialize, Deserialize)]
 /// struct MyInstance {

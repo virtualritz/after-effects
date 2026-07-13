@@ -11,12 +11,13 @@ define_suite!(
 impl EffectSequenceDataSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Retrieves the read-only const sequence_data object for a rendering thread when Multi-Frame Rendering is enabled for an effect.
-    pub fn const_sequence_data(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>) -> Result<ae_sys::PF_ConstHandle, Error> {
+    pub fn const_sequence_data(
+        &self,
+        effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>,
+    ) -> Result<ae_sys::PF_ConstHandle, Error> {
         call_suite_fn_single!(self, PF_GetConstSequenceData -> ae_sys::PF_ConstHandle, effect_ref.as_ptr())
     }
 }

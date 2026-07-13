@@ -1,5 +1,5 @@
 use crate::*;
-use ae_sys::{ PF_AsyncManagerP, AEGP_FrameReceiptH, AEGP_RenderOptionsH, AEGP_LayerRenderOptionsH };
+use ae_sys::{AEGP_FrameReceiptH, AEGP_LayerRenderOptionsH, AEGP_RenderOptionsH, PF_AsyncManagerP};
 
 define_suite!(
     /// For cases where such renders formerly were triggered by side-effect or cancelled implicity
@@ -17,15 +17,23 @@ define_suite!(
 impl RenderAsyncManagerSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
-    pub fn checkout_or_render_item_frame_async_manager(&self, async_manager: impl AsPtr<PF_AsyncManagerP>, purpose_id: u32, ro: impl AsPtr<AEGP_RenderOptionsH>) -> Result<AEGP_FrameReceiptH, Error> {
+    pub fn checkout_or_render_item_frame_async_manager(
+        &self,
+        async_manager: impl AsPtr<PF_AsyncManagerP>,
+        purpose_id: u32,
+        ro: impl AsPtr<AEGP_RenderOptionsH>,
+    ) -> Result<AEGP_FrameReceiptH, Error> {
         call_suite_fn_single!(self, AEGP_CheckoutOrRender_ItemFrame_AsyncManager -> AEGP_FrameReceiptH, async_manager.as_ptr(), purpose_id as _, ro.as_ptr())
     }
 
-    pub fn checkout_or_render_layer_frame_async_manager(&self, async_manager: impl AsPtr<PF_AsyncManagerP>, purpose_id: u32, lro: impl AsPtr<AEGP_LayerRenderOptionsH>) -> Result<AEGP_FrameReceiptH, Error> {
+    pub fn checkout_or_render_layer_frame_async_manager(
+        &self,
+        async_manager: impl AsPtr<PF_AsyncManagerP>,
+        purpose_id: u32,
+        lro: impl AsPtr<AEGP_LayerRenderOptionsH>,
+    ) -> Result<AEGP_FrameReceiptH, Error> {
         call_suite_fn_single!(self, AEGP_CheckoutOrRender_LayerFrame_AsyncManager -> AEGP_FrameReceiptH, async_manager.as_ptr(), purpose_id as _, lro.as_ptr())
     }
 }
@@ -37,11 +45,21 @@ register_handle!(AEGP_FrameReceiptH);
 define_handle_wrapper!(AsyncManager, PF_AsyncManagerP);
 
 impl AsyncManager {
-    pub fn checkout_or_render_item_frame_async_manager(&self, purpose_id: u32, ro: impl AsPtr<AEGP_RenderOptionsH>) -> Result<AEGP_FrameReceiptH, Error> {
-        RenderAsyncManagerSuite::new()?.checkout_or_render_item_frame_async_manager(self.0, purpose_id, ro)
+    pub fn checkout_or_render_item_frame_async_manager(
+        &self,
+        purpose_id: u32,
+        ro: impl AsPtr<AEGP_RenderOptionsH>,
+    ) -> Result<AEGP_FrameReceiptH, Error> {
+        RenderAsyncManagerSuite::new()?
+            .checkout_or_render_item_frame_async_manager(self.0, purpose_id, ro)
     }
 
-    pub fn checkout_or_render_layer_frame_async_manager(&self, purpose_id: u32, lro: impl AsPtr<AEGP_LayerRenderOptionsH>) -> Result<AEGP_FrameReceiptH, Error> {
-        RenderAsyncManagerSuite::new()?.checkout_or_render_layer_frame_async_manager(self.0, purpose_id, lro)
+    pub fn checkout_or_render_layer_frame_async_manager(
+        &self,
+        purpose_id: u32,
+        lro: impl AsPtr<AEGP_LayerRenderOptionsH>,
+    ) -> Result<AEGP_FrameReceiptH, Error> {
+        RenderAsyncManagerSuite::new()?
+            .checkout_or_render_layer_frame_async_manager(self.0, purpose_id, lro)
     }
 }

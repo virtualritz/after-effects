@@ -98,7 +98,9 @@ impl RegisterSuite {
                 Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
-            let Some((callback, refcon)) = (unsafe { (refcon as *mut (CommandHook<P, T>, T)).as_mut() }) else {
+            let Some((callback, refcon)) =
+                (unsafe { (refcon as *mut (CommandHook<P, T>, T)).as_mut() })
+            else {
                 return Error::Generic.into();
             };
 
@@ -116,15 +118,21 @@ impl RegisterSuite {
 
             match res {
                 Ok(CommandHookStatus::Handled) => {
-                    unsafe { *handled_p = 1; }
+                    unsafe {
+                        *handled_p = 1;
+                    }
                     Error::None
                 }
                 Ok(CommandHookStatus::Unhandled) => {
-                    unsafe { *handled_p = 0; }
+                    unsafe {
+                        *handled_p = 0;
+                    }
                     Error::None
                 }
                 Err(e) => {
-                    unsafe { *handled_p = 0; }
+                    unsafe {
+                        *handled_p = 0;
+                    }
                     e
                 }
             }
@@ -162,7 +170,8 @@ impl RegisterSuite {
                 Some(unsafe { &mut *(plugin_refcon as *mut P) })
             };
 
-            let Some((callback, refcon)) = (unsafe { (refcon as *mut (UpdateMenuHook<P, T>, T)).as_mut() })
+            let Some((callback, refcon)) =
+                (unsafe { (refcon as *mut (UpdateMenuHook<P, T>, T)).as_mut() })
             else {
                 return Error::Generic.into();
             };
@@ -460,15 +469,21 @@ impl RegisterNonAegpSuite {
 
             match res {
                 Ok(CommandHookStatus::Handled) => {
-                    unsafe { *handled_p = 1; }
+                    unsafe {
+                        *handled_p = 1;
+                    }
                     Error::None
                 }
                 Ok(CommandHookStatus::Unhandled) => {
-                    unsafe { *handled_p = 0; }
+                    unsafe {
+                        *handled_p = 0;
+                    }
                     Error::None
                 }
                 Err(e) => {
-                    unsafe { *handled_p = 0; }
+                    unsafe {
+                        *handled_p = 0;
+                    }
                     e
                 }
             }
@@ -500,7 +515,8 @@ impl RegisterNonAegpSuite {
             refcon: AEGP_UpdateMenuRefcon,
             window_type: ae_sys::AEGP_WindowType,
         ) -> sys::PF_Err {
-            let (callback, refcon) = unsafe { &mut *(refcon as *mut (NonAegpUpdateMenuHook<T>, T)) };
+            let (callback, refcon) =
+                unsafe { &mut *(refcon as *mut (NonAegpUpdateMenuHook<T>, T)) };
 
             match callback(refcon, window_type.into()) {
                 Ok(_) => Error::None,

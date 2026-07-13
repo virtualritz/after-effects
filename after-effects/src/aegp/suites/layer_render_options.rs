@@ -1,5 +1,7 @@
 use crate::*;
-use ae_sys::{ AEGP_LayerH, AEGP_EffectRefH, AEGP_LayerRenderOptionsH, A_Time, AEGP_WorldType, AEGP_MatteMode };
+use ae_sys::{
+    A_Time, AEGP_EffectRefH, AEGP_LayerH, AEGP_LayerRenderOptionsH, AEGP_MatteMode, AEGP_WorldType,
+};
 
 define_suite!(
     /// New in 13.0
@@ -12,18 +14,20 @@ define_suite!(
 impl LayerRenderOptionsSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
     /// Suite is released on drop.
-    pub fn new() -> Result<Self, Error> {
-        crate::Suite::new()
-    }
+    pub fn new() -> Result<Self, Error> { crate::Suite::new() }
 
     /// Returns the [`LayerRenderOptionsHandle`] associated with a given `AEGP_LayerH`.
     /// Render time is set to the layer's current time, time step is set to layer's frame duration,
     /// ROI to the layer's nominal bounds, and EffectsToRender to "all".
     ///
     /// The returned object will be disposed on drop
-    pub fn new_from_layer(&self, layer: impl AsPtr<AEGP_LayerH>, plugin_id: aegp::PluginId) -> Result<LayerRenderOptionsHandle, Error> {
+    pub fn new_from_layer(
+        &self,
+        layer: impl AsPtr<AEGP_LayerH>,
+        plugin_id: aegp::PluginId,
+    ) -> Result<LayerRenderOptionsHandle, Error> {
         Ok(LayerRenderOptionsHandle::from_raw_owned(
-            call_suite_fn_single!(self, AEGP_NewFromLayer -> AEGP_LayerRenderOptionsH, plugin_id, layer.as_ptr())?
+            call_suite_fn_single!(self, AEGP_NewFromLayer -> AEGP_LayerRenderOptionsH, plugin_id, layer.as_ptr())?,
         ))
     }
 
@@ -32,16 +36,24 @@ impl LayerRenderOptionsSuite {
     /// ROI to the layer's nominal bounds, and EffectsToRender to the index of `effect_ref`.
     ///
     /// The returned object will be disposed on drop
-    pub fn new_from_upstream_of_effect(&self, effect_ref: impl AsPtr<AEGP_EffectRefH>, plugin_id: aegp::PluginId) -> Result<LayerRenderOptionsHandle, Error> {
+    pub fn new_from_upstream_of_effect(
+        &self,
+        effect_ref: impl AsPtr<AEGP_EffectRefH>,
+        plugin_id: aegp::PluginId,
+    ) -> Result<LayerRenderOptionsHandle, Error> {
         Ok(LayerRenderOptionsHandle::from_raw_owned(
-            call_suite_fn_single!(self, AEGP_NewFromUpstreamOfEffect -> AEGP_LayerRenderOptionsH, plugin_id, effect_ref.as_ptr())?
+            call_suite_fn_single!(self, AEGP_NewFromUpstreamOfEffect -> AEGP_LayerRenderOptionsH, plugin_id, effect_ref.as_ptr())?,
         ))
     }
 
     /// Duplicates the given [`LayerRenderOptionsHandle`].
-    pub fn duplicate(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, plugin_id: aegp::PluginId) -> Result<LayerRenderOptionsHandle, Error> {
+    pub fn duplicate(
+        &self,
+        options: impl AsPtr<AEGP_LayerRenderOptionsH>,
+        plugin_id: aegp::PluginId,
+    ) -> Result<LayerRenderOptionsHandle, Error> {
         Ok(LayerRenderOptionsHandle::from_raw_owned(
-            call_suite_fn_single!(self, AEGP_Duplicate -> AEGP_LayerRenderOptionsH, plugin_id, options.as_ptr())?
+            call_suite_fn_single!(self, AEGP_Duplicate -> AEGP_LayerRenderOptionsH, plugin_id, options.as_ptr())?,
         ))
     }
 
@@ -51,7 +63,11 @@ impl LayerRenderOptionsSuite {
     }
 
     /// Sets the render time of the given [`LayerRenderOptionsHandle`].
-    pub fn set_time(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, time: Time) -> Result<(), Error> {
+    pub fn set_time(
+        &self,
+        options: impl AsPtr<AEGP_LayerRenderOptionsH>,
+        time: Time,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetTime, options.as_ptr(), time.into())
     }
 
@@ -61,7 +77,11 @@ impl LayerRenderOptionsSuite {
     }
 
     /// Specifies the time step (duration of a frame) for the referenced [`LayerRenderOptionsHandle`].
-    pub fn set_time_step(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, time_step: Time) -> Result<(), Error> {
+    pub fn set_time_step(
+        &self,
+        options: impl AsPtr<AEGP_LayerRenderOptionsH>,
+        time_step: Time,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetTimeStep, options.as_ptr(), time_step.into())
     }
 
@@ -71,22 +91,40 @@ impl LayerRenderOptionsSuite {
     }
 
     /// Specifies the AEGP_WorldType of the output of a given [`LayerRenderOptionsHandle`].
-    pub fn set_world_type(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, typ: aegp::WorldType) -> Result<(), Error> {
+    pub fn set_world_type(
+        &self,
+        options: impl AsPtr<AEGP_LayerRenderOptionsH>,
+        typ: aegp::WorldType,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetWorldType, options.as_ptr(), typ.into())
     }
 
     /// Retrieves the AEGP_WorldType of the given [`LayerRenderOptionsHandle`].
-    pub fn world_type(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>) -> Result<aegp::WorldType, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetWorldType -> AEGP_WorldType, options.as_ptr())?.into())
+    pub fn world_type(
+        &self,
+        options: impl AsPtr<AEGP_LayerRenderOptionsH>,
+    ) -> Result<aegp::WorldType, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetWorldType -> AEGP_WorldType, options.as_ptr())?
+                .into(),
+        )
     }
 
     /// Specifies the downsample factor (with independent horizontal and vertical settings) for the given [`LayerRenderOptionsHandle`].
-    pub fn set_downsample_factor(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, x: i16, y: i16) -> Result<(), Error> {
+    pub fn set_downsample_factor(
+        &self,
+        options: impl AsPtr<AEGP_LayerRenderOptionsH>,
+        x: i16,
+        y: i16,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetDownsampleFactor, options.as_ptr(), x, y)
     }
 
     /// Retrieves the downsample factor for the given [`LayerRenderOptionsHandle`].
-    pub fn downsample_factor(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>) -> Result<(i16, i16), Error> {
+    pub fn downsample_factor(
+        &self,
+        options: impl AsPtr<AEGP_LayerRenderOptionsH>,
+    ) -> Result<(i16, i16), Error> {
         call_suite_fn_double!(self, AEGP_GetDownsampleFactor -> i16, i16, options.as_ptr())
     }
 
@@ -95,13 +133,23 @@ impl LayerRenderOptionsSuite {
     /// - [`MatteMode::Straight`]
     /// - [`MatteMode::PremulBlack`]
     /// - [`MatteMode::PremulBgColor`]
-    pub fn set_matte_mode(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>, mode: MatteMode) -> Result<(), Error> {
+    pub fn set_matte_mode(
+        &self,
+        options: impl AsPtr<AEGP_LayerRenderOptionsH>,
+        mode: MatteMode,
+    ) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetMatteMode, options.as_ptr(), mode.into())
     }
 
     /// Retrieves the matte mode for the given [`LayerRenderOptionsHandle`].
-    pub fn matte_mode(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>) -> Result<MatteMode, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMatteMode -> AEGP_MatteMode, options.as_ptr())?.into())
+    pub fn matte_mode(
+        &self,
+        options: impl AsPtr<AEGP_LayerRenderOptionsH>,
+    ) -> Result<MatteMode, Error> {
+        Ok(
+            call_suite_fn_single!(self, AEGP_GetMatteMode -> AEGP_MatteMode, options.as_ptr())?
+                .into(),
+        )
     }
 }
 
@@ -112,7 +160,10 @@ define_owned_handle_wrapper!(LayerRenderOptionsHandle, AEGP_LayerRenderOptionsH)
 impl Drop for LayerRenderOptionsHandle {
     fn drop(&mut self) {
         if self.is_owned() {
-            LayerRenderOptionsSuite::new().unwrap().dispose(self.as_ptr()).unwrap();
+            LayerRenderOptionsSuite::new()
+                .unwrap()
+                .dispose(self.as_ptr())
+                .unwrap();
         }
     }
 }
@@ -178,10 +229,15 @@ impl LayerRenderOptions {
     /// ROI to the layer's nominal bounds, and EffectsToRender to "all".
     ///
     /// The returned object will be disposed on drop
-    pub fn from_layer(layer: impl AsPtr<AEGP_LayerH>, plugin_id: aegp::PluginId) -> Result<Self, Error> {
+    pub fn from_layer(
+        layer: impl AsPtr<AEGP_LayerH>,
+        plugin_id: aegp::PluginId,
+    ) -> Result<Self, Error> {
         Ok(Self::from_handle(
-            LayerRenderOptionsSuite::new().unwrap().new_from_layer(layer, plugin_id)?,
-            false
+            LayerRenderOptionsSuite::new()
+                .unwrap()
+                .new_from_layer(layer, plugin_id)?,
+            false,
         ))
     }
 
@@ -190,10 +246,15 @@ impl LayerRenderOptions {
     /// ROI to the layer's nominal bounds, and EffectsToRender to the index of `effect_ref`.
     ///
     /// The returned object will be disposed on drop
-    pub fn from_upstream_of_effect(effect_ref: impl AsPtr<AEGP_EffectRefH>, plugin_id: aegp::PluginId) -> Result<Self, Error> {
+    pub fn from_upstream_of_effect(
+        effect_ref: impl AsPtr<AEGP_EffectRefH>,
+        plugin_id: aegp::PluginId,
+    ) -> Result<Self, Error> {
         Ok(Self::from_handle(
-            LayerRenderOptionsSuite::new().unwrap().new_from_upstream_of_effect(effect_ref, plugin_id)?,
-            false
+            LayerRenderOptionsSuite::new()
+                .unwrap()
+                .new_from_upstream_of_effect(effect_ref, plugin_id)?,
+            false,
         ))
     }
 }

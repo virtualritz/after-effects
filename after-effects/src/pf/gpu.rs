@@ -17,26 +17,26 @@ pub struct GpuDeviceSetupExtra {
     pub(crate) ptr: *mut ae_sys::PF_GPUDeviceSetupExtra,
 }
 impl AsRef<ae_sys::PF_GPUDeviceSetupExtra> for GpuDeviceSetupExtra {
-    fn as_ref(&self) -> &ae_sys::PF_GPUDeviceSetupExtra {
-        unsafe { &*self.ptr }
-    }
+    fn as_ref(&self) -> &ae_sys::PF_GPUDeviceSetupExtra { unsafe { &*self.ptr } }
 }
 impl GpuDeviceSetupExtra {
     pub fn from_raw(ptr: *mut ae_sys::PF_GPUDeviceSetupExtra) -> Self {
         assert!(!ptr.is_null());
         Self { ptr }
     }
-    pub fn as_ptr(&self) -> *mut ae_sys::PF_GPUDeviceSetupExtra {
-        self.ptr
-    }
+
+    pub fn as_ptr(&self) -> *mut ae_sys::PF_GPUDeviceSetupExtra { self.ptr }
+
     pub fn what_gpu(&self) -> GpuFramework {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).what_gpu.into() }
     }
+
     pub fn device_index(&self) -> usize {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).device_index as usize }
     }
+
     pub fn set_gpu_data<T: Any>(&mut self, val: T) {
         assert!(!self.as_ref().output.is_null());
         let boxed: Box<Box<dyn Any>> = Box::new(Box::new(val));
@@ -51,26 +51,26 @@ pub struct GpuDeviceSetdownExtra {
     pub(crate) ptr: *mut ae_sys::PF_GPUDeviceSetdownExtra,
 }
 impl AsRef<ae_sys::PF_GPUDeviceSetdownExtra> for GpuDeviceSetdownExtra {
-    fn as_ref(&self) -> &ae_sys::PF_GPUDeviceSetdownExtra {
-        unsafe { &*self.ptr }
-    }
+    fn as_ref(&self) -> &ae_sys::PF_GPUDeviceSetdownExtra { unsafe { &*self.ptr } }
 }
 impl GpuDeviceSetdownExtra {
     pub fn from_raw(ptr: *mut ae_sys::PF_GPUDeviceSetdownExtra) -> Self {
         assert!(!ptr.is_null());
         Self { ptr }
     }
-    pub fn as_ptr(&self) -> *mut ae_sys::PF_GPUDeviceSetdownExtra {
-        self.ptr
-    }
+
+    pub fn as_ptr(&self) -> *mut ae_sys::PF_GPUDeviceSetdownExtra { self.ptr }
+
     pub fn what_gpu(&self) -> GpuFramework {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).what_gpu.into() }
     }
+
     pub fn device_index(&self) -> usize {
         assert!(!self.as_ref().input.is_null());
         unsafe { (*self.as_ref().input).device_index as usize }
     }
+
     /// # Panics
     /// Panics if the stored GPU data is not of type `T`.
     pub fn gpu_data_mut<'a, T: Any>(&'a mut self) -> &'a mut T {
@@ -83,6 +83,7 @@ impl GpuDeviceSetdownExtra {
             None => panic!("Invalid type for gpu_data"),
         }
     }
+
     /// # Panics
     /// Panics if the stored GPU data is not of type `T`.
     pub fn gpu_data<'a, T: Any>(&'a self) -> &'a T {
@@ -95,6 +96,7 @@ impl GpuDeviceSetdownExtra {
             None => panic!("Invalid type for gpu_data"),
         }
     }
+
     /// # Panics
     /// Panics if the stored GPU data is not of type `T`.
     pub fn destroy_gpu_data<T: Any>(&mut self) {
