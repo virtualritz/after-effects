@@ -105,6 +105,8 @@ pub use suites::item::{
     ItemHandle,
     ItemType,
     LabelId,
+    ItemSelection,
+    DeselectOthers,
 };
 pub use suites::keyframe::{
     Keyframes,
@@ -181,6 +183,8 @@ pub use suites::stream::{
     StreamType,
     StreamValue,
     TextDocumentHandle,
+    Undoable,
+    FlagValue,
 };
 pub use suites::utility::GetPathTypes;
 pub use suites::world::{
