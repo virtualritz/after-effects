@@ -185,6 +185,8 @@ impl ChannelChunk {
             _ => unreachable!(),
         }
     }
+    /// # Panics
+    /// Panics if `row` is out of range (`0..height`).
     pub fn channel_row_data(&self, row: i32) -> ChannelDataType {
         if row < 0 || row >= self.0.heightL {
             panic!("Invalid row: {row}, height: {}", self.0.heightL);
@@ -205,6 +207,8 @@ impl ChannelChunk {
         }
     }
 
+    /// # Panics
+    /// Panics if `row` or `col` is out of range (`0..height` / `0..width`).
     pub fn channel_row_col_data(&self, row: i32, col: i32) -> ChannelDataType {
         if row < 0 || row >= self.0.heightL {
             panic!("Invalid row: {row}, height: {}", self.0.heightL);
