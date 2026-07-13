@@ -715,7 +715,7 @@ impl ArbParamsExtra {
                 let lock = handle.lock()?;
 
                 let serialized = serde_json::to_string::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
-                let cstr = std::ffi::CString::new(serialized).unwrap();
+                let cstr = std::ffi::CString::new(serialized).map_err(|_| Error::InternalStructDamaged)?;
 
                 self.as_ref().u.print_size_func_params.print_sizePLu.write(
                     cstr.as_bytes_with_nul().len() as _,
@@ -731,7 +731,7 @@ impl ArbParamsExtra {
                 let lock = handle.lock()?;
 
                 let serialized = serde_json::to_string::<T>(lock.as_ref()?).map_err(|_| Error::InternalStructDamaged)?;
-                let cstr = std::ffi::CString::new(serialized).unwrap();
+                let cstr = std::ffi::CString::new(serialized).map_err(|_| Error::InternalStructDamaged)?;
                 let cstr = cstr.as_bytes_with_nul();
 
                 if cstr.len() <= self.as_ref().u.print_func_params.print_sizeLu as _ && self.as_ref().u.print_func_params.print_flags == 0 {
