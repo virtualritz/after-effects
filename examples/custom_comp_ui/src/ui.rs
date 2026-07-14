@@ -272,11 +272,10 @@ pub fn click(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &
         if do_click_handles(in_data, &frame, layer_to_layer_frame, event)? {
             event.set_event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
         }
-    } else if event.window_type() == ae::WindowType::Comp {
-        if do_click_handles(in_data, &frame, layer_to_comp_frame, event)? {
+    } else if event.window_type() == ae::WindowType::Comp
+        && do_click_handles(in_data, &frame, layer_to_comp_frame, event)? {
             event.set_event_out_flags(ae::EventOutFlags::HANDLED_EVENT);
         }
-    }
 
     Ok(())
 }

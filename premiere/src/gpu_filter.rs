@@ -75,11 +75,11 @@ impl GpuFilterData {
     }
     pub fn node_id(&self) -> i32 {
         assert!(!self.instance_ptr.is_null());
-        unsafe { (*self.instance_ptr).inNodeID as i32 }
+        unsafe { (*self.instance_ptr).inNodeID }
     }
     pub fn device_index(&self) -> u32 {
         assert!(!self.instance_ptr.is_null());
-        unsafe { (*self.instance_ptr).inDeviceIndex as u32 }
+        unsafe { (*self.instance_ptr).inDeviceIndex }
     }
 
     /// Get a specific param value at a specific time
@@ -115,14 +115,13 @@ impl GpuFilterData {
 
     pub fn param_arbitrary_data<T: for<'a> serde::Deserialize<'a>>(&self, index: usize, time: i64) -> Result<T, Error> {
         let ptr = self.param(index, time)?;
-        if let crate::Param::MemoryPtr(ptr) = ptr {
-            if !ptr.is_null() {
+        if let crate::Param::MemoryPtr(ptr) = ptr
+            && !ptr.is_null() {
                 let serialized = unsafe { std::slice::from_raw_parts(ptr as *mut u8, self.memory_manager_suite.ptr_size(ptr) as _) };
                 if let Ok(t) = bincode::serde::decode_from_slice::<T, _>(serialized, bincode::config::legacy()) {
                     return Ok(t.0);
                 }
             }
-        }
         Err(Error::InvalidParms)
     }
     pub fn property(&self, property: Property) -> Result<PropertyData, Error> {

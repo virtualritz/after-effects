@@ -103,7 +103,7 @@ impl AdobePluginGlobal for Plugin {
                 in_data.interact().abort()?;
 
                 let mut color_world = ae::pf::suites::World::new()?
-                    .new_world(in_data.clone(), width as _, height as _, true, pixel_format)?;
+                    .new_world(in_data, width as _, height as _, true, pixel_format)?;
 
                 in_data.interact().abort()?;
 

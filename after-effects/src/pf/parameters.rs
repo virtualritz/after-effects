@@ -151,8 +151,8 @@ impl AngleDef<'_> {
         if self._in_data.is_null() || self._parent_ptr.is_none() {
             return Err(Error::InvalidParms);
         }
-        Ok(pf::suites::AngleParam::new()?
-            .floating_point_value_from_angle_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())?)
+        pf::suites::AngleParam::new()?
+            .floating_point_value_from_angle_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())
     }
 }
 // ―――――――――――――――――――――――――――――――――――― Angle ―――――――――――――――――――――――――――――――――――――
@@ -180,7 +180,7 @@ define_param_wrapper! {
         param.set_label(" ");
     }
 }
-impl<'a> CheckBoxDef<'_> {
+impl CheckBoxDef<'_> {
     pub fn set_default(&mut self, v: bool) -> &mut Self {
         self.def.dephault = if v { 1 } else { 0 };
         self
@@ -212,8 +212,8 @@ impl ColorDef<'_> {
         if self._in_data.is_null() || self._parent_ptr.is_none() {
             return Err(Error::InvalidParms);
         }
-        Ok(pf::suites::ColorParam::new()?
-            .floating_point_value_from_color_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())?)
+        pf::suites::ColorParam::new()?
+            .floating_point_value_from_color_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())
     }
 }
 // ―――――――――――――――――――――――――――――――――――― Color ――――――――――――――――――――――――――――――――――――――
@@ -353,8 +353,8 @@ impl PointDef<'_> {
         if self._in_data.is_null() || self._parent_ptr.is_none() {
             return Err(Error::InvalidParms);
         }
-        Ok(pf::suites::PointParam::new()?
-            .floating_point_value_from_point_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())?)
+        pf::suites::PointParam::new()?
+            .floating_point_value_from_point_def(unsafe { (*self._in_data).effect_ref }, self._parent_ptr.unwrap())
     }
 }
 
@@ -447,14 +447,20 @@ impl<'a> LayerDef<'a> {
 // ―――――――――――――――――――――――――――――――――――― Null ―――――――――――――――――――――――――――――――――――――
 #[allow(dead_code)]
 pub struct NullDef<'a>(&'a ());
+impl<'a> Default for NullDef<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> NullDef<'a> {
     pub fn new() -> Self {
         Self(&())
     }
 }
-impl<'p> Into<Param<'p>> for NullDef<'p> {
-    fn into(self) -> Param<'p> {
-        Param::Null(self)
+impl<'p> From<NullDef<'p>> for Param<'p> {
+    fn from(val: NullDef<'p>) -> Self {
+        Param::Null(val)
     }
 }
 // ―――――――――――――――――――――――――――――――――――― Null ―――――――――――――――――――――――――――――――――――――
@@ -844,10 +850,10 @@ impl<'p> ParamDef<'p> {
     }
 
     pub fn as_ref(&self) -> &ae_sys::PF_ParamDef {
-        &*self.param_def
+        &self.param_def
     }
     pub fn as_mut(&mut self) -> &mut ae_sys::PF_ParamDef {
-        &mut *self.param_def
+        &mut self.param_def
     }
 
     pub fn index(&self) -> Option<i32> {
@@ -880,7 +886,7 @@ impl<'p> ParamDef<'p> {
     }
 
     pub fn add(&mut self, index: i32) -> Result<(), Error> {
-        self.in_data.interact().add_param(index, &*self.param_def)?;
+        self.in_data.interact().add_param(index, &self.param_def)?;
         if index != -1 {
             self.index = Some(index);
         }
@@ -894,8 +900,8 @@ impl<'p> ParamDef<'p> {
         }
 
         // For some reason the checked out param_type is 0 so we need to override using the info we have from params map.
-        if index > 0 && expected_type.is_some() {
-            param_def.param_type = expected_type.unwrap().into();
+        if index > 0 && let Some(expected_type) = expected_type {
+            param_def.param_type = expected_type.into();
         }
 
         Ok(Self {
@@ -1164,7 +1170,7 @@ impl<'p> ParamDef<'p> {
 impl Drop for ParamDef<'_> {
     fn drop(&mut self) {
         if self.checkin_on_drop {
-            self.in_data.interact().checkin_param(&*self.param_def).unwrap()
+            self.in_data.interact().checkin_param(&self.param_def).unwrap()
         }
     }
 }
@@ -1208,6 +1214,9 @@ impl<P: Eq + PartialEq + Hash + Copy + Debug> Default for Parameters<'_, P> {
 impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
     pub fn len(&self) -> usize {
         self.map.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
     }
     pub fn set_in_data(&mut self, in_data: *const ae_sys::PF_InData) {
         self.in_data = in_data;

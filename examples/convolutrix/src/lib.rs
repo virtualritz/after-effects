@@ -136,7 +136,7 @@ impl AdobePluginGlobal for Plugin {
                     }
                     ae::DepCheckType::MissingDependencies => {
                         // one-ninth of the time, something's missing
-                        if fastrand::u32(..) % 9 != 0 {
+                        if !fastrand::u32(..).is_multiple_of(9) {
                             extra.set_dependencies_str("Missing Dependencies requested.")?;
                         }
                     }

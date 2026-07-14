@@ -150,8 +150,8 @@ impl ParamUtilsSuite {
     pub fn key_index_to_time(&self, effect_ref: impl AsPtr<ae_sys::PF_ProgPtr>, param_index: i32, key_index: i32) -> Result<(i32, u32), Error> {
         let (time, timesale) = call_suite_fn_double!(self, PF_KeyIndexToTime -> ae_sys::A_long, ae_sys::A_u_long, effect_ref.as_ptr(), param_index, key_index)?;
         Ok((
-            time as i32,
-            timesale as u32
+            time,
+            timesale
         ))
     }
 }

@@ -224,7 +224,7 @@ impl InData {
     /// Frame data stored by your plug-in during other selectors. Locked and unlocked by After Effects before and after calling the plug-in.
     /// # Panics
     /// Panics if the stored frame data is not of type `T` (a plugin bug).
-    pub fn frame_data_mut<'a, T: Any>(&'a mut self) -> Option<&'a mut T> {
+    pub fn frame_data_mut<T: Any>(&mut self) -> Option<&mut T> {
         assert!(!self.ptr.is_null());
         if unsafe { (*self.ptr).frame_data.is_null() } {
             return None;
@@ -241,7 +241,7 @@ impl InData {
     ///
     /// # Panics
     /// Panics if the stored frame data is not of type `T` (a plugin bug).
-    pub fn frame_data<'a, T: Any>(&'a self) -> Option<&'a T> {
+    pub fn frame_data<T: Any>(&self) -> Option<&T> {
         assert!(!self.ptr.is_null());
         if unsafe { (*self.ptr).frame_data.is_null() } {
             return None;

@@ -74,8 +74,8 @@ pub fn drag(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
     let ae::Event::Drag(drag) = event.event() else { return Err(ae::Error::InvalidParms) };
     let context = event.context_handle();
 
-    if context.window_type() == ae::WindowType::Effect {
-        if event.effect_area() == ae::EffectArea::Control {
+    if context.window_type() == ae::WindowType::Effect
+        && event.effect_area() == ae::EffectArea::Control {
             let mouse_down = drag.screen_point();
             event.set_continue_refcon(1, mouse_down.h as _);
             let mut param = params.get_mut(Params::Color)?;
@@ -96,7 +96,6 @@ pub fn drag(in_data: &ae::InData, params: &mut ae::Parameters<Params>, event: &m
                 param.as_arbitrary_mut()?.set_value::<ae::Pixel8>(new_color)?;
             }
         }
-    }
 
     Ok(())
 }
@@ -147,7 +146,7 @@ impl PngImage {
         }
     }
     fn rgba_to_bgra(data: &mut [u8]) {
-        for chunk in data.chunks_exact_mut(4) {
+        for chunk in data.as_chunks_mut::<4>().0 {
             chunk.swap(0, 2);
         }
     }

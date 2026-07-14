@@ -1,8 +1,8 @@
 use super::*;
 
 pub fn histogrid_get_box_in_grid(origin: &ae::Point, grid_width: usize, grid_height: usize, box_across: usize, box_down: usize) -> ae::Rect {
-    let box_width  = (grid_width  / BOXES_ACROSS) as usize;
-    let box_height = (grid_height / BOXES_DOWN)   as usize;
+    let box_width  = grid_width  / BOXES_ACROSS;
+    let box_height = grid_height / BOXES_DOWN;
 
     // Given the grid h+w and the box coord (0,0 through BOXES_ACROSS,BOXES_DOWN) return the rect of the box
 
@@ -64,7 +64,7 @@ pub fn request_async_frame_for_preview(in_data: &ae::InData, event: &ae::EventEx
 
     const PURPOSE1: u32 = 1; // unique ID for effect helps hints auto cancelation of rendering by async manager when using multiple render requests
 
-    Ok(async_mgr.checkout_or_render_layer_frame_async_manager(PURPOSE1, layer_rops)?)
+    async_mgr.checkout_or_render_layer_frame_async_manager(PURPOSE1, layer_rops)
 }
 
 pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra) -> Result<(), ae::Error> {
@@ -109,9 +109,9 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
     // EXAMPLE: If this is the effect pane, then request the upstream frame for preview purposes and do any lightweight preview computation on it.
     // If the have a frame, update our sequence data color cache with the new computation
     // If the frame is not be immediately available, we draw our cached (or blank) state PF_Event_DRAW will get called again later when the frame render completes and then we'll try again
-    if event.window_type() == ae::WindowType::Effect {
-        if let Ok(frame_receipt) = request_async_frame_for_preview(in_data, event) {
-            if !frame_receipt.is_null() {
+    if event.window_type() == ae::WindowType::Effect
+        && let Ok(frame_receipt) = request_async_frame_for_preview(in_data, event)
+            && !frame_receipt.is_null() {
                 let r_suite = ae::aegp::suites::Render::new()?;
 
                 let world = r_suite.receipt_world(frame_receipt)?;
@@ -121,8 +121,6 @@ pub fn draw(seq: &mut Instance, in_data: &ae::InData, event: &mut ae::EventExtra
                 }
                 r_suite.checkin_frame(frame_receipt)?;
             }
-        }
-    }
 
     // The below will draw the grid with the color we have.
     // Might be fresh computed, previously cached (to reduce flicker), or just blank because it isn't valid yet (on sequence data setup)

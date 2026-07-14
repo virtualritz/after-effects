@@ -66,7 +66,7 @@ impl PreRenderExtra {
     }
     pub fn bit_depth(&self) -> i16 {
         assert!(!self.as_ref().input.is_null());
-        unsafe { (*self.as_ref().input).bitdepth as i16 }
+        unsafe { (*self.as_ref().input).bitdepth }
     }
     pub fn device_index(&self) -> usize {
         assert!(!self.as_ref().input.is_null());

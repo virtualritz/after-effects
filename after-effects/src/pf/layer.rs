@@ -58,7 +58,7 @@ impl Layer {
         self.layer.height as usize
     }
     pub fn buffer_stride(&self) -> usize {
-        self.layer.rowbytes.abs() as usize
+        self.layer.rowbytes.unsigned_abs() as usize
     }
     pub fn row_bytes(&self) -> isize {
         self.layer.rowbytes as isize
@@ -71,8 +71,8 @@ impl Layer {
     }
     pub fn origin(&self) -> Point {
         Point {
-            h: self.layer.origin_x.into(),
-            v: self.layer.origin_y.into(),
+            h: self.layer.origin_x,
+            v: self.layer.origin_y,
         }
     }
 
@@ -131,20 +131,18 @@ impl Layer {
         if self.bit_depth() == 16 {
             return self.fill16(color.map(pixel8_to_16), rect);
         }
-        if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
-            if let Ok(fill_suite) = pf::suites::FillMatte::new() {
+        if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") }
+            && let Ok(fill_suite) = pf::suites::FillMatte::new() {
                 return fill_suite.fill(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
             }
-        }
         self.utils().fill(self, color, rect)
     }
     pub fn fill16(&mut self, color: Option<Pixel16>, mut rect: Option<Rect>) -> Result<(), Error> {
         self.clamp_rect(&mut rect);
-        if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") } {
-            if let Ok(fill_suite) = pf::suites::FillMatte::new() {
+        if !self.in_data_ptr.is_null() && unsafe { (*self.in_data_ptr).appl_id != i32::from_be_bytes(*b"PrMr") }
+            && let Ok(fill_suite) = pf::suites::FillMatte::new() {
                 return fill_suite.fill16(unsafe { (*self.in_data_ptr).effect_ref }, self, color, rect);
             }
-        }
         self.utils().fill16(self, color, rect)
     }
 
@@ -220,7 +218,7 @@ impl Layer {
     #[allow(clippy::mut_from_ref)]
     pub fn as_pixel8_mut(&self, x: usize, y: usize) -> &mut Pixel8 {
         debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
-        unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel8).offset(x as isize) }
+        unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel8).add(x) }
     }
 
     pub fn as_pixel8(&self, x: usize, y: usize) -> &Pixel8 {
@@ -233,7 +231,7 @@ impl Layer {
     #[allow(clippy::mut_from_ref)]
     pub fn as_pixel16_mut(&self, x: usize, y: usize) -> &mut Pixel16 {
         debug_assert!(x < self.width() && y < self.height(), "Coordinate is outside EffectWorld bounds.");
-        unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel16).offset(x as isize) }
+        unsafe { &mut *(self.data_ptr_mut().offset(y as isize * self.row_bytes()) as *mut Pixel16).add(x) }
     }
 
     pub fn as_pixel16(&self, x: usize, y: usize) -> &Pixel16 {

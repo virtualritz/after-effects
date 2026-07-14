@@ -19,7 +19,7 @@ impl ProjectSuite {
 
     /// Currently will never return more than 1. After Effects can have only one project open at a time.
     pub fn num_projects(&self) -> Result<i32, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetNumProjects -> ae_sys::A_long)?.into())
+        Ok(call_suite_fn_single!(self, AEGP_GetNumProjects -> ae_sys::A_long)?)
     }
 
     /// Retrieves a specific project by index. as per `num_projects`, this will only ever take 0 as an argument.
@@ -113,7 +113,7 @@ impl ProjectSuite {
         proj_handle: ProjectHandle,
         bit_depth: ProjectBitDepth,
     ) -> Result<(), Error> {
-        Ok(call_suite_fn!(self, AEGP_SetProjectBitDepth, proj_handle.into(), bit_depth.into())?.into())
+        Ok(call_suite_fn!(self, AEGP_SetProjectBitDepth, proj_handle.into(), bit_depth.into())?)
     }
 
 }
@@ -166,16 +166,16 @@ pub struct TimeDisplayConfig {
     pub frame_display_mode: FrameDisplayMode,
 }
 
-impl Into<ae_sys::AEGP_TimeDisplay3> for TimeDisplayConfig {
-    fn into(self) -> ae_sys::AEGP_TimeDisplay3 {
+impl From<TimeDisplayConfig> for ae_sys::AEGP_TimeDisplay3 {
+    fn from(val: TimeDisplayConfig) -> Self {
         ae_sys::AEGP_TimeDisplay3 {
-            display_mode: self.source_timecode_display_mode.into(),
-            footage_display_mode: self.footage_display_mode.into(),
-            display_dropframeB: self.display_drop_frames.into(),
-            use_feet_framesB: self.use_feet_frames.into(),
-            timebaseC: self.time_base as ae_sys::A_char,
-            frames_per_footC: self.frames_per_foot as ae_sys::A_char,
-            frames_display_mode: self.frame_display_mode.into(),
+            display_mode: val.source_timecode_display_mode.into(),
+            footage_display_mode: val.footage_display_mode.into(),
+            display_dropframeB: val.display_drop_frames.into(),
+            use_feet_framesB: val.use_feet_frames.into(),
+            timebaseC: val.time_base as ae_sys::A_char,
+            frames_per_footC: val.frames_per_foot as ae_sys::A_char,
+            frames_display_mode: val.frame_display_mode.into(),
         }
     }
 }

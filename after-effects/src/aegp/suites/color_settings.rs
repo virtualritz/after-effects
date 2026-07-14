@@ -53,7 +53,7 @@ impl ColorSettingsSuite {
     /// Use [`MemHandle::to_bytes()`] to convert into `Vec<u8>`.
     pub fn new_icc_profile_from_color_profile(&self, plugin_id: PluginId, color_profile: ConstColorProfileHandle) -> Result<MemHandle<'_, u8>, Error> {
         let handle = call_suite_fn_single!(self, AEGP_GetNewICCProfileFromColorProfile -> ae_sys::AEGP_MemHandle, plugin_id, color_profile.as_ptr())?;
-        Ok(MemHandle::from_raw(handle)?)
+        MemHandle::from_raw(handle)
     }
 
     /// Returns a textual description of the specified color profile.
@@ -165,10 +165,9 @@ define_handle_wrapper!(ConstColorProfileHandle, AEGP_ConstColorProfileP);
 define_owned_handle_wrapper!(ColorProfileHandle, AEGP_ColorProfileP);
 impl Drop for ColorProfileHandle {
     fn drop(&mut self) {
-        if let Ok(suite) = ColorSettingsSuite::new() {
-            if suite.dispose_color_profile(self.as_ptr()).is_ok() {
+        if let Ok(suite) = ColorSettingsSuite::new()
+            && suite.dispose_color_profile(self.as_ptr()).is_ok() {
                 self.0 = std::ptr::null_mut();
             }
-        }
     }
 }

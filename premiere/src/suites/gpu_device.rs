@@ -72,7 +72,7 @@ impl GPUDeviceSuite {
     /// - PPixSuite::GetPixelFormat
     /// - PPix2Suite::GetFieldOrder
     pub fn create_gpu_ppix(&self, device_index: u32, pixel_format: PixelFormat, width: i32, height: i32, par_numerator: i32, par_denominator: i32, field_type: pr_sys::prFieldType) -> Result<pr_sys::PPixHand, Error> {
-        call_suite_fn_single!(self, CreateGPUPPix -> pr_sys::PPixHand, device_index, pixel_format.into(), width, height, par_numerator, par_denominator, field_type.into())
+        call_suite_fn_single!(self, CreateGPUPPix -> pr_sys::PPixHand, device_index, pixel_format.into(), width, height, par_numerator, par_denominator, field_type)
     }
     pub fn gpu_ppix_data(&self, ppix_handle: pr_sys::PPixHand) -> Result<*mut std::ffi::c_void, Error> {
         call_suite_fn_single!(self, GetGPUPPixData -> *mut std::ffi::c_void, ppix_handle)

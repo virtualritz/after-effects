@@ -1,7 +1,11 @@
 use byteorder::{BigEndian, WriteBytesExt};
 use std::io::Result;
 
-pub fn produce_resource(pipl: &[u8], _macos_rsrc_path: Option<&str>) {
+// The body is entirely platform-cfg'd, and `pipl` is compiled for the host as a
+// build-dependency, so both params read as unused on some targets despite being
+// used on Windows/macOS. Don't `_`-prefix genuinely-used bindings.
+#[allow(unused_variables)]
+pub fn produce_resource(pipl: &[u8], macos_rsrc_path: Option<&str>) {
     #[cfg(target_os = "windows")]
     {
         fn to_seq(bytes: &[u8]) -> String {
@@ -19,7 +23,7 @@ pub fn produce_resource(pipl: &[u8], _macos_rsrc_path: Option<&str>) {
         res.compile().unwrap();
     }
     #[cfg(target_os = "macos")]
-    if let Some(rsrc_path) = _macos_rsrc_path {
+    if let Some(rsrc_path) = macos_rsrc_path {
         #[rustfmt::skip]
         let rsrc_content = create_rsrc(&[
             (b"PiPL", &[

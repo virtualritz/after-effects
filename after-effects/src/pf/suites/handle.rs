@@ -37,6 +37,8 @@ impl HandleSuite {
         if pf_handle.is_null() {
             return std::ptr::null_mut();
         }
+        // The cast is a no-op on Windows (PF_Handle inner is c_void) but a real
+        // *mut i8 -> *mut c_void conversion on macOS, so it must stay.
         unsafe { *(pf_handle as *mut *mut std::ffi::c_void) }
     }
 

@@ -73,7 +73,7 @@ impl GpuDeviceSetdownExtra {
     }
     /// # Panics
     /// Panics if the stored GPU data is not of type `T`.
-    pub fn gpu_data_mut<'a, T: Any>(&'a mut self) -> &'a mut T {
+    pub fn gpu_data_mut<T: Any>(&mut self) -> &mut T {
         assert!(!self.as_ref().input.is_null());
         let data =
             unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };
@@ -85,7 +85,7 @@ impl GpuDeviceSetdownExtra {
     }
     /// # Panics
     /// Panics if the stored GPU data is not of type `T`.
-    pub fn gpu_data<'a, T: Any>(&'a self) -> &'a T {
+    pub fn gpu_data<T: Any>(&self) -> &T {
         assert!(!self.as_ref().input.is_null());
         let data =
             unsafe { Box::<Box<dyn Any>>::from_raw((*(*self.ptr).input).gpu_data as *mut _) };

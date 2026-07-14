@@ -116,8 +116,8 @@ impl IOInSuite {
     pub fn in_spec_dimensions(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<(i32, i32), Error> {
         let (width, height) = call_suite_fn_double!(self, AEGP_GetInSpecDimensions -> ae_sys::A_long, ae_sys::A_long, in_spec_handle.as_ptr())?;
         Ok((
-            width as i32,
-            height as i32
+            width,
+            height
         ))
     }
 

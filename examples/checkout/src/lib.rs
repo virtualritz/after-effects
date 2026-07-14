@@ -50,15 +50,14 @@ impl AdobePluginGlobal for Plugin {
                 if !in_data.is_premiere() {
                     let cs = ae::pf::suites::Channel::new()?;
                     let num_channels = cs.layer_channel_count(in_data.effect_ref(), 0)?;
-                    if num_channels > 0 {
-                        if let Some((ref_, desc)) = cs.layer_channel_typed_ref_and_desc(in_data.effect_ref(), 0, ae::ChannelType::Depth)? {
+                    if num_channels > 0
+                        && let Some((ref_, desc)) = cs.layer_channel_typed_ref_and_desc(in_data.effect_ref(), 0, ae::ChannelType::Depth)? {
                             let chunk = cs.checkout_layer_channel(in_data.effect_ref(), &ref_, in_data.current_time(), in_data.time_step(), in_data.time_scale(), desc.data_type.into())?;
 
                             // do interesting 3d stuff here;
 
                             cs.checkin_layer_channel(in_data.effect_ref(), &ref_, &chunk)?;
                         }
-                    }
                 }
 
                 // set the checked-out rect to be the top half of the layer

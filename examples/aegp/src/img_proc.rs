@@ -1,6 +1,5 @@
 use after_effects::Error;
 use image::{ImageBuffer, Rgba};
-use log;
 
 pub fn save_frame_as_png(
     data: &[u8],

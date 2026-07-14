@@ -1,3 +1,5 @@
+// Demonstration code: index/counter loops read clearly for pixel-grid work.
+#![allow(clippy::needless_range_loop, clippy::explicit_counter_loop, clippy::field_reassign_with_default, clippy::neg_cmp_op_on_partial_ord)]
 use after_effects as ae;
 
 mod ui;
@@ -195,7 +197,7 @@ impl AdobePluginInstance for Instance {
 
         // EXAMPLE compute the colors we will use for render. high quality
         let mut color_cache = ColorCache::new();
-        color_cache.compute_color_grid_from_frame(&in_layer)?;
+        color_cache.compute_color_grid_from_frame(in_layer)?;
 
         let mut current_color = 0;
 
@@ -330,7 +332,7 @@ impl AdobePluginInstance for Instance {
             }
             ae::Command::Event { mut extra } => {
                 if let ae::Event::Draw(_) = extra.event() {
-                    ui::draw(self, &in_data, &mut extra)?;
+                    ui::draw(self, in_data, &mut extra)?;
                 }
             }
             _ => { }

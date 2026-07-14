@@ -144,7 +144,7 @@ impl CanvasSuite {
     /// Returns the downsample factor of the [`RenderContextHandle`](pr::RenderContextHandle).
     pub fn render_downsample_factor(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<ae_sys::AEGP_DownsampleFactor, Error> {
         let dsf = call_suite_fn_single!(self, AEGP_GetRenderDownsampleFactor -> ae_sys::AEGP_DownsampleFactor, render_ctx.as_ptr())?;
-        Ok(dsf.into())
+        Ok(dsf)
     }
     pub fn set_render_downsample_factor(&self, render_ctx: impl AsPtr<PR_RenderContextH>, mut dsf: ae_sys::AEGP_DownsampleFactor) -> Result<(), Error> {
         call_suite_fn!(self, AEGP_SetRenderDownsampleFactor, render_ctx.as_ptr(), &mut dsf as *mut _)
@@ -357,8 +357,8 @@ impl CanvasSuite {
     pub fn interactive_checkerboard_colors(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<(Pixel8, Pixel8), Error> {
         let (px1, px2) = call_suite_fn_double!(self, AEGP_GetInteractiveCheckerboardColors -> ae_sys::PF_Pixel, ae_sys::PF_Pixel, render_ctx.as_ptr())?;
         Ok((
-            px1.into(),
-            px2.into()
+            px1,
+            px2
         ))
     }
 
@@ -471,9 +471,9 @@ pub enum RenderNumEffects {
     AllEffects,
     NumEffects(u16)
 }
-impl Into<i16> for RenderNumEffects {
-    fn into(self) -> i16 {
-        match self {
+impl From<RenderNumEffects> for i16 {
+    fn from(val: RenderNumEffects) -> Self {
+        match val {
             RenderNumEffects::AllEffects    => -1,
             RenderNumEffects::NumEffects(x) => x as i16
         }
