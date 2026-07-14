@@ -323,7 +323,7 @@ impl UtilCallbacks {
             // `host_lock_handle`/`host_unlock_handle` have been no-ops in After
             // Effects since CS6. A `PF_Handle` is a pointer to the data pointer,
             // so we dereference it directly to check the allocation succeeded.
-            let data_ptr = *ptr;
+            let data_ptr = *(ptr as *mut *mut c_void);
             if data_ptr.is_null() {
                 return Err(Error::OutOfMemory);
             }
@@ -699,7 +699,7 @@ impl RawHandle {
     /// data pointer is obtained by dereferencing the handle. The returned guard
     /// borrows `self`, keeping the handle alive for the lifetime of the borrow.
     pub fn lock(&self) -> Result<RawHandleLock<'_>, Error> {
-        let ptr = unsafe { *self.handle };
+        let ptr = unsafe { *(self.handle as *mut *mut c_void) };
         if ptr.is_null() {
             return Err(Error::OutOfMemory);
         }

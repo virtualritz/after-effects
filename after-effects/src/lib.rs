@@ -14,6 +14,7 @@
 #![allow(clippy::new_without_default)] // generated suite constructors
 #![allow(clippy::empty_docs)] // generated empty doc slots in define_suite
 #![allow(clippy::from_over_into)] // generated `impl Into<Param>` in define_param_wrapper
+#![allow(clippy::unnecessary_cast)] // FFI pointer casts that are no-ops on one platform but real conversions on another (e.g. PF_Handle inner is c_void on Windows, i8 on macOS)
 #![allow(clippy::should_implement_trait)] // as_ref/as_mut/clone on FFI wrappers; renaming is breaking
 #![allow(clippy::missing_safety_doc)] // unsafe fns pervasively wrap the C SDK; safety documented per-suite
 #![doc = include_str!(concat!("../", std::env!("CARGO_PKG_README")))]
