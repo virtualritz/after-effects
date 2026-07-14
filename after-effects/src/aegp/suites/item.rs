@@ -2,6 +2,20 @@ use crate::*;
 use crate::aegp::*;
 use ae_sys::AEGP_ItemH;
 
+/// Whether to select or deselect the item.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ItemSelection { Select, Deselect }
+impl From<bool> for ItemSelection {
+    fn from(b: bool) -> Self { if b { Self::Select } else { Self::Deselect } }
+}
+
+/// Whether to deselect all other items first.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeselectOthers { Yes, No }
+impl From<bool> for DeselectOthers {
+    fn from(b: bool) -> Self { if b { Self::Yes } else { Self::No } }
+}
+
 define_suite!(
     /// Accesses and modifies items within a project or composition.
     ///
@@ -60,8 +74,8 @@ impl ItemSuite {
     /// This call selects items in the Project panel.
     ///
     /// To make selections in the Composition panel, use [`suites::Comp:set_selection()`](aegp::suites::Comp::set_selection).
-    pub fn select_item(&self, item_handle: impl AsPtr<AEGP_ItemH>, select: bool, deselect_others: bool) -> Result<(), Error> {
-        call_suite_fn!(self, AEGP_SelectItem, item_handle.as_ptr(), select.into(), deselect_others.into())
+    pub fn select_item(&self, item_handle: impl AsPtr<AEGP_ItemH>, select: ItemSelection, deselect_others: DeselectOthers) -> Result<(), Error> {
+        call_suite_fn!(self, AEGP_SelectItem, item_handle.as_ptr(), matches!(select, ItemSelection::Select).into(), matches!(deselect_others, DeselectOthers::Yes).into())
     }
 
     /// Gets type of an item. Note: solids don't appear in the project, but can be the source to a layer.
@@ -280,7 +294,7 @@ define_suite_item_wrapper!(
         /// This call selects items in the Project panel.
         ///
         /// To make selections in the Composition panel, use [`suites::Comp:set_selection()`](aegp::suites::Comp::set_selection).
-        select(select: bool, deselect_others: bool) -> () => suite.select_item,
+        select(select: ItemSelection, deselect_others: DeselectOthers) -> () => suite.select_item,
 
         /// Gets type of an item. Note: solids don't appear in the project, but can be the source to a layer.
         item_type() -> ItemType => suite.item_type,

@@ -58,6 +58,7 @@ pub mod suites {
 }
 
 pub use suites::adv_item::Step;
+pub use suites::utility::{ ApplyTransform, AddStartTimeOffset };
 pub use suites::app::{
     AppColorType,
     AppPersonalTextInfo,

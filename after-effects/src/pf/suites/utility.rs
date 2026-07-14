@@ -1,6 +1,20 @@
 use crate::*;
 use ae_sys::*;
 
+/// Whether layer transforms are applied to the returned timecode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ApplyTransform { Yes, No }
+impl From<bool> for ApplyTransform {
+    fn from(b: bool) -> Self { if b { Self::Yes } else { Self::No } }
+}
+
+/// Whether the layer's start-time offset is added to the returned timecode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AddStartTimeOffset { Yes, No }
+impl From<bool> for AddStartTimeOffset {
+    fn from(b: bool) -> Self { if b { Self::Yes } else { Self::No } }
+}
+
 define_suite!(
     /// Utility functions for use by AE style effect plugins, running in Premiere Pro.
     UtilitySuite,
@@ -103,8 +117,8 @@ impl UtilitySuite {
     }
 
     /// Retrieves the source media timecode for the specified frame within the specified layer, with or without transforms and start time offsets applied.
-    pub fn source_track_media_timecode(&self, effect_ref: impl AsPtr<PF_ProgPtr>, layer_param_index: u32, apply_transform: bool, add_start_time_offset: bool) -> Result<A_long, Error> {
-        call_suite_fn_single!(self, GetSourceTrackMediaTimecode -> A_long, effect_ref.as_ptr(), layer_param_index, apply_transform, add_start_time_offset)
+    pub fn source_track_media_timecode(&self, effect_ref: impl AsPtr<PF_ProgPtr>, layer_param_index: u32, apply_transform: ApplyTransform, add_start_time_offset: AddStartTimeOffset) -> Result<A_long, Error> {
+        call_suite_fn_single!(self, GetSourceTrackMediaTimecode -> A_long, effect_ref.as_ptr(), layer_param_index, matches!(apply_transform, ApplyTransform::Yes), matches!(add_start_time_offset, AddStartTimeOffset::Yes))
     }
 
     /// Retrieves the name of the layer in use by the effect instance.
@@ -130,8 +144,8 @@ impl UtilitySuite {
     }
 
     /// Given a specific sequence time, retrieves the source track media timecode for the specified layer parameter.
-    pub fn source_track_media_timecode2(&self, effect_ref: impl AsPtr<PF_ProgPtr>, layer_param_index: u32, apply_transform: bool, add_start_time_offset: bool, sequence_time: PrTime) -> Result<A_long, Error> {
-        call_suite_fn_single!(self, GetSourceTrackMediaTimecode2 -> A_long, effect_ref.as_ptr(), layer_param_index, apply_transform, add_start_time_offset, sequence_time)
+    pub fn source_track_media_timecode2(&self, effect_ref: impl AsPtr<PF_ProgPtr>, layer_param_index: u32, apply_transform: ApplyTransform, add_start_time_offset: AddStartTimeOffset, sequence_time: PrTime) -> Result<A_long, Error> {
+        call_suite_fn_single!(self, GetSourceTrackMediaTimecode2 -> A_long, effect_ref.as_ptr(), layer_param_index, matches!(apply_transform, ApplyTransform::Yes), matches!(add_start_time_offset, AddStartTimeOffset::Yes), sequence_time)
     }
 
     /// Retrieves the clip name used by the specific layer parameter.
