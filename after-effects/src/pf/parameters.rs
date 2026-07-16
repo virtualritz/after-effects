@@ -7,59 +7,80 @@ use objc2_core_foundation::{CFRange, CFString};
 
 const MAX_NAME_LEN: usize = 32;
 
-/// Convert a UTF-8 string to a `CString` encoded in the system code page
-/// (e.g. CP936/GBK on Chinese Windows). On macOS this is a no-op since the
-/// system uses UTF-8 natively.
+/// Convert a UTF-8 string to system-code-page bytes (no trailing NUL).
 ///
-/// Uses [`CP_OEMCP`] on Windows to match the existing behaviour in
-/// [`ParamDef::set_name()`]; on CJK Windows this is equivalent to [`CP_ACP`].
-fn encode_to_system_cstring(s: &str) -> CString {
+/// On Windows this encodes via [`CP_OEMCP`] (same code page used by
+/// [`ParamDef::set_name()`]); on macOS it uses the system encoding reported
+/// by Core Foundation. On other platforms falls back to UTF-8.
+fn encode_to_system_bytes(s: &str) -> Vec<u8> {
+    #[cfg(target_os = "macos")]
+    unsafe {
+        let cfstr = CFString::from_str(s);
+        let encoding = CFString::system_encoding();
+        let length = cfstr.length();
+        let max_size = CFString::maximum_size_for_encoding(length, encoding);
+
+        let mut buffer = vec![0u8; max_size as usize];
+        let mut used_len = 0;
+
+        CFString::bytes(
+            &cfstr,
+            CFRange::new(0, length),
+            encoding,
+            b'?',  // replacement for unconvertible characters
+            false,
+            buffer.as_mut_ptr(),
+            max_size,
+            &mut used_len,
+        );
+
+        buffer.truncate(used_len as usize);
+        buffer
+    }
     #[cfg(target_os = "windows")]
     {
-        let bytes = encode_to_system_bytes(s);
-        CString::new(bytes).unwrap_or_else(|e| {
-            log::error!("encode_to_system_cstring: {e}");
-            CString::new("").unwrap()
-        })
+        use std::ffi::OsStr;
+        use std::os::windows::ffi::OsStrExt;
+        unsafe {
+            use windows_sys::Win32::Globalization::{WideCharToMultiByte, CP_OEMCP};
+            let wstr: Vec<u16> = OsStr::new(s).encode_wide().collect();
+            if wstr.is_empty() {
+                return Vec::new();
+            }
+            let wlen = wstr.len() as i32;
+            let len = WideCharToMultiByte(
+                CP_OEMCP, 0, wstr.as_ptr(), wlen,
+                std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut(),
+            );
+            if len <= 0 {
+                return Vec::new();
+            }
+            let mut bytes: Vec<u8> = Vec::with_capacity(len as usize);
+            let len = WideCharToMultiByte(
+                CP_OEMCP, 0, wstr.as_ptr(), wlen,
+                bytes.as_mut_ptr(), len, std::ptr::null(), std::ptr::null_mut(),
+            );
+            if len > 0 {
+                bytes.set_len(len as usize);
+            }
+            bytes
+        }
     }
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
-        CString::new(s).unwrap_or_else(|e| {
-            log::error!("encode_to_system_cstring: {e}");
-            CString::new("").unwrap()
-        })
+        s.as_bytes().to_vec()
     }
 }
 
-/// Convert a UTF-8 string to system-code-page bytes (no trailing NUL).
-#[cfg(target_os = "windows")]
-fn encode_to_system_bytes(s: &str) -> Vec<u8> {
-    use std::ffi::OsStr;
-    use std::os::windows::ffi::OsStrExt;
-    unsafe {
-        use windows_sys::Win32::Globalization::{WideCharToMultiByte, CP_OEMCP};
-        let wstr: Vec<u16> = OsStr::new(s).encode_wide().collect();
-        if wstr.is_empty() {
-            return Vec::new();
-        }
-        let wlen = wstr.len() as i32;
-        let len = WideCharToMultiByte(
-            CP_OEMCP, 0, wstr.as_ptr(), wlen,
-            std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut(),
-        );
-        if len <= 0 {
-            return Vec::new();
-        }
-        let mut bytes: Vec<u8> = Vec::with_capacity(len as usize);
-        let len = WideCharToMultiByte(
-            CP_OEMCP, 0, wstr.as_ptr(), wlen,
-            bytes.as_mut_ptr(), len, std::ptr::null(), std::ptr::null_mut(),
-        );
-        if len > 0 {
-            bytes.set_len(len as usize);
-        }
-        bytes
-    }
+/// Convert a UTF-8 string to a `CString` encoded in the system code page.
+///
+/// Uses [`encode_to_system_bytes`] on all platforms.
+fn encode_to_system_cstring(s: &str) -> CString {
+    let bytes = encode_to_system_bytes(s);
+    CString::new(bytes).unwrap_or_else(|e| {
+        log::error!("encode_to_system_cstring: {e}");
+        CString::new("").unwrap()
+    })
 }
 
 define_enum! {
@@ -1138,65 +1159,18 @@ impl<'p> ParamDef<'p> {
         }
         // According to Adobe docs, the encoding expected for the name is the system encoding.
         // Reference: https://ae-plugins.docsforadobe.dev/intro/localization/
-        let mut bytes = {
-            #[cfg(target_os = "macos")]
-            unsafe {
-                let cfstr = CFString::from_str(name);
-                let encoding = CFString::system_encoding(); 
-                let length = cfstr.length();
-                let max_size = CFString::maximum_size_for_encoding(length, encoding);
-                
-                let mut buffer = vec![0u8; max_size as usize];
-                let mut used_len = 0;
-                
-                 CFString::bytes(
-                    &cfstr,
-                    CFRange::new(0, length),
-                    encoding,
-                    b'?',  // replacement for unconvertible characters
-                    false,
-                    buffer.as_mut_ptr(),
-                    max_size,
-                    &mut used_len,
-                );
-                
-                buffer.truncate(used_len as usize);
-                buffer
-            }
-            #[cfg(target_os = "windows")]
-            unsafe {
-                use std::ffi::OsStr;
-                use std::os::windows::ffi::OsStrExt;
-                use windows_sys::Win32::Globalization::{WideCharToMultiByte, CP_OEMCP};
-                let mut wstr: Vec<u16> = OsStr::new(name).encode_wide().collect();
-                if !wstr.is_empty() {
-                    wstr.push(0); // Null-terminate
-                    let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut());
-                    if len > 0 {
-                        let mut bytes: Vec<u8> = Vec::with_capacity(len as usize);
-                        let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, bytes.as_mut_ptr() as _, len, std::ptr::null(), std::ptr::null_mut());
-                        if len > 0 {
-                            bytes.set_len(len as usize);
-                            bytes
-                        } else {
-                            Vec::new()
-                        }
-                    } else {
-                        Vec::new()
-                    }
-                } else {
-                    Vec::new()
-                }
-            }
-        };
+        let bytes = encode_to_system_bytes(name);
 
         let to_copy = bytes.len().min(MAX_NAME_LEN);
         if to_copy > 0 {
-            bytes.resize(to_copy, 0);
-            if let Some(last_elem) = bytes.get_mut(MAX_NAME_LEN - 1) {
-                *last_elem = 0;
+            self.param_def.name_do_not_use_directly[0..to_copy]
+                .copy_from_slice(unsafe { std::mem::transmute(&bytes[0..to_copy]) });
+            // Ensure null termination in the fixed-size buffer
+            if to_copy < MAX_NAME_LEN {
+                self.param_def.name_do_not_use_directly[to_copy] = 0;
+            } else {
+                self.param_def.name_do_not_use_directly[MAX_NAME_LEN - 1] = 0;
             }
-            self.param_def.name_do_not_use_directly[0..bytes.len()].copy_from_slice(unsafe { std::mem::transmute(bytes.as_slice()) });
             return Ok(());
         }
 
