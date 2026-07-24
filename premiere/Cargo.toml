@@ -15,7 +15,7 @@ homepage = "https://developer.adobe.com/premiere-pro/"
 repository = "https://github.com/virtualritz/after-effects/"
 
 [dependencies]
-base64 = "0.22"
+base64 = "0.23"
 bincode = { version = "2.0", features = ["serde"] }
 bitflags = "2.11"
 fastrand = "2.4"
