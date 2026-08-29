@@ -8,18 +8,18 @@ use std::io::Result;
 pub fn produce_resource(pipl: &[u8], macos_rsrc_path: Option<&str>) {
     #[cfg(target_os = "windows")]
     {
-        fn to_seq(bytes: &[u8]) -> String {
-            bytes.iter().fold(String::new(), |mut s, b| {
-                s.push_str(&format!("\\x{b:02x}"));
-                s
-            })
-        }
+        // An RC string literal is code-page converted by the resource
+        // compiler, which turns every byte >= 0x80 into `?` (0x3F). The
+        // global out-flags word crosses that line as soon as
+        // `PF_OutFlag_CUSTOM_UI` (bit 15) is set, and After Effects then
+        // refuses the plug-in with a global out-flags mismatch. A file
+        // reference is copied into the resource verbatim, so the PiPL bytes
+        // are written next to the generated .rc and referenced instead.
+        let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR is set for build scripts");
+        std::fs::write(std::path::Path::new(&out_dir).join("pipl.bin"), pipl).unwrap();
 
         let mut res = winres::WindowsResource::new();
-        res.append_rc_content(&format!(
-            "16000 PiPL DISCARDABLE BEGIN \"{}\" END",
-            to_seq(pipl)
-        ));
+        res.append_rc_content("16000 PiPL DISCARDABLE \"pipl.bin\"");
         res.compile().unwrap();
     }
     #[cfg(target_os = "macos")]
