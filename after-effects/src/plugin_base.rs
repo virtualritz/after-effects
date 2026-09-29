@@ -475,7 +475,7 @@ macro_rules! define_effect {
                 {
                     #[cfg(target_os = "windows")]
                     {
-                        let _ = $crate::log::set_logger(&$crate::win_dbg_logger::DEBUGGER_LOGGER);
+                        $crate::init_debug_logger();
                     }
                     #[cfg(target_os = "macos")]
                     {
@@ -613,19 +613,22 @@ macro_rules! define_general_plugin {
             aegp_plugin_id: $crate::sys::AEGP_PluginID,
             global_refcon: *mut $crate::sys::AEGP_GlobalRefcon,
         ) -> Error {
-            #[cfg(target_os = "windows")]
+            #[cfg(debug_assertions)]
             {
-                let _ = $crate::log::set_logger(&$crate::win_dbg_logger::DEBUGGER_LOGGER);
+                #[cfg(target_os = "windows")]
+                {
+                    $crate::init_debug_logger();
+                }
+                #[cfg(target_os = "macos")]
+                {
+                    let _ = $crate::oslog::OsLogger::new(env!("CARGO_PKG_NAME")).init();
+                }
+                $crate::log::set_max_level($crate::log::LevelFilter::Debug);
+                $crate::log::debug!(
+                    "Logging initialized for {} - entry point found.",
+                    env!("PIPL_NAME")
+                );
             }
-            #[cfg(target_os = "macos")]
-            {
-                let _ = $crate::oslog::OsLogger::new(env!("CARGO_PKG_NAME")).init();
-            }
-            $crate::log::set_max_level($crate::log::LevelFilter::Debug);
-            $crate::log::debug!(
-                "Logging initialized for {} - entry point found.",
-                env!("PIPL_NAME")
-            );
 
             let mut basic_suite = $crate::PicaBasicSuite::from_sp_basic_suite_raw(pica_basic);
 

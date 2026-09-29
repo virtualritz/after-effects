@@ -58,10 +58,12 @@ pub use fastrand;
 pub use parking_lot;
 pub use paste;
 pub use serde;
-#[cfg(target_os = "windows")]
-pub use win_dbg_logger;
 #[cfg(target_os = "macos")]
 pub use oslog;
+
+#[doc(hidden)]
+#[cfg(all(target_os = "windows", debug_assertions))]
+pub fn init_debug_logger() { let _ = log::set_logger(&win_dbg_logger::DEBUGGER_LOGGER); }
 
 thread_local! {
     pub(crate) static PICA_BASIC_SUITE: RefCell<*const ae_sys::SPBasicSuite> = const { RefCell::new(ptr::null_mut()) };
