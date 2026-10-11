@@ -612,7 +612,7 @@ impl ArbParamsExtra {
 
             ae_sys::PF_Arbitrary_FLATTEN_FUNC => unsafe {
                 // log::info!("FLATTEN_FUNC");
-                assert!(!self.as_ref().u.unflatten_func_params.flat_dataPV.is_null());
+                assert!(!self.as_ref().u.flatten_func_params.flat_dataPV.is_null());
 
                 let mut handle = Handle::<T>::from_raw(self.as_ref().u.flatten_func_params.arbH, false)?;
                 let lock = handle.lock()?;
@@ -1074,13 +1074,13 @@ impl<'p> ParamDef<'p> {
             #[cfg(target_os = "macos")]
             unsafe {
                 let cfstr = CFString::from_str(name);
-                let encoding = CFString::system_encoding(); 
+                let encoding = CFString::system_encoding();
                 let length = cfstr.length();
                 let max_size = CFString::maximum_size_for_encoding(length, encoding);
-                
+
                 let mut buffer = vec![0u8; max_size as usize];
                 let mut used_len = 0;
-                
+
                  CFString::bytes(
                     &cfstr,
                     CFRange::new(0, length),
@@ -1091,7 +1091,7 @@ impl<'p> ParamDef<'p> {
                     max_size,
                     &mut used_len,
                 );
-                
+
                 buffer.truncate(used_len as usize);
                 buffer
             }
