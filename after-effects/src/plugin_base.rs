@@ -244,7 +244,7 @@ macro_rules! define_effect {
         // `drop_non_drop`; the `?`-style error handling is generated, not authored.
         #[allow(clippy::drop_non_drop, clippy::question_mark)]
         fn handle_effect_main<T: AdobePluginGlobal, S: AdobePluginInstance, P>(
-            cmd: $crate::sys::PF_Cmd,
+            cmd: RawCommand,
             in_data_ptr: *mut $crate::sys::PF_InData,
             out_data_ptr: *mut $crate::sys::PF_OutData,
             params: *mut *mut $crate::sys::PF_ParamDef,
@@ -262,8 +262,6 @@ macro_rules! define_effect {
             }  else {
                 None
             };
-
-            let cmd = RawCommand::from(cmd);
 
             // Allocate or restore global data pointer
             let mut global_handle = if cmd == RawCommand::GlobalSetup {
@@ -498,6 +496,13 @@ macro_rules! define_effect {
             }
 
             define_effect!(check_size: $sequence_type);
+
+            // Hosts may send private commands that aren't part of the public SDK
+            // (e.g. PF_Cmd_RESERVED3 from Premiere Pro beta). Ignore them like the SDK samples do.
+            let Some(cmd) = RawCommand::try_from_raw(cmd) else {
+                $crate::log::debug!("Ignoring unknown command: {cmd}");
+                return $crate::sys::PF_Err_NONE as $crate::sys::PF_Err;
+            };
 
             // log::info!("EffectMain start {:?} {:?}", RawCommand::from(cmd), std::thread::current().id());
             // struct X { cmd: i32 } impl Drop for X { fn drop(&mut self) { log::info!("EffectMain end {:?} {:?}", RawCommand::from(self.cmd), std::thread::current().id()); } }

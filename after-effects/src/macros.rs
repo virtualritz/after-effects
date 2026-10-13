@@ -471,16 +471,20 @@ macro_rules! define_enum {
                 }
             }
         }
-        impl From<$raw_type> for $name {
-            fn from(v: $raw_type) -> Self {
+        impl $name {
+            /// Converts a raw value, returning `None` if it doesn't match any known variant.
+            pub fn try_from_raw(v: $raw_type) -> Option<Self> {
                 match v as _ {
                     $(
-                        $value => Self::$variant,
+                        $value => Some(Self::$variant),
                     )*
-                    _ => {
-                        panic!("Unknown enum value {}: {v}", stringify!($name));
-                    }
+                    _ => None,
                 }
+            }
+        }
+        impl From<$raw_type> for $name {
+            fn from(v: $raw_type) -> Self {
+                Self::try_from_raw(v).unwrap_or_else(|| panic!("Unknown enum value {}: {v}", stringify!($name)))
             }
         }
     };
