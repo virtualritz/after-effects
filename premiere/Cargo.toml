@@ -15,11 +15,11 @@ homepage = "https://developer.adobe.com/premiere-pro/"
 repository = "https://github.com/virtualritz/after-effects/"
 
 [dependencies]
-base64 = "0.22"
+base64 = "0.23"
 bincode = { version = "2.0", features = ["serde"] }
-bitflags = "2.11"
-fastrand = "2.4"
+bitflags = "2.13"
+fastrand = "2.5"
 log = "0.4"
-parking_lot = "0.12"
+parking_lot = "0.13"
 premiere-sys = "0.4"                               #{ path = "../premiere-sys" }
 serde = { version = "1.0", features = ["derive"] }
