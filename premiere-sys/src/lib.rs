@@ -7,7 +7,7 @@
 
 // TODO Description
 
-// Included bindings are generated from Premiere SDK dated Feb 2026
+// Included bindings are generated from Premiere Pro SDK 27.0 and After Effects SDK 27.0 dated Oct 2026
 
 #[cfg(all(target_os = "windows", builtin_bindings))]
 include!(concat!(env!("CARGO_MANIFEST_DIR"), "/bindings_win.rs"));

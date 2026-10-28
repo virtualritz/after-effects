@@ -13,6 +13,11 @@ readme = "README.md"
 homepage = "https://developer.adobe.com/after-effects/"
 repository = "https://github.com/virtualritz/after-effects/"
 
+[lib]
+# The doc comments are copied verbatim from the C headers, so indented C samples
+# in them would be compiled as Rust doctests.
+doctest = false
+
 [features]
 artisan-2-api = []
 
