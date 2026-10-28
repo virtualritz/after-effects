@@ -5,6 +5,8 @@ use std::{
 
 fn main() {
     println!("cargo:rerun-if-changed=wrapper.hpp");
+    println!("cargo:rerun-if-env-changed=PRSDK_ROOT");
+    println!("cargo:rerun-if-env-changed=AESDK_ROOT");
 
     println!("cargo::rustc-check-cfg=cfg(builtin_bindings)");
 

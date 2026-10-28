@@ -8,6 +8,7 @@ use std::{
 
 fn main() {
     println!("cargo:rerun-if-changed=wrapper.hpp");
+    println!("cargo:rerun-if-env-changed=AESDK_ROOT");
 
     println!("cargo::rustc-check-cfg=cfg(builtin_bindings)");
     if !env::var("AESDK_ROOT").is_ok_and(|x| !x.is_empty()) {
