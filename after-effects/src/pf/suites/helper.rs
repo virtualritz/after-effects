@@ -119,5 +119,6 @@ define_enum! {
         Torus             = ae_sys::PF_ExtendedSuiteTool_TORUS,
         Cone              = ae_sys::PF_ExtendedSuiteTool_CONE,
         Cylinder          = ae_sys::PF_ExtendedSuiteTool_CYLINDER,
+        SelectionBrush    = ae_sys::PF_ExtendedSuiteTool_SELECTIONBRUSH,
     }
 }

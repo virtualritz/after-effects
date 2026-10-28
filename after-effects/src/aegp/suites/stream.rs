@@ -9,6 +9,12 @@ define_suite!(
     kAEGPStreamSuite,
     kAEGPStreamSuiteVersion6
 );
+define_suite!(
+    StreamSuite7,
+    AEGP_StreamSuite7,
+    kAEGPStreamSuite,
+    kAEGPStreamSuiteVersion7
+);
 
 impl StreamSuite {
     /// Acquire this suite from the host. Returns error if the suite is not available.
@@ -204,6 +210,59 @@ impl StreamSuite {
     /// Get the unique ID of the given [`StreamReferenceHandle`].
     pub fn unique_stream_id(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>) -> Result<i32, Error> {
         call_suite_fn_single!(self, AEGP_GetUniqueStreamID -> i32, stream_ref.as_ptr())
+    }
+
+    /// New in the 26.5 SDK. Returns the render stage of a `PF_Param_LAYER` stream.
+    ///
+    /// A layer parameter has two independent values: the source layer (see [`StreamValue::LayerId`]) and the stage of the
+    /// source layer's render pipeline at which it is sampled. [`new_stream_value()`](Self::new_stream_value) only returns the source layer.
+    ///
+    /// Returns [`Error::Parameter`] if the stream is not a `PF_Param_LAYER` stream.
+    pub fn stream_layer_param_stage(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>, plugin_id: PluginId) -> Result<LayerParamStage, Error> {
+        let v7 = StreamSuite7::new()?;
+        let stage = call_suite_fn_single!(v7, AEGP_GetStreamLayerParamStageValue -> ae_sys::AEGP_LayerParamStage, plugin_id, stream_ref.as_ptr())?;
+        LayerParamStage::try_from_raw(stage).ok_or(Error::Generic)
+    }
+
+    /// New in the 26.5 SDK. Sets the render stage of a `PF_Param_LAYER` stream without changing its source layer.
+    ///
+    /// Returns [`Error::Parameter`] if the stream is not a `PF_Param_LAYER` stream.
+    pub fn set_stream_layer_param_stage(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>, plugin_id: PluginId, stage: LayerParamStage) -> Result<(), Error> {
+        let v7 = StreamSuite7::new()?;
+        call_suite_fn!(v7, AEGP_SetStreamLayerParamStageValue, plugin_id, stream_ref.as_ptr(), stage.into())
+    }
+
+    /// New in the 26.5 SDK. Returns both the source layer and the render stage of a `PF_Param_LAYER` stream.
+    ///
+    /// Returns [`Error::Parameter`] if the stream is not a `PF_Param_LAYER` stream.
+    pub fn stream_layer_param_and_stage(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>, plugin_id: PluginId) -> Result<(ae_sys::AEGP_LayerIDVal, LayerParamStage), Error> {
+        let v7 = StreamSuite7::new()?;
+        let (mut value, stage) = call_suite_fn_double!(v7, AEGP_GetStreamLayerParamAndStageValue -> ae_sys::AEGP_StreamValue2, ae_sys::AEGP_LayerParamStage, plugin_id, stream_ref.as_ptr())?;
+        let layer_id = unsafe { value.val.layer_id };
+        self.dispose_stream_value(&mut value)?;
+        Ok((layer_id, LayerParamStage::try_from_raw(stage).ok_or(Error::Generic)?))
+    }
+
+    /// New in the 26.5 SDK. Sets both the source layer and the render stage of a `PF_Param_LAYER` stream, as a single undo step.
+    ///
+    /// Returns [`Error::Parameter`] if the stream is not a `PF_Param_LAYER` stream.
+    pub fn set_stream_layer_param_and_stage(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>, plugin_id: PluginId, layer_id: ae_sys::AEGP_LayerIDVal, stage: LayerParamStage) -> Result<(), Error> {
+        let v7 = StreamSuite7::new()?;
+        let mut value = ae_sys::AEGP_StreamValue2 {
+            streamH: stream_ref.as_ptr(),
+            val: StreamValue::LayerId(layer_id).to_sys(),
+        };
+        call_suite_fn!(v7, AEGP_SetStreamLayerParamAndStageValue, plugin_id, stream_ref.as_ptr(), &mut value, stage.into())
+    }
+
+    /// New in the 26.5 SDK. Returns the highest render stage of a `PF_Param_LAYER` stream that doesn't introduce a render cycle.
+    ///
+    /// [`LayerParamStage::Source`] is always safe. The limit changes when effects are added, removed or reordered,
+    /// or when the source layer changes, so query it again before each use.
+    pub fn stream_input_stage_cycle_safe_limit(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>, plugin_id: PluginId) -> Result<LayerParamStage, Error> {
+        let v7 = StreamSuite7::new()?;
+        let stage = call_suite_fn_single!(v7, AEGP_GetStreamInputStageCycleSafeLimit -> ae_sys::AEGP_LayerParamStage, plugin_id, stream_ref.as_ptr())?;
+        LayerParamStage::try_from_raw(stage).ok_or(Error::Generic)
     }
 }
 
@@ -482,6 +541,59 @@ define_enum! {
         MaskId        = ae_sys::AEGP_StreamType_MASK_ID,
         Mask          = ae_sys::AEGP_StreamType_MASK,
         TextDocument  = ae_sys::AEGP_StreamType_TEXT_DOCUMENT,
+    }
+}
+
+/// Render stage of a `PF_Param_LAYER` stream: the point of the source layer's render pipeline at which the layer parameter samples it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum LayerParamStage {
+    /// The source layer, before masks and effects. This is the default.
+    Source,
+    /// The source layer with masks applied, but no effects.
+    OnlyMasks,
+    /// The source layer with masks and all effects applied.
+    AllEffects,
+    /// The source layer rendered through the effect with this 1-based index.
+    Effect(u32),
+}
+
+impl LayerParamStage {
+    /// Converts a raw value, returning `None` if it doesn't match any known stage.
+    pub fn try_from_raw(v: ae_sys::AEGP_LayerParamStage) -> Option<Self> {
+        match v {
+            x if x == ae_sys::AEGP_LayerParamStage_SOURCE as ae_sys::AEGP_LayerParamStage => Some(Self::Source),
+            x if x == ae_sys::AEGP_LayerParamStage_ONLY_MASKS as ae_sys::AEGP_LayerParamStage => Some(Self::OnlyMasks),
+            x if x == ae_sys::AEGP_LayerParamStage_ALL_EFFECTS as ae_sys::AEGP_LayerParamStage => Some(Self::AllEffects),
+            x if x > 0 => Some(Self::Effect(x as u32)),
+            _ => None,
+        }
+    }
+}
+
+impl From<LayerParamStage> for ae_sys::AEGP_LayerParamStage {
+    fn from(stage: LayerParamStage) -> Self {
+        match stage {
+            LayerParamStage::Source => ae_sys::AEGP_LayerParamStage_SOURCE as _,
+            LayerParamStage::OnlyMasks => ae_sys::AEGP_LayerParamStage_ONLY_MASKS as _,
+            LayerParamStage::AllEffects => ae_sys::AEGP_LayerParamStage_ALL_EFFECTS as _,
+            LayerParamStage::Effect(index) => index.min(ae_sys::AEGP_LayerParamStage::MAX as u32) as _,
+        }
+    }
+}
+
+#[cfg(test)]
+mod layer_param_stage_tests {
+    use super::*;
+
+    #[test]
+    fn layer_param_stage_round_trips() {
+        for stage in [LayerParamStage::Source, LayerParamStage::OnlyMasks, LayerParamStage::AllEffects, LayerParamStage::Effect(1), LayerParamStage::Effect(7)] {
+            let raw: ae_sys::AEGP_LayerParamStage = stage.into();
+            assert_eq!(LayerParamStage::try_from_raw(raw), Some(stage));
+        }
+        assert_eq!(ae_sys::AEGP_LayerParamStage::from(LayerParamStage::OnlyMasks), -2);
+        assert_eq!(ae_sys::AEGP_LayerParamStage::from(LayerParamStage::AllEffects), -1);
+        assert_eq!(LayerParamStage::try_from_raw(-3), None);
     }
 }
 
@@ -1008,6 +1120,21 @@ define_suite_item_wrapper!(
 
         /// Get the unique ID of this stream.
         unique_id() -> i32 => suite.unique_stream_id,
+
+        /// New in the 26.5 SDK. Returns the render stage of this `PF_Param_LAYER` stream.
+        layer_param_stage(plugin_id: PluginId) -> LayerParamStage => suite.stream_layer_param_stage,
+
+        /// New in the 26.5 SDK. Sets the render stage of this `PF_Param_LAYER` stream without changing its source layer.
+        set_layer_param_stage(plugin_id: PluginId, stage: LayerParamStage) -> () => suite.set_stream_layer_param_stage,
+
+        /// New in the 26.5 SDK. Returns both the source layer and the render stage of this `PF_Param_LAYER` stream.
+        layer_param_and_stage(plugin_id: PluginId) -> (ae_sys::AEGP_LayerIDVal, LayerParamStage) => suite.stream_layer_param_and_stage,
+
+        /// New in the 26.5 SDK. Sets both the source layer and the render stage of this `PF_Param_LAYER` stream, as a single undo step.
+        set_layer_param_and_stage(plugin_id: PluginId, layer_id: ae_sys::AEGP_LayerIDVal, stage: LayerParamStage) -> () => suite.set_stream_layer_param_and_stage,
+
+        /// New in the 26.5 SDK. Returns the highest render stage of this `PF_Param_LAYER` stream that doesn't introduce a render cycle.
+        input_stage_cycle_safe_limit(plugin_id: PluginId) -> LayerParamStage => suite.stream_input_stage_cycle_safe_limit,
 
         // ―――――――――――――――――――――――――――― Dynamic stream suite functions ――――――――――――――――――――――――――――
 

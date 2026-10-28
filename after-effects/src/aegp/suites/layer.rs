@@ -393,13 +393,15 @@ define_handle_wrapper!(LayerHandle, AEGP_LayerH);
 define_enum! {
     ae_sys::AEGP_ObjectType,
     ObjectType {
-        None        = ae_sys::AEGP_ObjectType_NONE,
-        AudioVideo  = ae_sys::AEGP_ObjectType_AV,
-        Light       = ae_sys::AEGP_ObjectType_LIGHT,
-        Camera      = ae_sys::AEGP_ObjectType_CAMERA,
-        Text        = ae_sys::AEGP_ObjectType_TEXT,
-        Vector      = ae_sys::AEGP_ObjectType_VECTOR,
-        ThreeDModel = ae_sys::AEGP_ObjectType_3D_MODEL,
+        None                 = ae_sys::AEGP_ObjectType_NONE,
+        AudioVideo           = ae_sys::AEGP_ObjectType_AV,
+        Light                = ae_sys::AEGP_ObjectType_LIGHT,
+        Camera               = ae_sys::AEGP_ObjectType_CAMERA,
+        Text                 = ae_sys::AEGP_ObjectType_TEXT,
+        Vector               = ae_sys::AEGP_ObjectType_VECTOR,
+        ThreeDModel          = ae_sys::AEGP_ObjectType_3D_MODEL,
+        /// New in AE 26.3. A layer created with [`CompSuite::create_parametric_mesh_layer_in_comp()`](aegp::suites::Comp::create_parametric_mesh_layer_in_comp).
+        ThreeDParametricMesh = ae_sys::AEGP_ObjectType_3D_PARAMETRIC_MESH,
     }
 }
 

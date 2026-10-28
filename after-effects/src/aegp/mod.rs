@@ -17,8 +17,10 @@ pub mod suites {
     pub(crate) mod composite;            pub use composite           ::CompositeSuite          as Composite;
     pub(crate) mod effect;               pub use effect              ::EffectSuite             as Effect;
     pub(crate) mod footage;              pub use footage             ::FootageSuite            as Footage;
+    pub(crate) mod guide;                pub use guide               ::GuideSuite              as Guide;
     pub(crate) mod io_in;                pub use io_in               ::IOInSuite               as IOIn;
     pub(crate) mod item;                 pub use item                ::ItemSuite               as Item;
+    pub(crate) mod item_view;            pub use item_view           ::ItemViewSuite           as ItemView;
     pub(crate) mod keyframe;             pub use keyframe            ::KeyframeSuite           as Keyframe;
     pub(crate) mod layer_render_options; pub use layer_render_options::LayerRenderOptionsSuite as LayerRenderOptions;
     pub(crate) mod layer;                pub use layer               ::LayerSuite              as Layer;
@@ -81,6 +83,7 @@ pub use suites::comp::{
     Collection2Handle,
     CompFlags,
     CompHandle,
+    ParametricMeshType,
 };
 pub use suites::compute_cache:: {
     ComputeClassId
@@ -97,6 +100,11 @@ pub use suites::footage::{
     FootageSignature,
     InterpretationStyle,
     Platform,
+};
+pub use suites::guide::{
+    Guide,
+    GuideOrientation,
+    GuidePositionType,
 };
 pub use suites::io_in::InputSpecification;
 pub use suites::item::{
@@ -173,6 +181,7 @@ pub use suites::sound_data::SoundDataHandle;
 pub use suites::stream::{
     Stream,
     DynamicStreamFlags,
+    LayerParamStage,
     LayerStream,
     MaskStream,
     StreamFlags,
