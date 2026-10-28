@@ -5,6 +5,19 @@ use serde::{de::DeserializeOwned, Serialize};
 #[cfg(target_os = "macos")]
 use objc2_core_foundation::{CFRange, CFString};
 
+static STRINGS_ARE_UTF8: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Records whether the effect runs with `PF_OutFlag2_STRINGS_ARE_UTF8` in effect, i.e. whether the host
+/// expects UTF-8 strings instead of the system encoding. Called by the effect entry point after global setup.
+#[doc(hidden)]
+pub fn set_strings_are_utf8(enabled: bool) {
+    STRINGS_ARE_UTF8.store(enabled, std::sync::atomic::Ordering::Relaxed);
+}
+
+fn strings_are_utf8() -> bool {
+    STRINGS_ARE_UTF8.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 const MAX_NAME_LEN: usize = 32;
 
 define_enum! {
@@ -1068,9 +1081,17 @@ impl<'p> ParamDef<'p> {
             self.param_def.name_do_not_use_directly[0] = 0;
             return Ok(());
         }
-        // According to Adobe docs, the encoding expected for the name is the system encoding.
+        // According to Adobe docs, the encoding expected for the name is the system encoding,
+        // unless the effect sets `PF_OutFlag2_STRINGS_ARE_UTF8` (After Effects only).
         // Reference: https://ae-plugins.docsforadobe.dev/intro/localization/
-        let mut bytes = {
+        let mut bytes = if strings_are_utf8() && self.in_data.is_after_effects() {
+            // Leave room for the terminating null and don't split a multi-byte character.
+            let mut end = name.len().min(MAX_NAME_LEN - 1);
+            while !name.is_char_boundary(end) {
+                end -= 1;
+            }
+            name.as_bytes()[..end].to_vec()
+        } else {
             #[cfg(target_os = "macos")]
             unsafe {
                 let cfstr = CFString::from_str(name);

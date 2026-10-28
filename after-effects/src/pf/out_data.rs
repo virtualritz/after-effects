@@ -223,5 +223,8 @@ define_enum! {
         SupportsThreadedRendering           = ae_sys::PF_OutFlag2_SUPPORTS_THREADED_RENDERING,
         MutableRenderSequenceDataSlower     = ae_sys::PF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER,
         SupportsDirectXRendering            = ae_sys::PF_OutFlag2_SUPPORTS_DIRECTX_RENDERING,
+        /// New in the 26.5 SDK, After Effects only. The effect emits and consumes UTF-8 strings (e.g. parameter names)
+        /// instead of the locale-dependent system encoding.
+        StringsAreUtf8                      = ae_sys::PF_OutFlag2_STRINGS_ARE_UTF8,
     }
 }

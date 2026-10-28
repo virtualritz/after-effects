@@ -348,6 +348,9 @@ bitflags::bitflags! {
         /// Note that changes to sequence_data will be discarded regularly, currently after each span of frames is rendered such as single RAM Preview or Render Queue export.
         const MutableRenderSequenceDataSlower     = 1 << 28; // PF_Cmd_GLOBAL_SETUP
         const SupportsDirectxRendering            = 1 << 29; // PF_Cmd_GLOBAL_SETUP
+        /// New in the 26.5 SDK, After Effects only. The effect emits and consumes UTF-8 strings (e.g. parameter names)
+        /// instead of the locale-dependent system encoding.
+        const StringsAreUtf8                      = 1 << 30; // PF_Cmd_GLOBAL_SETUP
     }
 }
 
@@ -537,6 +540,8 @@ pub enum Property {
     CodeMacARM64(&'static str),
     CodeWin32X86(&'static str),
     CodeWin64X86(&'static str),
+    /// Windows on Arm entry point, new in the 25.6 SDK.
+    CodeWinARM64(&'static str),
     SupportedModes(SupportedModes),
     EnableInfo(&'static str),
     FilterCaseInfo(&'static [FilterCaseInfoStruct]),
@@ -596,6 +601,16 @@ pub enum Property {
     AE_Reserved(u32),
     AE_Reserved_Info(u32),
     AE_Effect_Support_URL(&'static str),
+    /// New in the 26.5 SDK. Locale-keyed JSON with extra search terms for the Effects panel,
+    /// e.g. `{"en_US": ["blur", "soften"]}`. Always include an `en_US` entry; malformed JSON is ignored.
+    /// Must be a single line.
+    ///
+    /// Currently only used by Premiere Pro (Beta 27.0 and later).
+    AE_Effect_Search_Keywords(&'static str),
+    /// New in the 26.5 SDK. Short description of the effect shown in the Effects Manager.
+    ///
+    /// Currently only used by Premiere Pro (Beta 27.0 and later).
+    AE_Effect_Description(&'static str),
     AE_ImageFormat_Extension_Info {
         major_version: u16,
         minor_version: u16,
@@ -873,6 +888,11 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                     write_cstring(buffer, entry_point)
                 })?;
             }
+            Property::CodeWinARM64(entry_point) => {
+                write(&mut buffer, b"8BIM", b"wa64", |buffer| {
+                    write_cstring(buffer, entry_point)
+                })?;
+            }
             Property::SupportedModes(flags) => {
                 write(&mut buffer, b"8BIM", b"mode", |buffer| {
                     buffer.write_u32::<ByteOrder>(flags.bits())
@@ -1145,6 +1165,16 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             Property::AE_Effect_Support_URL(name) => {
                 write(&mut buffer, b"8BIM", b"eURL", |buffer| {
                     write_pstring(buffer, name)
+                })?;
+            }
+            Property::AE_Effect_Search_Keywords(keywords) => {
+                write(&mut buffer, b"8BIM", b"eKWD", |buffer| {
+                    write_cstring(buffer, keywords)
+                })?;
+            }
+            Property::AE_Effect_Description(description) => {
+                write(&mut buffer, b"8BIM", b"eDSC", |buffer| {
+                    write_cstring(buffer, description)
                 })?;
             }
             Property::AE_Effect_Info_Flags(x) => {
@@ -1553,7 +1583,20 @@ pub fn plugin_build(properties: Vec<Property>) {
             Property::AE_Effect_Support_URL(x) => {
                 println!("cargo:rustc-env=PIPL_SUPPORT_URL={x}");
             }
+            Property::AE_Effect_Search_Keywords(x) => {
+                // cargo build script directives are line-based, so a newline would truncate the value.
+                assert!(!x.contains(['\n', '\r']), "`AE_Effect_Search_Keywords` must be a single line");
+                println!("cargo:rustc-env=PIPL_SEARCH_KEYWORDS={x}");
+            }
+            Property::AE_Effect_Description(x) => {
+                assert!(!x.contains(['\n', '\r']), "`AE_Effect_Description` must be a single line");
+                println!("cargo:rustc-env=PIPL_EFFECT_DESCRIPTION={x}");
+            }
             Property::CodeWin64X86(x) => {
+                any_entrypoint_emitted = true;
+                println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
+            }
+            Property::CodeWinARM64(x) => {
                 any_entrypoint_emitted = true;
                 println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
             }

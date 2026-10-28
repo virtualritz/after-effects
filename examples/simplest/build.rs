@@ -39,5 +39,8 @@ fn main() {
         Property::AE_Effect_Match_Name("ADBE Simplest"),
         Property::AE_Reserved_Info(0),
         Property::AE_Effect_Support_URL("https://www.adobe.com"),
+        // Used by Premiere Pro 27.0+ in the Effects panel search and the Effects Manager.
+        Property::AE_Effect_Search_Keywords(r#"{"en_US": ["minimal", "example", "opacity"]}"#),
+        Property::AE_Effect_Description("Minimal example effect."),
     ])
 }

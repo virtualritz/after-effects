@@ -104,7 +104,7 @@
 ///
 /// # Host/version gating
 /// There is no `can_load` hook to refuse loading in a given host: Adobe ignores the
-/// return value of the `PluginDataEntryFunction2` entry point, so a plugin can never
+/// return value of the `PluginDataEntryFunction2`/`PluginDataEntryFunction3` entry points, so a plugin can never
 /// prevent itself from being registered. Gate at runtime instead -- inspect
 /// [`InData::is_after_effects()`](crate::InData::is_after_effects) (or
 /// [`InData::is_premiere()`](crate::InData::is_premiere)) in `params_setup`/render and
@@ -390,6 +390,11 @@ macro_rules! define_effect {
                     RawCommand::GlobalSetup => {
                         drop(global_lock);
                         (*out_data_ptr).global_data = pf::Handle::into_raw(global_handle);
+                        // The host only honors this flag in After Effects; parameter names must stay in the system encoding elsewhere.
+                        $crate::pf::set_strings_are_utf8(
+                            $crate::InData::from_raw(in_data_ptr).is_after_effects()
+                                && ((*out_data_ptr).out_flags2 & $crate::sys::PF_OutFlag2_STRINGS_ARE_UTF8 as $crate::sys::PF_OutFlags2) != 0
+                        );
                     }
                     RawCommand::GlobalSetdown => {
                         (*out_data_ptr).global_data = std::ptr::null_mut();
@@ -445,6 +450,51 @@ macro_rules! define_effect {
                         env!("PIPL_AE_SPEC_VER_MINOR") .parse().unwrap(),
                         AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,
                         cstr!(env!("PIPL_SUPPORT_URL")).as_ptr() as *const u8, // Support url
+                    )
+                }
+            } else {
+                $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err
+            }
+        }
+
+        // Version 3 of the entry point (26.5 SDK) additionally passes the search keywords and the
+        // description. Both versions are exported, so hosts that don't know version 3 keep using version 2.
+        #[unsafe(no_mangle)]
+        #[allow(non_snake_case)]
+        pub unsafe extern "C" fn PluginDataEntryFunction3(
+            in_ptr: $crate::sys::PF_PluginDataPtr,
+            in_plugin_data_callback_ptr: $crate::sys::PF_PluginDataCB3,
+            in_sp_basic_suite_ptr: *const $crate::sys::SPBasicSuite,
+            in_host_name: *const std::ffi::c_char,
+            in_host_version: *const std::ffi::c_char) -> $crate::sys::PF_Err
+        {
+            // Callback registration metadata; this is distinct from the PiPL
+            // AE_Reserved_Info/aeFL property, which may legitimately be zero.
+            const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;
+
+            if in_host_name.is_null() || in_host_version.is_null() {
+                return $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err;
+            }
+
+            // Both are optional, so pass empty strings when the PiPL doesn't define them.
+            let search_keywords = std::ffi::CString::new(option_env!("PIPL_SEARCH_KEYWORDS").unwrap_or("")).unwrap_or_default();
+            let description = std::ffi::CString::new(option_env!("PIPL_EFFECT_DESCRIPTION").unwrap_or("")).unwrap_or_default();
+
+            if let Some(cb_ptr) = in_plugin_data_callback_ptr {
+                use $crate::cstr_literal::cstr;
+                unsafe {
+                    cb_ptr(in_ptr,
+                        cstr!(env!("PIPL_NAME"))       .as_ptr() as *const u8, // Name
+                        cstr!(env!("PIPL_MATCH_NAME")) .as_ptr() as *const u8, // Match Name
+                        cstr!(env!("PIPL_CATEGORY"))   .as_ptr() as *const u8, // Category
+                        cstr!(env!("PIPL_ENTRYPOINT")) .as_ptr() as *const u8, // Entry point
+                        env!("PIPL_KIND")              .parse().unwrap(),
+                        env!("PIPL_AE_SPEC_VER_MAJOR") .parse().unwrap(),
+                        env!("PIPL_AE_SPEC_VER_MINOR") .parse().unwrap(),
+                        AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,
+                        cstr!(env!("PIPL_SUPPORT_URL")).as_ptr() as *const u8, // Support url
+                        search_keywords.as_ptr() as *const u8,                // Search keywords
+                        description.as_ptr() as *const u8,                    // Effect description
                     )
                 }
             } else {
@@ -665,15 +715,34 @@ mod tests {
     #[test]
     fn plugin_data_entry_uses_callback_reserved_info_not_pipl_property() {
         let source = include_str!("plugin_base.rs");
+        for (entry_point, next) in [
+            ("PluginDataEntryFunction2", "pub unsafe extern \"C\" fn PluginDataEntryFunction3"),
+            ("PluginDataEntryFunction3", "pub unsafe extern \"C\" fn EffectMain"),
+        ] {
+            let body = source
+                .split(&format!("pub unsafe extern \"C\" fn {entry_point}("))
+                .nth(1)
+                .and_then(|tail| tail.split(next).next())
+                .unwrap_or_else(|| panic!("{entry_point} body"));
+
+            assert!(body.contains("const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;"));
+            assert!(body.contains("AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,"));
+            assert!(!body.contains("env!(\"PIPL_AE_RESERVED\")"));
+        }
+    }
+
+    #[test]
+    fn plugin_data_entry3_passes_optional_keywords_and_description() {
+        let source = include_str!("plugin_base.rs");
         let body = source
-            .split("pub unsafe extern \"C\" fn PluginDataEntryFunction2")
+            .split("pub unsafe extern \"C\" fn PluginDataEntryFunction3(")
             .nth(1)
             .and_then(|tail| tail.split("pub unsafe extern \"C\" fn EffectMain").next())
-            .expect("PluginDataEntryFunction2 body");
+            .expect("PluginDataEntryFunction3 body");
 
-        assert!(body.contains("const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;"));
-        assert!(body.contains("AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,"));
-        assert!(!body.contains("env!(\"PIPL_AE_RESERVED\")"));
+        assert!(body.contains("$crate::sys::PF_PluginDataCB3"));
+        assert!(body.contains("option_env!(\"PIPL_SEARCH_KEYWORDS\")"));
+        assert!(body.contains("option_env!(\"PIPL_EFFECT_DESCRIPTION\")"));
     }
 
     #[test]

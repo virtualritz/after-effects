@@ -144,3 +144,41 @@ fn creating_rsrc() {
                       494D65474C32000000000000000408B294093842494D654D4E41000000000000000C0B4E656174566964656F35413842494D6165464C0000000000000004000000080000010000000248
                       00000148000000320000000000000000001C003200005069504C0000000A3E80FFFF0000000000000000");
 }
+
+// Reference bytes produced by Rez from the AE 27.0 SDK `AE_General.r` for the same properties.
+#[test]
+#[cfg(target_os = "macos")]
+fn search_keywords_and_description_macos() {
+    let pipl = build_pipl(vec![
+        Property::Kind(PIPLType::AEEffect),
+        Property::Name("Skeleton"),
+        Property::Category("Sample Plug-ins"),
+        Property::CodeMacIntel64("EffectMain"),
+        Property::CodeMacARM64("EffectMain"),
+        Property::AE_PiPL_Version { major: 2, minor: 0 },
+        Property::AE_Effect_Spec_Version { major: 13, minor: 29 },
+        Property::AE_Effect_Version {
+            version: 1,
+            subversion: 1,
+            bugversion: 0,
+            stage: Stage::Develop,
+            build: 1,
+        },
+        Property::AE_Effect_Info_Flags(0),
+        Property::AE_Effect_Global_OutFlags(OutFlags::DeepColorAware),
+        Property::AE_Effect_Global_OutFlags_2(OutFlags2::StringsAreUtf8),
+        Property::AE_Effect_Match_Name("ADBE Skeleton"),
+        Property::AE_Reserved_Info(0),
+        Property::AE_Effect_Support_URL("https://www.adobe.com"),
+        Property::AE_Effect_Search_Keywords(r#"{"en_US":["blur","soft"]}"#),
+        Property::AE_Effect_Description("Skeleton effect."),
+    ])
+    .unwrap();
+
+    ensure_eq(&pipl, "00000000000000103842494D6B696E64000000000000000465464B543842494D6E616D65000000000000000908536B656C65746F6E0000003842494D6361746700000000000000100F5361
+                      6D706C6520506C75672D696E733842494D6D693634000000000000000B0A4566666563744D61696E003842494D6D613634000000000000000B0A4566666563744D61696E003842494D6550
+                      56520000000000000004000200003842494D655356520000000000000004000D001D3842494D655645520000000000000004000880013842494D65494E4600000000000000020000000038
+                      42494D65474C4F0000000000000004020000003842494D65474C320000000000000004400000003842494D654D4E41000000000000000E0D4144424520536B656C65746F6E00003842494D
+                      6165464C0000000000000004000000003842494D6555524C00000000000000161568747470733A2F2F7777772E61646F62652E636F6D00003842494D654B5744000000000000001A7B2265
+                      6E5F5553223A5B22626C7572222C22736F6674225D7D0000003842494D654453430000000000000011536B656C65746F6E206566666563742E00000000");
+}
