@@ -24,6 +24,10 @@ fn main() {
         panic!("PRSDK_ROOT environment variable points to non-existent path: {pr_sdk_path}");
     }
 
+    // Build scripts are compiled for the host, so `cfg!(target_os)` would be wrong when
+    // cross-compiling. Cargo passes the real target OS in an env var instead.
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
+
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
@@ -52,7 +56,7 @@ fn main() {
                 .join("Headers")
                 .display()
         ));
-    if cfg!(target_os = "windows") {
+    if target_os == "windows" {
         pr_bindings = pr_bindings.clang_arg("-D_WINDOWS");
     }
 
@@ -67,7 +71,7 @@ fn main() {
         .clang_arg("--define-macro=HAS_AE_SDK");
     }
 
-    if cfg!(target_os = "macos") {
+    if target_os == "macos" {
         pr_bindings = pr_bindings
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework/Versions/A/Headers/")
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Versions/A/Headers/")

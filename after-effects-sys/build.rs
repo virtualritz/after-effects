@@ -26,6 +26,10 @@ fn main() {
         panic!("AESDK_ROOT environment variable points to non-existent path: {ae_sdk_path}");
     }
 
+    // Build scripts are compiled for the host, so `cfg!(target_os)` would be wrong when
+    // cross-compiling. Cargo passes the real target OS in an env var instead.
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
+
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
@@ -75,7 +79,7 @@ fn main() {
                 .join("Util")
                 .display()
         ));
-    if cfg!(target_os = "windows") {
+    if target_os == "windows" {
         ae_bindings = ae_bindings.clang_arg("-D_WINDOWS");
     }
 
@@ -83,7 +87,7 @@ fn main() {
         ae_bindings = ae_bindings.clang_arg("--define-macro=ARTISAN_2_API");
     }
 
-    if cfg!(target_os = "macos") {
+    if target_os == "macos" {
         ae_bindings = ae_bindings
             .clang_arg("-Wno-elaborated-enum-base")
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework/Versions/A/Headers/")
