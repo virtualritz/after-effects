@@ -13,7 +13,8 @@ define_suite!(
     EffectSuite,
     AEGP_EffectSuite4,
     kAEGPEffectSuite,
-    kAEGPEffectSuiteVersion4
+    kAEGPEffectSuiteVersion4,
+    newer: { v5: EffectSuite5 }
 );
 
 define_suite!(
@@ -206,7 +207,7 @@ impl EffectSuite {
         ))
     }
     pub fn is_internal_effect(&self, installed_effect_key: ae_sys::AEGP_InstalledEffectKey) -> Result<bool, Error> {
-        let v5 = EffectSuite5::new()?;
+        let v5 = self.v5()?;
         Ok(call_suite_fn_single!(v5, AEGP_GetIsInternalEffect -> ae_sys::A_Boolean, installed_effect_key)? != 0)
     }
 }

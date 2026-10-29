@@ -151,7 +151,7 @@ impl KeyframeSuite {
                 stream.as_ptr(),
                 key_index
             )?;
-        Ok((in_interp.into(), out_interp.into()))
+        Ok((KeyframeInterpolation::from_host(in_interp)?, KeyframeInterpolation::from_host(out_interp)?))
     }
 
     /// Specifies the in and out [`KeyframeInterpolation`]s to be used for the given keyframe.

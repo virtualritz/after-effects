@@ -187,6 +187,8 @@ define_enum! {
         NotInComputeCache        = ae_sys::A_Err_NOT_IN_CACHE_OR_COMPUTE_PENDING,
         None = ae_sys::PF_Err_NONE,
     }
+    // Hosts return error codes that aren't listed above (e.g. Unknown10007), so don't panic on them.
+    unknown => Generic
 }
 
 impl From<Error> for &'static str {

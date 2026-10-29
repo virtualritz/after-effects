@@ -26,7 +26,7 @@ impl BackgroundFrameSuite {
         call_suite_fn!(self, GetBackgroundFrame, (*in_data.as_ptr()).effect_ref, &mut background_frame, &mut background_transfer_mode)?;
         Ok((
             Layer::from_raw(background_frame, in_data.as_ptr(), None),
-            background_transfer_mode.into()
+            TransferMode::from_host(background_transfer_mode)?
         ))
     }
 }

@@ -250,14 +250,14 @@ impl CanvasSuite {
 
     /// Checks with After Effects' internal caching to determine whether a given [`RenderReceiptHandle`] is still valid.
     pub fn check_render_receipt(&self, current_render_ctx: impl AsPtr<PR_RenderContextH>, current_layer_ctx: impl AsPtr<AEGP_RenderLayerContextH>, old_render_receipt_handle: RenderReceiptHandle, check_geometrics: bool, num_effects: RenderNumEffects) -> Result<RenderReceiptStatus, Error> {
-        Ok(call_suite_fn_single!(self,
+        RenderReceiptStatus::from_host(call_suite_fn_single!(self,
             AEGP_CheckRenderReceipt -> ae_sys::AEGP_RenderReceiptStatus,
             current_render_ctx.as_ptr(),
             current_layer_ctx.as_ptr(),
             old_render_receipt_handle.as_ptr(),
             check_geometrics as i32 as _,
             num_effects.into()
-        )?.into())
+        )?)
     }
 
     /// Generates a [`RenderReceiptHandle`] for a layer as if the first `num_effects` have been rendered.
@@ -284,10 +284,10 @@ impl CanvasSuite {
 
     /// Retrieves the type of the given bin.
     pub fn bin_type(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<BinType, Error> {
-        Ok(call_suite_fn_single!(self,
+        BinType::from_host(call_suite_fn_single!(self,
             AEGP_GetBinType -> ae_sys::AEGP_BinType,
             render_ctx.as_ptr()
-        )?.into())
+        )?)
     }
 
     /// Retrieves the transform to correctly orient the layer being rendered with the output world.
@@ -389,7 +389,7 @@ impl CanvasSuite {
     ///
     /// This function is valid for interactive artisans only.
     pub fn interactive_display_channel(&self, render_ctx: impl AsPtr<PR_RenderContextH>) -> Result<DisplayChannel, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetInteractiveDisplayChannel -> ae_sys::AEGP_DisplayChannelType, render_ctx.as_ptr())?.into())
+        DisplayChannel::from_host(call_suite_fn_single!(self, AEGP_GetInteractiveDisplayChannel -> ae_sys::AEGP_DisplayChannelType, render_ctx.as_ptr())?)
     }
 
     /// Returns the exposure for the given [`RenderContextHandle`](pr::RenderContextHandle), expressed as a floating point number.

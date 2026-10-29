@@ -7,7 +7,8 @@ define_suite!(
     CompSuite,
     AEGP_CompSuite11,
     kAEGPCompSuite,
-    kAEGPCompSuiteVersion11
+    kAEGPCompSuiteVersion11,
+    newer: { v13: CompSuite13 }
 );
 define_suite!(
     CompSuite13,
@@ -373,7 +374,7 @@ impl CompSuite {
 
     /// New in AE 26.3. Creates a 3D parametric mesh layer (cube, sphere, plane, torus, cone or cylinder) in the composition.
     pub fn create_parametric_mesh_layer_in_comp(&self, comp_handle: impl AsPtr<AEGP_CompH>, mesh_type: ParametricMeshType) -> Result<LayerHandle, Error> {
-        let v13 = CompSuite13::new()?;
+        let v13 = self.v13()?;
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(v13, AEGP_CreateParametricMeshLayerInComp -> ae_sys::AEGP_LayerH, comp_handle.as_ptr(), mesh_type.into())?
         ))

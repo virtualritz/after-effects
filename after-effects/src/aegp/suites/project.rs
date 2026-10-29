@@ -31,7 +31,7 @@ impl ProjectSuite {
 
      /// Retrieves the current time display settings.
     pub fn project_time_display_config(&self, proj_handle: ProjectHandle) -> Result<TimeDisplayConfig, Error> {
-        Ok(call_suite_fn_single!( self, AEGP_GetProjectTimeDisplay -> AEGP_TimeDisplay3, proj_handle.into())?.into())
+        TimeDisplayConfig::from_host(call_suite_fn_single!( self, AEGP_GetProjectTimeDisplay -> AEGP_TimeDisplay3, proj_handle.into())?)
     }
 
 
@@ -104,7 +104,7 @@ impl ProjectSuite {
         &self,
         proj_handle: ProjectHandle,
     ) -> Result<ProjectBitDepth, Error> {
-        Ok(call_suite_fn_single!( self, AEGP_GetProjectBitDepth -> ae_sys::A_char, proj_handle.into())?.into())
+        ProjectBitDepth::from_host(call_suite_fn_single!( self, AEGP_GetProjectBitDepth -> ae_sys::A_char, proj_handle.into())?)
     }
 
     // Set the project bit depth, undoable.
@@ -180,16 +180,26 @@ impl From<TimeDisplayConfig> for ae_sys::AEGP_TimeDisplay3 {
     }
 }
 
-impl From<ae_sys::AEGP_TimeDisplay3> for TimeDisplayConfig {
-    fn from(time_display: ae_sys::AEGP_TimeDisplay3) -> Self {
-        Self {
-            source_timecode_display_mode: time_display.display_mode.into(),
-            footage_display_mode: time_display.footage_display_mode.into(),
+impl TimeDisplayConfig {
+    /// Converts a value returned by the host, returning [`Error::Generic`] for unknown display modes.
+    fn from_host(time_display: ae_sys::AEGP_TimeDisplay3) -> Result<Self, Error> {
+        Ok(Self {
+            source_timecode_display_mode: SourceTimecodeDisplayMode::from_host(time_display.display_mode)?,
+            footage_display_mode: TimeDisplayMode::from_host(time_display.footage_display_mode)?,
             display_drop_frames: time_display.display_dropframeB != 0,
             use_feet_frames: time_display.use_feet_framesB != 0,
             time_base: time_display.timebaseC as u8,
             frames_per_foot: time_display.frames_per_footC as u8,
-            frame_display_mode: time_display.frames_display_mode.into(),
-        }
+            frame_display_mode: FrameDisplayMode::from_host(time_display.frames_display_mode)?,
+        })
+    }
+}
+
+/// # Panics
+///
+/// Panics if a display mode doesn't match any known variant.
+impl From<ae_sys::AEGP_TimeDisplay3> for TimeDisplayConfig {
+    fn from(time_display: ae_sys::AEGP_TimeDisplay3) -> Self {
+        Self::from_host(time_display).unwrap_or_else(|_| panic!("Unknown display mode in {time_display:?}"))
     }
 }

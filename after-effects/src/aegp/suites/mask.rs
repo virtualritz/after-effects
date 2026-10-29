@@ -48,7 +48,7 @@ impl MaskSuite {
     /// * [`MaskMode::None`] does nothing.
     /// * [`MaskMode::Add`] is the default behavior.
     pub fn mask_mode(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<MaskMode, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskMode -> ae_sys::PF_MaskMode, mask.as_ptr())?.into())
+        MaskMode::from_host(call_suite_fn_single!(self, AEGP_GetMaskMode -> ae_sys::PF_MaskMode, mask.as_ptr())?)
     }
 
     /// Sets the mode of the given mask.
@@ -58,7 +58,7 @@ impl MaskSuite {
 
     /// Retrieves the motion blur setting for the given mask.
     pub fn mask_motion_blur_state(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<MaskMBlur, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskMotionBlurState -> ae_sys::AEGP_MaskMBlur, mask.as_ptr())?.into())
+        MaskMBlur::from_host(call_suite_fn_single!(self, AEGP_GetMaskMotionBlurState -> ae_sys::AEGP_MaskMBlur, mask.as_ptr())?)
     }
 
     /// New in CS6. Sets the motion blur setting for the given mask.
@@ -69,7 +69,7 @@ impl MaskSuite {
     /// New in CS6. Gets the type of feather falloff for the given mask, either
     /// [`MaskFeatherFalloff::Smooth`] or [`MaskFeatherFalloff::Linear`].
     pub fn mask_feather_falloff(&self, mask: impl AsPtr<AEGP_MaskRefH>) -> Result<MaskFeatherFalloff, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMaskFeatherFalloff -> ae_sys::AEGP_MaskFeatherFalloff, mask.as_ptr())?.into())
+        MaskFeatherFalloff::from_host(call_suite_fn_single!(self, AEGP_GetMaskFeatherFalloff -> ae_sys::AEGP_MaskFeatherFalloff, mask.as_ptr())?)
     }
 
     /// Sets the type of feather falloff for the given mask.

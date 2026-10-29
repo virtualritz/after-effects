@@ -19,7 +19,8 @@ define_suite!(
     LayerSuite,
     AEGP_LayerSuite7,
     kAEGPLayerSuite,
-    kAEGPLayerSuiteVersion7
+    kAEGPLayerSuiteVersion7,
+    newer: { v8: LayerSuite8, v9: LayerSuite9 }
 );
 define_suite!(
     LayerSuite8,
@@ -106,7 +107,7 @@ impl LayerSuite {
 
     /// Get the quality of a layer.
     pub fn layer_quality(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LayerQuality, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetLayerQuality -> ae_sys::AEGP_LayerQuality, layer_handle.as_ptr())?.into())
+        LayerQuality::from_host(call_suite_fn_single!(self, AEGP_GetLayerQuality -> ae_sys::AEGP_LayerQuality, layer_handle.as_ptr())?)
     }
 
     /// Sets the quality of a layer. Undoable.
@@ -226,8 +227,11 @@ impl LayerSuite {
     }
 
     /// Returns a layer's object type.
+    ///
+    /// Returns [`Error::Generic`] for object types this crate doesn't know, such as the SDK's
+    /// `AEGP_ObjectType_RESERVED0`/`RESERVED1` or types added by newer versions of After Effects.
     pub fn layer_object_type(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<ObjectType, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetLayerObjectType -> ae_sys::AEGP_ObjectType, layer_handle.as_ptr())?.into())
+        ObjectType::from_host(call_suite_fn_single!(self, AEGP_GetLayerObjectType -> ae_sys::AEGP_ObjectType, layer_handle.as_ptr())?)
     }
 
     /// Is the footage item a 3D layer. All AV layers are either 2D or 3D.
@@ -329,7 +333,7 @@ impl LayerSuite {
 
     /// Gets a layer's [`LabelId`].
     pub fn layer_label(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LabelId, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetLayerLabel -> ae_sys::AEGP_LabelID, layer_handle.as_ptr())?.into())
+        LabelId::from_host(call_suite_fn_single!(self, AEGP_GetLayerLabel -> ae_sys::AEGP_LabelID, layer_handle.as_ptr())?)
     }
 
     /// Sets a layer's [`LabelId`]. Undoable.
@@ -344,8 +348,8 @@ impl LayerSuite {
     /// - [`LayerSamplingQuality::Bilinear`]
     /// - [`LayerSamplingQuality::Bicubic`]
     pub fn layer_sampling_quality(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LayerSamplingQuality, Error> {
-        let v8 = LayerSuite8::new()?;
-        Ok(call_suite_fn_single!(v8, AEGP_GetLayerSamplingQuality -> ae_sys::AEGP_LayerSamplingQuality, layer_handle.as_ptr())?.into())
+        let v8 = self.v8()?;
+        LayerSamplingQuality::from_host(call_suite_fn_single!(v8, AEGP_GetLayerSamplingQuality -> ae_sys::AEGP_LayerSamplingQuality, layer_handle.as_ptr())?)
     }
 
     /// New in CC. Sets the sampling quality of a layer (see flag values above).
@@ -355,13 +359,13 @@ impl LayerSuite {
     /// If you want to force it on you must also set the layer quality to [`LayerQuality::Best`] with [`Self::set_layer_quality`].
     /// Otherwise it will only be using the specified layer sampling quality whenever the layer quality is set to [`LayerQuality::Best`].
     pub fn set_layer_sampling_quality(&self, layer_handle: impl AsPtr<AEGP_LayerH>, quality: LayerSamplingQuality) -> Result<(), Error> {
-        let v8 = LayerSuite8::new()?;
+        let v8 = self.v8()?;
         call_suite_fn!(v8, AEGP_SetLayerSamplingQuality, layer_handle.as_ptr(), quality.into())
     }
 
     /// New in 23.0. Returns the track matte layer of [`LayerHandle`]. Returns `None` if there is no track matte layer.
     pub fn track_matte_layer(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<Option<LayerHandle>, Error> {
-        let v9 = LayerSuite9::new()?;
+        let v9 = self.v9()?;
         let track_matte_handle = call_suite_fn_single!(v9, AEGP_GetTrackMatteLayer -> ae_sys::AEGP_LayerH, layer_handle.as_ptr())?;
         if track_matte_handle.is_null() {
             Ok(None)
@@ -374,13 +378,13 @@ impl LayerSuite {
     ///
     /// Setting the track matte type as [`TrackMatte::NoTrackMatte`] removes track matte.
     pub fn set_track_matte(&self, layer_handle: impl AsPtr<AEGP_LayerH>, track_matte_layer: Option<LayerHandle>, track_matte_type: TrackMatte) -> Result<(), Error> {
-        let v9 = LayerSuite9::new()?;
+        let v9 = self.v9()?;
         call_suite_fn!(v9, AEGP_SetTrackMatte, layer_handle.as_ptr(), track_matte_layer.map_or(std::ptr::null_mut(), |h| h.as_ptr()), track_matte_type.into())
     }
 
     /// New in 23.0. Removes the track matte layer of [`LayerHandle`].
     pub fn remove_track_matte(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<(), Error> {
-        let v9 = LayerSuite9::new()?;
+        let v9 = self.v9()?;
         call_suite_fn!(v9, AEGP_RemoveTrackMatte, layer_handle.as_ptr())
     }
 }
@@ -402,6 +406,21 @@ define_enum! {
         ThreeDModel          = ae_sys::AEGP_ObjectType_3D_MODEL,
         /// New in AE 26.3. A layer created with [`CompSuite::create_parametric_mesh_layer_in_comp()`](aegp::suites::Comp::create_parametric_mesh_layer_in_comp).
         ThreeDParametricMesh = ae_sys::AEGP_ObjectType_3D_PARAMETRIC_MESH,
+    }
+}
+
+#[cfg(test)]
+mod object_type_tests {
+    use super::*;
+
+    #[test]
+    fn unknown_object_types_are_rejected() {
+        assert_eq!(ObjectType::try_from_raw(ae_sys::AEGP_ObjectType_3D_PARAMETRIC_MESH as _), Some(ObjectType::ThreeDParametricMesh));
+        assert_eq!(ObjectType::try_from_raw(ae_sys::AEGP_ObjectType_NONE as _), Some(ObjectType::None));
+        for raw in [ae_sys::AEGP_ObjectType_RESERVED0, ae_sys::AEGP_ObjectType_RESERVED1, ae_sys::AEGP_ObjectType_NUM_TYPES] {
+            assert_eq!(ObjectType::try_from_raw(raw as _), None);
+            assert_eq!(ObjectType::from_host(raw as _), Err(Error::Generic));
+        }
     }
 }
 

@@ -8,7 +8,8 @@ define_suite!(
     ItemViewSuite,
     AEGP_ItemViewSuite1,
     kAEGPItemViewSuite,
-    kAEGPItemViewSuiteVersion1
+    kAEGPItemViewSuiteVersion1,
+    newer: { v2: ItemViewSuite2 }
 );
 define_suite!(
     ItemViewSuite2,
@@ -32,37 +33,37 @@ impl ItemViewSuite {
 
     /// New in AE 26.0. Returns whether guides are shown in the view.
     pub fn item_view_guides_visible(&self, item_view: impl AsPtr<AEGP_ItemViewP>) -> Result<bool, Error> {
-        let v2 = ItemViewSuite2::new()?;
+        let v2 = self.v2()?;
         Ok(call_suite_fn_single!(v2, AEGP_GetItemViewGuidesVisible -> ae_sys::A_Boolean, item_view.as_ptr())? != 0)
     }
 
     /// New in AE 26.0. Shows or hides guides in the view.
     pub fn set_item_view_guides_visible(&self, item_view: impl AsPtr<AEGP_ItemViewP>, visible: bool) -> Result<(), Error> {
-        let v2 = ItemViewSuite2::new()?;
+        let v2 = self.v2()?;
         call_suite_fn!(v2, AEGP_SetItemViewGuidesVisible, item_view.as_ptr(), visible as _)
     }
 
     /// New in AE 26.0. Returns whether snapping to guides is enabled in the view.
     pub fn item_view_guides_snap(&self, item_view: impl AsPtr<AEGP_ItemViewP>) -> Result<bool, Error> {
-        let v2 = ItemViewSuite2::new()?;
+        let v2 = self.v2()?;
         Ok(call_suite_fn_single!(v2, AEGP_GetItemViewGuidesSnap -> ae_sys::A_Boolean, item_view.as_ptr())? != 0)
     }
 
     /// New in AE 26.0. Enables or disables snapping to guides in the view.
     pub fn set_item_view_guides_snap(&self, item_view: impl AsPtr<AEGP_ItemViewP>, snap: bool) -> Result<(), Error> {
-        let v2 = ItemViewSuite2::new()?;
+        let v2 = self.v2()?;
         call_suite_fn!(v2, AEGP_SetItemViewGuidesSnap, item_view.as_ptr(), snap as _)
     }
 
     /// New in AE 26.0. Returns whether guides are locked in the view.
     pub fn item_view_guides_locked(&self, item_view: impl AsPtr<AEGP_ItemViewP>) -> Result<bool, Error> {
-        let v2 = ItemViewSuite2::new()?;
+        let v2 = self.v2()?;
         Ok(call_suite_fn_single!(v2, AEGP_GetItemViewGuidesLocked -> ae_sys::A_Boolean, item_view.as_ptr())? != 0)
     }
 
     /// New in AE 26.0. Locks or unlocks guides in the view.
     pub fn set_item_view_guides_locked(&self, item_view: impl AsPtr<AEGP_ItemViewP>, locked: bool) -> Result<(), Error> {
-        let v2 = ItemViewSuite2::new()?;
+        let v2 = self.v2()?;
         call_suite_fn!(v2, AEGP_SetItemViewGuidesLocked, item_view.as_ptr(), locked as _)
     }
 }

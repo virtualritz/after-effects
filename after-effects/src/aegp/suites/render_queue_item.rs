@@ -50,10 +50,7 @@ impl RenderQueueItemSuite {
 
     /// Returns the render state of the given render queue item.
     pub fn render_state(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>) -> Result<RenderItemStatus, Error> {
-        Ok(
-            call_suite_fn_single!(self, AEGP_GetRenderState -> ae_sys::AEGP_RenderItemStatusType, rq_item.as_ptr())?
-                .into()
-        )
+        RenderItemStatus::from_host(call_suite_fn_single!(self, AEGP_GetRenderState -> ae_sys::AEGP_RenderItemStatusType, rq_item.as_ptr())?)
     }
 
     /// Sets the render state of the given render queue item.
@@ -87,10 +84,7 @@ impl RenderQueueItemSuite {
 
     /// Returns the log type for the given render queue item.
     pub fn log_type(&self, rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>) -> Result<LogType, Error> {
-        Ok(
-            call_suite_fn_single!(self, AEGP_GetLogType -> ae_sys::AEGP_LogType, rq_item.as_ptr())?
-                .into()
-        )
+        LogType::from_host(call_suite_fn_single!(self, AEGP_GetLogType -> ae_sys::AEGP_LogType, rq_item.as_ptr())?)
     }
 
     /// Sets the log type for the given render queue item.

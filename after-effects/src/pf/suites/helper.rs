@@ -15,7 +15,7 @@ impl HelperSuite {
     }
 
     pub fn current_tool(&self) -> Result<SuiteTool, Error> {
-        Ok(call_suite_fn_single!(self, PF_GetCurrentTool -> ae_sys::PF_SuiteTool)?.into())
+        SuiteTool::from_host(call_suite_fn_single!(self, PF_GetCurrentTool -> ae_sys::PF_SuiteTool)?)
     }
 }
 
@@ -45,7 +45,7 @@ impl HelperSuite2 {
 
     /// Returns the current [`ExtendedSuiteTool`].
     pub fn current_extended_tool(&self) -> Result<ExtendedSuiteTool, Error> {
-        Ok(call_suite_fn_single!(self, PF_GetCurrentExtendedTool -> ae_sys::PF_ExtendedSuiteTool)?.into())
+        ExtendedSuiteTool::from_host(call_suite_fn_single!(self, PF_GetCurrentExtendedTool -> ae_sys::PF_ExtendedSuiteTool)?)
     }
 }
 

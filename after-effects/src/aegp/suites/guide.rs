@@ -10,7 +10,8 @@ define_suite!(
     GuideSuite,
     AEGP_GuideSuite1,
     kAEGPGuideSuite,
-    kAEGPGuideSuiteVersion1
+    kAEGPGuideSuiteVersion1,
+    newer: { v2: GuideSuite2 }
 );
 define_suite!(
     GuideSuite2,
@@ -39,13 +40,13 @@ impl GuideSuite {
     /// Returns the orientation and the position (in pixels) of the layer guide at `index`.
     pub fn layer_guide_by_index(&self, layer_handle: impl AsPtr<AEGP_LayerH>, index: i32) -> Result<(GuideOrientation, f64), Error> {
         let (orientation, position) = call_suite_fn_double!(self, AEGP_GetLayerGuideByIndex -> ae_sys::AEGP_GuideOrientationType, ae_sys::A_FpLong, layer_handle.as_ptr(), index)?;
-        Ok((orientation.into(), position))
+        Ok((GuideOrientation::from_host(orientation)?, position))
     }
 
     /// Returns the orientation and the position (in pixels) of the item guide at `index`.
     pub fn item_guide_by_index(&self, item_handle: impl AsPtr<AEGP_ItemH>, index: i32) -> Result<(GuideOrientation, f64), Error> {
         let (orientation, position) = call_suite_fn_double!(self, AEGP_GetItemGuideByIndex -> ae_sys::AEGP_GuideOrientationType, ae_sys::A_FpLong, item_handle.as_ptr(), index)?;
-        Ok((orientation.into(), position))
+        Ok((GuideOrientation::from_host(orientation)?, position))
     }
 
     /// Adds a guide to the layer at `position` (in pixels) and returns its index.
@@ -80,25 +81,25 @@ impl GuideSuite {
 
     /// New in AE 26.2. Returns all properties of the layer guide at `index`.
     pub fn layer_guide_by_index2(&self, layer_handle: impl AsPtr<AEGP_LayerH>, index: i32) -> Result<Guide, Error> {
-        let v2 = GuideSuite2::new()?;
+        let v2 = self.v2()?;
         let mut raw = RawGuide::zeroed();
         call_suite_fn!(v2, AEGP_GetLayerGuideByIndex2, layer_handle.as_ptr(), index, &mut raw.orientation, &mut raw.position_type, &mut raw.position, &mut raw.color, &mut raw.pinned)?;
-        Ok(raw.into())
+        raw.into_guide()
     }
 
     /// New in AE 26.2. Returns all properties of the item guide at `index`.
     pub fn item_guide_by_index2(&self, item_handle: impl AsPtr<AEGP_ItemH>, index: i32) -> Result<Guide, Error> {
-        let v2 = GuideSuite2::new()?;
+        let v2 = self.v2()?;
         let mut raw = RawGuide::zeroed();
         call_suite_fn!(v2, AEGP_GetItemGuideByIndex2, item_handle.as_ptr(), index, &mut raw.orientation, &mut raw.position_type, &mut raw.position, &mut raw.color, &mut raw.pinned)?;
-        Ok(raw.into())
+        raw.into_guide()
     }
 
     /// New in AE 26.2. Adds a guide to the layer and returns its index.
     ///
     /// The position is clamped to ±100,000 px or ±300%; non-finite positions are rejected.
     pub fn add_layer_guide2(&self, layer_handle: impl AsPtr<AEGP_LayerH>, guide: &Guide) -> Result<i32, Error> {
-        let v2 = GuideSuite2::new()?;
+        let v2 = self.v2()?;
         call_suite_fn_single!(v2, AEGP_AddLayerGuide2 -> ae_sys::A_long, layer_handle.as_ptr(), guide.orientation.into(), guide.position_type.into(), guide.position, &guide.color, guide.pinned as _)
     }
 
@@ -106,7 +107,7 @@ impl GuideSuite {
     ///
     /// The position is clamped to ±100,000 px or ±300%; non-finite positions are rejected.
     pub fn add_item_guide2(&self, item_handle: impl AsPtr<AEGP_ItemH>, guide: &Guide) -> Result<i32, Error> {
-        let v2 = GuideSuite2::new()?;
+        let v2 = self.v2()?;
         call_suite_fn_single!(v2, AEGP_AddItemGuide2 -> ae_sys::A_long, item_handle.as_ptr(), guide.orientation.into(), guide.position_type.into(), guide.position, &guide.color, guide.pinned as _)
     }
 
@@ -114,7 +115,7 @@ impl GuideSuite {
     ///
     /// The position is clamped to ±100,000 px or ±300%; non-finite positions are rejected.
     pub fn set_layer_guide2(&self, layer_handle: impl AsPtr<AEGP_LayerH>, index: i32, guide: &Guide) -> Result<(), Error> {
-        let v2 = GuideSuite2::new()?;
+        let v2 = self.v2()?;
         call_suite_fn!(v2, AEGP_SetLayerGuide2, layer_handle.as_ptr(), index, guide.orientation.into(), guide.position_type.into(), guide.position, &guide.color, guide.pinned as _)
     }
 
@@ -122,7 +123,7 @@ impl GuideSuite {
     ///
     /// The position is clamped to ±100,000 px or ±300%; non-finite positions are rejected.
     pub fn set_item_guide2(&self, item_handle: impl AsPtr<AEGP_ItemH>, index: i32, guide: &Guide) -> Result<(), Error> {
-        let v2 = GuideSuite2::new()?;
+        let v2 = self.v2()?;
         call_suite_fn!(v2, AEGP_SetItemGuide2, item_handle.as_ptr(), index, guide.orientation.into(), guide.position_type.into(), guide.position, &guide.color, guide.pinned as _)
     }
 }
@@ -172,16 +173,15 @@ impl RawGuide {
         // All fields are plain C data, for which all-zero is a valid value.
         unsafe { std::mem::zeroed() }
     }
-}
 
-impl From<RawGuide> for Guide {
-    fn from(raw: RawGuide) -> Self {
-        Self {
-            orientation: raw.orientation.into(),
-            position_type: raw.position_type.into(),
-            position: raw.position,
-            color: raw.color,
-            pinned: raw.pinned != 0,
-        }
+    /// Converts the values returned by the host, returning [`Error::Generic`] for an unknown orientation or position type.
+    fn into_guide(self) -> Result<Guide, Error> {
+        Ok(Guide {
+            orientation: GuideOrientation::from_host(self.orientation)?,
+            position_type: GuidePositionType::from_host(self.position_type)?,
+            position: self.position,
+            color: self.color,
+            pinned: self.pinned != 0,
+        })
     }
 }

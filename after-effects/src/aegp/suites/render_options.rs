@@ -73,7 +73,7 @@ impl RenderOptionsSuite {
 
     /// Retrieves the field settings for the given [`RenderOptionsHandle`].
     pub fn field_render(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<pf::Field, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetFieldRender -> PF_Field, options.as_ptr())?.into())
+        pf::Field::from_host(call_suite_fn_single!(self, AEGP_GetFieldRender -> PF_Field, options.as_ptr())?)
     }
 
     /// Specifies the AEGP_WorldType of the output of a given [`RenderOptionsHandle`].
@@ -83,7 +83,7 @@ impl RenderOptionsSuite {
 
     /// Retrieves the AEGP_WorldType of the given [`RenderOptionsHandle`].
     pub fn world_type(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<aegp::WorldType, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetWorldType -> AEGP_WorldType, options.as_ptr())?.into())
+        aegp::WorldType::from_host(call_suite_fn_single!(self, AEGP_GetWorldType -> AEGP_WorldType, options.as_ptr())?)
     }
 
     /// Specifies the downsample factor (with independent horizontal and vertical settings) for the given [`RenderOptionsHandle`].
@@ -117,7 +117,7 @@ impl RenderOptionsSuite {
 
     /// Retrieves the matte mode for the given [`RenderOptionsHandle`].
     pub fn matte_mode(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<MatteMode, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMatteMode -> AEGP_MatteMode, options.as_ptr())?.into())
+        MatteMode::from_host(call_suite_fn_single!(self, AEGP_GetMatteMode -> AEGP_MatteMode, options.as_ptr())?)
     }
 
     /// Specifies the [`ChannelOrder`] for the given [`RenderOptionsHandle`].
@@ -129,7 +129,7 @@ impl RenderOptionsSuite {
 
     /// Retrieves the [`ChannelOrder`] for the given [`RenderOptionsHandle`].
     pub fn channel_order(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<ChannelOrder, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetChannelOrder -> AEGP_ChannelOrder, options.as_ptr())?.into())
+        ChannelOrder::from_host(call_suite_fn_single!(self, AEGP_GetChannelOrder -> AEGP_ChannelOrder, options.as_ptr())?)
     }
 
     /// Passes back a boolean that is true if the render guide layers setting is on.
@@ -145,7 +145,7 @@ impl RenderOptionsSuite {
     /// Get the render quality of the render queue item.
     /// Quality can be either [`ItemQuality::Draft`] or [`ItemQuality::Best`].
     pub fn render_quality(&self, options: impl AsPtr<AEGP_RenderOptionsH>) -> Result<ItemQuality, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetRenderQuality -> AEGP_ItemQuality, options.as_ptr())?.into())
+        ItemQuality::from_host(call_suite_fn_single!(self, AEGP_GetRenderQuality -> AEGP_ItemQuality, options.as_ptr())?)
     }
 
     /// Set the render quality of the render queue item.

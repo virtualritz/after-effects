@@ -37,6 +37,6 @@ impl WorldSuite {
     /// * [`PixelFormat::Argb64`] - 16-bit RGB
     /// * [`PixelFormat::Argb128`] - 32-bit floating point RGB
     pub fn pixel_format(&self, effect_world: impl AsPtr<*const ae_sys::PF_EffectWorld>) -> Result<PixelFormat, Error> {
-        Ok(call_suite_fn_single!(self, PF_GetPixelFormat -> ae_sys::PF_PixelFormat, effect_world.as_ptr())?.into())
+        PixelFormat::from_host(call_suite_fn_single!(self, PF_GetPixelFormat -> ae_sys::PF_PixelFormat, effect_world.as_ptr())?)
     }
 }

@@ -104,7 +104,12 @@ impl RegisterSuite {
 
             let already_handled_bool = already_handled != 0;
 
-            let hook_priority_enum = HookPriority::from(hook_priority);
+            // Don't panic across the FFI boundary on a priority from a newer host; leave the command to After Effects.
+            let Some(hook_priority_enum) = HookPriority::try_from_raw(hook_priority) else {
+                log::warn!("Unknown AEGP_HookPriority value from the host: {hook_priority}");
+                unsafe { *handled_p = 0; }
+                return Error::None.into();
+            };
 
             let res = callback(
                 global,
@@ -167,7 +172,13 @@ impl RegisterSuite {
                 return Error::Generic.into();
             };
 
-            match callback(global, refcon, window_type.into()) {
+            // Don't panic across the FFI boundary on a window type from a newer host; skip the update instead.
+            let Some(window_type) = WindowType::try_from_raw(window_type) else {
+                log::warn!("Unknown AEGP_WindowType value from the host: {window_type}");
+                return Error::None.into();
+            };
+
+            match callback(global, refcon, window_type) {
                 Ok(_) => Error::None,
                 Err(e) => e,
             }
@@ -454,7 +465,12 @@ impl RegisterNonAegpSuite {
             let (cb, refcon) = unsafe { &mut *(refcon as *mut (NonAegpCommandHook<T>, T)) };
             let already_handled_bool = already_handled != 0;
 
-            let hook_priority_enum = HookPriority::from(hook_priority);
+            // Don't panic across the FFI boundary on a priority from a newer host; leave the command to After Effects.
+            let Some(hook_priority_enum) = HookPriority::try_from_raw(hook_priority) else {
+                log::warn!("Unknown AEGP_HookPriority value from the host: {hook_priority}");
+                unsafe { *handled_p = 0; }
+                return Error::None.into();
+            };
 
             let res = cb(refcon, command, hook_priority_enum, already_handled_bool);
 
@@ -502,7 +518,13 @@ impl RegisterNonAegpSuite {
         ) -> sys::PF_Err {
             let (callback, refcon) = unsafe { &mut *(refcon as *mut (NonAegpUpdateMenuHook<T>, T)) };
 
-            match callback(refcon, window_type.into()) {
+            // Don't panic across the FFI boundary on a window type from a newer host; skip the update instead.
+            let Some(window_type) = WindowType::try_from_raw(window_type) else {
+                log::warn!("Unknown AEGP_WindowType value from the host: {window_type}");
+                return Error::None.into();
+            };
+
+            match callback(refcon, window_type) {
                 Ok(_) => Error::None,
                 Err(e) => e,
             }
