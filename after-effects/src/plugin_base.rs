@@ -441,23 +441,10 @@ macro_rules! define_effect {
                     RawCommand::GlobalSetup => {
                         drop(global_lock);
                         (*out_data_ptr).global_data = pf::Handle::into_raw(global_handle);
-                        // `PF_OutFlag2_STRINGS_ARE_UTF8` is "AE Only" (AE_Effect.h), so parameter names stay in the
-                        // system encoding in other hosts. This is the single place that applies that gating.
-                        //
-                        // The flag also requires After Effects 26.5+: older versions ignore it and keep reading
-                        // strings in the locale-dependent encoding. The host version can't be detected here:
-                        // `in_data.version` is the PF API spec version (still 13.29 in the 27.0 SDK), there is no
-                        // in_flag acknowledging the flag, `AEGP_GetDriverImplementationVersion` reports the AEGP
-                        // API version rather than the app version, no suite version is introduced in 26.5 that
-                        // could be probed, and the `inHostVersion` string is only passed to
-                        // `PluginDataEntryFunction{2,3}` at registration time, and the headers don't guarantee that
-                        // it runs in the same session as GlobalSetup (AE can serve registration from its plugin
-                        // cache). So a plugin setting the flag must
-                        // require AE 26.5+, or limit itself to ASCII parameter names.
-                        $crate::pf::set_strings_are_utf8(
-                            in_data.is_after_effects()
-                                && ((*out_data_ptr).out_flags2 & $crate::sys::PF_OutFlag2_STRINGS_ARE_UTF8 as $crate::sys::PF_OutFlags2) != 0
-                        );
+                        // Pick the encoding of the strings the effect hands to the host. After Effects 26.x reads
+                        // UTF-8 with or without `PF_OutFlag2_STRINGS_ARE_UTF8` (measured in 26.2 and 26.5), older
+                        // versions and other hosts read a legacy multi-byte encoding. See `after_effects_reads_utf8`.
+                        $crate::pf::set_strings_are_utf8(in_data.is_after_effects() && $crate::pf::after_effects_reads_utf8());
                     }
                     RawCommand::GlobalSetdown => {
                         (*out_data_ptr).global_data = std::ptr::null_mut();

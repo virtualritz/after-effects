@@ -7,11 +7,8 @@ use objc2_core_foundation::{CFRange, CFString};
 
 static STRINGS_ARE_UTF8: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-/// Records whether the effect runs with `PF_OutFlag2_STRINGS_ARE_UTF8` in effect, i.e. whether the host
-/// expects UTF-8 strings instead of the system encoding. Called by the effect entry point after global setup.
-///
-/// The flag is only understood by After Effects 26.5 and later (26.5 SDK). Older versions ignore it and
-/// interpret the strings in the system encoding, so non-ASCII text sent as UTF-8 shows up as mojibake there.
+/// Records whether the host reads the effect's `char` strings as UTF-8 instead of a legacy multi-byte encoding.
+/// Called by the effect entry point after global setup, with [`after_effects_reads_utf8`] for After Effects.
 #[doc(hidden)]
 pub fn set_strings_are_utf8(enabled: bool) {
     STRINGS_ARE_UTF8.store(enabled, std::sync::atomic::Ordering::Relaxed);
@@ -21,9 +18,38 @@ fn strings_are_utf8() -> bool {
     STRINGS_ARE_UTF8.load(std::sync::atomic::Ordering::Relaxed)
 }
 
+/// Whether the running After Effects reads effect strings (parameter names, ...) as UTF-8.
+///
+/// Measured with a Cyrillic parameter name and no `PF_OutFlag2_STRINGS_ARE_UTF8`: After Effects 26.2 (Windows,
+/// ANSI code page 1251) and 26.5 (macOS) display UTF-8 correctly and drop the name entirely when it is sent in
+/// the system encoding, while After Effects 25.1 (macOS) reads it as MacRoman. So the deciding factor is the AE
+/// version, not the flag. The version can't be read directly by an effect, so this probes `AEGP_GuideSuite1`,
+/// which is new in After Effects 26.0. Must be called while the host's PICA basic suite is available.
+#[doc(hidden)]
+pub fn after_effects_reads_utf8() -> bool {
+    let pica = crate::borrow_pica_basic_as_ptr();
+    if pica.is_null() {
+        return false;
+    }
+    // Acquire the suite directly instead of through `Suite::new()`, which logs a missing suite as an error.
+    unsafe {
+        let (Some(acquire), Some(release)) = ((*pica).AcquireSuite, (*pica).ReleaseSuite) else {
+            return false;
+        };
+        let name = ae_sys::kAEGPGuideSuite.as_ptr() as *const _;
+        let version = ae_sys::kAEGPGuideSuiteVersion1 as i32;
+        let mut suite: *const std::ffi::c_void = std::ptr::null();
+        if acquire(name, version, &mut suite as *mut *const std::ffi::c_void as _) as u32 != ae_sys::kSPNoError {
+            return false;
+        }
+        release(name, version);
+        true
+    }
+}
+
 /// Encodes `s` the way the host expects `char` strings coming from the effect (parameter names, popup
-/// choices, checkbox labels, `return_msg`, ...): UTF-8 if the effect set `PF_OutFlag2_STRINGS_ARE_UTF8`,
-/// otherwise the system encoding.
+/// choices, checkbox labels, `return_msg`, ...): UTF-8 in After Effects 26.0+ (see [`after_effects_reads_utf8`]),
+/// otherwise the legacy multi-byte encoding (see `legacy_encode`).
 ///
 /// The result never contains the terminating NUL and is at most `max_len - 1` bytes long (so that it fits,
 /// together with the NUL, into a `max_len` byte buffer). Truncation never splits a character.
@@ -65,7 +91,7 @@ fn encode_host_string(s: &str, max_len: usize, utf8: bool) -> Vec<u8> {
     if utf8 {
         utf8_prefix(s, max_len.saturating_sub(1)).as_bytes().to_vec()
     } else {
-        truncate_encoded(s, max_len, system_encode)
+        truncate_encoded(s, max_len, legacy_encode)
     }
 }
 
@@ -92,9 +118,12 @@ fn truncate_encoded(s: &str, max_len: usize, encode: impl Fn(&str) -> Vec<u8>) -
     }
 }
 
-/// Converts `s` to the system ("ANSI") multi-byte encoding. Unconvertible characters are replaced with `?`.
+/// Converts `s` to the system multi-byte encoding. Unconvertible characters are replaced with `?`.
+///
+/// Note that After Effects 25.1 on macOS was measured to read these strings as MacRoman even with a MacCyrillic
+/// system encoding, so text outside MacRoman can't be shown there in any encoding.
 #[cfg(target_os = "macos")]
-fn system_encode(s: &str) -> Vec<u8> {
+fn legacy_encode(s: &str) -> Vec<u8> {
     let cfstr = CFString::from_str(s);
     let encoding = CFString::system_encoding();
     let length = cfstr.length();
@@ -121,16 +150,15 @@ fn system_encode(s: &str) -> Vec<u8> {
 /// Converts `s` to the system ("ANSI") multi-byte encoding. Unconvertible characters are replaced with the
 /// code page's default character.
 #[cfg(target_os = "windows")]
-fn system_encode(s: &str) -> Vec<u8> {
+fn legacy_encode(s: &str) -> Vec<u8> {
     use windows_sys::Win32::Globalization::{WideCharToMultiByte, CP_ACP};
     let wstr: Vec<u16> = s.encode_utf16().collect();
     if wstr.is_empty() {
         return Vec::new();
     }
-    // Adobe's localization page says to use `CP_OEMCP`, but that is the console (OEM) code page, while the docs also
-    // say the host reads these strings "using the application's current locale", which for a GUI application is the
-    // ANSI code page (`CP_ACP`). Both are the same on CJK systems (so the doc mistake is easy to miss), but differ e.g.
-    // for Cyrillic (1251 vs 866) and Western European (1252 vs 437/850) systems. Don't change this back to `CP_OEMCP`.
+    // Adobe's localization page says to use `CP_OEMCP`, the console (OEM) code page. Measured on a Russian Windows
+    // (ANSI 1251, OEM 866): Premiere Pro 2026 reads the ANSI code page (`CP_ACP`); OEM bytes would come out wrong.
+    // After Effects 26.x doesn't use this path at all, as it reads UTF-8 (see `after_effects_reads_utf8`).
     unsafe {
         let len = WideCharToMultiByte(CP_ACP, 0, wstr.as_ptr(), wstr.len() as i32, std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut());
         if len <= 0 {
@@ -144,7 +172,7 @@ fn system_encode(s: &str) -> Vec<u8> {
 }
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-fn system_encode(s: &str) -> Vec<u8> {
+fn legacy_encode(s: &str) -> Vec<u8> {
     s.as_bytes().to_vec()
 }
 
@@ -1221,9 +1249,7 @@ impl<'p> ParamDef<'p> {
     }
 
     pub fn set_name(&mut self, name: &str) -> Result<(), Error> {
-        // According to Adobe docs, the encoding expected for the name is the system encoding,
-        // unless the effect sets `PF_OutFlag2_STRINGS_ARE_UTF8` (After Effects 26.5+ only).
-        // Reference: https://ae-plugins.docsforadobe.dev/intro/localization/
+        // UTF-8 in After Effects 26.0+, the legacy multi-byte encoding otherwise (see `host_string_bytes`).
         let written = copy_host_string(&mut self.param_def.name_do_not_use_directly, name);
         if written == 0 && !name.is_empty() {
             log::error!("Failed to set the parameter name, \"{name}\" could not be converted to the host encoding.");

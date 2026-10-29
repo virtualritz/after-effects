@@ -66,8 +66,8 @@ impl OutData {
 
     /// After Effects displays any string you put here (checked and cleared after every command selector).
     ///
-    /// The message is converted to the encoding the host expects (the system encoding, or UTF-8 if the effect
-    /// sets [`OutFlags2::StringsAreUtf8`]) and truncated on a character boundary to fit the 256 byte buffer.
+    /// The message is converted to the encoding the host expects (UTF-8 in After Effects 26.0+, the legacy
+    /// multi-byte encoding otherwise) and truncated on a character boundary to fit the 256 byte buffer.
     pub fn set_return_msg(&mut self, msg: &str) {
         copy_host_string(&mut self.as_mut().return_msg, msg);
     }
@@ -237,9 +237,9 @@ define_enum! {
         /// New in the 26.5 SDK, After Effects only. The effect emits and consumes UTF-8 strings (parameter names,
         /// popup choices, checkbox labels, `return_msg`, ...) instead of the locale-dependent system encoding.
         ///
-        /// Only After Effects 26.5 and later understand this flag. Older versions ignore it and interpret the
-        /// strings in the system encoding, so non-ASCII text shows up as mojibake there. Only set it when your
-        /// effect targets After Effects 26.5+.
+        /// The crate doesn't depend on it: After Effects 26.x was measured to read UTF-8 also without the flag
+        /// (and older versions ignore it), so strings are encoded by host version instead. Setting it documents
+        /// the effect's behaviour to After Effects 26.5+.
         StringsAreUtf8                      = ae_sys::PF_OutFlag2_STRINGS_ARE_UTF8,
     }
 }
