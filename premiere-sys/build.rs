@@ -62,7 +62,7 @@ fn main() {
         pr_bindings = pr_bindings.clang_arg("-D_WINDOWS");
     }
 
-    if let Ok(ae_sdk) = env::var("AESDK_ROOT") {
+    if let Some(ae_sdk) = env::var("AESDK_ROOT").ok().filter(|x| !x.is_empty()) {
         pr_bindings = pr_bindings.clang_arg(format!(
             "-I{}",
             Path::new(&ae_sdk)
