@@ -65,12 +65,11 @@ impl OutData {
     }
 
     /// After Effects displays any string you put here (checked and cleared after every command selector).
+    ///
+    /// The message is converted to the encoding the host expects (the system encoding, or UTF-8 if the effect
+    /// sets [`OutFlags2::StringsAreUtf8`]) and truncated on a character boundary to fit the 256 byte buffer.
     pub fn set_return_msg(&mut self, msg: &str) {
-        let msg = msg.as_bytes();
-        assert!(msg.len() < 256);
-        let return_msg = &mut self.as_mut().return_msg;
-        return_msg.fill(0);
-        return_msg[..msg.len()].copy_from_slice(unsafe { std::mem::transmute(msg) });
+        copy_host_string(&mut self.as_mut().return_msg, msg);
     }
 
     /// Whether the plug-in already supplied a message for the current command.
@@ -145,6 +144,18 @@ mod tests {
 
         assert!(out.has_return_msg());
         assert_eq!(raw.return_msg[12], 0);
+    }
+
+    #[test]
+    fn long_return_message_is_truncated_and_nul_terminated() {
+        let mut raw: ae_sys::PF_OutData = unsafe { std::mem::zeroed() };
+        let mut out = OutData::from_raw(&mut raw);
+
+        out.set_return_msg(&"a".repeat(300));
+
+        let len = raw.return_msg.len();
+        assert!(raw.return_msg[..len - 1].iter().all(|&c| c == b'a' as ae_sys::A_char));
+        assert_eq!(raw.return_msg[len - 1], 0);
     }
 
     #[test]
@@ -223,8 +234,12 @@ define_enum! {
         SupportsThreadedRendering           = ae_sys::PF_OutFlag2_SUPPORTS_THREADED_RENDERING,
         MutableRenderSequenceDataSlower     = ae_sys::PF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER,
         SupportsDirectXRendering            = ae_sys::PF_OutFlag2_SUPPORTS_DIRECTX_RENDERING,
-        /// New in the 26.5 SDK, After Effects only. The effect emits and consumes UTF-8 strings (e.g. parameter names)
-        /// instead of the locale-dependent system encoding.
+        /// New in the 26.5 SDK, After Effects only. The effect emits and consumes UTF-8 strings (parameter names,
+        /// popup choices, checkbox labels, `return_msg`, ...) instead of the locale-dependent system encoding.
+        ///
+        /// Only After Effects 26.5 and later understand this flag. Older versions ignore it and interpret the
+        /// strings in the system encoding, so non-ASCII text shows up as mojibake there. Only set it when your
+        /// effect targets After Effects 26.5+.
         StringsAreUtf8                      = ae_sys::PF_OutFlag2_STRINGS_ARE_UTF8,
     }
 }
