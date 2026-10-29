@@ -5,14 +5,9 @@ mod resource;
 pub use resource::*;
 
 #[cfg(any(target_os = "macos", target_os = "linux"))]
-use byteorder::BigEndian as ByteOrder;
-#[cfg(target_os = "windows")]
-use byteorder::LittleEndian as ByteOrder;
-
-#[cfg(any(target_os = "macos", target_os = "linux"))]
 mod plist;
 
-use byteorder::WriteBytesExt;
+use byteorder::{BigEndian, LittleEndian, WriteBytesExt};
 use std::io::Result;
 use std::io::Write;
 
@@ -50,66 +45,155 @@ pub enum PIPLType {
     AIGeneral,
 }
 
-const fn fourcc(code: &[u8; 4]) -> [u8; 4] {
-    // Code order is different between Windows and MacOS
-    #[cfg(target_os = "windows")]
-    {
-        [code[3], code[2], code[1], code[0]]
+/// The platform a PiPL resource is built for. It decides the byte order, the padding and the
+/// resource container (`.rc` on Windows, `.rsrc` on macOS).
+///
+/// `pipl` runs inside the plugin's build script, which is compiled for the *host*, so the target must
+/// come from cargo's `CARGO_CFG_TARGET_OS` rather than `cfg!(target_os)`; see [`TargetOs::current`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TargetOs {
+    /// Little-endian, Windows `.rc` layout.
+    Windows,
+    /// Big-endian, macOS `.rsrc` (Rez) layout. Also used for every non-Windows target.
+    MacOs,
+}
+
+impl TargetOs {
+    /// The target being built: `CARGO_CFG_TARGET_OS` (set by cargo for build scripts), falling back to
+    /// the platform this code is compiled for when unset (e.g. in tests).
+    pub fn current() -> Self {
+        Self::from_cargo_target_os(std::env::var("CARGO_CFG_TARGET_OS").ok().as_deref())
     }
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
-    {
-        *code
+
+    fn from_cargo_target_os(target_os: Option<&str>) -> Self {
+        match target_os {
+            Some("windows") => Self::Windows,
+            Some(_) => Self::MacOs,
+            None if cfg!(target_os = "windows") => Self::Windows,
+            None => Self::MacOs,
+        }
+    }
+
+    const fn fourcc(self, code: &[u8; 4]) -> [u8; 4] {
+        // Code order is different between Windows and MacOS
+        match self {
+            Self::Windows => [code[3], code[2], code[1], code[0]],
+            Self::MacOs => *code,
+        }
+    }
+
+    const fn u32_bytes(self, v: u32) -> [u8; 4] {
+        match self {
+            Self::Windows => v.to_le_bytes(),
+            Self::MacOs => v.to_be_bytes(),
+        }
     }
 }
-const fn u32_bytes(v: u32) -> [u8; 4] {
-    #[cfg(target_os = "windows")]
-    {
-        v.to_le_bytes()
+
+/// The PiPL being written, with the byte order of its target.
+///
+/// The `write_u16`/`write_u24`/`write_u32`/`write_f64` methods take precedence over the
+/// `byteorder::WriteBytesExt` ones; everything else goes to the underlying `Vec<u8>`.
+struct PiplBuffer {
+    data: Vec<u8>,
+    target: TargetOs,
+}
+
+impl PiplBuffer {
+    fn write_fourcc(&mut self, code: &[u8; 4]) -> Result<()> {
+        let bytes = self.target.fourcc(code);
+        self.data.write_all(&bytes)
     }
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
-    {
-        v.to_be_bytes()
+    /// Overwrites the 4 bytes at `pos` with `v`.
+    fn patch_u32(&mut self, pos: usize, v: u32) {
+        let bytes = self.target.u32_bytes(v);
+        self.data[pos..pos + 4].copy_from_slice(&bytes);
+    }
+    fn write_u16(&mut self, v: u16) -> Result<()> {
+        match self.target {
+            TargetOs::Windows => self.data.write_u16::<LittleEndian>(v),
+            TargetOs::MacOs => self.data.write_u16::<BigEndian>(v),
+        }
+    }
+    fn write_u24(&mut self, v: u32) -> Result<()> {
+        match self.target {
+            TargetOs::Windows => self.data.write_u24::<LittleEndian>(v),
+            TargetOs::MacOs => self.data.write_u24::<BigEndian>(v),
+        }
+    }
+    fn write_u32(&mut self, v: u32) -> Result<()> {
+        self.data.write_all(&self.target.u32_bytes(v))
+    }
+    fn write_f64(&mut self, v: f64) -> Result<()> {
+        match self.target {
+            TargetOs::Windows => self.data.write_f64::<LittleEndian>(v),
+            TargetOs::MacOs => self.data.write_f64::<BigEndian>(v),
+        }
+    }
+}
+
+impl std::ops::Deref for PiplBuffer {
+    type Target = Vec<u8>;
+    fn deref(&self) -> &Vec<u8> {
+        &self.data
+    }
+}
+impl std::ops::DerefMut for PiplBuffer {
+    fn deref_mut(&mut self) -> &mut Vec<u8> {
+        &mut self.data
     }
 }
 
 impl PIPLType {
-    #[rustfmt::skip]
+    /// The four-character code in the target's byte order (see [`TargetOs::current`]).
     pub fn as_bytes(&self) -> [u8; 4] {
+        TargetOs::current().fourcc(self.code())
+    }
+
+    /// The value of the four-character code as a C multi-character constant (`'eFKT'`), as passed in
+    /// the `inKind` argument of the `PF_PluginDataCB*` registration callbacks. Doesn't depend on the target.
+    fn kind_value(&self) -> u32 {
+        u32::from_be_bytes(*self.code())
+    }
+
+    /// The four-character code in its natural (big-endian, `'eFKT'`) order.
+    #[rustfmt::skip]
+    fn code(&self) -> &'static [u8; 4] {
         match self {
             // Photoshop plug-in types
-            Self::General        => fourcc(b"8BPI"),
-            Self::Filter         => fourcc(b"8BFM"),
-            Self::Parser         => fourcc(b"8BYM"),
-            Self::ImageFormat    => fourcc(b"8BIF"),
-            Self::Extension      => fourcc(b"8BXM"),
-            Self::Acquire        => fourcc(b"8BAM"),
-            Self::Export         => fourcc(b"8BEM"),
-            Self::Selection      => fourcc(b"8BSM"),
-            Self::Picker         => fourcc(b"8BCM"),
-            Self::Actions        => fourcc(b"8LIZ"),
-            Self::Test           => fourcc(b"8BTS"),
-            Self::MSPUtility     => fourcc(b"8SPU"),
-            Self::PsModernFilter => fourcc(b"8BFm"),
+            Self::General        => b"8BPI",
+            Self::Filter         => b"8BFM",
+            Self::Parser         => b"8BYM",
+            Self::ImageFormat    => b"8BIF",
+            Self::Extension      => b"8BXM",
+            Self::Acquire        => b"8BAM",
+            Self::Export         => b"8BEM",
+            Self::Selection      => b"8BSM",
+            Self::Picker         => b"8BCM",
+            Self::Actions        => b"8LIZ",
+            Self::Test           => b"8BTS",
+            Self::MSPUtility     => b"8SPU",
+            Self::PsModernFilter => b"8BFm",
             // After Effects plug-in types
-            Self::AEEffect       => fourcc(b"eFKT"),
-            Self::AEImageFormat  => fourcc(b"FXIF"),
-            Self::AEAccelerator  => fourcc(b"eFST"),
-            Self::AEGeneral      => fourcc(b"AEgp"),
-            Self::AEGP           => fourcc(b"AEgx"),
-            // Premiere plug-in typefourcc
-            Self::PrEffect       => fourcc(b"SPFX"),
-            Self::PrVideoFilter  => fourcc(b"VFlt"),
-            Self::PrAudioFilter  => fourcc(b"AFlt"),
-            Self::PrEDLExport    => fourcc(b"ExpM"),
-            Self::PrDataExport   => fourcc(b"ExpD"),
-            Self::PrDevice       => fourcc(b"DevC"),
-            Self::PrImporter     => fourcc(b"IMPT"),
-            Self::PrCompile      => fourcc(b"CMPM"),
-            Self::PrRecord       => fourcc(b"RECM"),
-            Self::PrPlay         => fourcc(b"PLYM"),
+            Self::AEEffect       => b"eFKT",
+            Self::AEImageFormat  => b"FXIF",
+            Self::AEAccelerator  => b"eFST",
+            Self::AEGeneral      => b"AEgp",
+            Self::AEGP           => b"AEgx",
+            // Premiere plug-in types
+            Self::PrEffect       => b"SPFX",
+            Self::PrVideoFilter  => b"VFlt",
+            Self::PrAudioFilter  => b"AFlt",
+            Self::PrEDLExport    => b"ExpM",
+            Self::PrDataExport   => b"ExpD",
+            Self::PrDevice       => b"DevC",
+            Self::PrImporter     => b"IMPT",
+            Self::PrCompile      => b"CMPM",
+            Self::PrRecord       => b"RECM",
+            Self::PrPlay         => b"PLYM",
             // Illustrator/SweetPea plug-in types
-            Self::SweetPea       => fourcc(b"SPEA"),
-            Self::AIGeneral      => fourcc(b"ARPI")
+            Self::SweetPea       => b"SPEA",
+            Self::AIGeneral      => b"ARPI"
         }
     }
 }
@@ -718,28 +802,34 @@ pub enum Property {
     },
 }
 
+/// Builds the PiPL resource data for the target being built (see [`TargetOs::current`]).
 pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
+    build_pipl_for(properties, TargetOs::current())
+}
+
+/// Builds the PiPL resource data with the layout of `target`.
+pub fn build_pipl_for(properties: Vec<Property>, target: TargetOs) -> Result<Vec<u8>> {
     #[rustfmt::skip]
     fn padding_4(x: u32) -> u32 { if !x.is_multiple_of(4) { 4 - x % 4 } else { 0 } }
 
     fn write(
-        buffer: &mut Vec<u8>,
+        buffer: &mut PiplBuffer,
         type_: &[u8; 4],
         key: &[u8; 4],
-        mut contents_fn: impl FnMut(&mut Vec<u8>) -> Result<()>,
+        mut contents_fn: impl FnMut(&mut PiplBuffer) -> Result<()>,
     ) -> Result<()> {
-        buffer.write_all(&fourcc(type_))?;
-        buffer.write_all(&fourcc(key))?;
-        buffer.write_u32::<ByteOrder>(0)?; // pad
+        buffer.write_fourcc(type_)?;
+        buffer.write_fourcc(key)?;
+        buffer.write_u32(0)?; // pad
         let len = buffer.len();
-        buffer.write_u32::<ByteOrder>(0)?; // length placeholder
+        buffer.write_u32(0)?; // length placeholder
         contents_fn(buffer)?;
         let aligned_len = (buffer.len() - len - 4) as u32;
         // Overwrite the length
-        buffer[len..len + 4].clone_from_slice(&u32_bytes(aligned_len));
+        buffer.patch_u32(len, aligned_len);
 
         // Padding is done differently between Windows and macOS
-        if cfg!(target_os = "macos") {
+        if buffer.target == TargetOs::MacOs {
             let padding = padding_4(aligned_len);
             for _ in 0..padding {
                 buffer.write_u8(0)?;
@@ -748,12 +838,12 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
         Ok(())
     }
     // Write pascal string
-    fn write_pstring(buffer: &mut Vec<u8>, s: &'static str) -> Result<()> {
+    fn write_pstring(buffer: &mut PiplBuffer, s: &'static str) -> Result<()> {
         buffer.write_u8(s.len() as u8)?;
         buffer.extend(s.as_bytes());
 
         // Padding is done differently between Windows and macOS
-        if cfg!(target_os = "windows") {
+        if buffer.target == TargetOs::Windows {
             let padding = padding_4(s.len() as u32 + 1);
             for _ in 0..padding {
                 buffer.write_u8(0)?;
@@ -762,12 +852,12 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
         Ok(())
     }
     // Write Long Word padded C String
-    fn write_cstring(buffer: &mut Vec<u8>, s: &'static str) -> Result<()> {
+    fn write_cstring(buffer: &mut PiplBuffer, s: &'static str) -> Result<()> {
         buffer.extend(s.as_bytes());
         buffer.push(0);
 
         // Padding is done differently between Windows and macOS
-        if cfg!(target_os = "windows") {
+        if buffer.target == TargetOs::Windows {
             let padding = padding_4(s.len() as u32 + 1);
             for _ in 0..padding {
                 buffer.write_u8(0)?;
@@ -776,18 +866,18 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
         Ok(())
     }
 
-    let mut buffer = Vec::new();
-    if cfg!(target_os = "windows") {
+    let mut buffer = PiplBuffer { data: Vec::new(), target };
+    if target == TargetOs::Windows {
         buffer.write_u8(1)?; // Reserved
         buffer.write_u8(0)?; // Reserved
     }
-    buffer.write_u32::<ByteOrder>(0)?; // kPIPropertiesVersion
-    buffer.write_all(&u32_bytes(properties.len() as u32))?;
+    buffer.write_u32(0)?; // kPIPropertiesVersion
+    buffer.write_u32(properties.len() as u32)?;
     for prop in properties {
         match prop {
             Property::Kind(x) => {
                 write(&mut buffer, b"8BIM", b"kind", |buffer| {
-                    buffer.write_all(&x.as_bytes())?;
+                    buffer.write_fourcc(x.code())?;
                     Ok(())
                 })?;
             }
@@ -799,25 +889,25 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 build,
             } => {
                 write(&mut buffer, b"8BIM", b"vers", |buffer| {
-                    buffer.write_u32::<ByteOrder>(pf_version(
+                    buffer.write_u32(pf_version(
                         version, subversion, bugversion, stage, build,
                     ))
                 })?;
             }
             Property::Priority(x) => {
                 write(&mut buffer, b"8BIM", b"prty", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x)
+                    buffer.write_u32(x)
                 })?;
             }
             Property::Component((version, uuid)) => {
                 write(&mut buffer, b"8BIM", b"cmpt", |buffer| {
-                    buffer.write_u32::<ByteOrder>(version)?;
+                    buffer.write_u32(version)?;
                     write_cstring(buffer, uuid)
                 })?;
             }
             Property::RequiredHost(x) => {
                 write(&mut buffer, b"8BIM", b"host", |buffer| {
-                    buffer.write_all(&fourcc(x))?;
+                    buffer.write_fourcc(x)?;
                     Ok(())
                 })?;
             }
@@ -834,27 +924,27 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             }
             Property::Code68k((type_, x)) => {
                 write(&mut buffer, b"8BIM", b"m68k", |buffer| {
-                    buffer.write_all(&type_.as_bytes())?;
-                    buffer.write_u16::<ByteOrder>(x)
+                    buffer.write_fourcc(type_.code())?;
+                    buffer.write_u16(x)
                 })?;
             }
             Property::Code68kFPU((type_, x)) => {
                 write(&mut buffer, b"8BIM", b"68fp", |buffer| {
-                    buffer.write_all(&type_.as_bytes())?;
-                    buffer.write_u16::<ByteOrder>(x)
+                    buffer.write_fourcc(type_.code())?;
+                    buffer.write_u16(x)
                 })?;
             }
             Property::CodePowerPC((x, y, entry_point)) => {
                 write(&mut buffer, b"8BIM", b"pwpc", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x)?;
-                    buffer.write_u32::<ByteOrder>(y)?;
+                    buffer.write_u32(x)?;
+                    buffer.write_u32(y)?;
                     write_pstring(buffer, entry_point)
                 })?;
             }
             Property::CodeCarbonPowerPC((x, y, entry_point)) => {
                 write(&mut buffer, b"8BIM", b"ppcb", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x)?;
-                    buffer.write_u32::<ByteOrder>(y)?;
+                    buffer.write_u32(x)?;
+                    buffer.write_u32(y)?;
                     write_pstring(buffer, entry_point)
                 })?;
             }
@@ -895,7 +985,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             }
             Property::SupportedModes(flags) => {
                 write(&mut buffer, b"8BIM", b"mode", |buffer| {
-                    buffer.write_u32::<ByteOrder>(flags.bits())
+                    buffer.write_u32(flags.bits())
                 })?;
             }
             Property::EnableInfo(condition) => {
@@ -920,7 +1010,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                             buffer.write_u8(flags)?;
                             buffer.write_u8(0)?;
                         } else {
-                            buffer.write_u32::<ByteOrder>(0)?;
+                            buffer.write_u32(0)?;
                         }
                     }
                     Ok(())
@@ -935,14 +1025,14 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"expf", |buffer| {
                     buffer.write_u8(if supports_transparency { 1 << 7 } else { 0 })?;
-                    buffer.write_u24::<ByteOrder>(0)
+                    buffer.write_u24(0)
                 })?;
             }
             Property::FmtFileType((type_, creator)) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fmTC", |buffer| {
-                    buffer.write_all(&fourcc(type_))?;
-                    buffer.write_all(&fourcc(creator))?;
+                    buffer.write_fourcc(type_)?;
+                    buffer.write_fourcc(creator)?;
                     Ok(())
                 })?;
             }
@@ -951,8 +1041,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"RdTy", |buffer| {
                     for type_ in types {
-                        buffer.write_all(&fourcc(type_.0))?;
-                        buffer.write_all(&fourcc(type_.1))?;
+                        buffer.write_fourcc(type_.0)?;
+                        buffer.write_fourcc(type_.1)?;
                     }
                     Ok(())
                 })?;
@@ -961,8 +1051,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"WrTy", |buffer| {
                     for type_ in types {
-                        buffer.write_all(&fourcc(type_.0))?;
-                        buffer.write_all(&fourcc(type_.1))?;
+                        buffer.write_fourcc(type_.0)?;
+                        buffer.write_fourcc(type_.1)?;
                     }
                     Ok(())
                 })?;
@@ -972,8 +1062,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fftT", |buffer| {
                     for type_ in types {
-                        buffer.write_all(&fourcc(type_.0))?;
-                        buffer.write_all(&fourcc(type_.1))?;
+                        buffer.write_fourcc(type_.0)?;
+                        buffer.write_fourcc(type_.1)?;
                     }
                     Ok(())
                 })?;
@@ -984,7 +1074,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"RdEx", |buffer| {
                     for &ext in exts {
-                        buffer.write_all(&fourcc(ext))?;
+                        buffer.write_fourcc(ext)?;
                     }
                     Ok(())
                 })?;
@@ -993,7 +1083,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"WrEx", |buffer| {
                     for &ext in exts {
-                        buffer.write_all(&fourcc(ext))?;
+                        buffer.write_fourcc(ext)?;
                     }
                     Ok(())
                 })?;
@@ -1003,7 +1093,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"fftE", |buffer| {
                     for &ext in exts {
-                        buffer.write_all(&fourcc(ext))?;
+                        buffer.write_fourcc(ext)?;
                     }
                     Ok(())
                 })?;
@@ -1022,21 +1112,21 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                                 if can_read              { 1 << 5 } else { 0 } |
                                 if saves_image_resources { 1 << 6 } else { 0 };
                     buffer.write_u8(flags)?;
-                    buffer.write_u24::<ByteOrder>(0)
+                    buffer.write_u24(0)
                 })?;
             }
             Property::FormatMaxSize { width, height } => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"mxsz", |buffer| {
-                    buffer.write_u16::<ByteOrder>(width)?;
-                    buffer.write_u16::<ByteOrder>(height)
+                    buffer.write_u16(width)?;
+                    buffer.write_u16(height)
                 })?;
             }
             Property::FormatMaxChannels(max_channels) => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"mxch", |buffer| {
                     for ch in max_channels {
-                        buffer.write_u16::<ByteOrder>(*ch)?;
+                        buffer.write_u16(*ch)?;
                     }
                     for _ in 0..padding_4(max_channels.len() as u32 * 2) as usize {
                         buffer.write_u8(0)?;
@@ -1052,8 +1142,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psTY", |buffer| {
                     for type_ in types {
-                        buffer.write_all(&fourcc(type_.0))?;
-                        buffer.write_all(&fourcc(type_.1))?;
+                        buffer.write_fourcc(type_.0)?;
+                        buffer.write_fourcc(type_.1)?;
                     }
                     Ok(())
                 })?;
@@ -1062,7 +1152,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psCB", |buffer| {
                     for &type_ in types {
-                        buffer.write_all(&fourcc(type_))?;
+                        buffer.write_fourcc(type_)?;
                     }
                     Ok(())
                 })?;
@@ -1072,8 +1162,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psTy", |buffer| {
                     for type_ in types {
-                        buffer.write_all(&fourcc(type_.0))?;
-                        buffer.write_all(&fourcc(type_.1))?;
+                        buffer.write_fourcc(type_.0)?;
+                        buffer.write_fourcc(type_.1)?;
                     }
                     Ok(())
                 })?;
@@ -1084,7 +1174,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psEX", |buffer| {
                     for &ext in exts {
-                        buffer.write_all(&fourcc(ext))?;
+                        buffer.write_fourcc(ext)?;
                     }
                     Ok(())
                 })?;
@@ -1093,7 +1183,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"psEx", |buffer| {
                     for &ext in exts {
-                        buffer.write_all(&fourcc(ext))?;
+                        buffer.write_fourcc(ext)?;
                     }
                     Ok(())
                 })?;
@@ -1115,10 +1205,10 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             } => {
                 // TODO: tests
                 write(&mut buffer, b"8BIM", b"hstm", |buffer| {
-                    buffer.write_u32::<ByteOrder>(0)?; // Version.
-                    buffer.write_u32::<ByteOrder>(class_id)?; // Class ID, always required.  Can be Suite ID.
-                    buffer.write_u32::<ByteOrder>(event_id)?; // Event ID, or typeNULL if not Filter/Color Picker/Selection.
-                    buffer.write_u16::<ByteOrder>(dictionary_resource_id)?; // Dictionary ('AETE') resource ID.
+                    buffer.write_u32(0)?; // Version.
+                    buffer.write_u32(class_id)?; // Class ID, always required.  Can be Suite ID.
+                    buffer.write_u32(event_id)?; // Event ID, or typeNULL if not Filter/Color Picker/Selection.
+                    buffer.write_u16(dictionary_resource_id)?; // Dictionary ('AETE') resource ID.
                     write_cstring(buffer, unique_scope_string)
                     // TODO: Padding?
                 })?;
@@ -1126,7 +1216,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             // If this property is present, then its on. No parameters are required:
             Property::Persistent => {
                 write(&mut buffer, b"8BIM", b"prst", |buffer| {
-                    buffer.write_u32::<ByteOrder>(1)
+                    buffer.write_u32(1)
                 })?;
             }
             //-------------------------------------------------------------------
@@ -1134,14 +1224,14 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             //-------------------------------------------------------------------
             Property::AE_PiPL_Version { major, minor } => {
                 write(&mut buffer, b"8BIM", b"ePVR", |buffer| {
-                    buffer.write_u16::<ByteOrder>(major)?;
-                    buffer.write_u16::<ByteOrder>(minor)
+                    buffer.write_u16(major)?;
+                    buffer.write_u16(minor)
                 })?;
             }
             Property::AE_Effect_Spec_Version { major, minor } => {
                 write(&mut buffer, b"8BIM", b"eSVR", |buffer| {
-                    buffer.write_u16::<ByteOrder>(major)?;
-                    buffer.write_u16::<ByteOrder>(minor)
+                    buffer.write_u16(major)?;
+                    buffer.write_u16(minor)
                 })?;
             }
             Property::AE_Effect_Version {
@@ -1152,7 +1242,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 build,
             } => {
                 write(&mut buffer, b"8BIM", b"eVER", |buffer| {
-                    buffer.write_u32::<ByteOrder>(pf_version(
+                    buffer.write_u32(pf_version(
                         version, subversion, bugversion, stage, build,
                     ))
                 })?;
@@ -1180,31 +1270,31 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             Property::AE_Effect_Info_Flags(x) => {
                 write(&mut buffer, b"8BIM", b"eINF", |buffer| {
                     // This shouldn't make a difference, but let's keep it consistent with the native tools
-                    if cfg!(target_os = "windows") {
-                        buffer.write_u32::<ByteOrder>(x)
+                    if buffer.target == TargetOs::Windows {
+                        buffer.write_u32(x)
                     } else {
-                        buffer.write_u16::<ByteOrder>(x as u16)
+                        buffer.write_u16(x as u16)
                     }
                 })?;
             }
             Property::AE_Effect_Global_OutFlags(x) => {
                 write(&mut buffer, b"8BIM", b"eGLO", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x.bits())
+                    buffer.write_u32(x.bits())
                 })?;
             }
             Property::AE_Effect_Global_OutFlags_2(x) => {
                 write(&mut buffer, b"8BIM", b"eGL2", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x.bits())
+                    buffer.write_u32(x.bits())
                 })?;
             }
             Property::AE_Reserved(x) => {
                 write(&mut buffer, b"8BIM", b"aeRD", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x)
+                    buffer.write_u32(x)
                 })?;
             }
             Property::AE_Reserved_Info(x) => {
                 write(&mut buffer, b"8BIM", b"aeFL", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x)
+                    buffer.write_u32(x)
                 })?;
             }
             //-------------------------------------------------------------------
@@ -1227,8 +1317,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 signature,
             } => {
                 write(&mut buffer, b"8BIM", b"FXMF", |buffer| {
-                    buffer.write_u16::<ByteOrder>(major_version)?;
-                    buffer.write_u16::<ByteOrder>(minor_version)?;
+                    buffer.write_u16(major_version)?;
+                    buffer.write_u16(minor_version)?;
                     #[rustfmt::skip]
                     let flags: u32 = if input            { 1u32 << 0 } else { 0 } |
                                      if output           { 1u32 << 1 } else { 0 } |
@@ -1241,9 +1331,9 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                                      if must_interact    { 1u32 << 8 } else { 0 } |
                                      if !sequential_only { 1u32 << 9 } else { 0 } |
                                      if !has_options     { 1u32 << 10 } else { 0 };
-                    buffer.write_u32::<ByteOrder>(flags)?;
-                    buffer.write_u32::<ByteOrder>(0)?; // Reserved.
-                    buffer.write_all(&fourcc(&signature))?;
+                    buffer.write_u32(flags)?;
+                    buffer.write_u32(0)?; // Reserved.
+                    buffer.write_fourcc(&signature)?;
                     Ok(())
                 })?;
             }
@@ -1271,9 +1361,9 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 match_name,
             } => {
                 write(&mut buffer, b"8BIM", b"aFLT", |buffer| {
-                    buffer.write_u32::<ByteOrder>(spec_version_major)?;
-                    buffer.write_u32::<ByteOrder>(spec_version_minor)?;
-                    buffer.write_u32::<ByteOrder>(filter_params_version)?;
+                    buffer.write_u32(spec_version_major)?;
+                    buffer.write_u32(spec_version_minor)?;
+                    buffer.write_u32(filter_params_version)?;
                     #[rustfmt::skip]
                     let flags: u32 = (if randomness               { 1u32 << 0 } else { 0 } |  // ANIM_FF_HAS_RANDOMNESS (AE only)
                                      if !geometric               { 1u32 << 1 } else { 0 } |  // ANIM_FF_NON_GEOMETRIC (AE only)
@@ -1289,8 +1379,8 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                                      if any_pixel_aspect_ratio   { 1u32 << 16 } else { 0 } | // ANIM_FF_ANY_PAR
                                      if unity_pixel_aspec_tratio { 1u32 << 17 } else { 0 }; // ANIM_FF_UNITY_PAR
 
-                    buffer.write_u32::<ByteOrder>(flags)?;
-                    buffer.write_u32::<ByteOrder>(number_of_parameters)?;
+                    buffer.write_u32(flags)?;
+                    buffer.write_u32(number_of_parameters)?;
 
                     let match_name_buf = match_name.as_bytes();
                     assert!(match_name_buf.len() < 32);
@@ -1299,10 +1389,10 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                         buffer.push(0);
                     }
 
-                    buffer.write_u32::<ByteOrder>(0)?; // Operates in place - not currently implemented
-                    buffer.write_u32::<ByteOrder>(0)?; // reserved
-                    buffer.write_u32::<ByteOrder>(0)?; // reserved
-                    buffer.write_u32::<ByteOrder>(0) // reserved
+                    buffer.write_u32(0)?; // Operates in place - not currently implemented
+                    buffer.write_u32(0)?; // reserved
+                    buffer.write_u32(0)?; // reserved
+                    buffer.write_u32(0) // reserved
                 })?;
             }
             Property::ANIM_ParamAtom {
@@ -1330,27 +1420,27 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                     for _ in 0..(32 - external_name.len()) {
                         buffer.push(0);
                     }
-                    buffer.write_u32::<ByteOrder>(match_id)?;
-                    buffer.write_u32::<ByteOrder>(data_type as u32)?; // obsolete, don't use OPAQUE with Premiere
-                    buffer.write_u32::<ByteOrder>(ui_type as u32)?; // UI types are only used by AE
-                    buffer.write_f64::<ByteOrder>(valid_min)?; // used for UI type slider - AE only
-                    buffer.write_f64::<ByteOrder>(valid_max)?; // used for UI type slider - AE only
-                    buffer.write_f64::<ByteOrder>(ui_min)?; // used for UI type slider - AE only
-                    buffer.write_f64::<ByteOrder>(ui_max)?; // used for UI type slider - AE only
+                    buffer.write_u32(match_id)?;
+                    buffer.write_u32(data_type as u32)?; // obsolete, don't use OPAQUE with Premiere
+                    buffer.write_u32(ui_type as u32)?; // UI types are only used by AE
+                    buffer.write_f64(valid_min)?; // used for UI type slider - AE only
+                    buffer.write_f64(valid_max)?; // used for UI type slider - AE only
+                    buffer.write_f64(ui_min)?; // used for UI type slider - AE only
+                    buffer.write_f64(ui_max)?; // used for UI type slider - AE only
                     #[rustfmt::skip]
                     let flags: u32 = if res_dependant     { 1u32 << 0 } else { 0 } |
                                      if space_is_relative { 1u32 << 1 } else { 0 } |
                                      if restrict_bounds   { 1u32 << 2 } else { 0 } |
                                      if animate_param     { 1u32 << 3 } else { 0 } |
                                      if scale_ui_range    { 1u32 << 4 } else { 0 };
-                    buffer.write_u32::<ByteOrder>(flags)?;
+                    buffer.write_u32(flags)?;
 
-                    buffer.write_u32::<ByteOrder>(property_size)?; // size of property described in bytes (short = 2, long = 4, etc.)
+                    buffer.write_u32(property_size)?; // size of property described in bytes (short = 2, long = 4, etc.)
 
-                    buffer.write_u32::<ByteOrder>(0)?; // reserved0
-                    buffer.write_u32::<ByteOrder>(0)?; // reserved1
-                    buffer.write_u32::<ByteOrder>(0)?; // reserved2
-                    buffer.write_u32::<ByteOrder>(0) // reserved3
+                    buffer.write_u32(0)?; // reserved0
+                    buffer.write_u32(0)?; // reserved1
+                    buffer.write_u32(0)?; // reserved2
+                    buffer.write_u32(0) // reserved3
                 })?;
             }
             //-------------------------------------------------------------------
@@ -1375,7 +1465,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 more_flags,
             } => {
                 write(&mut buffer, b"PrMr", b"pOPT", |buffer| {
-                    buffer.write_u32::<ByteOrder>(version)?;
+                    buffer.write_u32(version)?;
 
                     // Valid corners mask and initial corners (lsb to msb):
                     // bitTop | bitRight | bitBottom | bitLeft | bitUpperRight | bitLowerRight | bitLowerLeft | bitUpperLeft
@@ -1396,7 +1486,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                     buffer.write_u8(have_start_point as u8)?;
                     buffer.write_u8(have_end_point as u8)?;
 
-                    buffer.write_u32::<ByteOrder>(more_flags)
+                    buffer.write_u32(more_flags)
                 })?;
             }
             // The text description of the transition.
@@ -1410,17 +1500,17 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             //-------------------------------------------------------------------
             Property::InterfaceVersion(x) => {
                 write(&mut buffer, b"ADBE", b"ivrs", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x)
+                    buffer.write_u32(x)
                 })?;
             }
             Property::AdapterVersion(x) => {
                 write(&mut buffer, b"ADBE", b"adpt", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x)
+                    buffer.write_u32(x)
                 })?;
             }
             Property::SP_STSP(x) => {
                 write(&mut buffer, b"ADBE", b"STSP", |buffer| {
-                    buffer.write_u32::<ByteOrder>(x)
+                    buffer.write_u32(x)
                 })?;
             }
             Property::InternalName(name) => {
@@ -1430,32 +1520,32 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             }
             Property::Imports(imports) => {
                 write(&mut buffer, b"ADBE", b"impt", |buffer| {
-                    buffer.write_u32::<ByteOrder>(imports.len() as u32)?;
+                    buffer.write_u32(imports.len() as u32)?;
                     for import in imports {
                         let len = buffer.len();
 
-                        buffer.write_u32::<ByteOrder>(0)?;
+                        buffer.write_u32(0)?;
                         write_cstring(buffer, import.0)?;
-                        buffer.write_u32::<ByteOrder>(import.1)?; // Suite version.
+                        buffer.write_u32(import.1)?; // Suite version.
 
                         let new_len = (buffer.len() - len) as u32;
-                        buffer[len..len + 4].clone_from_slice(&u32_bytes(new_len));
+                        buffer.patch_u32(len, new_len);
                     }
                     Ok(())
                 })?;
             }
             Property::Exports(exports) => {
                 write(&mut buffer, b"ADBE", b"expt", |buffer| {
-                    buffer.write_u32::<ByteOrder>(exports.len() as u32)?;
+                    buffer.write_u32(exports.len() as u32)?;
                     for export in exports {
                         let len = buffer.len();
 
-                        buffer.write_u32::<ByteOrder>(0)?;
+                        buffer.write_u32(0)?;
                         write_cstring(buffer, export.0)?;
-                        buffer.write_u32::<ByteOrder>(export.1)?; // Suite version.
+                        buffer.write_u32(export.1)?; // Suite version.
 
                         let new_len = (buffer.len() - len) as u32;
-                        buffer[len..len + 4].clone_from_slice(&u32_bytes(new_len));
+                        buffer.patch_u32(len, new_len);
                     }
                     Ok(())
                 })?;
@@ -1467,15 +1557,15 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             }
             Property::Keywords(keywords) => {
                 write(&mut buffer, b"ADBE", b"keyw", |buffer| {
-                    buffer.write_u32::<ByteOrder>(keywords.len() as u32)?;
+                    buffer.write_u32(keywords.len() as u32)?;
                     for keyword in keywords {
                         let len = buffer.len();
 
-                        buffer.write_u32::<ByteOrder>(0)?;
+                        buffer.write_u32(0)?;
                         write_cstring(buffer, keyword)?;
 
                         let new_len = (buffer.len() - len) as u32;
-                        buffer[len..len + 4].clone_from_slice(&u32_bytes(new_len));
+                        buffer.patch_u32(len, new_len);
                     }
                     Ok(())
                 })?;
@@ -1497,7 +1587,7 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                                      if shutdown_required { 1u32 << 1 } else { 0 } | // Default is to give shutdown msg.
                                      if purge_cache       { 1u32 << 2 } else { 0 } |
                                      if startup_required  { 1u32 << 3 } else { 0 };
-                    buffer.write_u32::<ByteOrder>(flags)
+                    buffer.write_u32(flags)
                 })?;
             }
             //-------------------------------------------------------------------
@@ -1511,18 +1601,18 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
                 icon_name,
             } => {
                 write(&mut buffer, b"8BIM", b"btni", |buffer| {
-                    buffer.write_u32::<ByteOrder>(version)?; // version
+                    buffer.write_u32(version)?; // version
                     match mac_icon_type {
-                        ButtonIconType::None => buffer.write_u32::<ByteOrder>(0)?,
-                        ButtonIconType::MacCICN => buffer.write_u32::<ByteOrder>(1)?,
+                        ButtonIconType::None => buffer.write_u32(0)?,
+                        ButtonIconType::MacCICN => buffer.write_u32(1)?,
                         _ => {}
                     }
                     match win_icon_type {
-                        ButtonIconType::None => buffer.write_u32::<ByteOrder>(0)?,
-                        ButtonIconType::WindowsICON => buffer.write_u32::<ByteOrder>(1)?,
+                        ButtonIconType::None => buffer.write_u32(0)?,
+                        ButtonIconType::WindowsICON => buffer.write_u32(1)?,
                         _ => {}
                     }
-                    buffer.write_u32::<ByteOrder>(resource_id)?;
+                    buffer.write_u32(resource_id)?;
                     write_cstring(buffer, icon_name)
                 })?;
             }
@@ -1531,44 +1621,43 @@ pub fn build_pipl(properties: Vec<Property>) -> Result<Vec<u8>> {
             //-------------------------------------------------------------------
             Property::Class { version, class } => {
                 write(&mut buffer, b"8BIM", b"clas", |buffer| {
-                    buffer.write_u32::<ByteOrder>(version)?; // version
-                    buffer.write_u32::<ByteOrder>(class as u32)
+                    buffer.write_u32(version)?; // version
+                    buffer.write_u32(class as u32)
                 })?;
             }
             Property::PreviewFile { version, filename } => {
                 write(&mut buffer, b"8BIM", b"prvw", |buffer| {
-                    buffer.write_u32::<ByteOrder>(version)?; // version
+                    buffer.write_u32(version)?; // version
                     write_cstring(buffer, filename)
                 })?;
             }
         }
     }
 
-    Ok(buffer)
+    Ok(buffer.data)
 }
 
+/// Generates the PiPL resource of a plugin for the target being built and passes the registration
+/// data to the `after-effects` crate through `cargo:rustc-env=PIPL_*`. Call it from the build script.
 pub fn plugin_build(properties: Vec<Property>) {
+    plugin_build_for(properties, TargetOs::current())
+}
+
+fn plugin_build_for(properties: Vec<Property>, target: TargetOs) {
     let mut any_entrypoint_emitted = false;
+    let mut target_entrypoint_emitted = false;
     let mut kind = None;
     let mut name = None;
+    let mut search_keywords = "";
+    let mut description = "";
     println!("cargo:rustc-check-cfg=cfg(with_premiere)");
     println!("cargo:rustc-check-cfg=cfg(catch_panics)");
     for prop in properties.iter() {
         match prop {
             Property::Kind(x) => {
-                let bytes = {
-                    #[cfg(target_os = "windows")]
-                    {
-                        u32::from_le_bytes(x.as_bytes())
-                    }
-                    #[cfg(any(target_os = "macos", target_os = "linux"))]
-                    {
-                        u32::from_be_bytes(x.as_bytes())
-                    }
-                };
                 // take the final one
                 kind = Some(x);
-                println!("cargo:rustc-env=PIPL_KIND={bytes}");
+                println!("cargo:rustc-env=PIPL_KIND={}", x.kind_value());
             }
             Property::Name(x) => {
                 name = Some(x);
@@ -1586,26 +1675,20 @@ pub fn plugin_build(properties: Vec<Property>) {
             Property::AE_Effect_Search_Keywords(x) => {
                 // cargo build script directives are line-based, so a newline would truncate the value.
                 assert!(!x.contains(['\n', '\r']), "`AE_Effect_Search_Keywords` must be a single line");
-                println!("cargo:rustc-env=PIPL_SEARCH_KEYWORDS={x}");
+                search_keywords = x;
             }
             Property::AE_Effect_Description(x) => {
                 assert!(!x.contains(['\n', '\r']), "`AE_Effect_Description` must be a single line");
-                println!("cargo:rustc-env=PIPL_EFFECT_DESCRIPTION={x}");
+                description = x;
             }
-            Property::CodeWin64X86(x) => {
+            Property::CodeWin64X86(x) | Property::CodeWinARM64(x) => {
                 any_entrypoint_emitted = true;
+                target_entrypoint_emitted |= target == TargetOs::Windows;
                 println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
             }
-            Property::CodeWinARM64(x) => {
+            Property::CodeMacIntel64(x) | Property::CodeMacARM64(x) => {
                 any_entrypoint_emitted = true;
-                println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
-            }
-            Property::CodeMacIntel64(x) => {
-                any_entrypoint_emitted = true;
-                println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
-            }
-            Property::CodeMacARM64(x) => {
-                any_entrypoint_emitted = true;
+                target_entrypoint_emitted |= target == TargetOs::MacOs;
                 println!("cargo:rustc-env=PIPL_ENTRYPOINT={x}");
             }
             Property::AE_Effect_Spec_Version { major, minor } => {
@@ -1666,7 +1749,16 @@ pub fn plugin_build(properties: Vec<Property>) {
     }
     if !any_entrypoint_emitted {
         println!("cargo:rustc-env=PIPL_ENTRYPOINT=EffectMain");
+    } else if !target_entrypoint_emitted {
+        // Typically a build script choosing the `Code*` properties with `#[cfg(target_os = ..)]`,
+        // which is the *host* OS in a build script, while cross-compiling.
+        println!(
+            "cargo:warning=The PiPL has no entry point property for the {target:?} target. Select the `Code*` properties with the `CARGO_CFG_TARGET_OS` environment variable instead of `#[cfg(target_os)]` when cross-compiling."
+        );
     }
+    // Always emitted (empty when not set) so that `PluginDataEntryFunction3` can pass static strings.
+    println!("cargo:rustc-env=PIPL_SEARCH_KEYWORDS={search_keywords}");
+    println!("cargo:rustc-env=PIPL_EFFECT_DESCRIPTION={description}");
 
     let Some(_kind) = kind else {
         panic!("No `Property::Kind` found in pipl specification. ");
@@ -1677,12 +1769,13 @@ pub fn plugin_build(properties: Vec<Property>) {
     };
 
     // output 8byte PkgInfo and the Info.plist
+    // (the `plist` dependency is only available on macOS and Linux hosts)
     #[cfg(any(target_os = "macos", target_os = "linux"))]
-    {
+    if target == TargetOs::MacOs {
         let pkginfo_path = format!("{}/../../../{}_PkgInfo", std::env::var("OUT_DIR").unwrap(), std::env::var("CARGO_PKG_NAME").unwrap());
 
         let fxtc_tag = b"FXTC";
-        let kind_tag = _kind.as_bytes();
+        let kind_tag = *_kind.code();
         let pkginfo_bytes = [kind_tag, *fxtc_tag].concat();
         std::fs::write(pkginfo_path, &pkginfo_bytes).unwrap();
 
@@ -1690,9 +1783,10 @@ pub fn plugin_build(properties: Vec<Property>) {
         plist::produce_plist(plist_path, _kind, _name);
     }
 
-    let pipl = build_pipl(properties).unwrap();
+    let pipl = build_pipl_for(properties, target).unwrap();
 
-    resource::produce_resource(
+    resource::produce_resource_for(
+        target,
         &pipl,
         Some(&format!(
             "{}/../../../{}.rsrc",
@@ -1700,4 +1794,32 @@ pub fn plugin_build(properties: Vec<Property>) {
             std::env::var("CARGO_PKG_NAME").unwrap()
         )),
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn target_os_comes_from_cargo_cfg_target_os() {
+        assert_eq!(TargetOs::from_cargo_target_os(Some("windows")), TargetOs::Windows);
+        assert_eq!(TargetOs::from_cargo_target_os(Some("macos")), TargetOs::MacOs);
+        assert_eq!(TargetOs::from_cargo_target_os(Some("linux")), TargetOs::MacOs);
+        let host = if cfg!(target_os = "windows") { TargetOs::Windows } else { TargetOs::MacOs };
+        assert_eq!(TargetOs::from_cargo_target_os(None), host);
+    }
+
+    // `PIPL_KIND` is the `inKind` registration argument: the C multi-character constant on every platform.
+    #[test]
+    fn kind_value_is_the_multichar_constant() {
+        assert_eq!(PIPLType::AEEffect.kind_value(), 0x6546_4B54); // 'eFKT'
+        assert_eq!(
+            u32::from_le_bytes(TargetOs::Windows.fourcc(PIPLType::AEEffect.code())),
+            PIPLType::AEEffect.kind_value()
+        );
+        assert_eq!(
+            u32::from_be_bytes(TargetOs::MacOs.fourcc(PIPLType::AEEffect.code())),
+            PIPLType::AEEffect.kind_value()
+        );
+    }
 }

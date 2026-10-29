@@ -20,10 +20,11 @@ fn ensure_eq(our: &[u8], expected: &'static str) {
 
 use pipl::*;
 
+// The layout is chosen by the target (`CARGO_CFG_TARGET_OS` in a build script), not by the host, so
+// the golden tests of both platforms run everywhere through `build_pipl_for`.
 #[test]
-#[cfg(target_os = "macos")]
 fn skeleton_macos() {
-    let pipl = build_pipl(vec![
+    let pipl = build_pipl_for(vec![
         Property::Kind(PIPLType::AEEffect),
         Property::Name("Portable"),
         Property::Category("Sample Plug-ins"),
@@ -48,7 +49,7 @@ fn skeleton_macos() {
         Property::AE_Effect_Match_Name("ADBE Portable"),
         Property::AE_Reserved_Info(0),
         Property::AE_Effect_Support_URL("https://www.adobe.com"),
-    ])
+    ], TargetOs::MacOs)
     .unwrap();
 
     ensure_eq(&pipl, "000000000000000E3842494D6B696E64000000000000000465464B543842494D6E616D65000000000000000908506F727461626C650000003842494D6361746700000000000000100F53
@@ -77,10 +78,9 @@ fn skeleton_macos() {
 }
 
 #[test]
-#[cfg(target_os = "windows")]
-fn sdk_invert_proc_amp() {
+fn sdk_invert_proc_amp_windows() {
     #[rustfmt::skip]
-    let pipl = build_pipl(vec![
+    let pipl = build_pipl_for(vec![
         Property::Kind(PIPLType::AEEffect),
         Property::Name("SDK_Invert_ProcAmp"),
         Property::Category("Sample Plug-ins"),
@@ -110,7 +110,7 @@ fn sdk_invert_proc_amp() {
         Property::AE_Effect_Match_Name("ADBE SDK_Invert_ProcAmp"),
         Property::AE_Reserved_Info(0),
         Property::AE_Effect_Support_URL("https://www.adobe.com"),
-    ]).unwrap();
+    ], TargetOs::Windows).unwrap();
 
     ensure_eq(&pipl, "0100000000000D0000004D494238646E696B0000000004000000544B46654D494238656D616E00000000140000001253444B5F496E766572745F50726F63416D70004D49423867746163
                       00000000100000000F53616D706C6520506C75672D696E734D49423834363638000000000C0000004566666563744D61696E00004D494238525650650000000004000000020000004D49
@@ -147,9 +147,8 @@ fn creating_rsrc() {
 
 // Reference bytes produced by Rez from the AE 27.0 SDK `AE_General.r` for the same properties.
 #[test]
-#[cfg(target_os = "macos")]
 fn search_keywords_and_description_macos() {
-    let pipl = build_pipl(vec![
+    let pipl = build_pipl_for(vec![
         Property::Kind(PIPLType::AEEffect),
         Property::Name("Skeleton"),
         Property::Category("Sample Plug-ins"),
@@ -172,7 +171,7 @@ fn search_keywords_and_description_macos() {
         Property::AE_Effect_Support_URL("https://www.adobe.com"),
         Property::AE_Effect_Search_Keywords(r#"{"en_US":["blur","soft"]}"#),
         Property::AE_Effect_Description("Skeleton effect."),
-    ])
+    ], TargetOs::MacOs)
     .unwrap();
 
     ensure_eq(&pipl, "00000000000000103842494D6B696E64000000000000000465464B543842494D6E616D65000000000000000908536B656C65746F6E0000003842494D6361746700000000000000100F5361
@@ -181,4 +180,43 @@ fn search_keywords_and_description_macos() {
                       42494D65474C4F0000000000000004020000003842494D65474C320000000000000004400000003842494D654D4E41000000000000000E0D4144424520536B656C65746F6E00003842494D
                       6165464C0000000000000004000000003842494D6555524C00000000000000161568747470733A2F2F7777772E61646F62652E636F6D00003842494D654B5744000000000000001A7B2265
                       6E5F5553223A5B22626C7572222C22736F6674225D7D0000003842494D654453430000000000000011536B656C65746F6E206566666563742E00000000");
+}
+
+fn skeleton_properties() -> Vec<Property> {
+    vec![
+        Property::Kind(PIPLType::AEEffect),
+        Property::Name("Skeleton"),
+        Property::Category("Sample Plug-ins"),
+        Property::CodeWin64X86("EffectMain"),
+        Property::AE_Effect_Spec_Version { major: 13, minor: 29 },
+        Property::AE_Effect_Global_OutFlags_2(OutFlags2::StringsAreUtf8),
+        Property::AE_Effect_Search_Keywords("blur"),
+    ]
+}
+
+// Outside a build script `CARGO_CFG_TARGET_OS` is unset, so `build_pipl` falls back to the host.
+#[test]
+fn build_pipl_defaults_to_the_host_layout() {
+    let host = if cfg!(target_os = "windows") { TargetOs::Windows } else { TargetOs::MacOs };
+    assert_eq!(TargetOs::current(), host);
+    assert_eq!(build_pipl(skeleton_properties()).unwrap(), build_pipl_for(skeleton_properties(), host).unwrap());
+}
+
+#[test]
+fn windows_and_macos_layouts_differ() {
+    let windows = build_pipl_for(skeleton_properties(), TargetOs::Windows).unwrap();
+    let macos = build_pipl_for(skeleton_properties(), TargetOs::MacOs).unwrap();
+
+    // Windows: 2 reserved bytes, little-endian, four-character codes reversed.
+    assert_eq!(&windows[..10], &[1, 0, 0, 0, 0, 0, 7, 0, 0, 0]);
+    assert_eq!(&windows[10..18], b"MIB8dnik");
+    // macOS: big-endian, four-character codes in natural order.
+    assert_eq!(&macos[..8], &[0, 0, 0, 0, 0, 0, 0, 7]);
+    assert_eq!(&macos[8..16], b"8BIMkind");
+    // Windows pads C strings to 4 bytes inside the property: "blur\0" + 3, length 8.
+    let ekwd = windows.windows(4).position(|w| w == b"DWKe").unwrap();
+    assert_eq!(&windows[ekwd + 8..ekwd + 20], &[8, 0, 0, 0, b'b', b'l', b'u', b'r', 0, 0, 0, 0]);
+    // macOS pads the whole property instead: length 5, then 3 padding bytes.
+    let ekwd = macos.windows(4).position(|w| w == b"eKWD").unwrap();
+    assert_eq!(&macos[ekwd + 8..ekwd + 20], &[0, 0, 0, 5, b'b', b'l', b'u', b'r', 0, 0, 0, 0]);
 }
