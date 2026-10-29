@@ -451,7 +451,37 @@ macro_rules! define_struct_conv {
 }
 
 macro_rules! define_enum {
+    // Raw values that don't match any variant convert to `$fallback` (and are logged) instead of panicking.
+    ($raw_type:ty, $(#[$topattr:meta])* $name:ident { $( $(#[$attr:meta])* $variant:ident = $value:path ),*, } unknown => $fallback:ident) => {
+        define_enum!(@common $raw_type, [$(#[$topattr])*] $name { $( [$(#[$attr])*] $variant = $value ),* });
+
+        impl From<$raw_type> for $name {
+            /// Converts a raw value. Values that don't match any known variant are logged and converted to
+            #[doc = concat!("[`", stringify!($name), "::", stringify!($fallback), "`].")]
+            fn from(v: $raw_type) -> Self {
+                Self::try_from_raw(v).unwrap_or_else(|| {
+                    log::warn!("Unknown {} value {v}, treating it as {}", stringify!($name), stringify!($fallback));
+                    Self::$fallback
+                })
+            }
+        }
+    };
     ($raw_type:ty, $(#[$topattr:meta])* $name:ident { $( $(#[$attr:meta])* $variant:ident = $value:path ),*, }) => {
+        define_enum!(@common $raw_type, [$(#[$topattr])*] $name { $( [$(#[$attr])*] $variant = $value ),* });
+
+        impl From<$raw_type> for $name {
+            /// Converts a raw value.
+            ///
+            /// # Panics
+            ///
+            /// Panics if the value doesn't match any known variant. Hosts add new values over time, so use
+            #[doc = concat!("[`", stringify!($name), "::try_from_raw()`] for values that come from the host.")]
+            fn from(v: $raw_type) -> Self {
+                Self::try_from_raw(v).unwrap_or_else(|| panic!("Unknown enum value {}: {v}", stringify!($name)))
+            }
+        }
+    };
+    (@common $raw_type:ty, [$(#[$topattr:meta])*] $name:ident { $( [$(#[$attr:meta])*] $variant:ident = $value:path ),* }) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
         #[repr(i32)]
         $(#[$topattr])*
@@ -481,22 +511,54 @@ macro_rules! define_enum {
                     _ => None,
                 }
             }
-        }
-        impl From<$raw_type> for $name {
-            fn from(v: $raw_type) -> Self {
-                Self::try_from_raw(v).unwrap_or_else(|| panic!("Unknown enum value {}: {v}", stringify!($name)))
+
+            /// Converts a raw value returned by the host. Values that don't match any known variant (e.g. ones
+            /// added in a newer SDK) are logged and returned as [`Error::Generic`](crate::Error::Generic)
+            /// instead of panicking, as a panic could unwind into the host.
+            #[allow(dead_code)]
+            pub(crate) fn from_host(v: $raw_type) -> Result<Self, crate::Error> {
+                Self::try_from_raw(v).ok_or_else(|| {
+                    log::warn!("Unknown {} value from the host: {v}", stringify!($name));
+                    crate::Error::Generic
+                })
             }
         }
     };
 }
 
 macro_rules! define_suite {
+    // `newer: { field: SuiteType, ... }` adds fields holding newer versions of the same suite, for functions that only exist
+    // there. Each is acquired on first use through the generated private `field()` method, at most once per instance of this
+    // suite (a failure to acquire it is cached too), and released when this suite is dropped.
+    ($(#[$attr:meta])* $suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident, newer: { $( $newer_field:ident: $newer_type:ty ),* $(,)? }) => {
+        define_suite!(@impl [$(#[$attr])*] $suite_pretty_name, $suite_name, $suite_name_string, $suite_version, [$( $newer_field: $newer_type ),*]);
+
+        impl $suite_pretty_name {
+            $(
+                #[doc = concat!("Returns the lazily acquired [`", stringify!($newer_type), "`], or the error from acquiring it.")]
+                fn $newer_field(&self) -> Result<&$newer_type, Error> {
+                    self.$newer_field.get_or_init(<$newer_type as Suite>::new).as_ref().map_err(|e| *e)
+                }
+            )*
+        }
+    };
     ($(#[$attr:meta])* $suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident) => {
-        #[derive(Debug, Hash)]
+        define_suite!(@impl [$(#[$attr])*] $suite_pretty_name, $suite_name, $suite_name_string, $suite_version, []);
+    };
+    (@impl [$(#[$attr:meta])*] $suite_pretty_name:ident, $suite_name:ident, $suite_name_string:ident, $suite_version:ident, [$( $newer_field:ident: $newer_type:ty ),*]) => {
+        #[derive(Debug)]
         $(#[$attr])*
         pub struct $suite_pretty_name {
             pica_basic_suite_ptr: *const after_effects_sys::SPBasicSuite,
             suite_ptr: *const after_effects_sys::$suite_name,
+            $( $newer_field: std::cell::OnceCell<Result<$newer_type, Error>>, )*
+        }
+
+        impl std::hash::Hash for $suite_pretty_name {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                std::hash::Hash::hash(&self.pica_basic_suite_ptr, state);
+                std::hash::Hash::hash(&self.suite_ptr, state);
+            }
         }
 
         impl Suite for $suite_pretty_name {
@@ -512,6 +574,7 @@ macro_rules! define_suite {
                     Ok(suite_ptr) => Ok(Self {
                         pica_basic_suite_ptr,
                         suite_ptr,
+                        $( $newer_field: std::cell::OnceCell::new(), )*
                     }),
                     Err(e) => Err(e),
                 }
@@ -524,6 +587,7 @@ macro_rules! define_suite {
             }
         }
 
+        // The `newer` fields are dropped (and their suites released) after this, through the same PICA basic suite.
         impl Drop for $suite_pretty_name {
             fn drop(&mut self) {
                 ae_release_suite_ptr!(
@@ -636,4 +700,32 @@ macro_rules! define_ptr_wrapper {
             }
         }
     };
+}
+
+#[cfg(test)]
+mod define_enum_tests {
+    use crate::{ae_sys, aegp::GuideOrientation, Error};
+
+    #[test]
+    fn try_from_raw_and_from_host_reject_unknown_values() {
+        let vertical = ae_sys::AEGP_GuideOrientationType_VERTICAL as ae_sys::AEGP_GuideOrientationType;
+        assert_eq!(GuideOrientation::try_from_raw(vertical), Some(GuideOrientation::Vertical));
+        assert_eq!(GuideOrientation::from_host(vertical), Ok(GuideOrientation::Vertical));
+        assert_eq!(GuideOrientation::try_from_raw(1234), None);
+        assert_eq!(GuideOrientation::from_host(1234), Err(Error::Generic));
+    }
+
+    #[test]
+    #[should_panic(expected = "Unknown enum value GuideOrientation: 1234")]
+    fn from_raw_still_panics_on_unknown_values() {
+        let _ = GuideOrientation::from(1234 as ae_sys::AEGP_GuideOrientationType);
+    }
+
+    #[test]
+    fn unknown_error_codes_convert_to_generic() {
+        assert_eq!(Error::from(ae_sys::PF_Err_NONE as ae_sys::PF_Err), Error::None);
+        assert_eq!(Error::from(ae_sys::A_Err_PARAMETER as ae_sys::PF_Err), Error::Parameter);
+        assert_eq!(Error::from(123_456 as ae_sys::PF_Err), Error::Generic);
+        assert_eq!(Error::try_from_raw(123_456 as ae_sys::PF_Err), None);
+    }
 }

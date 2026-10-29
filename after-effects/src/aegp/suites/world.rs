@@ -31,7 +31,7 @@ impl WorldSuite {
 
     /// Returns the type of a given [`WorldHandle`]
     pub fn world_type(&self, world: impl AsPtr<AEGP_WorldH>) -> Result<WorldType, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetType -> ae_sys::AEGP_WorldType, world.as_ptr())?.into())
+        WorldType::from_host(call_suite_fn_single!(self, AEGP_GetType -> ae_sys::AEGP_WorldType, world.as_ptr())?)
     }
 
     /// Returns the width and height of the given [`WorldHandle`].

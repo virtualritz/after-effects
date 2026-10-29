@@ -61,10 +61,7 @@ impl RenderQueueSuite {
     */
     /// Obtains the current render queue state.
     pub fn render_queue_state(&self) -> Result<RenderQueueState, Error> {
-        Ok(
-            call_suite_fn_single!(self, AEGP_GetRenderQueueState -> ae_sys::AEGP_RenderQueueState)?
-                .into(),
-        )
+        RenderQueueState::from_host(call_suite_fn_single!(self, AEGP_GetRenderQueueState -> ae_sys::AEGP_RenderQueueState)?)
     }
 
     /// Obtains the current render queue state.

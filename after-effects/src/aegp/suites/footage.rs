@@ -69,7 +69,7 @@ impl FootageSuite {
 
     /// Retrieves the footage signature of specified footage.
     pub fn footage_signature(&self, footage_handle: impl AsPtr<AEGP_FootageH>) -> Result<FootageSignature, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetFootageSignature -> ae_sys::AEGP_FootageSignature, footage_handle.as_ptr())?.into())
+        FootageSignature::from_host(call_suite_fn_single!(self, AEGP_GetFootageSignature -> ae_sys::AEGP_FootageSignature, footage_handle.as_ptr())?)
     }
 
     /// Creates a new footage item. The file path is a NULL-terminated UTF-16 string with platform separators.

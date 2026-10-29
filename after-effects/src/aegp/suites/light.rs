@@ -20,7 +20,8 @@ define_suite!(
     LightSuite,
     AEGP_LightSuite2,
     kAEGPLightSuite,
-    kAEGPLightSuiteVersion2
+    kAEGPLightSuiteVersion2,
+    newer: { v3: LightSuite3 }
 );
 define_suite!(
     LightSuite3,
@@ -39,7 +40,7 @@ impl LightSuite {
 
     /// Retrieves the [`LightType`] of the specified camera layer
     pub fn light_type(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LightType, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetLightType -> ae_sys::AEGP_LightType, layer_handle.as_ptr())?.into())
+        LightType::from_host(call_suite_fn_single!(self, AEGP_GetLightType -> ae_sys::AEGP_LightType, layer_handle.as_ptr())?)
     }
 
     /// Sets the [`LightType`] for the specified camera layer.
@@ -48,13 +49,13 @@ impl LightSuite {
     }
 
     pub fn light_source(&self, layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<LayerHandle, Error> {
-        let v3 = LightSuite3::new()?;
+        let v3 = self.v3()?;
         Ok(LayerHandle::from_raw(
             call_suite_fn_single!(v3, AEGP_GetLightSource -> ae_sys::AEGP_LayerH, layer_handle.as_ptr())?
         ))
     }
     pub fn set_light_source(&self, layer_handle: impl AsPtr<AEGP_LayerH>, light_source: impl AsPtr<AEGP_LayerH>) -> Result<(), Error> {
-        let v3 = LightSuite3::new()?;
+        let v3 = self.v3()?;
         call_suite_fn!(v3, AEGP_SetLightSource, layer_handle.as_ptr(), light_source.as_ptr())
     }
 }

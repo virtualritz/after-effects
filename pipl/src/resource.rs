@@ -1,36 +1,51 @@
 use byteorder::{BigEndian, WriteBytesExt};
 use std::io::Result;
 
-// The body is entirely platform-cfg'd, and `pipl` is compiled for the host as a
-// build-dependency, so both params read as unused on some targets despite being
-// used on Windows/macOS. Don't `_`-prefix genuinely-used bindings.
-#[allow(unused_variables)]
+/// Embeds (Windows) or writes (macOS, to `macos_rsrc_path`) the PiPL resource for the target being
+/// built (see [`TargetOs::current`](crate::TargetOs::current)).
 pub fn produce_resource(pipl: &[u8], macos_rsrc_path: Option<&str>) {
-    #[cfg(target_os = "windows")]
-    {
-        // An RC string literal is code-page converted by the resource
-        // compiler, which turns every byte >= 0x80 into `?` (0x3F). The
-        // global out-flags word crosses that line as soon as
-        // `PF_OutFlag_CUSTOM_UI` (bit 15) is set, and After Effects then
-        // refuses the plug-in with a global out-flags mismatch. A file
-        // reference is copied into the resource verbatim, so the PiPL bytes
-        // are written next to the generated .rc and referenced instead.
-        let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR is set for build scripts");
-        std::fs::write(std::path::Path::new(&out_dir).join("pipl.bin"), pipl).unwrap();
+    produce_resource_for(crate::TargetOs::current(), pipl, macos_rsrc_path)
+}
 
-        let mut res = winres::WindowsResource::new();
-        res.append_rc_content("16000 PiPL DISCARDABLE \"pipl.bin\"");
-        res.compile().unwrap();
-    }
-    #[cfg(target_os = "macos")]
-    if let Some(rsrc_path) = macos_rsrc_path {
-        #[rustfmt::skip]
-        let rsrc_content = create_rsrc(&[
-            (b"PiPL", &[
-                (16000, pipl)
-            ])
-        ]).unwrap();
-        std::fs::write(rsrc_path, rsrc_content).unwrap();
+pub(crate) fn produce_resource_for(target: crate::TargetOs, pipl: &[u8], macos_rsrc_path: Option<&str>) {
+    match target {
+        crate::TargetOs::Windows => {
+            // An RC string literal is code-page converted by the resource
+            // compiler, which turns every byte >= 0x80 into `?` (0x3F). The
+            // global out-flags word crosses that line as soon as
+            // `PF_OutFlag_CUSTOM_UI` (bit 15) is set, and After Effects then
+            // refuses the plug-in with a global out-flags mismatch. A file
+            // reference is copied into the resource verbatim, so the PiPL bytes
+            // are written next to the generated .rc and referenced instead.
+            let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR is set for build scripts");
+            std::fs::write(std::path::Path::new(&out_dir).join("pipl.bin"), pipl).unwrap();
+
+            let mut res = winres::WindowsResource::new();
+            res.append_rc_content("16000 PiPL DISCARDABLE \"pipl.bin\"");
+            if cfg!(windows) {
+                res.compile().unwrap();
+            } else {
+                // Off Windows, winres only knows `rc.exe`/`windres` from fixed locations, so a missing
+                // resource compiler must not fail e.g. `cargo check --target x86_64-pc-windows-msvc`.
+                // The .rc and pipl.bin are still written to OUT_DIR.
+                if let Err(e) = res.compile() {
+                    println!(
+                        "cargo:warning=The Windows PiPL resource was not compiled ({e}); the plugin won't load in After Effects without it. The resource script is {out_dir}/resource.rc"
+                    );
+                }
+            }
+        }
+        crate::TargetOs::MacOs => {
+            if let Some(rsrc_path) = macos_rsrc_path {
+                #[rustfmt::skip]
+                let rsrc_content = create_rsrc(&[
+                    (b"PiPL", &[
+                        (16000, pipl)
+                    ])
+                ]).unwrap();
+                std::fs::write(rsrc_path, rsrc_content).unwrap();
+            }
+        }
     }
 }
 

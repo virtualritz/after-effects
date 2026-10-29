@@ -120,7 +120,7 @@ impl PathDataSuite {
 
     /// Retrieves the mode for the given path.
     pub fn path_get_mask_mode(&self, effect_ref: impl AsPtr<PF_ProgPtr>, unique_id: PF_PathID) -> Result<MaskMode, Error> {
-        Ok(call_suite_fn_single!(self, PF_PathGetMaskMode -> PF_MaskMode, effect_ref.as_ptr(), unique_id)?.into())
+        MaskMode::from_host(call_suite_fn_single!(self, PF_PathGetMaskMode -> PF_MaskMode, effect_ref.as_ptr(), unique_id)?)
     }
 
     /// Retrieves the name of the path.

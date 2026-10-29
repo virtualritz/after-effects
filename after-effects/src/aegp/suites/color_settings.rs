@@ -159,6 +159,7 @@ impl ColorSettingsSuite {
 
 // ――――――――――――――――――――――――――――――――――――――― Types ――――――――――――――――――――――――――――――――――――――――
 
+register_handle!(AEGP_ItemViewP);
 define_handle_wrapper!(ItemViewHandle, AEGP_ItemViewP);
 define_handle_wrapper!(ConstColorProfileHandle, AEGP_ConstColorProfileP);
 

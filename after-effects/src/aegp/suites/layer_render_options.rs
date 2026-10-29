@@ -77,7 +77,7 @@ impl LayerRenderOptionsSuite {
 
     /// Retrieves the AEGP_WorldType of the given [`LayerRenderOptionsHandle`].
     pub fn world_type(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>) -> Result<aegp::WorldType, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetWorldType -> AEGP_WorldType, options.as_ptr())?.into())
+        aegp::WorldType::from_host(call_suite_fn_single!(self, AEGP_GetWorldType -> AEGP_WorldType, options.as_ptr())?)
     }
 
     /// Specifies the downsample factor (with independent horizontal and vertical settings) for the given [`LayerRenderOptionsHandle`].
@@ -101,7 +101,7 @@ impl LayerRenderOptionsSuite {
 
     /// Retrieves the matte mode for the given [`LayerRenderOptionsHandle`].
     pub fn matte_mode(&self, options: impl AsPtr<AEGP_LayerRenderOptionsH>) -> Result<MatteMode, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetMatteMode -> AEGP_MatteMode, options.as_ptr())?.into())
+        MatteMode::from_host(call_suite_fn_single!(self, AEGP_GetMatteMode -> AEGP_MatteMode, options.as_ptr())?)
     }
 }
 

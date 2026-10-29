@@ -5,7 +5,176 @@ use serde::{de::DeserializeOwned, Serialize};
 #[cfg(target_os = "macos")]
 use objc2_core_foundation::{CFRange, CFString};
 
-const MAX_NAME_LEN: usize = 32;
+static STRINGS_ARE_UTF8: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Records whether the host reads the effect's `char` strings as UTF-8 instead of a legacy multi-byte encoding.
+/// Called by the effect entry point after global setup, with [`after_effects_reads_utf8`] for After Effects.
+#[doc(hidden)]
+pub fn set_strings_are_utf8(enabled: bool) {
+    STRINGS_ARE_UTF8.store(enabled, std::sync::atomic::Ordering::Relaxed);
+}
+
+fn strings_are_utf8() -> bool {
+    STRINGS_ARE_UTF8.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// Whether the running After Effects reads effect strings (parameter names, ...) as UTF-8.
+///
+/// Measured with a Cyrillic parameter name and no `PF_OutFlag2_STRINGS_ARE_UTF8`: After Effects 26.2 (Windows,
+/// ANSI code page 1251) and 26.5 (macOS) display UTF-8 correctly and drop the name entirely when it is sent in
+/// the system encoding, while After Effects 25.1 (macOS) reads it as MacRoman. So the deciding factor is the AE
+/// version, not the flag. The version can't be read directly by an effect, so this probes `AEGP_GuideSuite1`,
+/// which is new in After Effects 26.0. Must be called while the host's PICA basic suite is available.
+#[doc(hidden)]
+pub fn after_effects_reads_utf8() -> bool {
+    let pica = crate::borrow_pica_basic_as_ptr();
+    if pica.is_null() {
+        return false;
+    }
+    // Acquire the suite directly instead of through `Suite::new()`, which logs a missing suite as an error.
+    unsafe {
+        let (Some(acquire), Some(release)) = ((*pica).AcquireSuite, (*pica).ReleaseSuite) else {
+            return false;
+        };
+        let name = ae_sys::kAEGPGuideSuite.as_ptr() as *const _;
+        let version = ae_sys::kAEGPGuideSuiteVersion1 as i32;
+        let mut suite: *const std::ffi::c_void = std::ptr::null();
+        if acquire(name, version, &mut suite as *mut *const std::ffi::c_void as _) as u32 != ae_sys::kSPNoError {
+            return false;
+        }
+        release(name, version);
+        true
+    }
+}
+
+/// Encodes `s` the way the host expects `char` strings coming from the effect (parameter names, popup
+/// choices, checkbox labels, `return_msg`, ...): UTF-8 in After Effects 26.0+ (see [`after_effects_reads_utf8`]),
+/// otherwise the legacy multi-byte encoding (see `legacy_encode`).
+///
+/// The result never contains the terminating NUL and is at most `max_len - 1` bytes long (so that it fits,
+/// together with the NUL, into a `max_len` byte buffer). Truncation never splits a character.
+/// Reference: <https://ae-plugins.docsforadobe.dev/intro/localization/>
+pub(crate) fn host_string_bytes(s: &str, max_len: usize) -> Vec<u8> {
+    encode_host_string(s, max_len, strings_are_utf8())
+}
+
+/// Encodes `s` with [`host_string_bytes`] into the fixed-size, NUL-terminated buffer `dst`.
+/// The whole buffer is cleared first, so no bytes of a previous, longer string are left behind.
+/// Returns the number of bytes written, not counting the terminating NUL.
+pub(crate) fn copy_host_string(dst: &mut [ae_sys::A_char], s: &str) -> usize {
+    write_nul_terminated(dst, &host_string_bytes(s, dst.len()))
+}
+
+fn write_nul_terminated(dst: &mut [ae_sys::A_char], bytes: &[u8]) -> usize {
+    dst.fill(0);
+    let len = bytes.len().min(dst.len().saturating_sub(1));
+    for (d, s) in dst.iter_mut().zip(&bytes[..len]) {
+        *d = *s as ae_sys::A_char;
+    }
+    len
+}
+
+/// Reads a NUL-terminated string owned by the host. Returns an empty string for a null pointer or for
+/// text that isn't valid UTF-8 (e.g. non-ASCII text in the system encoding).
+fn host_cstr_to_str<'a>(ptr: *const std::ffi::c_char) -> &'a str {
+    if ptr.is_null() {
+        return "";
+    }
+    let cstr = unsafe { CStr::from_ptr(ptr) };
+    cstr.to_str().unwrap_or_else(|_| {
+        log::warn!("Host string is not valid UTF-8: {}", cstr.to_string_lossy());
+        ""
+    })
+}
+
+fn encode_host_string(s: &str, max_len: usize, utf8: bool) -> Vec<u8> {
+    if utf8 {
+        utf8_prefix(s, max_len.saturating_sub(1)).as_bytes().to_vec()
+    } else {
+        truncate_encoded(s, max_len, legacy_encode)
+    }
+}
+
+/// The longest prefix of `s` that is at most `limit` bytes long and ends on a character boundary.
+fn utf8_prefix(s: &str, limit: usize) -> &str {
+    let mut end = s.len().min(limit);
+    while !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    &s[..end]
+}
+
+/// Encodes the longest prefix of `s` (cut on a character boundary) whose encoding fits into `max_len - 1` bytes.
+fn truncate_encoded(s: &str, max_len: usize, encode: impl Fn(&str) -> Vec<u8>) -> Vec<u8> {
+    let limit = max_len.saturating_sub(1);
+    // Every character takes at least one byte, so a prefix with more than `limit` characters can never fit.
+    let mut end = s.char_indices().nth(limit).map_or(s.len(), |(i, _)| i);
+    loop {
+        let bytes = if end == 0 { Vec::new() } else { encode(&s[..end]) };
+        if bytes.len() <= limit {
+            return bytes;
+        }
+        end = s[..end].char_indices().next_back().map_or(0, |(i, _)| i);
+    }
+}
+
+/// Converts `s` to the system multi-byte encoding. Unconvertible characters are replaced with `?`.
+///
+/// Note that After Effects 25.1 on macOS was measured to read these strings as MacRoman even with a MacCyrillic
+/// system encoding, so text outside MacRoman can't be shown there in any encoding.
+#[cfg(target_os = "macos")]
+fn legacy_encode(s: &str) -> Vec<u8> {
+    let cfstr = CFString::from_str(s);
+    let encoding = CFString::system_encoding();
+    let length = cfstr.length();
+    let max_size = CFString::maximum_size_for_encoding(length, encoding);
+
+    let mut buffer = vec![0u8; max_size.max(0) as usize];
+    let mut used_len = 0;
+    unsafe {
+        CFString::bytes(
+            &cfstr,
+            CFRange::new(0, length),
+            encoding,
+            b'?', // replacement for unconvertible characters
+            false,
+            buffer.as_mut_ptr(),
+            max_size,
+            &mut used_len,
+        );
+    }
+    buffer.truncate(used_len.max(0) as usize);
+    buffer
+}
+
+/// Converts `s` to the system ("ANSI") multi-byte encoding. Unconvertible characters are replaced with the
+/// code page's default character.
+#[cfg(target_os = "windows")]
+fn legacy_encode(s: &str) -> Vec<u8> {
+    use windows_sys::Win32::Globalization::{WideCharToMultiByte, CP_ACP};
+    let wstr: Vec<u16> = s.encode_utf16().collect();
+    if wstr.is_empty() {
+        return Vec::new();
+    }
+    // Adobe's localization page says to use `CP_OEMCP`, the console (OEM) code page. Measured on a Russian Windows
+    // (ANSI 1251, OEM 866): Premiere Pro 2026 reads the ANSI code page (`CP_ACP`); OEM bytes would come out wrong.
+    // After Effects 26.x doesn't use this path at all, as it reads UTF-8 (see `after_effects_reads_utf8`).
+    unsafe {
+        let len = WideCharToMultiByte(CP_ACP, 0, wstr.as_ptr(), wstr.len() as i32, std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut());
+        if len <= 0 {
+            return Vec::new();
+        }
+        let mut bytes = vec![0u8; len as usize];
+        let len = WideCharToMultiByte(CP_ACP, 0, wstr.as_ptr(), wstr.len() as i32, bytes.as_mut_ptr(), len, std::ptr::null(), std::ptr::null_mut());
+        bytes.truncate(len.max(0) as usize);
+        bytes
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn legacy_encode(s: &str) -> Vec<u8> {
+    s.as_bytes().to_vec()
+}
 
 define_enum! {
     ae_sys::PF_ParamType,
@@ -174,6 +343,7 @@ define_param_wrapper! {
     Param::CheckBox,
     CheckBoxDef {
         label: CString,
+        label_utf8: String,
     },
     impl value: bool,
     fn init(param) {
@@ -189,12 +359,18 @@ impl CheckBoxDef<'_> {
         self.def.dephault != 0
     }
     pub fn set_label(&mut self, v: &str) -> &mut Self {
-        self.label = CString::new(v).unwrap();
+        // The host reads the label in its string encoding (see `host_string_bytes`), keep the original for `label()`.
+        self.label = CString::new(host_string_bytes(v, usize::MAX)).unwrap();
+        self.label_utf8 = v.to_owned();
         self.def.u.nameptr = self.label.as_ptr();
         self
     }
     pub fn label(&self) -> &str {
-        unsafe { CStr::from_ptr(self.def.u.nameptr).to_str().unwrap() }
+        let nameptr = unsafe { self.def.u.nameptr };
+        if std::ptr::eq(nameptr, self.label.as_ptr()) {
+            return &self.label_utf8;
+        }
+        host_cstr_to_str(nameptr)
     }
 }
 // ――――――――――――――――――――――――――――――――――― Checkbox ――――――――――――――――――――――――――――――――――――
@@ -406,6 +582,7 @@ define_param_wrapper! {
     Param::Popup,
     PopupDef {
         options: CString,
+        options_utf8: String,
     },
     impl value: i32,
     impl default: i32,
@@ -413,12 +590,20 @@ define_param_wrapper! {
 impl<'a> PopupDef<'a> {
     pub fn set_options(&mut self, options: &[&str]) {
         // Build a string in the format "list|of|choices|", the format Ae expects.
-        self.options = CString::new(options.join("|")).unwrap();
+        let joined = options.join("|");
+        // The host reads the choices in its string encoding (see `host_string_bytes`), keep the original for `options()`.
+        self.options = CString::new(host_string_bytes(&joined, usize::MAX)).unwrap();
+        self.options_utf8 = joined;
         self.def.u.namesptr = self.options.as_ptr();
         self.def.num_choices = options.len().try_into().unwrap();
     }
     pub fn options(&self) -> Vec<&str> {
-        let options = unsafe { CStr::from_ptr(self.def.u.namesptr).to_str().unwrap() };
+        let namesptr = unsafe { self.def.u.namesptr };
+        let options = if std::ptr::eq(namesptr, self.options.as_ptr()) {
+            self.options_utf8.as_str()
+        } else {
+            host_cstr_to_str(namesptr)
+        };
         options.split('|').collect()
     }
 }
@@ -1064,76 +1249,13 @@ impl<'p> ParamDef<'p> {
     }
 
     pub fn set_name(&mut self, name: &str) -> Result<(), Error> {
-        if name.is_empty() {
-            self.param_def.name_do_not_use_directly[0] = 0;
-            return Ok(());
+        // UTF-8 in After Effects 26.0+, the legacy multi-byte encoding otherwise (see `host_string_bytes`).
+        let written = copy_host_string(&mut self.param_def.name_do_not_use_directly, name);
+        if written == 0 && !name.is_empty() {
+            log::error!("Failed to set the parameter name, \"{name}\" could not be converted to the host encoding.");
+            return Err(Error::InvalidParms);
         }
-        // According to Adobe docs, the encoding expected for the name is the system encoding.
-        // Reference: https://ae-plugins.docsforadobe.dev/intro/localization/
-        let mut bytes = {
-            #[cfg(target_os = "macos")]
-            unsafe {
-                let cfstr = CFString::from_str(name);
-                let encoding = CFString::system_encoding();
-                let length = cfstr.length();
-                let max_size = CFString::maximum_size_for_encoding(length, encoding);
-
-                let mut buffer = vec![0u8; max_size as usize];
-                let mut used_len = 0;
-
-                 CFString::bytes(
-                    &cfstr,
-                    CFRange::new(0, length),
-                    encoding,
-                    b'?',  // replacement for unconvertible characters
-                    false,
-                    buffer.as_mut_ptr(),
-                    max_size,
-                    &mut used_len,
-                );
-
-                buffer.truncate(used_len as usize);
-                buffer
-            }
-            #[cfg(target_os = "windows")]
-            unsafe {
-                use std::ffi::OsStr;
-                use std::os::windows::ffi::OsStrExt;
-                use windows_sys::Win32::Globalization::{WideCharToMultiByte, CP_OEMCP};
-                let mut wstr: Vec<u16> = OsStr::new(name).encode_wide().collect();
-                if !wstr.is_empty() {
-                    wstr.push(0); // Null-terminate
-                    let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, std::ptr::null_mut(), 0, std::ptr::null(), std::ptr::null_mut());
-                    if len > 0 {
-                        let mut bytes: Vec<u8> = Vec::with_capacity(len as usize);
-                        let len = WideCharToMultiByte(CP_OEMCP, 0, wstr.as_ptr(), wstr.len() as i32, bytes.as_mut_ptr() as _, len, std::ptr::null(), std::ptr::null_mut());
-                        if len > 0 {
-                            bytes.set_len(len as usize);
-                            bytes
-                        } else {
-                            Vec::new()
-                        }
-                    } else {
-                        Vec::new()
-                    }
-                } else {
-                    Vec::new()
-                }
-            }
-        };
-
-        let to_copy = bytes.len().min(MAX_NAME_LEN);
-        if to_copy > 0 {
-            bytes.resize(to_copy, 0);
-            if let Some(last_elem) = bytes.get_mut(MAX_NAME_LEN - 1) {
-                *last_elem = 0;
-            }
-            self.param_def.name_do_not_use_directly[0..bytes.len()].copy_from_slice(unsafe { std::mem::transmute(bytes.as_slice()) });
-            return Ok(());
-        }
-
-        log::error!("Failed to set the parameter name, \"{name}\" is too long or contains invalid characters for the system encoding.");
-        Err(Error::InvalidParms)
+        Ok(())
     }
 
     pub fn set_flags       (&mut self, f: ParamFlag)    { self.param_def.flags           = f.bits() as _; }
@@ -1420,5 +1542,103 @@ impl<'p, P: Eq + PartialEq + Hash + Copy + Debug> Parameters<'p, P> {
             map: self.map.clone(),
             params: self.params.to_vec(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn as_bytes(buf: &[ae_sys::A_char]) -> Vec<u8> {
+        buf.iter().map(|&c| c as u8).collect()
+    }
+
+    #[test]
+    fn utf8_host_string_is_truncated_on_a_char_boundary() {
+        // "Ре" is 4 bytes, "Реж" would be 6 bytes, which doesn't fit into 6 - 1.
+        assert_eq!(encode_host_string("Режим", 6, true), "Ре".as_bytes());
+        assert_eq!(encode_host_string("Mode", 32, true), b"Mode");
+        assert_eq!(encode_host_string("Mode", 5, true), b"Mode");
+        assert_eq!(encode_host_string("Mode", 4, true), b"Mod");
+        assert!(encode_host_string("Mode", 1, true).is_empty());
+        assert!(encode_host_string("Mode", 0, true).is_empty());
+        assert!(encode_host_string("", 32, true).is_empty());
+    }
+
+    #[test]
+    fn encoded_host_string_is_truncated_on_a_char_boundary() {
+        // An encoding with two bytes per character, like a double-byte code page.
+        let utf16 = |s: &str| s.encode_utf16().flat_map(u16::to_le_bytes).collect::<Vec<u8>>();
+        assert_eq!(truncate_encoded("abcdef", 6, utf16), utf16("ab"));
+        assert_eq!(truncate_encoded("abcdef", 7, utf16), utf16("abc"));
+        assert_eq!(truncate_encoded("abc", 32, utf16), utf16("abc"));
+        assert!(truncate_encoded("abc", 2, utf16).is_empty());
+        assert!(truncate_encoded("abc", 0, utf16).is_empty());
+        // Truncation never splits a multi-byte character.
+        let utf8 = |s: &str| s.as_bytes().to_vec();
+        assert_eq!(truncate_encoded("Режим", 6, utf8), "Ре".as_bytes());
+    }
+
+    #[test]
+    fn ascii_is_unchanged_in_the_system_encoding() {
+        assert_eq!(encode_host_string("Pop-up param", 32, false), b"Pop-up param");
+        assert_eq!(encode_host_string("A long parameter name that does not fit", 32, false), b"A long parameter name that does");
+    }
+
+    #[test]
+    fn host_string_buffer_is_cleared_and_nul_terminated() {
+        let mut buf = [b'x' as ae_sys::A_char; 8];
+        assert_eq!(write_nul_terminated(&mut buf, b"ab"), 2);
+        assert_eq!(as_bytes(&buf), b"ab\0\0\0\0\0\0");
+
+        assert_eq!(write_nul_terminated(&mut buf, b"0123456789"), 7);
+        assert_eq!(as_bytes(&buf), b"0123456\0");
+
+        assert_eq!(write_nul_terminated(&mut [], b"ab"), 0);
+    }
+
+    #[test]
+    fn shorter_param_name_does_not_leave_stale_bytes() {
+        let raw_in: ae_sys::PF_InData = unsafe { std::mem::zeroed() };
+        let mut raw_def: ae_sys::PF_ParamDef = unsafe { std::mem::zeroed() };
+        raw_def.name_do_not_use_directly.fill(b'x' as ae_sys::A_char);
+        let mut def = ParamDef::from_raw(InData::from_raw(&raw_in), &mut raw_def, None);
+
+        def.set_name("A long parameter name that does not fit").unwrap();
+        def.set_name("Short").unwrap();
+        def.set_name("").unwrap();
+        def.set_name("Mode").unwrap();
+        drop(def);
+
+        let name = as_bytes(&raw_def.name_do_not_use_directly);
+        assert_eq!(&name[..4], b"Mode");
+        assert!(name[4..].iter().all(|&b| b == 0));
+    }
+
+    #[test]
+    fn long_param_name_is_truncated_and_nul_terminated() {
+        let raw_in: ae_sys::PF_InData = unsafe { std::mem::zeroed() };
+        let mut raw_def: ae_sys::PF_ParamDef = unsafe { std::mem::zeroed() };
+        let mut def = ParamDef::from_raw(InData::from_raw(&raw_in), &mut raw_def, None);
+        def.set_name("A long parameter name that does not fit").unwrap();
+        drop(def);
+
+        let name = as_bytes(&raw_def.name_do_not_use_directly);
+        let len = name.len();
+        assert_eq!(&name[..len - 1], &b"A long parameter name that does not fit"[..len - 1]);
+        assert_eq!(name[len - 1], 0);
+    }
+
+    #[test]
+    fn popup_options_and_checkbox_label_round_trip() {
+        let mut popup = PopupDef::new();
+        popup.set_options(&["Мягкий", "Жёсткий", "(-", "Off"]);
+        assert_eq!(popup.options(), ["Мягкий", "Жёсткий", "(-", "Off"]);
+        assert_eq!(popup.def.num_choices, 4);
+
+        let mut checkbox = CheckBoxDef::new();
+        assert_eq!(checkbox.label(), " ");
+        checkbox.set_label("Включить");
+        assert_eq!(checkbox.label(), "Включить");
     }
 }

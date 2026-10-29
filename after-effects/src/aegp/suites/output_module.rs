@@ -42,15 +42,12 @@ impl OutputModuleSuite {
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
         output_module: impl AsPtr<ae_sys::AEGP_OutputModuleRefH>,
     ) -> Result<EmbeddingType, Error> {
-        Ok(
-            call_suite_fn_single!(
+        EmbeddingType::from_host(call_suite_fn_single!(
                 self,
                 AEGP_GetEmbedOptions -> ae_sys::AEGP_EmbeddingType,
                 rq_item.as_ptr(),
                 output_module.as_ptr()
-            )?
-            .into()
-        )
+            )?)
     }
 
     /// Sets the embedding options for an output module.
@@ -75,15 +72,12 @@ impl OutputModuleSuite {
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
         output_module: impl AsPtr<ae_sys::AEGP_OutputModuleRefH>,
     ) -> Result<PostRenderAction, Error> {
-        Ok(
-            call_suite_fn_single!(
+        PostRenderAction::from_host(call_suite_fn_single!(
                 self,
                 AEGP_GetPostRenderAction -> ae_sys::AEGP_PostRenderAction,
                 rq_item.as_ptr(),
                 output_module.as_ptr()
-            )?
-            .into()
-        )
+            )?)
     }
 
     /// Sets the post-render action for an output module.
@@ -140,15 +134,12 @@ impl OutputModuleSuite {
         rq_item: impl AsPtr<ae_sys::AEGP_RQItemRefH>,
         output_module: impl AsPtr<ae_sys::AEGP_OutputModuleRefH>,
     ) -> Result<VideoChannels, Error> {
-        Ok(
-            call_suite_fn_single!(
+        VideoChannels::from_host(call_suite_fn_single!(
                 self,
                 AEGP_GetOutputChannels -> ae_sys::AEGP_VideoChannels,
                 rq_item.as_ptr(),
                 output_module.as_ptr()
-            )?
-            .into()
-        )
+            )?)
     }
 
     /// Sets the output channels for an output module.
@@ -189,7 +180,7 @@ impl OutputModuleSuite {
             &mut locked
         )?;
 
-        Ok((is_enabled != 0, stretch_quality.into(), locked != 0))
+        Ok((is_enabled != 0, StretchQuality::from_host(stretch_quality)?, locked != 0))
     }
 
     /// Sets the stretch info for an output module.

@@ -53,7 +53,7 @@ impl CameraSuite {
 
     /// Given a layer, returns the camera type of the layer.
     pub fn camera_type(&self, camera_layer_handle: impl AsPtr<AEGP_LayerH>) -> Result<CameraType, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetCameraType -> ae_sys::AEGP_CameraType, camera_layer_handle.as_ptr())?.into())
+        CameraType::from_host(call_suite_fn_single!(self, AEGP_GetCameraType -> ae_sys::AEGP_CameraType, camera_layer_handle.as_ptr())?)
     }
 
     /// Retrieves the size (and units used to measure that size) of the film used by the designated camera.
@@ -63,7 +63,7 @@ impl CameraSuite {
 
         call_suite_fn!(self, AEGP_GetCameraFilmSize, camera_layer_handle.as_ptr(), &mut film_size_units, &mut film_size)?;
 
-        Ok((film_size_units.into(), film_size))
+        Ok((FilmSizeUnits::from_host(film_size_units)?, film_size))
     }
 
     /// Sets the size (and unites used to measure that size) of the film used by the designated camera.

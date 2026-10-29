@@ -5,6 +5,8 @@ use std::{
 
 fn main() {
     println!("cargo:rerun-if-changed=wrapper.hpp");
+    println!("cargo:rerun-if-env-changed=PRSDK_ROOT");
+    println!("cargo:rerun-if-env-changed=AESDK_ROOT");
 
     println!("cargo::rustc-check-cfg=cfg(builtin_bindings)");
 
@@ -23,6 +25,10 @@ fn main() {
     if !Path::new(pr_sdk_path).exists() {
         panic!("PRSDK_ROOT environment variable points to non-existent path: {pr_sdk_path}");
     }
+
+    // Build scripts are compiled for the host, so `cfg!(target_os)` would be wrong when
+    // cross-compiling. Cargo passes the real target OS in an env var instead.
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
@@ -52,11 +58,11 @@ fn main() {
                 .join("Headers")
                 .display()
         ));
-    if cfg!(target_os = "windows") {
+    if target_os == "windows" {
         pr_bindings = pr_bindings.clang_arg("-D_WINDOWS");
     }
 
-    if let Ok(ae_sdk) = env::var("AESDK_ROOT") {
+    if let Some(ae_sdk) = env::var("AESDK_ROOT").ok().filter(|x| !x.is_empty()) {
         pr_bindings = pr_bindings.clang_arg(format!(
             "-I{}",
             Path::new(&ae_sdk)
@@ -67,7 +73,7 @@ fn main() {
         .clang_arg("--define-macro=HAS_AE_SDK");
     }
 
-    if cfg!(target_os = "macos") {
+    if target_os == "macos" {
         pr_bindings = pr_bindings
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework/Versions/A/Headers/")
             //.clang_arg("-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Versions/A/Headers/")

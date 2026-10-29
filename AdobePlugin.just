@@ -8,15 +8,16 @@ export PRSDK_ROOT := if env("PRSDK_ROOT", "") == "" { justfile_directory() / "..
 build:
     cargo build
     if (-not $env:NO_INSTALL) { \
-        Start-Process PowerShell -Verb runAs -ArgumentList "-command Set-Location '{{source_directory()}}'; Copy-Item -Force '{{TargetDir}}\debug\{{BinaryName}}.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\{{PluginName}}.aex'" \
+        Start-Process PowerShell -Verb runAs -ArgumentList "-command Set-Location '{{source_directory()}}'; Copy-Item -Force '{{TargetDir}}\debug\{{BinaryName}}.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\{{PluginName}}.aex'; if (Test-Path '{{justfile_directory()}}\Preview') { New-Item -ItemType Directory -Force 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\Preview' | Out-Null; Copy-Item -Force '{{justfile_directory()}}\Preview\{{PluginName}}.*' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\Preview\' }" \
     }
 
 [windows]
 release:
     cargo build --release
     Copy-Item -Force '{{TargetDir}}\release\{{BinaryName}}.dll' '{{TargetDir}}\release\{{PluginName}}.aex'
+    if (Test-Path '{{justfile_directory()}}\Preview') { New-Item -ItemType Directory -Force '{{TargetDir}}\release\Preview' | Out-Null; Copy-Item -Force '{{justfile_directory()}}\Preview\{{PluginName}}.*' '{{TargetDir}}\release\Preview\' }
     if (-not $env:NO_INSTALL) { \
-        Start-Process PowerShell -Verb runAs -ArgumentList "-command Set-Location '{{source_directory()}}'; Copy-Item -Force '{{TargetDir}}\release\{{BinaryName}}.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\{{PluginName}}.aex'" \
+        Start-Process PowerShell -Verb runAs -ArgumentList "-command Set-Location '{{source_directory()}}'; Copy-Item -Force '{{TargetDir}}\release\{{BinaryName}}.dll' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\{{PluginName}}.aex'; if (Test-Path '{{justfile_directory()}}\Preview') { New-Item -ItemType Directory -Force 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\Preview' | Out-Null; Copy-Item -Force '{{justfile_directory()}}\Preview\{{PluginName}}.*' 'C:\Program Files\Adobe\Common\Plug-ins\7.0\MediaCore\Preview\' }" \
     }
 
 [macos]
@@ -58,6 +59,12 @@ create_bundle profile TargetDir:
         cp {{TargetDir}}/{{profile}}/lib{{BinaryName}}.dylib {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/MacOS/{{PluginName}}
     fi
     /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier "{{BundleIdentifier}}"' {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Info.plist
+
+    # Effects panel preview media (Premiere Pro 27.0+): Preview/<PluginName>.jpg (640x360) and optional .mp4 (H.264, 640x360)
+    if ls "{{justfile_directory()}}/Preview/{{PluginName}}".* >/dev/null 2>&1; then
+        mkdir -p {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Resources/Preview
+        cp "{{justfile_directory()}}/Preview/{{PluginName}}".* {{TargetDir}}/{{profile}}/{{PluginName}}.plugin/Contents/Resources/Preview/
+    fi
 
     DEV_CERT=$(security find-identity -v -p codesigning | grep -m 1 "Apple Development" | awk -F ' ' '{print $2}')
 

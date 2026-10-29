@@ -82,7 +82,7 @@ impl SurfaceSuite {
 
     /// Get the interpolation policy.
     pub fn interpolation_policy(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>) -> Result<InterpolationPolicy, Error> {
-        Ok(call_suite_fn_single!(self, GetInterpolationPolicy -> ae_sys::DRAWBOT_InterpolationPolicy, surface_ref.as_ptr())?.into())
+        InterpolationPolicy::from_host(call_suite_fn_single!(self, GetInterpolationPolicy -> ae_sys::DRAWBOT_InterpolationPolicy, surface_ref.as_ptr())?)
     }
 
     /// Set the anti-alias policy.
@@ -92,7 +92,7 @@ impl SurfaceSuite {
 
     /// Get the anti-alias policy.
     pub fn anti_alias_policy(&self, surface_ref: impl AsPtr<DRAWBOT_SurfaceRef>) -> Result<AntiAliasPolicy, Error> {
-        Ok(call_suite_fn_single!(self, GetAntiAliasPolicy -> ae_sys::DRAWBOT_AntiAliasPolicy, surface_ref.as_ptr())?.into())
+        AntiAliasPolicy::from_host(call_suite_fn_single!(self, GetAntiAliasPolicy -> ae_sys::DRAWBOT_AntiAliasPolicy, surface_ref.as_ptr())?)
     }
 
     /// Flush drawing. This is not always needed, and if overused, may cause excessive redrawing and flashing.

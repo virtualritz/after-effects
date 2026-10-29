@@ -66,7 +66,7 @@ impl ItemSuite {
 
     /// Gets type of an item. Note: solids don't appear in the project, but can be the source to a layer.
     pub fn item_type(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<ItemType, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetItemType -> ae_sys::AEGP_ItemType, item_handle.as_ptr())?.into())
+        ItemType::from_host(call_suite_fn_single!(self, AEGP_GetItemType -> ae_sys::AEGP_ItemType, item_handle.as_ptr())?)
     }
 
     /// Get name of type. (name length up to `32`).
@@ -195,7 +195,7 @@ impl ItemSuite {
 
     /// Retrieves an item's label.
     pub fn item_label(&self, item_handle: impl AsPtr<AEGP_ItemH>) -> Result<LabelId, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetItemLabel -> ae_sys::AEGP_LabelID, item_handle.as_ptr())?.into())
+        LabelId::from_host(call_suite_fn_single!(self, AEGP_GetItemLabel -> ae_sys::AEGP_LabelID, item_handle.as_ptr())?)
     }
 
     /// Sets an item's label.

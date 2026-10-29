@@ -104,7 +104,7 @@
 ///
 /// # Host/version gating
 /// There is no `can_load` hook to refuse loading in a given host: Adobe ignores the
-/// return value of the `PluginDataEntryFunction2` entry point, so a plugin can never
+/// return value of the `PluginDataEntryFunction2`/`PluginDataEntryFunction3` entry points, so a plugin can never
 /// prevent itself from being registered. Gate at runtime instead -- inspect
 /// [`InData::is_after_effects()`](crate::InData::is_after_effects) (or
 /// [`InData::is_premiere()`](crate::InData::is_premiere)) in `params_setup`/render and
@@ -143,6 +143,57 @@
 /// ```
 #[macro_export]
 macro_rules! define_effect {
+    // Internal rule: the body shared by `PluginDataEntryFunction2` and `PluginDataEntryFunction3`.
+    // The callback versions only differ in the trailing arguments (`$extra`) that follow the
+    // support URL, so registration changes are made here once for both entry points.
+    // Internal `@` rules come first, as is conventional, so they are matched before the public rule.
+    (@plugin_data_entry $in_ptr:expr, $callback:expr, $host_name:expr, $host_version:expr $(, $extra:expr)* $(,)?) => {{
+        // Callback registration metadata; this is distinct from the PiPL
+        // AE_Reserved_Info/aeFL property, which may legitimately be zero.
+        const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;
+
+        if $host_name.is_null() || $host_version.is_null() {
+            return $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err;
+        }
+
+        if let Some(cb_ptr) = $callback {
+            use $crate::cstr_literal::cstr;
+            // All strings are NUL-terminated statics: the host may keep the pointers after the call returns.
+            unsafe {
+                cb_ptr($in_ptr,
+                    cstr!(env!("PIPL_NAME"))       .as_ptr() as *const u8, // Name
+                    cstr!(env!("PIPL_MATCH_NAME")) .as_ptr() as *const u8, // Match Name
+                    cstr!(env!("PIPL_CATEGORY"))   .as_ptr() as *const u8, // Category
+                    cstr!(env!("PIPL_ENTRYPOINT")) .as_ptr() as *const u8, // Entry point
+                    env!("PIPL_KIND")              .parse().unwrap(),
+                    env!("PIPL_AE_SPEC_VER_MAJOR") .parse().unwrap(),
+                    env!("PIPL_AE_SPEC_VER_MINOR") .parse().unwrap(),
+                    AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,
+                    cstr!(env!("PIPL_SUPPORT_URL")).as_ptr() as *const u8, // Support url
+                    $($extra,)*
+                )
+            }
+        } else {
+            $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err
+        }
+    }};
+    // Internal rule: pointer to a static NUL-terminated copy of an optional compile-time env var,
+    // or to an empty string when it is not set (e.g. when built with an older `pipl` that doesn't
+    // emit it). `cstr!(env!(..))` can't be used there because `env!` fails on a missing variable.
+    (@optional_env_cstr $var:literal) => {{
+        const VALUE: &str = match option_env!($var) { Some(value) => value, None => "" };
+        static VALUE_NUL: [u8; VALUE.len() + 1] = {
+            let mut out = [0u8; VALUE.len() + 1];
+            let bytes = VALUE.as_bytes();
+            let mut i = 0;
+            while i < bytes.len() {
+                out[i] = bytes[i];
+                i += 1;
+            }
+            out
+        };
+        VALUE_NUL.as_ptr()
+    }};
     ($global_type:ty, $sequence_type:tt, $params_type:ty) => {
         use $crate::*;
         use std::collections::HashMap;
@@ -390,6 +441,10 @@ macro_rules! define_effect {
                     RawCommand::GlobalSetup => {
                         drop(global_lock);
                         (*out_data_ptr).global_data = pf::Handle::into_raw(global_handle);
+                        // Pick the encoding of the strings the effect hands to the host. After Effects 26.x reads
+                        // UTF-8 with or without `PF_OutFlag2_STRINGS_ARE_UTF8` (measured in 26.2 and 26.5), older
+                        // versions and other hosts read a legacy multi-byte encoding. See `after_effects_reads_utf8`.
+                        $crate::pf::set_strings_are_utf8(in_data.is_after_effects() && $crate::pf::after_effects_reads_utf8());
                     }
                     RawCommand::GlobalSetdown => {
                         (*out_data_ptr).global_data = std::ptr::null_mut();
@@ -423,33 +478,28 @@ macro_rules! define_effect {
             in_host_name: *const std::ffi::c_char,
             in_host_version: *const std::ffi::c_char) -> $crate::sys::PF_Err
         {
-            // Callback registration metadata; this is distinct from the PiPL
-            // AE_Reserved_Info/aeFL property, which may legitimately be zero.
-            const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;
             // let _pica = ae::PicaBasicSuite::from_sp_basic_suite_raw(in_sp_basic_suite_ptr);
+            $crate::define_effect!(@plugin_data_entry in_ptr, in_plugin_data_callback_ptr, in_host_name, in_host_version)
+        }
 
-            if in_host_name.is_null() || in_host_version.is_null() {
-                return $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err;
-            }
-
-            if let Some(cb_ptr) = in_plugin_data_callback_ptr {
-                use $crate::cstr_literal::cstr;
-                unsafe {
-                    cb_ptr(in_ptr,
-                        cstr!(env!("PIPL_NAME"))       .as_ptr() as *const u8, // Name
-                        cstr!(env!("PIPL_MATCH_NAME")) .as_ptr() as *const u8, // Match Name
-                        cstr!(env!("PIPL_CATEGORY"))   .as_ptr() as *const u8, // Category
-                        cstr!(env!("PIPL_ENTRYPOINT")) .as_ptr() as *const u8, // Entry point
-                        env!("PIPL_KIND")              .parse().unwrap(),
-                        env!("PIPL_AE_SPEC_VER_MAJOR") .parse().unwrap(),
-                        env!("PIPL_AE_SPEC_VER_MINOR") .parse().unwrap(),
-                        AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,
-                        cstr!(env!("PIPL_SUPPORT_URL")).as_ptr() as *const u8, // Support url
-                    )
-                }
-            } else {
-                $crate::sys::PF_Err_INVALID_CALLBACK as $crate::sys::PF_Err
-            }
+        // Version 3 of the entry point (26.5 SDK) additionally passes the search keywords and the
+        // description. Both versions are exported, so hosts that don't know version 3 keep using version 2.
+        #[unsafe(no_mangle)]
+        #[allow(non_snake_case)]
+        pub unsafe extern "C" fn PluginDataEntryFunction3(
+            in_ptr: $crate::sys::PF_PluginDataPtr,
+            in_plugin_data_callback_ptr: $crate::sys::PF_PluginDataCB3,
+            in_sp_basic_suite_ptr: *const $crate::sys::SPBasicSuite,
+            in_host_name: *const std::ffi::c_char,
+            in_host_version: *const std::ffi::c_char) -> $crate::sys::PF_Err
+        {
+            // Both are optional: `pipl` emits empty strings when the PiPL doesn't define them, and an
+            // empty string is passed rather than NULL because `AE_PluginData.h` documents no NULL
+            // convention for these arguments (same as an absent `eKWD`/`eDSC` PiPL property).
+            $crate::define_effect!(@plugin_data_entry in_ptr, in_plugin_data_callback_ptr, in_host_name, in_host_version,
+                $crate::define_effect!(@optional_env_cstr "PIPL_SEARCH_KEYWORDS"),    // Search keywords
+                $crate::define_effect!(@optional_env_cstr "PIPL_EFFECT_DESCRIPTION"), // Effect description
+            )
         }
 
         #[unsafe(no_mangle)]
@@ -662,18 +712,101 @@ macro_rules! define_general_plugin {
 
 #[cfg(test)]
 mod tests {
+    fn source() -> &'static str {
+        // Only the macro definitions; the tests below would otherwise match their own string literals.
+        include_str!("plugin_base.rs").split("#[cfg(test)]").next().unwrap()
+    }
+
+    fn between<'a>(source: &'a str, start: &str, end: &str) -> &'a str {
+        source
+            .split(start)
+            .nth(1)
+            .and_then(|tail| tail.split(end).next())
+            .unwrap_or_else(|| panic!("no `{start}` .. `{end}` section"))
+    }
+
+    fn shared_registration_rule() -> &'static str {
+        between(source(), "(@plugin_data_entry $in_ptr:expr", "(@optional_env_cstr $var:literal)")
+    }
+
+    fn entry_point_body(entry_point: &str) -> &'static str {
+        let next = match entry_point {
+            "PluginDataEntryFunction2" => "pub unsafe extern \"C\" fn PluginDataEntryFunction3",
+            "PluginDataEntryFunction3" => "pub unsafe extern \"C\" fn EffectMain",
+            _ => unreachable!(),
+        };
+        between(source(), &format!("pub unsafe extern \"C\" fn {entry_point}("), next)
+    }
+
     #[test]
     fn plugin_data_entry_uses_callback_reserved_info_not_pipl_property() {
-        let source = include_str!("plugin_base.rs");
-        let body = source
-            .split("pub unsafe extern \"C\" fn PluginDataEntryFunction2")
-            .nth(1)
-            .and_then(|tail| tail.split("pub unsafe extern \"C\" fn EffectMain").next())
-            .expect("PluginDataEntryFunction2 body");
+        let shared = shared_registration_rule();
+        assert!(shared.contains("const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;"));
+        assert!(shared.contains("AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,"));
+        assert!(!shared.contains("PIPL_AE_RESERVED"));
+        // Defined once, for both entry points.
+        assert_eq!(source().matches("AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32").count(), 1);
+    }
 
-        assert!(body.contains("const AE_PLUGIN_DATA_ENTRY_RESERVED_INFO: i32 = 8;"));
-        assert!(body.contains("AE_PLUGIN_DATA_ENTRY_RESERVED_INFO,"));
-        assert!(!body.contains("env!(\"PIPL_AE_RESERVED\")"));
+    #[test]
+    fn plugin_data_entry_points_share_the_registration_rule() {
+        for entry_point in ["PluginDataEntryFunction2", "PluginDataEntryFunction3"] {
+            let body = entry_point_body(entry_point);
+            assert!(
+                body.contains("$crate::define_effect!(@plugin_data_entry in_ptr, in_plugin_data_callback_ptr, in_host_name, in_host_version"),
+                "{entry_point} must use the shared registration rule"
+            );
+            assert!(!body.contains("cb_ptr("), "{entry_point} must not call the callback directly");
+            assert!(!body.contains("env!(\"PIPL_NAME\")"), "{entry_point} must not duplicate the common arguments");
+        }
+        assert!(entry_point_body("PluginDataEntryFunction2").contains("$crate::sys::PF_PluginDataCB2"));
+
+        // The callback arguments in the order of `PF_PluginDataCB2` (the extra `PF_PluginDataCB3` ones follow).
+        let shared = shared_registration_rule();
+        let mut rest = between(shared, "cb_ptr($in_ptr,", ")\n            }");
+        for arg in [
+            "env!(\"PIPL_NAME\")",
+            "env!(\"PIPL_MATCH_NAME\")",
+            "env!(\"PIPL_CATEGORY\")",
+            "env!(\"PIPL_ENTRYPOINT\")",
+            "env!(\"PIPL_KIND\")",
+            "env!(\"PIPL_AE_SPEC_VER_MAJOR\")",
+            "env!(\"PIPL_AE_SPEC_VER_MINOR\")",
+            "AE_PLUGIN_DATA_ENTRY_RESERVED_INFO",
+            "env!(\"PIPL_SUPPORT_URL\")",
+            "$($extra,)*",
+        ] {
+            let at = rest.find(arg).unwrap_or_else(|| panic!("`{arg}` missing or out of order"));
+            rest = &rest[at + arg.len()..];
+        }
+        assert!(shared.contains("$host_name.is_null() || $host_version.is_null()"));
+    }
+
+    #[test]
+    fn plugin_data_entry3_passes_optional_keywords_and_description() {
+        let body = entry_point_body("PluginDataEntryFunction3");
+        assert!(body.contains("$crate::sys::PF_PluginDataCB3"));
+        let keywords = body.find("@optional_env_cstr \"PIPL_SEARCH_KEYWORDS\"").expect("search keywords argument");
+        let description = body.find("@optional_env_cstr \"PIPL_EFFECT_DESCRIPTION\"").expect("description argument");
+        assert!(keywords < description, "search keywords come before the description in `PF_PluginDataCB3`");
+
+        // The host may keep the string pointers, so they must point to statics, not to locals freed on return.
+        assert!(!body.contains("CString"));
+        let optional = between(source(), "(@optional_env_cstr $var:literal) => {{", "}};");
+        assert!(optional.contains("static VALUE_NUL"));
+        assert!(optional.contains("VALUE_NUL.as_ptr()"));
+    }
+
+    // Runtime check of the `@optional_env_cstr` rule: a static NUL-terminated copy, or "" when unset.
+    #[test]
+    fn optional_env_cstr_is_a_static_nul_terminated_string() {
+        let set = crate::define_effect!(@optional_env_cstr "CARGO_PKG_NAME");
+        let unset = crate::define_effect!(@optional_env_cstr "AFTER_EFFECTS_SURELY_UNSET_ENV_VAR");
+        assert_eq!(unsafe { std::ffi::CStr::from_ptr(set.cast()) }.to_str().unwrap(), env!("CARGO_PKG_NAME"));
+        assert_eq!(unsafe { std::ffi::CStr::from_ptr(unset.cast()) }.to_bytes(), b"");
+        // Same address on every evaluation of the same expansion site => it is a static.
+        let ptrs: Vec<_> = (0..2).map(|_| crate::define_effect!(@optional_env_cstr "CARGO_PKG_NAME")).collect();
+        assert_eq!(ptrs[0], ptrs[1]);
     }
 
     #[test]

@@ -158,7 +158,7 @@ impl IOInSuite {
 
     /// Obtains the encoding method (signed PCM, unsigned PCM, or floating point) from an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
     pub fn in_spec_sound_encoding(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<aeio::SoundEncoding, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetInSpecSoundEncoding -> ae_sys::AEIO_SndEncoding, in_spec_handle.as_ptr())?.into())
+        aeio::SoundEncoding::from_host(call_suite_fn_single!(self, AEGP_GetInSpecSoundEncoding -> ae_sys::AEIO_SndEncoding, in_spec_handle.as_ptr())?)
     }
 
     /// Sets the encoding method of an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
@@ -168,7 +168,7 @@ impl IOInSuite {
 
     /// Retrieves the bytes-per-sample (1,2, or 4) from an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
     pub fn in_spec_sound_sample_size(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<aeio::SoundSampleSize, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetInSpecSoundSampleSize -> ae_sys::AEIO_SndSampleSize, in_spec_handle.as_ptr())?.into())
+        aeio::SoundSampleSize::from_host(call_suite_fn_single!(self, AEGP_GetInSpecSoundSampleSize -> ae_sys::AEIO_SndSampleSize, in_spec_handle.as_ptr())?)
     }
 
     /// Set the bytes per sample of an [`aeio::InSpecHandle`](crate::aeio::InSpecHandle).
@@ -178,7 +178,7 @@ impl IOInSuite {
 
     /// Determines whether the audio in the [`aeio::SoundChannels`] is mono or stereo.
     pub fn in_spec_sound_channels(&self, in_spec_handle: impl AsPtr<AEIO_InSpecH>) -> Result<aeio::SoundChannels, Error> {
-        Ok(call_suite_fn_single!(self, AEGP_GetInSpecSoundChannels -> ae_sys::AEIO_SndChannels, in_spec_handle.as_ptr())?.into())
+        aeio::SoundChannels::from_host(call_suite_fn_single!(self, AEGP_GetInSpecSoundChannels -> ae_sys::AEIO_SndChannels, in_spec_handle.as_ptr())?)
     }
 
     /// Sets the audio in an [`aeio::SoundChannels`] to mono or stereo.

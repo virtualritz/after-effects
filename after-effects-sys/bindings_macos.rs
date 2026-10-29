@@ -296,18 +296,21 @@ pub const kAEGPProjSuiteVersion6: u32 = 9;
 pub const kAEGPItemSuite: &[u8; 16] = b"AEGP Item Suite\0";
 pub const kAEGPItemSuiteVersion9: u32 = 14;
 pub const kAEGPItemViewSuite: &[u8; 21] = b"AEGP Item View Suite\0";
-pub const kAEGPItemViewSuiteVersion1: u32 = 1;
+pub const kAEGPItemViewSuiteVersion2: u32 = 2;
 pub const kAEGPSoundDataSuite: &[u8; 22] = b"AEGP Sound Data Suite\0";
 pub const kAEGPSoundDataVersion1: u32 = 1;
+pub const kAEGPGuideSuite: &[u8; 17] = b"AEGP Guide Suite\0";
+pub const kAEGPGuideSuiteVersion1: u32 = 1;
+pub const kAEGPGuideSuiteVersion2: u32 = 2;
 pub const kAEGPCompSuite: &[u8; 16] = b"AEGP Comp Suite\0";
-pub const kAEGPCompSuiteVersion12: u32 = 26;
+pub const kAEGPCompSuiteVersion13: u32 = 27;
 pub const kAEGPMemorySuite: &[u8; 18] = b"AEGP Memory Suite\0";
 pub const kAEGPMemorySuiteVersion1: u32 = 1;
 pub const AEGP_REORDER_LAYER_TO_END: i32 = -1;
 pub const kAEGPLayerSuite: &[u8; 17] = b"AEGP Layer Suite\0";
 pub const kAEGPLayerSuiteVersion9: u32 = 15;
 pub const kAEGPStreamSuite: &[u8; 18] = b"AEGP Stream Suite\0";
-pub const kAEGPStreamSuiteVersion6: u32 = 11;
+pub const kAEGPStreamSuiteVersion7: u32 = 12;
 pub const AEGP_MAX_STREAM_MATCH_NAME_SIZE: u32 = 40;
 pub const AEGP_StreamGroupName_MASK_PARADE: &[u8; 17] = b"ADBE Mask Parade\0";
 pub const AEGP_StreamGroupName_MASK_ATOM: &[u8; 15] = b"ADBE Mask Atom\0";
@@ -427,6 +430,7 @@ pub const kAEGPCanvasSuiteVersion6: u32 = 11;
 pub const kAEGPCanvasSuiteVersion7: u32 = 13;
 pub const kAEGPMaskOutlineSuiteVersion2: u32 = 3;
 pub const kAEGPMaskOutlineSuiteVersion1: u32 = 2;
+pub const kAEGPCompSuiteVersion12: u32 = 26;
 pub const kAEGPCompSuiteVersion11: u32 = 25;
 pub const kAEGPCompSuiteVersion10: u32 = 21;
 pub const kAEGPCompSuiteVersion9: u32 = 19;
@@ -444,6 +448,7 @@ pub const kAEGPLayerSuiteVersion6: u32 = 12;
 pub const kAEGPLayerSuiteVersion5: u32 = 11;
 pub const kAEGPLayerSuiteVersion4: u32 = 10;
 pub const kAEGPLayerSuiteVersion3: u32 = 8;
+pub const kAEGPStreamSuiteVersion6: u32 = 11;
 pub const kAEGPStreamSuiteVersion5: u32 = 10;
 pub const kAEGPStreamSuiteVersion4: u32 = 9;
 pub const kAEGPStreamSuiteVersion3: u32 = 8;
@@ -474,6 +479,7 @@ pub const kAEGPKeyframeSuiteVersion2: u32 = 2;
 pub const kAEGPKeyframeSuiteVersion1: u32 = 1;
 pub const kAEGPItemSuiteVersion2: u32 = 4;
 pub const kAEGPItemSuiteVersion1: u32 = 3;
+pub const kAEGPItemViewSuiteVersion1: u32 = 1;
 pub const kAEGPUtilitySuiteVersion5: u32 = 11;
 pub const kAEGPUtilitySuiteVersion4: u32 = 10;
 pub const kAEGPUtilitySuiteVersion3: u32 = 7;
@@ -773,6 +779,8 @@ pub const PF_ParamFlag_EXCLUDE_FROM_HAVE_INPUTS_CHANGED: _bindgen_ty_14 = 256;
 pub const PF_ParamFlag_SKIP_REVEAL_WHEN_UNHIDDEN: _bindgen_ty_14 = 512;
 pub const PF_ParamFlag_unused1: _bindgen_ty_14 = 1024;
 pub const PF_ParamFlag_RESERVED4: _bindgen_ty_14 = 2048;
+pub const PF_ParamFlag_RESERVED5: _bindgen_ty_14 = 4096;
+pub const PF_ParamFlag_RESERVED6: _bindgen_ty_14 = 8192;
 pub const PF_ParamFlags_ALL: _bindgen_ty_14 = 4294967295;
 pub type _bindgen_ty_14 = ::std::os::raw::c_uint;
 pub type PF_ParamFlags = A_long;
@@ -832,7 +840,7 @@ pub const PF_OutFlag_AUDIO_IIR: _bindgen_ty_17 = 268435456;
 pub const PF_OutFlag_I_SYNTHESIZE_AUDIO: _bindgen_ty_17 = 536870912;
 pub const PF_OutFlag_AUDIO_EFFECT_TOO: _bindgen_ty_17 = 1073741824;
 pub const PF_OutFlag_AUDIO_EFFECT_ONLY: _bindgen_ty_17 = 2147483648;
-#[doc = " -------------------- Output Flags --------------------\n\nThe out_flags field of the OutData can be set to an OR-ed\ncombination of these flags to communicate various things to\nthe driver program.  The flags are described here:\n\nPF_OutFlag_NONE\nThis is the \"empty\" setting -- no outflags.\n\nPF_OutFlag_WIDE_TIME_INPUT\nSet this flag if the effect calls get_param to inquire a\nparameter at a time besides the current one (e.g. to get\nthe previous video frame). This should be sent, if it is\ngoing to be sent, at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nAs of AE10, this flag is no longer recommended. It still works the\nsame way and is safe to set, but there's a more efficient option.\nSee PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT.\n\nPF_OutFlag_NON_PARAM_VARY\nSet this if the effect uses information other than the parameters\nin the param list to generate its output at the current time.\nFor instance, if the effect uses the current time of the frame\nor some random value to decide the output, set this flag.  This\nflag should be sent at PF_Cmd_GLOBAL_SETUP.  If the effect\nproduces changing frames when applied to a still image and\nall parameters are constant, that's a sure sign that this bit\nshould be set (e.g. Wave Warp).\tCan be over-ridden dynamically\nduring PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING\nWhen you allocate a sequence data handle, the app\nmay write the handle out to disk and reuse it\nlater. Pass this flag if the handle is not \"flat\"\n(i.e. has pointers or handles hanging off of it).\nBasically, this gives you a chance to alter the\nhandle contents before it is written out to disk,\nso  you won't get invalid handles or pointers. Once\nyou have flattened a handle, you will get an\nopportunity to un-flatten it before the effect\nneeds to continue. For sequence data, you will be\ninvoked with a PF_Cmd_SEQUENCE_RESETUP call. You\nshould store a boolean at a common  offset in your\nunflattened and flattened data that says whether\nthe data is flat or not. If you get a\nPF_Cmd_SEQUENCE_RESETUP and the boolean indicated\nthe data is flattened, you should  unflatten the\ndata, free the flattened data handle, and set the\nsequence_data handle in the  PF_OutData. If you\never set the data to NULL when you flatten it, you\nwill NOT get the sequence  resetup call to\nunflatten it. Instead, you may just get a RENDER\ncall with NULL data. Forewarned is  forearmed. This\nflag, indicating if the data will need to be\nflattened, should be set at  PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_I_DO_DIALOG\nSet this is the effect responds to a PF_Cmd_DO_DIALOG, i.e. Does this\neffect bring up an options dialog box.  PF_Cmd_DO_DIALOG is generated\nwhen the user presses the Options button on the Effect floater.\nThis flag should be set at PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_USE_OUTPUT_EXTENT\nThe output layer is passed with an \"extent rect\" indicating\nthe area of the layer that actually contains visible image data.  If\nthe effect changes its behavior based on the extent rect (for instance,\nby not iterating over the entire image), set this flag, so the\napplication will know whether having the extent\tchange should cause\nthe frame to re-render.  Specify this flag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_SEND_DO_DIALOG\nSome filters need their options dialog box to be brought up at least\nonce to be valid.  You can set this flag, and the driver app will\nautomatically send a PF_Cmd_DO_DIALOG to the effect when it is applied.\nThe DO_DIALOG will be sent after PF_Cmd_SEQUENCE_SETUP.  This flag\nshould be set in PF_Cmd_SEQUENCE_SETUP if it is going to be set.\n\nPF_OutFlag_DISPLAY_ERROR_MESSAGE\nWhenever the return_msg field in the PF_OutData is set to a string,\nAfter Effects will bring up a simple dialog box containing that\nstring.  If you set this flag, the dialog box will be made to look\nlike an error message dialog box.  If you don't set this flag, it\nwill be an undecorated dialog box.  Using this flag, an effects module\ncan have and display its own error messages and not worry about the\ncode for dialog boxes -- the program will do it for you.\nThis flag can be sent after any command.\n\nPF_OutFlag_I_EXPAND_BUFFER\nStarting with After Effects 2.0, effects will be able to expand their buffers\nbeyond the current layer's dimensions. This has always been part of the\nPF specification, but as an extra precaution (and hint to the AE rendering\nengine) set this flag at PF_Cmd_GLOBAL_SETUP if you plan to expand your\nbuffer.\n\nPF_OutFlag_I_SHRINK_BUFFER\nSet this flag if you can shrink your buffer based on the extent-rects passed\nto you in order to be more memory efficient.\n\nPF_OutFlag_PIX_INDEPENDENT\nSet this flag if the output at a given pixel is not dependent on the values\nof the pixels around it. If this is set, the pixels After Effects does not\ncare about (because of field rendering, for example) could be filled with garbage\ncolors.  Please set this flag at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_WRITE_INPUT_BUFFER\nSet this flag if your effect would like to write into the input buffer. This\ncan be useful if you need an scratch buffer, but it also invalidates some speedups\nin the AE rendering pipeline, so use it with some discretion. Please set this\nflag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_KEEP_RESOURCE_OPEN\n\nObsoleted in AE 2015 (does nothing when set).\n\nSet this flag if your effect expects its Macintosh resource fork to be open\nat any time other than global setup.  Note that this does not mean that\nthe resource fork will be kept open at all times, just whenever the\neffect is being executed.\n\nPF_OutFlag_NOP_RENDER\n\nSet this flag in PF_Cmd_GLOBAL_SETUP if the render would never result in changes\nto the source image (or audio?). For example, an expression control would set this.\n\nPF_OutFlag_CUSTOM_UI\n\nThis flag must be set if your effect has a custom UI in the Effect Controls\nWindow, Layer Window or Comp Window.\n\nPF_OutFlag2_CUSTOM_UI_ASYNC_MANAGER\t(new in 13.5)\n\nThis flags enables use of AEGP_CheckoutOrRender_*_AsyncManager() calls\nwhich avoid the need for plugin management of the lifetime of async custom UI renders from the UI thread.\nThe plugin asks for what frames it needs and the manager calls PF_Event_DRAW again when they are available\n(or cancels them as needed automatically).  The plugin responds in PF_Event_DRAW by asking for what it needs\nand drawing what it can from what is available.\n\nDue to separation of Render thread and UI thread in 13.5, frames for custom UI should no longer be\nrendered synchronously (see RenderSuite5 for more details). The manager simplifies this, especially when\nthere are multiple requests needed for DRAW.\n\nWhen enabled, this flag associates a \"PF_AsyncManager\" with the NEW_CONTEXT/CLOSE_CONTEXT and PF_Event_DRAW\nthat will automatically track completion of 1 or more asynch render requests made for drawing custom UI.\nAs requests complete,  PF_Event_DRAW will be called again and the current state of the CUSTOM_UI can be drawn.\nSuch requests may be canceled automatically as the user scrubs the time needle or project changes are made and\nbecome invalid.\n\nThis flag is used in addition to the CUSTOM_UI flag during PF_Cmd_GLOBAL_SETUP\n\nPF_OutFlag_REFRESH_UI\n\nCan be returned from PF_Cmd_EVENT, PF_Cmd_RENDER, and PF_Cmd_DO_DIALOG.\nCauses the effects control window, layer window, and comp window to be re-drawn.\n\nPF_OutFlag_I_USE_SHUTTER_ANGLE\n\nMust be set at PF_Cmd_GLOBAL_SETUP time if the effect uses\nthe shutter_angle or the shutter_phase. Can be over-ridden dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_USE_AUDIO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for a visual effect\nthat calls the audio checkout calls.\n\nPF_OutFlag_I_AM_OBSOLETE\n\nSet at PF_Cmd_GLOBAL_SETUP time for effects that don't\nwant to appear in the AE Effects menu (but will still be invoked\nif you load a project that has an old copy of the effect applied).\n\nPF_OutFlag_FORCE_RERENDER\n\nSet at PF_Cmd_EVENT if the effect modified sequence data,\nor did anything else that requires the effect needs to re-render.\nNote that setting PF_ChangeFlag_CHANGED_VALUE automatically\ncauses a re-render, so don't worry about setting PF_OutFlag_FORCE_RERENDER\nin that case. Also, I_MIX_GUID_DEPENDENCIES can be used to trigger a rerender on\ndependant changes if sequence_data has not been changed.\n\nIMPORTANT: FORCE_RERENDER should be used as a last resort. Long term we should be eliminating the need for this\nbecause it causes forced cache invalidation that doesn't work well with undo.\nOnce we have the full set of APIs in place needed to manage render state, we will be able to deprecate this.\nPrefer using ARB data + CHANGED_VALUE or I_MIX_GUID_DEPENDENCIES when possible instead.\n\nIn 13.5 the split between a UI and render threads means that FORCE_RERENDER will now also have the needed\nside effect of copying sequence_data state to the render project.  This can be expensive if the sequence_data is large.\nSupport GET_FLATTENED_SEQUENCE_DATA to prevent deallocation of your sequence_data, which can help.\nGET_FLATTENED_SEQUENCE_DATA support is required for FORCE_RERENDER use in custom mouse/key events.\n\nPF_OutFlag_PiPL_OVERRIDES_OUTDATA_OUTFLAGS\n\nValid only for setting in your PiPL.  When set out_flags will be\nignored at PF_Cmd_GLOBAL_SETUP time (& thus don't need to match).\n\nPF_OutFlag_I_HAVE_EXTERNAL_DEPENDENCIES\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if the effect has dependencies\nthat the user should know about before transporting their project to a\ndifferent machine.  For example, dependencies on an installed font,\nor on an external file.  If set, the effect will receive a\nPF_Cmd_GET_EXTERNAL_DEPENDENCIES request, where the extra\nparam will be a PF_ExtDependenciesExtra, and the effect should\nreport its information based on the given sequence_data.\n\nPF_OutFlag_SEND_UPDATE_PARAMS_UI\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you want to receive\nPF_Cmd_UPDATE_PARAMS_UI messages.\n\nPF_OutFlag_AUDIO_FLOAT_ONLY\n\nSet this flag if you only want to receive PF_SIGNED_FLOAT data\nwhen processing audio data.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_IIR\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you are an\nInfinite-Impulse-Response audio filter (i.e. your output at a given\ntime depends on your output from previous times).\n\nPF_OutFlag_I_SYNTHESIZE_AUDIO\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you generate\naudio even when handed silence.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_EFFECT_TOO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect that\nwants to filter the audio too (as opposed to just reading the audio).\n\nPF_OutFlag_AUDIO_EFFECT_ONLY\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect\nthat only filters audio (no video).\n\nPF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\n\nSet this during PF_Cmd_GLOBAL_SETUP if the effect handles PF_Cmd_QUERY_DYNAMIC_FLAGS.\nSupporting this command can dramatically improve performance for certain\neffects, because it provides dynamic information to the host about what\ncan be cached (as opposed to PIPL bits which cannot be changed at run-time)\n\nPF_OutFlag2_I_USE_3D_CAMERA\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_USE_3D_LIGHTS\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_PARAM_GROUP_START_COLLAPSED_FLAG\n\nIf you want a parameter group to honor the PF_ParamFlag_COLLAPSE_TWIRLY or\nPF_ParamFlag_START_COLLAPSED flag, set this bit.  Otherwise, all parameter\ngroups will be collapsed by default.\n\nPF_OutFlag2_DOESNT_NEED_EMPTY_PIXELS\n\nAdded for render optimizations; shrinks the input buffer passed to the effect to\nexclude any empty pixels (where empty means \"zero alpha\" unless\nPF_OutFlag2_REVEALS_ZERO_ALPHA is set, in which case RGB must be zero as well.)\nThe origin of the trimmed buffer can be found in in_data->pre_effect_source_origin.\nEffects with both this flag and PF_OutFlag_I_EXPAND_BUFFER set may get called with\na null input buffer if their input is completely empty, and must be able to handle\nthis case without crashing. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_REVEALS_ZERO_ALPHA\n\nThe effect can take pixels with zero alpha and reveal the RGB data in them (like\nour Set Channels effect). This tells After Effects not to trim such pixels when\ndetermining the input for the effect. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_AM_DEPRECATED\nthis effect is still available, and shows up under user-visible \"Obsolete\" category\nin the UI. Setting this flag means \"there's a better way to do this, but this effect\nmay still be useful in some situations\".  distinct from PF_OutFlag_I_AM_OBSOLETE in\nthat these will still show up in the GUI and the user can still apply them to new\nprojects.  The category that is set by the effect is pretty much ignored, as it will\ninstead always go into the \"Obsolete\" category\n\nPF_OutFlag2_I_USE_TIMECODE\nNew in AE 9.0.  The effect depends on the Composition's timecode or a layer's\nsource footage timecode.  If the underlying timecode changes the effects will\nbe asked to rerender.\n\nPF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT\nNew in AE 10. Requires setting of PF_OutFlag_WIDE_TIME_INPUT (which allows you\nto support old hosts), but effectively overrides that flag. When set, all\nparameter checkouts are tracked so over-time dependencies are known by AE. Note\nthat if you use this new flag, and you cache any time-dependent data in your\nsequence data (or anywhere else), you must validate that cache using the\nnew PF_HaveInputsChangedOverTimeSpan() before using it.\n\nThis only works for smart effects (those that set PF_OutFlag2_SUPPORTS_SMART_RENDER). If you haven't\nset that, After Effects will silently treat this as PF_OutFlag_WIDE_TIME_INPUT instead.\n\nTo test that it's working, apply your effect with one parameter keyframed on every frame.\nRAM Preview to fill the cache, then change one of the keyframes. The related frame and\nall dependent frames (e.g. later frames, in the case of a simulation) should lose their\ncache marks and require re-rendering. Simlarly, upstream changes to sources of layer\nparameters should cause time-selective invalidation of the cache.\n\nPF_OutFlag2_DEPENDS_ON_UNREFERENCED_MASKS\nSet this if you are going to look at paths that aren't directly referenced by a path\nparam, e.g. if you are going to draw a stroke on all masks.\n\nPF_OutFlag2_OUTPUT_IS_WATERMARKED\nSet this if your output is going to be watermarked in some way that makes it unsuitable for\nfinal use, probably because the user is using an unlicensed demo version. It is ok to change\nthis state during the course of app session, if e.g. a floating license status changes.\nPlugin authors that actually do have this state changing asynchronously must be careful to\nhave the next render match the last state returned from QUERY_DYNAMIC_FLAGS otherwise race conditions\ncould cause incorrect frames to be cached. (This is a non-issue if you only change this in response\nto DO_DIALOG.)\n\nPF_OutFlag2_I_MIX_GUID_DEPENDENCIES\t(new in 13.5)\nSmart effects only. With this option, FORCE_RERENDER becomes a cache-savvy more efficient MAYBE rerender.\nIf custom UI or DO_DIALOG change sequence data, returning FORCE_RERENDER requests AE to check whether\nrerender needs to occur.  During PreRender, the effect uses the GuidMixInPtr callback to mix\nany additional state that affects the render into our internal GUID for the cached frame.\nAE can then tell whether the frame already exists and if so, no longer needs to render.\nThis also means that DO_DIALOG no longer always blows the cache and that undo works across DO_DIALOG.\nCancelation of DO_DIALOG no longer blows the cache either.\nThis also means that I_USE_* flags are now basically redundant since any dependency could be mixed in.\nJust be sure to mix in everything that can uniquely affect resulting rendered pixels (that is not already\nan AE stream parameter).  But don't mixin things that are disabled and have no render effect  (this\nresults in less cache efficiency).\n\nPF_OutFlag2_SUPPORTS_THREADED_RENDERING\nIndicates the effect supports rendering on multiple threads at the same time. Single or multiple\napplications of this effect on a layer can be called to render at the same time on multiple threads.\n\nUI selectors are still sent on the main thread, however Sequence Setup, Sequence Resetup, Sequence SetDown,\nPreRender, and Render may be sent on multiple threads at the same time as the UI selectors are being handled\nso all of these selectors must be thread safe.\n\nGlobal Setup and Global Setdown selectors are unaffected by this flag.  Regardless whether this flag is set\nor not, they will only be sent on the main thread, and will not be sent at the same time as any other selectors.\n\nIf the effect sets PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING indicating the sequence data needs flattening\nthen it must also set PF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA.\n\nsequence_data is read-only at render time and must be accessed with PF_EffectSequenceDataSuite.\nin_data->sequence_data will be NULL during render. AEGP_ComputeCacheSuite is suggested if writing to\nsequence_data at render time is needed for caching. This suite unifies cache entries so multiple threads do\nnot recompute the same cache value. If neither of these solutions work, see the next flag,\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER.\n\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER\nIndicates the effect needs sequence_data replicated for each render thread, thus allowing each render to have\nsequence_data which can be written to. Note that changes to sequence_data will be discarded regularly, currently\nafter each span of frames is rendered such as single RAM Preview or Render Queue export."]
+#[doc = " -------------------- Output Flags --------------------\n\nThe out_flags field of the OutData can be set to an OR-ed\ncombination of these flags to communicate various things to\nthe driver program.  The flags are described here:\n\nPF_OutFlag_NONE\nThis is the \"empty\" setting -- no outflags.\n\nPF_OutFlag_WIDE_TIME_INPUT\nSet this flag if the effect calls get_param to inquire a\nparameter at a time besides the current one (e.g. to get\nthe previous video frame). This should be sent, if it is\ngoing to be sent, at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nAs of AE10, this flag is no longer recommended. It still works the\nsame way and is safe to set, but there's a more efficient option.\nSee PF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT.\n\nPF_OutFlag_NON_PARAM_VARY\nSet this if the effect uses information other than the parameters\nin the param list to generate its output at the current time.\nFor instance, if the effect uses the current time of the frame\nor some random value to decide the output, set this flag.  This\nflag should be sent at PF_Cmd_GLOBAL_SETUP.  If the effect\nproduces changing frames when applied to a still image and\nall parameters are constant, that's a sure sign that this bit\nshould be set (e.g. Wave Warp). Can be over-ridden dynamically\nduring PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING\nWhen you allocate a sequence data handle, the app\nmay write the handle out to disk and reuse it\nlater. Pass this flag if the handle is not \"flat\"\n(i.e. has pointers or handles hanging off of it).\nBasically, this gives you a chance to alter the\nhandle contents before it is written out to disk,\nso  you won't get invalid handles or pointers. Once\nyou have flattened a handle, you will get an\nopportunity to un-flatten it before the effect\nneeds to continue. For sequence data, you will be\ninvoked with a PF_Cmd_SEQUENCE_RESETUP call. You\nshould store a boolean at a common  offset in your\nunflattened and flattened data that says whether\nthe data is flat or not. If you get a\nPF_Cmd_SEQUENCE_RESETUP and the boolean indicated\nthe data is flattened, you should  unflatten the\ndata, free the flattened data handle, and set the\nsequence_data handle in the  PF_OutData. If you\never set the data to NULL when you flatten it, you\nwill NOT get the sequence  resetup call to\nunflatten it. Instead, you may just get a RENDER\ncall with NULL data. Forewarned is  forearmed. This\nflag, indicating if the data will need to be\nflattened, should be set at  PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_I_DO_DIALOG\nSet this is the effect responds to a PF_Cmd_DO_DIALOG, i.e. Does this\neffect bring up an options dialog box.  PF_Cmd_DO_DIALOG is generated\nwhen the user presses the Options button on the Effect floater.\nThis flag should be set at PF_Cmd_GLOBAL_SETUP time.\n\nPF_OutFlag_USE_OUTPUT_EXTENT\nThe output layer is passed with an \"extent rect\" indicating\nthe area of the layer that actually contains visible image data.  If\nthe effect changes its behavior based on the extent rect (for instance,\nby not iterating over the entire image), set this flag, so the\napplication will know whether having the extent change should cause\nthe frame to re-render.  Specify this flag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_SEND_DO_DIALOG\nSome filters need their options dialog box to be brought up at least\nonce to be valid.  You can set this flag, and the driver app will\nautomatically send a PF_Cmd_DO_DIALOG to the effect when it is applied.\nThe DO_DIALOG will be sent after PF_Cmd_SEQUENCE_SETUP.  This flag\nshould be set in PF_Cmd_SEQUENCE_SETUP if it is going to be set.\n\nPF_OutFlag_DISPLAY_ERROR_MESSAGE\nWhenever the return_msg field in the PF_OutData is set to a string,\nAfter Effects will bring up a simple dialog box containing that\nstring.  If you set this flag, the dialog box will be made to look\nlike an error message dialog box.  If you don't set this flag, it\nwill be an undecorated dialog box.  Using this flag, an effects module\ncan have and display its own error messages and not worry about the\ncode for dialog boxes -- the program will do it for you.\nThis flag can be sent after any command.\n\nPF_OutFlag_I_EXPAND_BUFFER\nStarting with After Effects 2.0, effects will be able to expand their buffers\nbeyond the current layer's dimensions. This has always been part of the\nPF specification, but as an extra precaution (and hint to the AE rendering\nengine) set this flag at PF_Cmd_GLOBAL_SETUP if you plan to expand your\nbuffer.\n\nPF_OutFlag_I_SHRINK_BUFFER\nSet this flag if you can shrink your buffer based on the extent-rects passed\nto you in order to be more memory efficient.\n\nPF_OutFlag_PIX_INDEPENDENT\nSet this flag if the output at a given pixel is not dependent on the values\nof the pixels around it. If this is set, the pixels After Effects does not\ncare about (because of field rendering, for example) could be filled with garbage\ncolors.  Please set this flag at PF_Cmd_GLOBAL_SETUP. Can be over-ridden\ndynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_WRITE_INPUT_BUFFER\nSet this flag if your effect would like to write into the input buffer. This\ncan be useful if you need an scratch buffer, but it also invalidates some speedups\nin the AE rendering pipeline, so use it with some discretion. Please set this\nflag at PF_Cmd_GLOBAL_SETUP.\n\nPF_OutFlag_KEEP_RESOURCE_OPEN\n\nObsoleted in AE 2015 (does nothing when set).\n\nSet this flag if your effect expects its Macintosh resource fork to be open\nat any time other than global setup.  Note that this does not mean that\nthe resource fork will be kept open at all times, just whenever the\neffect is being executed.\n\nPF_OutFlag_NOP_RENDER\n\nSet this flag in PF_Cmd_GLOBAL_SETUP if the render would never result in changes\nto the source image (or audio?). For example, an expression control would set this.\n\nPF_OutFlag_CUSTOM_UI\n\nThis flag must be set if your effect has a custom UI in the Effect Controls\nWindow, Layer Window or Comp Window.\n\nPF_OutFlag2_CUSTOM_UI_ASYNC_MANAGER (new in 13.5)\n\nThis flags enables use of AEGP_CheckoutOrRender_*_AsyncManager() calls\nwhich avoid the need for plugin management of the lifetime of async custom UI renders from the UI thread.\nThe plugin asks for what frames it needs and the manager calls PF_Event_DRAW again when they are available\n(or cancels them as needed automatically).  The plugin responds in PF_Event_DRAW by asking for what it needs\nand drawing what it can from what is available.\n\nDue to separation of Render thread and UI thread in 13.5, frames for custom UI should no longer be\nrendered synchronously (see RenderSuite5 for more details). The manager simplifies this, especially when\nthere are multiple requests needed for DRAW.\n\nWhen enabled, this flag associates a \"PF_AsyncManager\" with the NEW_CONTEXT/CLOSE_CONTEXT and PF_Event_DRAW\nthat will automatically track completion of 1 or more asynch render requests made for drawing custom UI.\nAs requests complete,  PF_Event_DRAW will be called again and the current state of the CUSTOM_UI can be drawn.\nSuch requests may be canceled automatically as the user scrubs the time needle or project changes are made and\nbecome invalid.\n\nThis flag is used in addition to the CUSTOM_UI flag during PF_Cmd_GLOBAL_SETUP\n\nPF_OutFlag_REFRESH_UI\n\nCan be returned from PF_Cmd_EVENT, PF_Cmd_RENDER, and PF_Cmd_DO_DIALOG.\nCauses the effects control window, layer window, and comp window to be re-drawn.\n\nPF_OutFlag_I_USE_SHUTTER_ANGLE\n\nMust be set at PF_Cmd_GLOBAL_SETUP time if the effect uses\nthe shutter_angle or the shutter_phase. Can be over-ridden dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag_I_USE_AUDIO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for a visual effect\nthat calls the audio checkout calls.\n\nPF_OutFlag_I_AM_OBSOLETE\n\nSet at PF_Cmd_GLOBAL_SETUP time for effects that don't\nwant to appear in the AE Effects menu (but will still be invoked\nif you load a project that has an old copy of the effect applied).\n\nPF_OutFlag_FORCE_RERENDER\n\nSet at PF_Cmd_EVENT if the effect modified sequence data,\nor did anything else that requires the effect needs to re-render.\nNote that setting PF_ChangeFlag_CHANGED_VALUE automatically\ncauses a re-render, so don't worry about setting PF_OutFlag_FORCE_RERENDER\nin that case. Also, I_MIX_GUID_DEPENDENCIES can be used to trigger a rerender on\ndependant changes if sequence_data has not been changed.\n\nIMPORTANT: FORCE_RERENDER should be used as a last resort. Long term we should be eliminating the need for this\nbecause it causes forced cache invalidation that doesn't work well with undo.\nOnce we have the full set of APIs in place needed to manage render state, we will be able to deprecate this.\nPrefer using ARB data + CHANGED_VALUE or I_MIX_GUID_DEPENDENCIES when possible instead.\n\nIn 13.5 the split between a UI and render threads means that FORCE_RERENDER will now also have the needed\nside effect of copying sequence_data state to the render project.  This can be expensive if the sequence_data is large.\nSupport GET_FLATTENED_SEQUENCE_DATA to prevent deallocation of your sequence_data, which can help.\nGET_FLATTENED_SEQUENCE_DATA support is required for FORCE_RERENDER use in custom mouse/key events.\n\nPF_OutFlag_PiPL_OVERRIDES_OUTDATA_OUTFLAGS\n\nValid only for setting in your PiPL.  When set out_flags will be\nignored at PF_Cmd_GLOBAL_SETUP time (& thus don't need to match).\n\nPF_OutFlag_I_HAVE_EXTERNAL_DEPENDENCIES\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if the effect has dependencies\nthat the user should know about before transporting their project to a\ndifferent machine.  For example, dependencies on an installed font,\nor on an external file.  If set, the effect will receive a\nPF_Cmd_GET_EXTERNAL_DEPENDENCIES request, where the extra\nparam will be a PF_ExtDependenciesExtra, and the effect should\nreport its information based on the given sequence_data.\n\nPF_OutFlag_SEND_UPDATE_PARAMS_UI\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you want to receive\nPF_Cmd_UPDATE_PARAMS_UI messages.\n\nPF_OutFlag_AUDIO_FLOAT_ONLY\n\nSet this flag if you only want to receive PF_SIGNED_FLOAT data\nwhen processing audio data.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_IIR\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you are an\nInfinite-Impulse-Response audio filter (i.e. your output at a given\ntime depends on your output from previous times).\n\nPF_OutFlag_I_SYNTHESIZE_AUDIO\n\nSet this flag at PF_Cmd_GLOBAL_SETUP time if you generate\naudio even when handed silence.  Requires PF_OutFlag_AUDIO_EFFECT_TOO\nor PF_OutFlag_AUDIO_EFFECT_ONLY.\n\nPF_OutFlag_AUDIO_EFFECT_TOO\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect that\nwants to filter the audio too (as opposed to just reading the audio).\n\nPF_OutFlag_AUDIO_EFFECT_ONLY\n\nMust be set at PF_Cmd_GLOBAL_SETUP time for an effect\nthat only filters audio (no video).\n\nPF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\n\nSet this during PF_Cmd_GLOBAL_SETUP if the effect handles PF_Cmd_QUERY_DYNAMIC_FLAGS.\nSupporting this command can dramatically improve performance for certain\neffects, because it provides dynamic information to the host about what\ncan be cached (as opposed to PIPL bits which cannot be changed at run-time)\n\nPF_OutFlag2_I_USE_3D_CAMERA\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_USE_3D_LIGHTS\n\nThis bit must be set if the effect ever uses the AEGP PF_Interface suite to\naccess camera layers. Can be over-ridden dynamically during PF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_PARAM_GROUP_START_COLLAPSED_FLAG\n\nIf you want a parameter group to honor the PF_ParamFlag_COLLAPSE_TWIRLY or\nPF_ParamFlag_START_COLLAPSED flag, set this bit.  Otherwise, all parameter\ngroups will be collapsed by default.\n\nPF_OutFlag2_DOESNT_NEED_EMPTY_PIXELS\n\nAdded for render optimizations; shrinks the input buffer passed to the effect to\nexclude any empty pixels (where empty means \"zero alpha\" unless\nPF_OutFlag2_REVEALS_ZERO_ALPHA is set, in which case RGB must be zero as well.)\nThe origin of the trimmed buffer can be found in in_data->pre_effect_source_origin.\nEffects with both this flag and PF_OutFlag_I_EXPAND_BUFFER set may get called with\na null input buffer if their input is completely empty, and must be able to handle\nthis case without crashing. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_REVEALS_ZERO_ALPHA\n\nThe effect can take pixels with zero alpha and reveal the RGB data in them (like\nour Set Channels effect). This tells After Effects not to trim such pixels when\ndetermining the input for the effect. This flag can be cleared dynamically during\nPF_Cmd_QUERY_DYNAMIC_FLAGS.\n\nPF_OutFlag2_I_AM_DEPRECATED\nthis effect is still available, and shows up under user-visible \"Obsolete\" category\nin the UI. Setting this flag means \"there's a better way to do this, but this effect\nmay still be useful in some situations\".  distinct from PF_OutFlag_I_AM_OBSOLETE in\nthat these will still show up in the GUI and the user can still apply them to new\nprojects.  The category that is set by the effect is pretty much ignored, as it will\ninstead always go into the \"Obsolete\" category\n\nPF_OutFlag2_I_USE_TIMECODE\nNew in AE 9.0.  The effect depends on the Composition's timecode or a layer's\nsource footage timecode.  If the underlying timecode changes the effects will\nbe asked to rerender.\n\nPF_OutFlag2_AUTOMATIC_WIDE_TIME_INPUT\nNew in AE 10. Requires setting of PF_OutFlag_WIDE_TIME_INPUT (which allows you\nto support old hosts), but effectively overrides that flag. When set, all\nparameter checkouts are tracked so over-time dependencies are known by AE. Note\nthat if you use this new flag, and you cache any time-dependent data in your\nsequence data (or anywhere else), you must validate that cache using the\nnew PF_HaveInputsChangedOverTimeSpan() before using it.\n\nThis only works for smart effects (those that set PF_OutFlag2_SUPPORTS_SMART_RENDER). If you haven't\nset that, After Effects will silently treat this as PF_OutFlag_WIDE_TIME_INPUT instead.\n\nTo test that it's working, apply your effect with one parameter keyframed on every frame.\nRAM Preview to fill the cache, then change one of the keyframes. The related frame and\nall dependent frames (e.g. later frames, in the case of a simulation) should lose their\ncache marks and require re-rendering. Simlarly, upstream changes to sources of layer\nparameters should cause time-selective invalidation of the cache.\n\nPF_OutFlag2_DEPENDS_ON_UNREFERENCED_MASKS\nSet this if you are going to look at paths that aren't directly referenced by a path\nparam, e.g. if you are going to draw a stroke on all masks.\n\nPF_OutFlag2_OUTPUT_IS_WATERMARKED\nSet this if your output is going to be watermarked in some way that makes it unsuitable for\nfinal use, probably because the user is using an unlicensed demo version. It is ok to change\nthis state during the course of app session, if e.g. a floating license status changes.\nPlugin authors that actually do have this state changing asynchronously must be careful to\nhave the next render match the last state returned from QUERY_DYNAMIC_FLAGS otherwise race conditions\ncould cause incorrect frames to be cached. (This is a non-issue if you only change this in response\nto DO_DIALOG.)\n\nPF_OutFlag2_I_MIX_GUID_DEPENDENCIES (new in 13.5)\nSmart effects only. With this option, FORCE_RERENDER becomes a cache-savvy more efficient MAYBE rerender.\nIf custom UI or DO_DIALOG change sequence data, returning FORCE_RERENDER requests AE to check whether\nrerender needs to occur.  During PreRender, the effect uses the GuidMixInPtr callback to mix\nany additional state that affects the render into our internal GUID for the cached frame.\nAE can then tell whether the frame already exists and if so, no longer needs to render.\nThis also means that DO_DIALOG no longer always blows the cache and that undo works across DO_DIALOG.\nCancelation of DO_DIALOG no longer blows the cache either.\nThis also means that I_USE_* flags are now basically redundant since any dependency could be mixed in.\nJust be sure to mix in everything that can uniquely affect resulting rendered pixels (that is not already\nan AE stream parameter).  But don't mixin things that are disabled and have no render effect  (this\nresults in less cache efficiency).\n\nPF_OutFlag2_SUPPORTS_THREADED_RENDERING\nIndicates the effect supports rendering on multiple threads at the same time. Single or multiple\napplications of this effect on a layer can be called to render at the same time on multiple threads.\n\nUI selectors are still sent on the main thread, however Sequence Setup, Sequence Resetup, Sequence SetDown,\nPreRender, and Render may be sent on multiple threads at the same time as the UI selectors are being handled\nso all of these selectors must be thread safe.\n\nGlobal Setup and Global Setdown selectors are unaffected by this flag.  Regardless whether this flag is set\nor not, they will only be sent on the main thread, and will not be sent at the same time as any other selectors.\n\nIf the effect sets PF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING indicating the sequence data needs flattening\nthen it must also set PF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA.\n\nsequence_data is read-only at render time and must be accessed with PF_EffectSequenceDataSuite.\nin_data->sequence_data will be NULL during render. AEGP_ComputeCacheSuite is suggested if writing to\nsequence_data at render time is needed for caching. This suite unifies cache entries so multiple threads do\nnot recompute the same cache value. If neither of these solutions work, see the next flag,\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER.\n\nPF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER\nIndicates the effect needs sequence_data replicated for each render thread, thus allowing each render to have\nsequence_data which can be written to. Note that changes to sequence_data will be discarded regularly, currently\nafter each span of frames is rendered such as single RAM Preview or Render Queue export."]
 pub type _bindgen_ty_17 = ::std::os::raw::c_uint;
 pub type PF_OutFlags = A_long;
 pub const PF_OutFlag2_NONE: _bindgen_ty_18 = 0;
@@ -865,6 +873,7 @@ pub const PF_OutFlag2_RESERVED12: _bindgen_ty_18 = 67108864;
 pub const PF_OutFlag2_SUPPORTS_THREADED_RENDERING: _bindgen_ty_18 = 134217728;
 pub const PF_OutFlag2_MUTABLE_RENDER_SEQUENCE_DATA_SLOWER: _bindgen_ty_18 = 268435456;
 pub const PF_OutFlag2_SUPPORTS_DIRECTX_RENDERING: _bindgen_ty_18 = 536870912;
+pub const PF_OutFlag2_STRINGS_ARE_UTF8: _bindgen_ty_18 = 1073741824;
 pub type _bindgen_ty_18 = ::std::os::raw::c_uint;
 pub type PF_OutFlags2 = A_long;
 pub const PF_InFlag_NONE: _bindgen_ty_19 = 0;
@@ -907,7 +916,7 @@ pub const PF_Cmd_SMART_RENDER_GPU: _bindgen_ty_20 = 31;
 pub const PF_Cmd_GPU_DEVICE_SETUP: _bindgen_ty_20 = 32;
 pub const PF_Cmd_GPU_DEVICE_SETDOWN: _bindgen_ty_20 = 33;
 pub const PF_Cmd_NUM_CMDS: _bindgen_ty_20 = 34;
-#[doc = " -------------------- Command Selectors --------------------\n\nThe first parameter to the effect routine is one of t\these command\nselectors.  The commands are described here.\n\nPF_Cmd_ABOUT\nThis command should display an information dialog box about the\neffect module.  The easiest thing to do is PF_SPRINTF the info\ninto the out_data->return_msg field.  After Effects will bring\nup a simple undecorated modal dialog with your text proudly displayed.\nThis command can be sent at _any_ time, so don't count on having\nany global data or anything else set.  (Except, as always, the\ncurrent resource file will be set to your effects module.)\n\nPF_Cmd_GLOBAL_SETUP\nWhen you get this command, you should check the version of the\neffect protocol with which you are being invoked, and set any of\nthe necessary out flags (described above) or out data fields\n(described below).  If your global data was flattened, the flat\ndata will be passed here and you should unflatten it, free the\nflat global data, and set the OutData global_data to the new un-flat\ndata.  Alternatively, the global data may come in NULL and you can\nallocate new global data at this time.\n\nPF_Cmd_GLOBAL_SETDOWN\nYou should free any global data you have allocated when you get\nthis command.\n\nPF_Cmd_PARAMS_SETUP\nHere you should add any params your effect wants using the\nPF_ADD_PARAM callback described below.  This is called after global\nsetup -- see the add_param callback described below.\n\nPF_Cmd_SEQUENCE_SETUP\nThis is called when the effect is first applied to a layer.\nA sequence is a series of images that will usually be all be of the same\nsize and in the same context.  You can allocate sequence data\nat this time -- many more input fields are defined at this time.\nSee the PF_InData description below.\n\nAs of 13.5 this only happens on the UI thread.\nExcept for legacy (no GET_FLATTENED_SEQUENCE_DATA) effects that do I_DO_DIALOG which can still hit this in render.\n\nPF_Cmd_SEQUENCE_RESETUP\nThis call is made to unflatten flattened sequence data.\nThere are at least three cases when this can happen:\n1) after the sequence data is written to disk, 2) after the\nsequence data is read in from disk, 3) after a duplicate\nis made (called on both original and the new sequence).\n\nThis can happen in UI or Render thread (13.5),  the effect must handle\ninitialization of a NULL sequence_data input if needed.  See also PF_InFlag_PROJECT_IS_RENDER_ONLY.\n\nPF_Cmd_SEQUENCE_FLATTEN\nThis call is made to flatten unflat sequence data so it can be\ncached to disk.  After the data is flattened, free the un-flat data\nand set the out_data->sequence_data to the new flat data.\nIf you don't want your sequence handle written to disk, you\ncan set it to NULL (after disposing it) at this time.  Presumably\nyou would then reallocate it at another time.\n\nThis command will be sent when saving and when duplicating\nthe sequence.\n\nPF_Cmd_GET_FLATTENED_SEQUENCE_DATA\t(new in 13.5)\nReturns an independent allocation of the sequence data which can be written\nto disk or used to initialise or update other instances of the effect plug-in.\n\nThe host calls this command to serialize the sequence data without\nhaving to flatten and resetup the UI plug-in as was legacy practice. (However, at present effects\nstill may need flattening in render if the sequence_data is about to be assigned.)\n\nAn effect that implements GET_FLATTENED_SEQUENCE_DATA will only receive SEQUENCE_SETUP on the UI thread.\nSEQUENCE_RESETUP can happen on either thread. Make sure you handle a NULL sequence_data in RESETUP.\n(Without GET_FLATTENED, a legacy effect may still get SEQUENCE_SETUP in render but DO_DIALOG will not be called.)\n\nAlso when enabled, this means that the effect is guaranteed to get a\nSEQUENCE_SETDOWN cmd to dispose the effect's sequence_data  (previously\nit was possible for AE to bypass this if the sequence_data was flat,\nbut that lead to SEQUENCE_SETUP/SETDOWN imbalances for some plugins.\nThe imbalance should not happen when using this flag, but the plugin must\nhandle being called on SETDOWN with possibly flat data. For example,\ntry copy and pasting an effect onto itself.\n\nSupport for this command is indicated by setting\nPF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA\n\nThe ownership of the returned handle is transferred to the host.\n\nPF_Cmd_SEQUENCE_SETDOWN\nYou should free any sequence data you have allocated when you\nget this command.\n\nPF_Cmd_DO_DIALOG\nThis command indicated that the Options button or command has\nbeen selected and the effect should bring up its options dialog.\nThis command will only be sent it the effect has indicated that\nit has an options dialog with PF_OutFlag_I_DO_DIALOG.  This\ncommand will automatically be sent once upon applying the filter\nif PF_OutFlag_SEND_DO_DIALOG is set in SEQUENCE_SETUP.\n\nPF_Cmd_FRAME_SETUP\nThis is called immediately before each frame is invoked.  You\ncan allocate frame data at this time, if you wish, or you can\njust wait for the RENDER which will immediately follow.\n\nPF_Cmd_RENDER\nThis is the call to render the frame.  All fields in the in_data\nwill be valid at this time and you can inquire parameters or\nwhat-have-you.  This should set the output frame with the new\nimage data.  This is the main action command.\n\nPF_Cmd_FRAME_SETDOWN\nIf you allocated data in PF_Cmd_FRAME_SETUP, this is the time\nto free it and clean up after rendering the frame.\n\nPF_Cmd_USER_CHANGED_PARAM\nThis command will be sent if you set the PF_ParamFlag_SUPERVISE\nflag for a param.  This allows you to modify the params array contents to\ncontrol values or make one control affect others, including arbitrary\ndata.  This command will be sent whenever the user interacts with a\nstandard param controller that has PF_ParamFlag_SUPERVISE\nset.\n\nThe \"extra\" field will be a pointer to a PF_UserChangedParamExtra structure\nwhich contains the param_index of the changed parameter.\n\nYou can return PF_ChangeFlag_CHANGED_VALUE and/or call PF_UpdateParamUI()\nfor any param.\n\nPF_Cmd_UPDATE_PARAMS_UI\nThis command will be sent when the Effect Controls Window (ECW)\nneeds to updated (e.g. after opening the ECW or moving the comp to\na new time) if you have set PF_OutFlag_SEND_UPDATE_PARAMS_UI at\nglobal setup time.\n\nThis gives you a chance to call PF_UpdateParamUI() to modify certain\nui fields for the params.  See the doc for PF_UpdateParamUI()\nto see which fields can be modified.\n\nWARNING: When handling PF_Cmd_UPDATE_PARAMS_UI, you can call\nPF_UpdateParamUI() for any param(s), but not PF_ChangeFlag_CHANGED_VALUE --\nonly cosmetic changes can be made in response to this command.\n\nPF_Cmd_QUERY_DYNAMIC_FLAGS\nThis command will be sent at arbitrary times if PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\nis set during global setup. During this call the effect may examine the values\nof its parameters at the current time (except layer parameters) by checking them out,\nand decide whether any of the flags that support PF_Cmd_QUERY_DYNAMIC_FLAGS should be set.\n\nThe appropriate flags must be set in out_data->out_flags and out_data->out_flags2 before\nreturning. The effect must decide what information is necessary to render a frame at\nthe current time, given only the values of parameters at that time. Clearing the\nappropriate bits when possible can result in great performance improvements, but\nincorrectly clearing bits will result in caching bugs, and you won't like that. Nope.\n\n Important Reminder***\nBefore you add a new PF_Cmd, evaluate whether it should allow\nnew Sequence Data allocations! If so, remember to add it to\nCmdCanChangeSequenceData() in FLT_Host.cpp!"]
+#[doc = " -------------------- Command Selectors --------------------\n\nThe first parameter to the effect routine is one of t   hese command\nselectors.  The commands are described here.\n\nPF_Cmd_ABOUT\nThis command should display an information dialog box about the\neffect module.  The easiest thing to do is PF_SPRINTF the info\ninto the out_data->return_msg field.  After Effects will bring\nup a simple undecorated modal dialog with your text proudly displayed.\nThis command can be sent at _any_ time, so don't count on having\nany global data or anything else set.  (Except, as always, the\ncurrent resource file will be set to your effects module.)\n\nPF_Cmd_GLOBAL_SETUP\nWhen you get this command, you should check the version of the\neffect protocol with which you are being invoked, and set any of\nthe necessary out flags (described above) or out data fields\n(described below).  If your global data was flattened, the flat\ndata will be passed here and you should unflatten it, free the\nflat global data, and set the OutData global_data to the new un-flat\ndata.  Alternatively, the global data may come in NULL and you can\nallocate new global data at this time.\n\nPF_Cmd_GLOBAL_SETDOWN\nYou should free any global data you have allocated when you get\nthis command.\n\nPF_Cmd_PARAMS_SETUP\nHere you should add any params your effect wants using the\nPF_ADD_PARAM callback described below.  This is called after global\nsetup -- see the add_param callback described below.\n\nPF_Cmd_SEQUENCE_SETUP\nThis is called when the effect is first applied to a layer.\nA sequence is a series of images that will usually be all be of the same\nsize and in the same context.  You can allocate sequence data\nat this time -- many more input fields are defined at this time.\nSee the PF_InData description below.\n\nAs of 13.5 this only happens on the UI thread.\nExcept for legacy (no GET_FLATTENED_SEQUENCE_DATA) effects that do I_DO_DIALOG which can still hit this in render.\n\nPF_Cmd_SEQUENCE_RESETUP\nThis call is made to unflatten flattened sequence data.\nThere are at least three cases when this can happen:\n1) after the sequence data is written to disk, 2) after the\nsequence data is read in from disk, 3) after a duplicate\nis made (called on both original and the new sequence).\n\nThis can happen in UI or Render thread (13.5),  the effect must handle\ninitialization of a NULL sequence_data input if needed.  See also PF_InFlag_PROJECT_IS_RENDER_ONLY.\n\nPF_Cmd_SEQUENCE_FLATTEN\nThis call is made to flatten unflat sequence data so it can be\ncached to disk.  After the data is flattened, free the un-flat data\nand set the out_data->sequence_data to the new flat data.\nIf you don't want your sequence handle written to disk, you\ncan set it to NULL (after disposing it) at this time.  Presumably\nyou would then reallocate it at another time.\n\nThis command will be sent when saving and when duplicating\nthe sequence.\n\nPF_Cmd_GET_FLATTENED_SEQUENCE_DATA  (new in 13.5)\nReturns an independent allocation of the sequence data which can be written\nto disk or used to initialise or update other instances of the effect plug-in.\n\nThe host calls this command to serialize the sequence data without\nhaving to flatten and resetup the UI plug-in as was legacy practice. (However, at present effects\nstill may need flattening in render if the sequence_data is about to be assigned.)\n\nAn effect that implements GET_FLATTENED_SEQUENCE_DATA will only receive SEQUENCE_SETUP on the UI thread.\nSEQUENCE_RESETUP can happen on either thread. Make sure you handle a NULL sequence_data in RESETUP.\n(Without GET_FLATTENED, a legacy effect may still get SEQUENCE_SETUP in render but DO_DIALOG will not be called.)\n\nAlso when enabled, this means that the effect is guaranteed to get a\nSEQUENCE_SETDOWN cmd to dispose the effect's sequence_data  (previously\nit was possible for AE to bypass this if the sequence_data was flat,\nbut that lead to SEQUENCE_SETUP/SETDOWN imbalances for some plugins.\nThe imbalance should not happen when using this flag, but the plugin must\nhandle being called on SETDOWN with possibly flat data. For example,\ntry copy and pasting an effect onto itself.\n\nSupport for this command is indicated by setting\nPF_OutFlag2_SUPPORTS_GET_FLATTENED_SEQUENCE_DATA\n\nThe ownership of the returned handle is transferred to the host.\n\nPF_Cmd_SEQUENCE_SETDOWN\nYou should free any sequence data you have allocated when you\nget this command.\n\nPF_Cmd_DO_DIALOG\nThis command indicated that the Options button or command has\nbeen selected and the effect should bring up its options dialog.\nThis command will only be sent it the effect has indicated that\nit has an options dialog with PF_OutFlag_I_DO_DIALOG.  This\ncommand will automatically be sent once upon applying the filter\nif PF_OutFlag_SEND_DO_DIALOG is set in SEQUENCE_SETUP.\n\nPF_Cmd_FRAME_SETUP\nThis is called immediately before each frame is invoked.  You\ncan allocate frame data at this time, if you wish, or you can\njust wait for the RENDER which will immediately follow.\n\nPF_Cmd_RENDER\nThis is the call to render the frame.  All fields in the in_data\nwill be valid at this time and you can inquire parameters or\nwhat-have-you.  This should set the output frame with the new\nimage data.  This is the main action command.\n\nPF_Cmd_FRAME_SETDOWN\nIf you allocated data in PF_Cmd_FRAME_SETUP, this is the time\nto free it and clean up after rendering the frame.\n\nPF_Cmd_USER_CHANGED_PARAM\nThis command will be sent if you set the PF_ParamFlag_SUPERVISE\nflag for a param.  This allows you to modify the params array contents to\ncontrol values or make one control affect others, including arbitrary\ndata.  This command will be sent whenever the user interacts with a\nstandard param controller that has PF_ParamFlag_SUPERVISE\nset.\n\nThe \"extra\" field will be a pointer to a PF_UserChangedParamExtra structure\nwhich contains the param_index of the changed parameter.\n\nYou can return PF_ChangeFlag_CHANGED_VALUE and/or call PF_UpdateParamUI()\nfor any param.\n\nPF_Cmd_UPDATE_PARAMS_UI\nThis command will be sent when the Effect Controls Window (ECW)\nneeds to updated (e.g. after opening the ECW or moving the comp to\na new time) if you have set PF_OutFlag_SEND_UPDATE_PARAMS_UI at\nglobal setup time.\n\nThis gives you a chance to call PF_UpdateParamUI() to modify certain\nui fields for the params.  See the doc for PF_UpdateParamUI()\nto see which fields can be modified.\n\nWARNING: When handling PF_Cmd_UPDATE_PARAMS_UI, you can call\nPF_UpdateParamUI() for any param(s), but not PF_ChangeFlag_CHANGED_VALUE --\nonly cosmetic changes can be made in response to this command.\n\nPF_Cmd_QUERY_DYNAMIC_FLAGS\nThis command will be sent at arbitrary times if PF_OutFlag2_SUPPORTS_QUERY_DYNAMIC_FLAGS\nis set during global setup. During this call the effect may examine the values\nof its parameters at the current time (except layer parameters) by checking them out,\nand decide whether any of the flags that support PF_Cmd_QUERY_DYNAMIC_FLAGS should be set.\n\nThe appropriate flags must be set in out_data->out_flags and out_data->out_flags2 before\nreturning. The effect must decide what information is necessary to render a frame at\nthe current time, given only the values of parameters at that time. Clearing the\nappropriate bits when possible can result in great performance improvements, but\nincorrectly clearing bits will result in caching bugs, and you won't like that. Nope.\n\n Important Reminder***\nBefore you add a new PF_Cmd, evaluate whether it should allow\nnew Sequence Data allocations! If so, remember to add it to\nCmdCanChangeSequenceData() in FLT_Host.cpp!"]
 pub type _bindgen_ty_20 = ::std::os::raw::c_uint;
 pub type PF_Cmd = A_long;
 #[repr(C)]
@@ -1065,7 +1074,7 @@ pub struct PF_ChannelRef {
 }
 #[doc = " the opaque type representing the channel data"]
 pub type PF_ChannelRefPtr = *mut PF_ChannelRef;
-#[doc = " the channel data parallels the image data in size and shape.\n the width is the number of pixels, the height is the number of scanlines\n the height is image_height\n the dimension is the number of planes in a pixel\n the row_bytes is the length of a scanline in bytes\n the data type is the type of data in a plane\n\tNote : a pixel consists of dimensionL * sizeof(data_type) bytes\n dataH is a handle to the data.\n dataPV is a pointer to the dereferenced locked handle\n effects should always have dataPV non null."]
+#[doc = " the channel data parallels the image data in size and shape.\n the width is the number of pixels, the height is the number of scanlines\n the height is image_height\n the dimension is the number of planes in a pixel\n the row_bytes is the length of a scanline in bytes\n the data type is the type of data in a plane\n Note : a pixel consists of dimensionL * sizeof(data_type) bytes\n dataH is a handle to the data.\n dataPV is a pointer to the dereferenced locked handle\n effects should always have dataPV non null."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PF_ChannelChunk {
@@ -1564,6 +1573,7 @@ pub type PF_DeletePreRenderDataFunc =
 pub const PF_RenderOutputFlag_RETURNS_EXTRA_PIXELS: _bindgen_ty_37 = 1;
 pub const PF_RenderOutputFlag_GPU_RENDER_POSSIBLE: _bindgen_ty_37 = 2;
 pub const PF_RenderOutputFlag_RESERVED1: _bindgen_ty_37 = 4;
+pub const PF_RenderOutputFlag_RESERVED2: _bindgen_ty_37 = 8;
 pub type _bindgen_ty_37 = ::std::os::raw::c_uint;
 pub type PF_RenderOutputFlags = ::std::os::raw::c_short;
 #[repr(C)]
@@ -1746,7 +1756,7 @@ pub struct PF_InteractCallbacks {
     pub reserved_str: [*mut ::std::os::raw::c_void; 3usize],
     pub reserved: [*mut ::std::os::raw::c_void; 10usize],
 }
-#[doc = " -------------------- Effect Parameter Blocks --------------------\n\nThe effects module itself is invoked with input and output blocks\nof parameters for various messages that it needs to handle.  The\noutput block (values returned from the effect to the program) and\nthe input block (values provided by the program for the edification\nof the effect) are defined here.  Discussion follows.\n\nThe Output Block\n\nMost fields of the output block are only examined for changes after\ncertain commands have been sent to the effect module.  Each field\nbelow describes when it will be checked.\n\nmy_version\nThis is the version number of your plug-in effect, not to be confused\nwith the version of the plug-in specification. Please set this\nat PF_Cmd_GLOBAL_SETUP.\n\nname\nThis lets you override the name of the effect in the Time Layout and\nin the Effect Controls windows when the effect is applied. The name from\nthe PiPL resource is always used in the Effect menu. This field is\nchecked after PF_Cmd_SEQUENCE_SETUP. You will almost always leave\nthis field empty.\n\nglobal_data\nThis is a Handle that you can allocate at PF_Cmd_GLOBAL_SETUP\ntime.  It will be passed back to you verbatim in the input\nparameter block for use later on.  In PF_Cmd_GLOBAL_SETUP,\nthe global_data field in the Input Block may be set to a\nflattened version of your global data, in which case you should\nunflatten it, free the flat version, and set this field to the\nunflattened new global data.\n\nIt will be locked & unlocked for you automatically like sequence_data.\n\nnum_params\nThe calling application will sanity check the num_params field\nvs the times add_param is called.  The implicit main\nlayer parameter MUST be included in the parameter count.  Use the\nnum_params value in the in_data as a starting value (it will\ninclude the implicit layer parameter).\nSet this field when you get PF_Cmd_PARAMS_SETUP.\n\nsequence_data\nThis is a Handle that you can allocate (using PF_NEW_HANDLE)\nat PF_Cmd_SEQUENCE_SETUP time.\nIt will be passed back to you in the input parameter block\nfor later use.\n\nWARNING: this handle is always locked for you before your plugin\nis called, and the lock-state is restored on the way out.  If you\nhave arbitrary data, your plugin can be called re-entrantly, so\nif you have a lock/unlock inside your plugin, the handle will\nbecome unlocked prematurely -- instead simply depend on the host\nto lock & unlock your sequence data for you.  Of course during\nPF_Cmd_SEQUENCE_SETUP the handle you allocate will not be\nlocked unless you explicitly lock it at that time.\n\nThe contents of this handle will be written out to\ndisk.  If other handles\thang off this block, you must specify the\nPF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING out flag when you get\nthe PF_Cmd_GLOBAL_SETUP command.  You will then receive the\nPF_Cmd_SEQUENCE_FLATTEN before your handle is written out.  At that\ntime, you should create a flat version of the handle contents,\nfree the old unflat handle, and set this field to the flattened\nversion of the handle.  Or after disposing, simply set to NULL\nand nothing will be written to disk.\n\nYou will receive a PF_Cmd_SEQUENCE_RESETUP\ncall to unflatten this handle (as well as to adjust the sequence\ndata to altered frame rates, etc).  If your\nsequence data can be flat or unflat, you should store its current\nstate along with the other data, and check that value in Resetup.\nIf the handle is flat, Resetup should unflatten it, free the flat\nhandle, and set this field to the new unflat usable handle.\n\nflat_sdata_size\nOBSOLETE.  Turns out, it was never used.  Since the handle\nset in sequence_data must be allocated using PF_NEW_HANDLE,\nthe host can find out the size of the handle without asking.\n\nframe_data\nThis is a Handle that you can allocated at PF_Cmd_FRAME_SETUP\ntime.  It will be passed to you in the input parameters, as\nwith the global_data and the sequence_data.  This will not\nbe written out to disk.  There is no particular use for this.\nSet this field in PF_Cmd_FRAME_SETUP, if you must.\n\nIt will be locked & unlocked for you like sequence_data.\n\nwidth\nheight\norigin\nYou set these fields at PF_Cmd_FRAME_SETUP time to indicate\nthat the output image will be larger than the input image.\nYou\tshould set width and height to the size that you want the\noutput buffer to be.  Set origin to the place that the\npoint (0,0) in the input should map to in the new larger\noutput.  Thus, if you created a 5 pixel drop shadow up and left,\nyou would set origin to (5, 5).\n\nout_flags\nout_flags2\nThis field can be set to an OR-ed combination of the PF_OutFlag\nand PF_OutFlag2 constants (don't mix them up!) to communicate\nthings to After Effects.  This will be checked after every\ncommand, but only certain flags are relevant at given times.\nCheck the PF_OutFlag constants above.\n\nreturn_msg\nThis is a message string (in C string format) that will be\ninterpreted as either an error message or a useful display\nmessage (for instance, for handling PF_Cmd_ABOUT).  Fill\nthis string with a message you want After Effects to report\nto the user for you.  It will come up in a simple dialog\nwith an OK button.  Set the first byte of this string to '\\0'\nto indicate no string -- it is set that way upon entry.  This\nfield is examined after every PF_Cmd.\n\nThe Input Block\n\nMany parts of the input block are actually structures defined elsewhere\nin this file, or in the companion file AE_EffectCB.h.  See the documentation\nwhere those structures are defined to understand their contents.\nWith any given PF_Cmd, only certain fields in the Input Block will\nhave valid values.  Each field described below tells when it is valid.\n\nin_flags\nin_flags2\nThese are various flags indicating some boolean value to\nthe effect module.  This is a combination of PF_InFlag values\nOR-ed together.  This is set for all commands, though most\nflags make sense only at certain times.  Usually this is\njust a copy of the PiPL global flags.  See PF_OutFlags and\nPF_OutFlags2 above.\n\ninter\nThis is a structure defined above containing callbacks\nrelated to user interaction.  This has callbacks to add parameters,\nto check if the user has interrupted the effect, to display\na progress bar, and to inquire parameter values outside of the\ncurrent moment.  See the doc above.  When each callback can\nvalidly be executed is defined above.\n\nutils\nThis is a pointer to a block of useful graphical and mathematical\ncallbacks provided for the effects module.  The documentation\nfor this block is in the AE_EffectCB.h file.  This is a void *,\nwhich can be confusing.  See AE_EffectCB.h for macros to use these\nfunctions.  This pointer will be defined at all times.\n\neffect_ref\nThis is a opaque piece of data that needs to be passed to\nmost of the various callback routines.  Don't worry about it.\n\nquality\nThis is set to one of the PF_Quality constants above to\ndescribe the Quality currently chosen by the user.  Ideally,\nyour effect should do a faster version with LO quality, and\na better, \"broadcast\"-able version with HI quality.  Also,\nsome of the utility callbacks perform differently between\nLO and HI quality.  This is defined for all PF_Cmds related\nto SEQUENCE and FRAME (obviously, including RENDER).\n\nversion\nThis is the version of the effects spec with which you are\nbeing invoked.  This will not be defined until after GLOBAL_SETUP.\n\nserial_num\nThis is the serial number of the invoking application.\n\nappl_id\nThis is the identifier of the invoking application.  It will\nbe the creator A_long of the app.\n\nfreq\nThis is an estimate of the frequency with which you should\ncall the abort check callback.  You can ignore this.\n\nnum_params\nThis is set to the number of input parameters you are receiving.\n\nwhat_cpu\nThis is set to the return value from Gestalt asking what sort\nof CPU your machine has.  If your effect requires a certain\ntype of CPU it should check this value and return an error\nindicating that it cannot run.  After Effects only runs on\n68020s and higher, so don't sweat it if you require that.\n\nwhat_fpu\nThis is set to the return value from Gestalt asking what sort\nof FPU your machine has.  If you require a floating point unit,\nyou should return the OutFlag indicating that in GLOBAL_SETUP,\nand then do not execute your floating point code if this value\nis set to 0 -- just do a PF_COPY of the input to the output when\nyou get the PF_Cmd_RENDER.  See OutFlag description above.\n\ncurrent_time\nThis is the time of the current frame.  It will be set in RENDER.\nThe number of the current frame is current_time / time_step.\nAll effects sequences start at time 0.\n\ntime_step\nThis is the time difference to the next or last frame.  This value\nand current_time and total_time are in units given by time_scale.\nThe time between frames is time_step, not 1.  This value will be 0\nat SEQUENCE_SETUP if it is not constant for all frames.  It will\nbe set correctly in the FRAME calls, even if it's not constant.\n\ntotal_time\nThis is the amount of time from the start to the end of the\nimage sequence on which this effect is being invoked.  The total\nnumber of frames is total_time / time_step.\n\ntime_scale\nThese are the units that current_time, time_step, and total_time\nare in.  See QuickTime for an explanation of how these time values work.\n\nwidth\nheight\nThese are the size of the input image. As Stoney Ballard points out,\nthese are certainly NOT the same as the\twidth and height fields in param[0],\nbut rather reflect the full-resolution dimensions of the input layer.\n\nfield\nWill be set to PF_Field_UPPER or PF_Field_LOWER during field-rendering\nif certain conditions are met -- for example: effect must have\nPF_OutFlag_PIX_INDEPENDENT set, and the layer to which the effect is\napplied must not be rotated, scaled nor positioned on a subpixel.\nYou can safely ignore the setting of this field, but might be able to\noptimize things by only processing the specified field.\n\nextent_hint\nThis is a rectangle that indicates the intersection of the visible\nportions of the input and output layers.  For an effect that does\nnot do a geometric distortion of the image, copying just this rectangle\nfrom the source image to the destination image is sufficient to copy\nall the image data that the user will see.  This can speed up effects\nvery much.  Just iterate over only this rectangle of pixels.\n\noutput_origin_x\noutput_origin_y\nThese fields correspond to the origin returned in the out_data at\nPF_Cmd_FRAME_SETUP time. They indicate the position of the top left\ncorner of the input buffer in the output buffer.\n\ndownsample_x\ndownsample_y\nFor speed, the user may have asked for only every Nth vertical or\nhorizontal pixel to be actually rendered by After Effects.  The width\nand height of all effect parameters (including layers) will be\nautomatically adjusted to compensate, but the effect needs to know\nthe downsampling factors to correctly interpret scalar parameters\n(ie. sliders) that represent pixel distances in the image.\nDownsample factors will be in the range 1 to 999+.  This is set in\nSEQUENCE_SETUP or RESETUP as the case may be. As of PF_PLUG_IN_VERSION 2,\nthis factor is a rational quantity.\n\nglobal_data\nsequence_data\nframe_data\nThese fields are copied from the out data on previous invocations\nand set here for you to access as you need them.  They will only\nbe set if they have been allocated during previous commands.\n\npre_effect_source_origin_x\npre_effect_source_origin_y\nThese fields are the origin of the source image in the input buffer. They are set\nonly during frame calls (PF_Cmd_FRAME_SETUP, PF_Cmd_RENDER, PF_Cmd_FRAME_SETDOWN).\nThey will be non-zero only if one or more effects that preceded this effect\non the same layer resized the output buffer (i.e. specified that the output\nimage will be larger or smaller than the input image)."]
+#[doc = " -------------------- Effect Parameter Blocks --------------------\n\nThe effects module itself is invoked with input and output blocks\nof parameters for various messages that it needs to handle.  The\noutput block (values returned from the effect to the program) and\nthe input block (values provided by the program for the edification\nof the effect) are defined here.  Discussion follows.\n\nThe Output Block\n\nMost fields of the output block are only examined for changes after\ncertain commands have been sent to the effect module.  Each field\nbelow describes when it will be checked.\n\nmy_version\nThis is the version number of your plug-in effect, not to be confused\nwith the version of the plug-in specification. Please set this\nat PF_Cmd_GLOBAL_SETUP.\n\nname\nThis lets you override the name of the effect in the Time Layout and\nin the Effect Controls windows when the effect is applied. The name from\nthe PiPL resource is always used in the Effect menu. This field is\nchecked after PF_Cmd_SEQUENCE_SETUP. You will almost always leave\nthis field empty.\n\nglobal_data\nThis is a Handle that you can allocate at PF_Cmd_GLOBAL_SETUP\ntime.  It will be passed back to you verbatim in the input\nparameter block for use later on.  In PF_Cmd_GLOBAL_SETUP,\nthe global_data field in the Input Block may be set to a\nflattened version of your global data, in which case you should\nunflatten it, free the flat version, and set this field to the\nunflattened new global data.\n\nIt will be locked & unlocked for you automatically like sequence_data.\n\nnum_params\nThe calling application will sanity check the num_params field\nvs the times add_param is called.  The implicit main\nlayer parameter MUST be included in the parameter count.  Use the\nnum_params value in the in_data as a starting value (it will\ninclude the implicit layer parameter).\nSet this field when you get PF_Cmd_PARAMS_SETUP.\n\nsequence_data\nThis is a Handle that you can allocate (using PF_NEW_HANDLE)\nat PF_Cmd_SEQUENCE_SETUP time.\nIt will be passed back to you in the input parameter block\nfor later use.\n\nWARNING: this handle is always locked for you before your plugin\nis called, and the lock-state is restored on the way out.  If you\nhave arbitrary data, your plugin can be called re-entrantly, so\nif you have a lock/unlock inside your plugin, the handle will\nbecome unlocked prematurely -- instead simply depend on the host\nto lock & unlock your sequence data for you.  Of course during\nPF_Cmd_SEQUENCE_SETUP the handle you allocate will not be\nlocked unless you explicitly lock it at that time.\n\nThe contents of this handle will be written out to\ndisk.  If other handles hang off this block, you must specify the\nPF_OutFlag_SEQUENCE_DATA_NEEDS_FLATTENING out flag when you get\nthe PF_Cmd_GLOBAL_SETUP command.  You will then receive the\nPF_Cmd_SEQUENCE_FLATTEN before your handle is written out.  At that\ntime, you should create a flat version of the handle contents,\nfree the old unflat handle, and set this field to the flattened\nversion of the handle.  Or after disposing, simply set to NULL\nand nothing will be written to disk.\n\nYou will receive a PF_Cmd_SEQUENCE_RESETUP\ncall to unflatten this handle (as well as to adjust the sequence\ndata to altered frame rates, etc).  If your\nsequence data can be flat or unflat, you should store its current\nstate along with the other data, and check that value in Resetup.\nIf the handle is flat, Resetup should unflatten it, free the flat\nhandle, and set this field to the new unflat usable handle.\n\nflat_sdata_size\nOBSOLETE.  Turns out, it was never used.  Since the handle\nset in sequence_data must be allocated using PF_NEW_HANDLE,\nthe host can find out the size of the handle without asking.\n\nframe_data\nThis is a Handle that you can allocated at PF_Cmd_FRAME_SETUP\ntime.  It will be passed to you in the input parameters, as\nwith the global_data and the sequence_data.  This will not\nbe written out to disk.  There is no particular use for this.\nSet this field in PF_Cmd_FRAME_SETUP, if you must.\n\nIt will be locked & unlocked for you like sequence_data.\n\nwidth\nheight\norigin\nYou set these fields at PF_Cmd_FRAME_SETUP time to indicate\nthat the output image will be larger than the input image.\nYou should set width and height to the size that you want the\noutput buffer to be.  Set origin to the place that the\npoint (0,0) in the input should map to in the new larger\noutput.  Thus, if you created a 5 pixel drop shadow up and left,\nyou would set origin to (5, 5).\n\nout_flags\nout_flags2\nThis field can be set to an OR-ed combination of the PF_OutFlag\nand PF_OutFlag2 constants (don't mix them up!) to communicate\nthings to After Effects.  This will be checked after every\ncommand, but only certain flags are relevant at given times.\nCheck the PF_OutFlag constants above.\n\nreturn_msg\nThis is a message string (in C string format) that will be\ninterpreted as either an error message or a useful display\nmessage (for instance, for handling PF_Cmd_ABOUT).  Fill\nthis string with a message you want After Effects to report\nto the user for you.  It will come up in a simple dialog\nwith an OK button.  Set the first byte of this string to '\\0'\nto indicate no string -- it is set that way upon entry.  This\nfield is examined after every PF_Cmd.\n\nThe Input Block\n\nMany parts of the input block are actually structures defined elsewhere\nin this file, or in the companion file AE_EffectCB.h.  See the documentation\nwhere those structures are defined to understand their contents.\nWith any given PF_Cmd, only certain fields in the Input Block will\nhave valid values.  Each field described below tells when it is valid.\n\nin_flags\nin_flags2\nThese are various flags indicating some boolean value to\nthe effect module.  This is a combination of PF_InFlag values\nOR-ed together.  This is set for all commands, though most\nflags make sense only at certain times.  Usually this is\njust a copy of the PiPL global flags.  See PF_OutFlags and\nPF_OutFlags2 above.\n\ninter\nThis is a structure defined above containing callbacks\nrelated to user interaction.  This has callbacks to add parameters,\nto check if the user has interrupted the effect, to display\na progress bar, and to inquire parameter values outside of the\ncurrent moment.  See the doc above.  When each callback can\nvalidly be executed is defined above.\n\nutils\nThis is a pointer to a block of useful graphical and mathematical\ncallbacks provided for the effects module.  The documentation\nfor this block is in the AE_EffectCB.h file.  This is a void *,\nwhich can be confusing.  See AE_EffectCB.h for macros to use these\nfunctions.  This pointer will be defined at all times.\n\neffect_ref\nThis is a opaque piece of data that needs to be passed to\nmost of the various callback routines.  Don't worry about it.\n\nquality\nThis is set to one of the PF_Quality constants above to\ndescribe the Quality currently chosen by the user.  Ideally,\nyour effect should do a faster version with LO quality, and\na better, \"broadcast\"-able version with HI quality.  Also,\nsome of the utility callbacks perform differently between\nLO and HI quality.  This is defined for all PF_Cmds related\nto SEQUENCE and FRAME (obviously, including RENDER).\n\nversion\nThis is the version of the effects spec with which you are\nbeing invoked.  This will not be defined until after GLOBAL_SETUP.\n\nserial_num\nThis is the serial number of the invoking application.\n\nappl_id\nThis is the identifier of the invoking application.  It will\nbe the creator A_long of the app.\n\nfreq\nThis is an estimate of the frequency with which you should\ncall the abort check callback.  You can ignore this.\n\nnum_params\nThis is set to the number of input parameters you are receiving.\n\nwhat_cpu\nThis is set to the return value from Gestalt asking what sort\nof CPU your machine has.  If your effect requires a certain\ntype of CPU it should check this value and return an error\nindicating that it cannot run.  After Effects only runs on\n68020s and higher, so don't sweat it if you require that.\n\nwhat_fpu\nThis is set to the return value from Gestalt asking what sort\nof FPU your machine has.  If you require a floating point unit,\nyou should return the OutFlag indicating that in GLOBAL_SETUP,\nand then do not execute your floating point code if this value\nis set to 0 -- just do a PF_COPY of the input to the output when\nyou get the PF_Cmd_RENDER.  See OutFlag description above.\n\ncurrent_time\nThis is the time of the current frame.  It will be set in RENDER.\nThe number of the current frame is current_time / time_step.\nAll effects sequences start at time 0.\n\ntime_step\nThis is the time difference to the next or last frame.  This value\nand current_time and total_time are in units given by time_scale.\nThe time between frames is time_step, not 1.  This value will be 0\nat SEQUENCE_SETUP if it is not constant for all frames.  It will\nbe set correctly in the FRAME calls, even if it's not constant.\n\ntotal_time\nThis is the amount of time from the start to the end of the\nimage sequence on which this effect is being invoked.  The total\nnumber of frames is total_time / time_step.\n\ntime_scale\nThese are the units that current_time, time_step, and total_time\nare in.  See QuickTime for an explanation of how these time values work.\n\nwidth\nheight\nThese are the size of the input image. As Stoney Ballard points out,\nthese are certainly NOT the same as the width and height fields in param[0],\nbut rather reflect the full-resolution dimensions of the input layer.\n\nfield\nWill be set to PF_Field_UPPER or PF_Field_LOWER during field-rendering\nif certain conditions are met -- for example: effect must have\nPF_OutFlag_PIX_INDEPENDENT set, and the layer to which the effect is\napplied must not be rotated, scaled nor positioned on a subpixel.\nYou can safely ignore the setting of this field, but might be able to\noptimize things by only processing the specified field.\n\nextent_hint\nThis is a rectangle that indicates the intersection of the visible\nportions of the input and output layers.  For an effect that does\nnot do a geometric distortion of the image, copying just this rectangle\nfrom the source image to the destination image is sufficient to copy\nall the image data that the user will see.  This can speed up effects\nvery much.  Just iterate over only this rectangle of pixels.\n\noutput_origin_x\noutput_origin_y\nThese fields correspond to the origin returned in the out_data at\nPF_Cmd_FRAME_SETUP time. They indicate the position of the top left\ncorner of the input buffer in the output buffer.\n\ndownsample_x\ndownsample_y\nFor speed, the user may have asked for only every Nth vertical or\nhorizontal pixel to be actually rendered by After Effects.  The width\nand height of all effect parameters (including layers) will be\nautomatically adjusted to compensate, but the effect needs to know\nthe downsampling factors to correctly interpret scalar parameters\n(ie. sliders) that represent pixel distances in the image.\nDownsample factors will be in the range 1 to 999+.  This is set in\nSEQUENCE_SETUP or RESETUP as the case may be. As of PF_PLUG_IN_VERSION 2,\nthis factor is a rational quantity.\n\nglobal_data\nsequence_data\nframe_data\nThese fields are copied from the out data on previous invocations\nand set here for you to access as you need them.  They will only\nbe set if they have been allocated during previous commands.\n\npre_effect_source_origin_x\npre_effect_source_origin_y\nThese fields are the origin of the source image in the input buffer. They are set\nonly during frame calls (PF_Cmd_FRAME_SETUP, PF_Cmd_RENDER, PF_Cmd_FRAME_SETDOWN).\nThey will be non-zero only if one or more effects that preceded this effect\non the same layer resized the output buffer (i.e. specified that the output\nimage will be larger or smaller than the input image)."]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct PF_OutData {
@@ -2400,8 +2410,23 @@ pub struct _PF_CustomUIInfo {
     pub preview_ui_height: A_long,
     pub preview_ui_alignment: PF_UIAlignment,
 }
-pub type int32 = i32;
-pub type uint8 = u8;
+#[repr(C)]
+pub struct std_exception__bindgen_vtable(::std::os::raw::c_void);
+#[repr(C)]
+#[derive(Debug)]
+pub struct std_exception {
+    pub vtable_: *const std_exception__bindgen_vtable,
+}
+unsafe extern "C" {
+    #[link_name = "\u{1}__ZNSt9exceptionD1Ev"]
+    pub fn std_exception_exception_destructor(this: *mut std_exception);
+}
+unsafe extern "C" {
+    #[link_name = "\u{1}__ZNKSt9exception4whatEv"]
+    pub fn std_exception_what(this: *mut ::std::os::raw::c_void) -> *const ::std::os::raw::c_char;
+}
+pub type uint8 = ::std::os::raw::c_uchar;
+pub type int32 = ::std::os::raw::c_int;
 pub type SPBoolean = uint8;
 pub type SPErr = int32;
 #[doc = " @ingroup Suites\nThis suite provides basic memory management for PICA (the Adobe plug-in manager)\nand defines the basic functions for acquiring and releasing other suites.\n\nA suite consists of a list of function pointers. The application, or a\nplug-in that loads a suite, provides valid pointers when the suite is\nacquired. When a suite is not available, the pointers are set to the\naddress of the \\c #Undefined() function.\n\nDo not attempt to acquire a suite (other than the \\c #SPBlocksSuite)\nin response to a PICA access (\\c #kSPAccessCaller) or property\n(\\c #kSPPropertiesCaller) message. Most suites are unavailable\nduring these load and unload operations.\n\nYou can acquire all the suites you will need when your plug-in is first\nloaded, as long as you release them before your plug-in is unloaded.\nAt shutdown, however, it is most efficient to acquire only those\nsuites explicitly needed to shut down; for example, to free memory\nand save preferences.\n\nThe \\c SPBasicSuite itself is a part of the message data passed\nto your plug-in with any call. To access it from the message data structure:\n@code\nSPBasicSuite sBasic = message->d.basic;\nsBasic->function( )\n@endcode"]
@@ -2788,59 +2813,59 @@ pub struct PF_ChannelSuite1 {
         ) -> PF_Err,
     >,
 }
+pub const PF_Xfer_NONE: _bindgen_ty_58 = -1;
+pub const PF_Xfer_COPY: _bindgen_ty_58 = 0;
+pub const PF_Xfer_BEHIND: _bindgen_ty_58 = 1;
+pub const PF_Xfer_IN_FRONT: _bindgen_ty_58 = 2;
+pub const PF_Xfer_DISSOLVE: _bindgen_ty_58 = 3;
+pub const PF_Xfer_ADD: _bindgen_ty_58 = 4;
+pub const PF_Xfer_MULTIPLY: _bindgen_ty_58 = 5;
+pub const PF_Xfer_SCREEN: _bindgen_ty_58 = 6;
+pub const PF_Xfer_OVERLAY: _bindgen_ty_58 = 7;
+pub const PF_Xfer_SOFT_LIGHT: _bindgen_ty_58 = 8;
+pub const PF_Xfer_HARD_LIGHT: _bindgen_ty_58 = 9;
+pub const PF_Xfer_DARKEN: _bindgen_ty_58 = 10;
+pub const PF_Xfer_LIGHTEN: _bindgen_ty_58 = 11;
+pub const PF_Xfer_DIFFERENCE: _bindgen_ty_58 = 12;
+pub const PF_Xfer_HUE: _bindgen_ty_58 = 13;
+pub const PF_Xfer_SATURATION: _bindgen_ty_58 = 14;
+pub const PF_Xfer_COLOR: _bindgen_ty_58 = 15;
+pub const PF_Xfer_LUMINOSITY: _bindgen_ty_58 = 16;
+pub const PF_Xfer_MULTIPLY_ALPHA: _bindgen_ty_58 = 17;
+pub const PF_Xfer_MULTIPLY_ALPHA_LUMA: _bindgen_ty_58 = 18;
+pub const PF_Xfer_MULTIPLY_NOT_ALPHA: _bindgen_ty_58 = 19;
+pub const PF_Xfer_MULTIPLY_NOT_ALPHA_LUMA: _bindgen_ty_58 = 20;
+pub const PF_Xfer_ADDITIVE_PREMUL: _bindgen_ty_58 = 21;
+pub const PF_Xfer_ALPHA_ADD: _bindgen_ty_58 = 22;
+pub const PF_Xfer_COLOR_DODGE: _bindgen_ty_58 = 23;
+pub const PF_Xfer_COLOR_BURN: _bindgen_ty_58 = 24;
+pub const PF_Xfer_EXCLUSION: _bindgen_ty_58 = 25;
+pub const PF_Xfer_DIFFERENCE2: _bindgen_ty_58 = 26;
+pub const PF_Xfer_COLOR_DODGE2: _bindgen_ty_58 = 27;
+pub const PF_Xfer_COLOR_BURN2: _bindgen_ty_58 = 28;
+pub const PF_Xfer_LINEAR_DODGE: _bindgen_ty_58 = 29;
+pub const PF_Xfer_LINEAR_BURN: _bindgen_ty_58 = 30;
+pub const PF_Xfer_LINEAR_LIGHT: _bindgen_ty_58 = 31;
+pub const PF_Xfer_VIVID_LIGHT: _bindgen_ty_58 = 32;
+pub const PF_Xfer_PIN_LIGHT: _bindgen_ty_58 = 33;
+pub const PF_Xfer_HARD_MIX: _bindgen_ty_58 = 34;
+pub const PF_Xfer_LIGHTER_COLOR: _bindgen_ty_58 = 35;
+pub const PF_Xfer_DARKER_COLOR: _bindgen_ty_58 = 36;
+pub const PF_Xfer_SUBTRACT: _bindgen_ty_58 = 37;
+pub const PF_Xfer_DIVIDE: _bindgen_ty_58 = 38;
+pub const PF_Xfer_RESERVED0: _bindgen_ty_58 = 39;
+pub const PF_Xfer_RESERVED1: _bindgen_ty_58 = 40;
+pub const PF_Xfer_NUM_MODES: _bindgen_ty_58 = 41;
+pub type _bindgen_ty_58 = ::std::os::raw::c_int;
+pub const PF_Xfer_TINT: _bindgen_ty_59 = 29;
+pub const PF_Xfer_SHADE: _bindgen_ty_59 = 30;
+pub const PF_Xfer_INTENSE_LIGHT: _bindgen_ty_59 = 32;
+pub type _bindgen_ty_59 = ::std::os::raw::c_uint;
 pub type PF_KernelFlags = A_u_long;
-pub const PF_SampleEdgeBehav_ZERO: _bindgen_ty_58 = 0;
+pub const PF_SampleEdgeBehav_ZERO: _bindgen_ty_60 = 0;
 #[doc = " ---------- PF_SampleEdgeBehav ----------\n\nThe sampling routines always deal with 32 bit images, and thus\nneed to compute properly alpha-weighted samples. An issue arises\nwhen an attempt is made to sample outside of the image content area.\n\nBefore PF_PLUG_IN_VERSION 2, After Effects always treated pixels\noutside of the image content area as having alpha = 0, which is desirable\nin many cases. Distortions and other effects may want different sampling\nbehaviors, however, hence the PF_SampleEdgeBehav.\n"]
-pub type _bindgen_ty_58 = ::std::os::raw::c_uint;
-pub type PF_SampleEdgeBehav = A_u_long;
-pub const PF_Xfer_NONE: _bindgen_ty_59 = -1;
-pub const PF_Xfer_COPY: _bindgen_ty_59 = 0;
-pub const PF_Xfer_BEHIND: _bindgen_ty_59 = 1;
-pub const PF_Xfer_IN_FRONT: _bindgen_ty_59 = 2;
-pub const PF_Xfer_DISSOLVE: _bindgen_ty_59 = 3;
-pub const PF_Xfer_ADD: _bindgen_ty_59 = 4;
-pub const PF_Xfer_MULTIPLY: _bindgen_ty_59 = 5;
-pub const PF_Xfer_SCREEN: _bindgen_ty_59 = 6;
-pub const PF_Xfer_OVERLAY: _bindgen_ty_59 = 7;
-pub const PF_Xfer_SOFT_LIGHT: _bindgen_ty_59 = 8;
-pub const PF_Xfer_HARD_LIGHT: _bindgen_ty_59 = 9;
-pub const PF_Xfer_DARKEN: _bindgen_ty_59 = 10;
-pub const PF_Xfer_LIGHTEN: _bindgen_ty_59 = 11;
-pub const PF_Xfer_DIFFERENCE: _bindgen_ty_59 = 12;
-pub const PF_Xfer_HUE: _bindgen_ty_59 = 13;
-pub const PF_Xfer_SATURATION: _bindgen_ty_59 = 14;
-pub const PF_Xfer_COLOR: _bindgen_ty_59 = 15;
-pub const PF_Xfer_LUMINOSITY: _bindgen_ty_59 = 16;
-pub const PF_Xfer_MULTIPLY_ALPHA: _bindgen_ty_59 = 17;
-pub const PF_Xfer_MULTIPLY_ALPHA_LUMA: _bindgen_ty_59 = 18;
-pub const PF_Xfer_MULTIPLY_NOT_ALPHA: _bindgen_ty_59 = 19;
-pub const PF_Xfer_MULTIPLY_NOT_ALPHA_LUMA: _bindgen_ty_59 = 20;
-pub const PF_Xfer_ADDITIVE_PREMUL: _bindgen_ty_59 = 21;
-pub const PF_Xfer_ALPHA_ADD: _bindgen_ty_59 = 22;
-pub const PF_Xfer_COLOR_DODGE: _bindgen_ty_59 = 23;
-pub const PF_Xfer_COLOR_BURN: _bindgen_ty_59 = 24;
-pub const PF_Xfer_EXCLUSION: _bindgen_ty_59 = 25;
-pub const PF_Xfer_DIFFERENCE2: _bindgen_ty_59 = 26;
-pub const PF_Xfer_COLOR_DODGE2: _bindgen_ty_59 = 27;
-pub const PF_Xfer_COLOR_BURN2: _bindgen_ty_59 = 28;
-pub const PF_Xfer_LINEAR_DODGE: _bindgen_ty_59 = 29;
-pub const PF_Xfer_LINEAR_BURN: _bindgen_ty_59 = 30;
-pub const PF_Xfer_LINEAR_LIGHT: _bindgen_ty_59 = 31;
-pub const PF_Xfer_VIVID_LIGHT: _bindgen_ty_59 = 32;
-pub const PF_Xfer_PIN_LIGHT: _bindgen_ty_59 = 33;
-pub const PF_Xfer_HARD_MIX: _bindgen_ty_59 = 34;
-pub const PF_Xfer_LIGHTER_COLOR: _bindgen_ty_59 = 35;
-pub const PF_Xfer_DARKER_COLOR: _bindgen_ty_59 = 36;
-pub const PF_Xfer_SUBTRACT: _bindgen_ty_59 = 37;
-pub const PF_Xfer_DIVIDE: _bindgen_ty_59 = 38;
-pub const PF_Xfer_RESERVED0: _bindgen_ty_59 = 39;
-pub const PF_Xfer_RESERVED1: _bindgen_ty_59 = 40;
-pub const PF_Xfer_NUM_MODES: _bindgen_ty_59 = 41;
-pub type _bindgen_ty_59 = ::std::os::raw::c_int;
-pub const PF_Xfer_TINT: _bindgen_ty_60 = 29;
-pub const PF_Xfer_SHADE: _bindgen_ty_60 = 30;
-pub const PF_Xfer_INTENSE_LIGHT: _bindgen_ty_60 = 32;
 pub type _bindgen_ty_60 = ::std::os::raw::c_uint;
+pub type PF_SampleEdgeBehav = A_u_long;
 pub const PF_MaskFlag_NONE: _bindgen_ty_61 = 0;
 pub const PF_MaskFlag_INVERTED: _bindgen_ty_61 = 1;
 pub const PF_MaskFlag_LUMINANCE: _bindgen_ty_61 = 2;
@@ -4463,11 +4488,11 @@ pub struct PF_GPUDeviceInfo {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PF_GPUDeviceSuite1 {
-    #[doc = "\tThis will return the number of gpu devices the host supports.\n\n\t@param\teffect_ref\t\t\t\t\t\t\t\tComes with PF_InData.\n\t@param\tdevice_countP\t\t\t\t\t\t\tReturn number of devices available."]
+    #[doc = "  This will return the number of gpu devices the host supports.\n\n  @param  effect_ref                              Comes with PF_InData.\n  @param  device_countP                           Return number of devices available."]
     pub GetDeviceCount: ::std::option::Option<
         unsafe extern "C" fn(effect_ref: PF_ProgPtr, device_countP: *mut A_u_long) -> PF_Err,
     >,
-    #[doc = "\tThis will return the device info with given device index, which includes necessary context/queue information\n\tneeded to dispatch task to the device. Refer PF_GPUDeviceInfo for details.\n\n\t@param\teffect_ref\t\t\t\t\t\t\t\tComes with PF_InData.\n\t@param\tdevice_index\t\t\t\t\t\t\tThe device index for the requested device.\n\t@param\tPF_GPUDeviceInfo\t\t\t\t\t\tThe device info will to be filled."]
+    #[doc = "  This will return the device info with given device index, which includes necessary context/queue information\n  needed to dispatch task to the device. Refer PF_GPUDeviceInfo for details.\n\n  @param  effect_ref                              Comes with PF_InData.\n  @param  device_index                            The device index for the requested device.\n  @param  PF_GPUDeviceInfo                        The device info will to be filled."]
     pub GetDeviceInfo: ::std::option::Option<
         unsafe extern "C" fn(
             effect_ref: PF_ProgPtr,
@@ -4475,14 +4500,14 @@ pub struct PF_GPUDeviceSuite1 {
             device_infoP: *mut PF_GPUDeviceInfo,
         ) -> PF_Err,
     >,
-    #[doc = "\tAcquire/release exclusive access to inDeviceIndex. All calls below this point generally require access be held.\n\tFor full GPU plugins (those that use a separate entry point for GPU rendering) exclusive access is always held.\n\tThese calls do not need to be made in that case.\n\t\tFor CUDA calls cuCtxPushCurrent/cuCtxPopCurrent on the current thread to manage the devices context."]
+    #[doc = "  Acquire/release exclusive access to inDeviceIndex. All calls below this point generally require access be held.\n  For full GPU plugins (those that use a separate entry point for GPU rendering) exclusive access is always held.\n  These calls do not need to be made in that case.\n      For CUDA calls cuCtxPushCurrent/cuCtxPopCurrent on the current thread to manage the devices context."]
     pub AcquireExclusiveDeviceAccess: ::std::option::Option<
         unsafe extern "C" fn(effect_ref: PF_ProgPtr, device_index: A_u_long) -> PF_Err,
     >,
     pub ReleaseExclusiveDeviceAccess: ::std::option::Option<
         unsafe extern "C" fn(effect_ref: PF_ProgPtr, device_index: A_u_long) -> PF_Err,
     >,
-    #[doc = "\tAll device memory must be allocated through this suite.\n\t\tPurge should be called only in emergency situations when working with GPU memory\n\t\t\tthat cannot be allocated through this suite (eg OpenGL memory).\n\t\tReturned pointer value represents memory allocated through cuMemAlloc or clCreateBuffer or CreateCommittedResource."]
+    #[doc = "  All device memory must be allocated through this suite.\n      Purge should be called only in emergency situations when working with GPU memory\n          that cannot be allocated through this suite (eg OpenGL memory).\n      Returned pointer value represents memory allocated through cuMemAlloc or clCreateBuffer or CreateCommittedResource."]
     pub AllocateDeviceMemory: ::std::option::Option<
         unsafe extern "C" fn(
             effect_ref: PF_ProgPtr,
@@ -4506,7 +4531,7 @@ pub struct PF_GPUDeviceSuite1 {
             bytes_purgedP0: *mut usize,
         ) -> PF_Err,
     >,
-    #[doc = "\tAll host (pinned) memory must be allocated through this suite.\n\t\tPurge should be called only in emergency situations when working with GPU memory\n\t\t\tthat cannot be allocated through this suite (eg OpenGL memory).\n\t\tReturned pointer value represents memory allocated through cuMemHostAlloc or malloc or CreateCommittedResource (on upload heap)."]
+    #[doc = "  All host (pinned) memory must be allocated through this suite.\n      Purge should be called only in emergency situations when working with GPU memory\n          that cannot be allocated through this suite (eg OpenGL memory).\n      Returned pointer value represents memory allocated through cuMemHostAlloc or malloc or CreateCommittedResource (on upload heap)."]
     pub AllocateHostMemory: ::std::option::Option<
         unsafe extern "C" fn(
             effect_ref: PF_ProgPtr,
@@ -4530,7 +4555,7 @@ pub struct PF_GPUDeviceSuite1 {
             bytes_purgedP0: *mut usize,
         ) -> PF_Err,
     >,
-    #[doc = "\tThis will allocate a gpu effect world. Caller is responsible for deallocating the buffer with\n\tPF_GPUDeviceSuite1::DisposeGPUWorld.\n\n\t@param\teffect_ref\t\t\t\t\tComes with PF_InData.\n\t@param\tdevice_index\t\t\t\tThe device you want your gpu effect world allocated with.\n\t@param\twidth\t\t\t\t\t\tWidth of the effect world.\n\t@param\theight\t\t\t\t\t\tHeight of the effect world.\n\t@param\tpixel_aspect_ratio\t\t\tPixel Aspect Ratio of the effect world.\n\t@param\tfield_type\t\t\t\t\tThe field of the effect world.\n\t@param\tpixel_format\t\t\t\tThe pixel format of the effect world, only gpu formats are accepted.\n\t@param\tclear_pixB\t\t\t\t\tPass in 'true' for a transparent black frame.\n\t@param\tworldPP\t\t\t\t\t\tThe handle to the effect world to be created."]
+    #[doc = "  This will allocate a gpu effect world. Caller is responsible for deallocating the buffer with\n  PF_GPUDeviceSuite1::DisposeGPUWorld.\n\n  @param  effect_ref                  Comes with PF_InData.\n  @param  device_index                The device you want your gpu effect world allocated with.\n  @param  width                       Width of the effect world.\n  @param  height                      Height of the effect world.\n  @param  pixel_aspect_ratio          Pixel Aspect Ratio of the effect world.\n  @param  field_type                  The field of the effect world.\n  @param  pixel_format                The pixel format of the effect world, only gpu formats are accepted.\n  @param  clear_pixB                  Pass in 'true' for a transparent black frame.\n  @param  worldPP                     The handle to the effect world to be created."]
     pub CreateGPUWorld: ::std::option::Option<
         unsafe extern "C" fn(
             effect_ref: PF_ProgPtr,
@@ -4544,11 +4569,11 @@ pub struct PF_GPUDeviceSuite1 {
             worldPP: *mut *mut PF_EffectWorld,
         ) -> PF_Err,
     >,
-    #[doc = "\tThis will free this effect world. The effect world is no longer valid after this function is called.\n\tPlugin module is only allowed to dispose of effect worlds they create.\n\n\t@param\teffect_ref\t\t\t\t\tComes with PF_InData.\n\t@param\tworldP\t\t\t\t\t\tThe effect world you want to dispose."]
+    #[doc = "  This will free this effect world. The effect world is no longer valid after this function is called.\n  Plugin module is only allowed to dispose of effect worlds they create.\n\n  @param  effect_ref                  Comes with PF_InData.\n  @param  worldP                      The effect world you want to dispose."]
     pub DisposeGPUWorld: ::std::option::Option<
         unsafe extern "C" fn(effect_ref: PF_ProgPtr, worldP: *mut PF_EffectWorld) -> PF_Err,
     >,
-    #[doc = "\tThis will return the gpu buffer address of the given effect world.\n\n\t@param\teffect_ref\t\t\t\t\t\tComes with PF_InData.\n\t@param\tworldP\t\t\t\t\t\t\tThe effect world you want to operate on, has to be a gpu effect world.\n\t@param\tpixPP\t\t\t\t\t\t\tReturns the gpu buffer address."]
+    #[doc = "  This will return the gpu buffer address of the given effect world.\n\n  @param  effect_ref                      Comes with PF_InData.\n  @param  worldP                          The effect world you want to operate on, has to be a gpu effect world.\n  @param  pixPP                           Returns the gpu buffer address."]
     pub GetGPUWorldData: ::std::option::Option<
         unsafe extern "C" fn(
             effect_ref: PF_ProgPtr,
@@ -4556,7 +4581,7 @@ pub struct PF_GPUDeviceSuite1 {
             pixPP: *mut *mut ::std::os::raw::c_void,
         ) -> PF_Err,
     >,
-    #[doc = "\tThis will return the size of the total data in the effect world.\n\n\t@param\teffect_ref\t\t\t\t\t\tComes with PF_InData.\n\t@param\tworldP\t\t\t\t\t\t\tThe effect world you want to operate on, has to be a gpu effect world.\n\t@param\tdevice_indexP\t\t\t\t\tReturns the size of the total data in the effect world."]
+    #[doc = "  This will return the size of the total data in the effect world.\n\n  @param  effect_ref                      Comes with PF_InData.\n  @param  worldP                          The effect world you want to operate on, has to be a gpu effect world.\n  @param  device_indexP                   Returns the size of the total data in the effect world."]
     pub GetGPUWorldSize: ::std::option::Option<
         unsafe extern "C" fn(
             effect_ref: PF_ProgPtr,
@@ -4564,7 +4589,7 @@ pub struct PF_GPUDeviceSuite1 {
             size_in_bytesP: *mut usize,
         ) -> PF_Err,
     >,
-    #[doc = "\tThis will return device index the gpu effect world is associated with.\n\n\t@param\teffect_ref\t\t\t\t\t\tComes with PF_InData.\n\t@param\tworldP\t\t\t\t\t\t\tThe effect world you want to operate on, has to be a gpu effect world.\n\t@param\tdevice_indexP\t\t\t\t\tReturns the device index of the given effect world."]
+    #[doc = "  This will return device index the gpu effect world is associated with.\n\n  @param  effect_ref                      Comes with PF_InData.\n  @param  worldP                          The effect world you want to operate on, has to be a gpu effect world.\n  @param  device_indexP                   Returns the device index of the given effect world."]
     pub GetGPUWorldDeviceIndex: ::std::option::Option<
         unsafe extern "C" fn(
             effect_ref: PF_ProgPtr,
@@ -5378,6 +5403,7 @@ pub const PF_ExtendedSuiteTool_PLANE: _bindgen_ty_72 = 41;
 pub const PF_ExtendedSuiteTool_TORUS: _bindgen_ty_72 = 42;
 pub const PF_ExtendedSuiteTool_CONE: _bindgen_ty_72 = 43;
 pub const PF_ExtendedSuiteTool_CYLINDER: _bindgen_ty_72 = 44;
+pub const PF_ExtendedSuiteTool_SELECTIONBRUSH: _bindgen_ty_72 = 45;
 #[doc = " PF_HelperSuite2\n\nPF_ParseClipboard()\n\ncauses After Effects to parse the clipboard immediately"]
 pub type _bindgen_ty_72 = ::std::os::raw::c_uint;
 pub type PF_ExtendedSuiteTool = A_LegacyEnumType;
@@ -7051,13 +7077,31 @@ pub struct AEGP_ItemSuite9 {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct AEGP_ItemViewSuite1 {
+pub struct AEGP_ItemViewSuite2 {
     pub AEGP_GetItemViewPlaybackTime: ::std::option::Option<
         unsafe extern "C" fn(
             item_viewP: AEGP_ItemViewP,
             is_currently_previewingPB0: *mut A_Boolean,
             curr_timePT: *mut A_Time,
         ) -> A_Err,
+    >,
+    pub AEGP_GetItemViewGuidesVisible: ::std::option::Option<
+        unsafe extern "C" fn(item_viewP: AEGP_ItemViewP, guides_visiblePB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_SetItemViewGuidesVisible: ::std::option::Option<
+        unsafe extern "C" fn(item_viewP: AEGP_ItemViewP, guides_visibleB: A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetItemViewGuidesSnap: ::std::option::Option<
+        unsafe extern "C" fn(item_viewP: AEGP_ItemViewP, guides_snapPB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_SetItemViewGuidesSnap: ::std::option::Option<
+        unsafe extern "C" fn(item_viewP: AEGP_ItemViewP, guides_snapB: A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetItemViewGuidesLocked: ::std::option::Option<
+        unsafe extern "C" fn(item_viewP: AEGP_ItemViewP, guides_lockedPB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_SetItemViewGuidesLocked: ::std::option::Option<
+        unsafe extern "C" fn(item_viewP: AEGP_ItemViewP, guides_lockedB: A_Boolean) -> A_Err,
     >,
 }
 #[repr(C)]
@@ -7089,28 +7133,243 @@ pub struct AEGP_SoundDataSuite1 {
         unsafe extern "C" fn(soundH: AEGP_SoundDataH, num_samplesPL: *mut A_long) -> A_Err,
     >,
 }
+pub const AEGP_GuideOrientationType_HORIZONTAL: _bindgen_ty_116 = 0;
+pub const AEGP_GuideOrientationType_VERTICAL: _bindgen_ty_116 = 1;
+pub type _bindgen_ty_116 = ::std::os::raw::c_uint;
+pub type AEGP_GuideOrientationType = A_long;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_GuideSuite1 {
+    pub AEGP_GetLayerNumGuides: ::std::option::Option<
+        unsafe extern "C" fn(inLayerH: AEGP_LayerH, outNumGuidesP: *mut A_long) -> A_Err,
+    >,
+    pub AEGP_GetItemNumGuides: ::std::option::Option<
+        unsafe extern "C" fn(inItemH: AEGP_ItemH, outNumGuidesP: *mut A_long) -> A_Err,
+    >,
+    pub AEGP_GetLayerGuideByIndex: ::std::option::Option<
+        unsafe extern "C" fn(
+            inLayerH: AEGP_LayerH,
+            inGuideIndex: A_long,
+            outOrientationP: *mut AEGP_GuideOrientationType,
+            outPositionP: *mut A_FpLong,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetItemGuideByIndex: ::std::option::Option<
+        unsafe extern "C" fn(
+            inItemH: AEGP_ItemH,
+            inGuideIndex: A_long,
+            outOrientationP: *mut AEGP_GuideOrientationType,
+            outPositionP: *mut A_FpLong,
+        ) -> A_Err,
+    >,
+    pub AEGP_AddLayerGuide: ::std::option::Option<
+        unsafe extern "C" fn(
+            inLayerH: AEGP_LayerH,
+            inOrientation: AEGP_GuideOrientationType,
+            inPosition: A_FpLong,
+            outGuideIndexP: *mut A_long,
+        ) -> A_Err,
+    >,
+    pub AEGP_AddItemGuide: ::std::option::Option<
+        unsafe extern "C" fn(
+            inItemH: AEGP_ItemH,
+            inOrientation: AEGP_GuideOrientationType,
+            inPosition: A_FpLong,
+            outGuideIndexP: *mut A_long,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetLayerGuide: ::std::option::Option<
+        unsafe extern "C" fn(
+            inLayerH: AEGP_LayerH,
+            inGuideIndex: A_long,
+            inPosition: A_FpLong,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetItemGuide: ::std::option::Option<
+        unsafe extern "C" fn(
+            inItemH: AEGP_ItemH,
+            inGuideIndex: A_long,
+            inPosition: A_FpLong,
+        ) -> A_Err,
+    >,
+    pub AEGP_RemoveLayerGuide: ::std::option::Option<
+        unsafe extern "C" fn(inLayerH: AEGP_LayerH, inGuideIndex: A_long) -> A_Err,
+    >,
+    pub AEGP_RemoveItemGuide: ::std::option::Option<
+        unsafe extern "C" fn(inItemH: AEGP_ItemH, inGuideIndex: A_long) -> A_Err,
+    >,
+}
+pub const AEGP_GuidePositionType_PIXEL: _bindgen_ty_117 = 0;
+pub const AEGP_GuidePositionType_PERCENTAGE: _bindgen_ty_117 = 1;
+pub type _bindgen_ty_117 = ::std::os::raw::c_uint;
+pub type AEGP_GuidePositionType = A_long;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_GuideColor {
+    pub red: A_FpLong,
+    pub green: A_FpLong,
+    pub blue: A_FpLong,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_GuideSuite2 {
+    pub AEGP_GetLayerNumGuides: ::std::option::Option<
+        unsafe extern "C" fn(inLayerH: AEGP_LayerH, outNumGuidesP: *mut A_long) -> A_Err,
+    >,
+    pub AEGP_GetItemNumGuides: ::std::option::Option<
+        unsafe extern "C" fn(inItemH: AEGP_ItemH, outNumGuidesP: *mut A_long) -> A_Err,
+    >,
+    pub AEGP_GetLayerGuideByIndex: ::std::option::Option<
+        unsafe extern "C" fn(
+            inLayerH: AEGP_LayerH,
+            inGuideIndex: A_long,
+            outOrientationP: *mut AEGP_GuideOrientationType,
+            outPositionP: *mut A_FpLong,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetItemGuideByIndex: ::std::option::Option<
+        unsafe extern "C" fn(
+            inItemH: AEGP_ItemH,
+            inGuideIndex: A_long,
+            outOrientationP: *mut AEGP_GuideOrientationType,
+            outPositionP: *mut A_FpLong,
+        ) -> A_Err,
+    >,
+    pub AEGP_AddLayerGuide: ::std::option::Option<
+        unsafe extern "C" fn(
+            inLayerH: AEGP_LayerH,
+            inOrientation: AEGP_GuideOrientationType,
+            inPosition: A_FpLong,
+            outGuideIndexP: *mut A_long,
+        ) -> A_Err,
+    >,
+    pub AEGP_AddItemGuide: ::std::option::Option<
+        unsafe extern "C" fn(
+            inItemH: AEGP_ItemH,
+            inOrientation: AEGP_GuideOrientationType,
+            inPosition: A_FpLong,
+            outGuideIndexP: *mut A_long,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetLayerGuide: ::std::option::Option<
+        unsafe extern "C" fn(
+            inLayerH: AEGP_LayerH,
+            inGuideIndex: A_long,
+            inPosition: A_FpLong,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetItemGuide: ::std::option::Option<
+        unsafe extern "C" fn(
+            inItemH: AEGP_ItemH,
+            inGuideIndex: A_long,
+            inPosition: A_FpLong,
+        ) -> A_Err,
+    >,
+    pub AEGP_RemoveLayerGuide: ::std::option::Option<
+        unsafe extern "C" fn(inLayerH: AEGP_LayerH, inGuideIndex: A_long) -> A_Err,
+    >,
+    pub AEGP_RemoveItemGuide: ::std::option::Option<
+        unsafe extern "C" fn(inItemH: AEGP_ItemH, inGuideIndex: A_long) -> A_Err,
+    >,
+    pub AEGP_GetLayerGuideByIndex2: ::std::option::Option<
+        unsafe extern "C" fn(
+            inLayerH: AEGP_LayerH,
+            inGuideIndex: A_long,
+            outOrientationP: *mut AEGP_GuideOrientationType,
+            outPositionTypeP: *mut AEGP_GuidePositionType,
+            outPositionP: *mut A_FpLong,
+            outColorP: *mut AEGP_GuideColor,
+            outPinnedP: *mut A_Boolean,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetItemGuideByIndex2: ::std::option::Option<
+        unsafe extern "C" fn(
+            inItemH: AEGP_ItemH,
+            inGuideIndex: A_long,
+            outOrientationP: *mut AEGP_GuideOrientationType,
+            outPositionTypeP: *mut AEGP_GuidePositionType,
+            outPositionP: *mut A_FpLong,
+            outColorP: *mut AEGP_GuideColor,
+            outPinnedP: *mut A_Boolean,
+        ) -> A_Err,
+    >,
+    pub AEGP_AddLayerGuide2: ::std::option::Option<
+        unsafe extern "C" fn(
+            inLayerH: AEGP_LayerH,
+            inOrientation: AEGP_GuideOrientationType,
+            inPositionType: AEGP_GuidePositionType,
+            inPosition: A_FpLong,
+            inColorP: *const AEGP_GuideColor,
+            inPinned: A_Boolean,
+            outGuideIndexP: *mut A_long,
+        ) -> A_Err,
+    >,
+    pub AEGP_AddItemGuide2: ::std::option::Option<
+        unsafe extern "C" fn(
+            inItemH: AEGP_ItemH,
+            inOrientation: AEGP_GuideOrientationType,
+            inPositionType: AEGP_GuidePositionType,
+            inPosition: A_FpLong,
+            inColorP: *const AEGP_GuideColor,
+            inPinned: A_Boolean,
+            outGuideIndexP: *mut A_long,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetLayerGuide2: ::std::option::Option<
+        unsafe extern "C" fn(
+            inLayerH: AEGP_LayerH,
+            inGuideIndex: A_long,
+            inOrientation: AEGP_GuideOrientationType,
+            inPositionType: AEGP_GuidePositionType,
+            inPosition: A_FpLong,
+            inColorP: *const AEGP_GuideColor,
+            inPinned: A_Boolean,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetItemGuide2: ::std::option::Option<
+        unsafe extern "C" fn(
+            inItemH: AEGP_ItemH,
+            inGuideIndex: A_long,
+            inOrientation: AEGP_GuideOrientationType,
+            inPositionType: AEGP_GuidePositionType,
+            inPosition: A_FpLong,
+            inColorP: *const AEGP_GuideColor,
+            inPinned: A_Boolean,
+        ) -> A_Err,
+    >,
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct AEGP_DownsampleFactor {
     pub xS: A_short,
     pub yS: A_short,
 }
-pub const AEGP_CompFlag_SHOW_ALL_SHY: _bindgen_ty_116 = 1;
-pub const AEGP_CompFlag_RESERVED_1: _bindgen_ty_116 = 2;
-pub const AEGP_CompFlag_RESERVED_2: _bindgen_ty_116 = 4;
-pub const AEGP_CompFlag_ENABLE_MOTION_BLUR: _bindgen_ty_116 = 8;
-pub const AEGP_CompFlag_ENABLE_TIME_FILTER: _bindgen_ty_116 = 16;
-pub const AEGP_CompFlag_GRID_TO_FRAMES: _bindgen_ty_116 = 32;
-pub const AEGP_CompFlag_GRID_TO_FIELDS: _bindgen_ty_116 = 64;
-pub const AEGP_CompFlag_USE_LOCAL_DSF: _bindgen_ty_116 = 128;
-pub const AEGP_CompFlag_DRAFT_3D: _bindgen_ty_116 = 256;
-pub const AEGP_CompFlag_SHOW_GRAPH: _bindgen_ty_116 = 512;
-pub const AEGP_CompFlag_RESERVED_3: _bindgen_ty_116 = 1024;
-pub type _bindgen_ty_116 = ::std::os::raw::c_uint;
+pub const AEGP_CompFlag_SHOW_ALL_SHY: _bindgen_ty_118 = 1;
+pub const AEGP_CompFlag_RESERVED_1: _bindgen_ty_118 = 2;
+pub const AEGP_CompFlag_RESERVED_2: _bindgen_ty_118 = 4;
+pub const AEGP_CompFlag_ENABLE_MOTION_BLUR: _bindgen_ty_118 = 8;
+pub const AEGP_CompFlag_ENABLE_TIME_FILTER: _bindgen_ty_118 = 16;
+pub const AEGP_CompFlag_GRID_TO_FRAMES: _bindgen_ty_118 = 32;
+pub const AEGP_CompFlag_GRID_TO_FIELDS: _bindgen_ty_118 = 64;
+pub const AEGP_CompFlag_USE_LOCAL_DSF: _bindgen_ty_118 = 128;
+pub const AEGP_CompFlag_DRAFT_3D: _bindgen_ty_118 = 256;
+pub const AEGP_CompFlag_SHOW_GRAPH: _bindgen_ty_118 = 512;
+pub const AEGP_CompFlag_RESERVED_3: _bindgen_ty_118 = 1024;
+pub type _bindgen_ty_118 = ::std::os::raw::c_uint;
 pub type AEGP_CompFlags = A_long;
+pub const AEGP_ParametricMeshType_NONE: _bindgen_ty_119 = -1;
+pub const AEGP_ParametricMeshType_CUBE: _bindgen_ty_119 = 0;
+pub const AEGP_ParametricMeshType_SPHERE: _bindgen_ty_119 = 1;
+pub const AEGP_ParametricMeshType_PLANE: _bindgen_ty_119 = 2;
+pub const AEGP_ParametricMeshType_TORUS: _bindgen_ty_119 = 3;
+pub const AEGP_ParametricMeshType_CONE: _bindgen_ty_119 = 4;
+pub const AEGP_ParametricMeshType_CYLINDER: _bindgen_ty_119 = 5;
+pub const AEGP_ParametricMeshType_NUM_TYPES: _bindgen_ty_119 = 6;
+pub type _bindgen_ty_119 = ::std::os::raw::c_int;
+pub type AEGP_ParametricMeshType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct AEGP_CompSuite12 {
+pub struct AEGP_CompSuite13 {
     pub AEGP_GetCompFromItem: ::std::option::Option<
         unsafe extern "C" fn(itemH: AEGP_ItemH, compPH: *mut AEGP_CompH) -> A_Err,
     >,
@@ -7301,11 +7560,18 @@ pub struct AEGP_CompSuite12 {
     >,
     pub AEGP_ReorderCompSelection:
         ::std::option::Option<unsafe extern "C" fn(compH: AEGP_CompH, index: A_long) -> A_Err>,
+    pub AEGP_CreateParametricMeshLayerInComp: ::std::option::Option<
+        unsafe extern "C" fn(
+            parent_compH: AEGP_CompH,
+            mesh_type: AEGP_ParametricMeshType,
+            new_parametric_mesh_layerPH: *mut AEGP_LayerH,
+        ) -> A_Err,
+    >,
 }
-pub const AEGP_MemFlag_NONE: _bindgen_ty_117 = 0;
-pub const AEGP_MemFlag_CLEAR: _bindgen_ty_117 = 1;
-pub const AEGP_MemFlag_QUIET: _bindgen_ty_117 = 2;
-pub type _bindgen_ty_117 = ::std::os::raw::c_uint;
+pub const AEGP_MemFlag_NONE: _bindgen_ty_120 = 0;
+pub const AEGP_MemFlag_CLEAR: _bindgen_ty_120 = 1;
+pub const AEGP_MemFlag_QUIET: _bindgen_ty_120 = 2;
+pub type _bindgen_ty_120 = ::std::os::raw::c_uint;
 pub type AEGP_MemFlag = A_long;
 pub type AEGP_MemSize = A_u_long;
 #[repr(C)]
@@ -7350,16 +7616,16 @@ pub struct AEGP_MemorySuite1 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_TransferFlag_PRESERVE_ALPHA: _bindgen_ty_118 = 1;
-pub const AEGP_TransferFlag_RANDOMIZE_DISSOLVE: _bindgen_ty_118 = 2;
-pub type _bindgen_ty_118 = ::std::os::raw::c_uint;
+pub const AEGP_TransferFlag_PRESERVE_ALPHA: _bindgen_ty_121 = 1;
+pub const AEGP_TransferFlag_RANDOMIZE_DISSOLVE: _bindgen_ty_121 = 2;
+pub type _bindgen_ty_121 = ::std::os::raw::c_uint;
 pub type AEGP_TransferFlags = A_long;
-pub const AEGP_TrackMatte_NO_TRACK_MATTE: _bindgen_ty_119 = 0;
-pub const AEGP_TrackMatte_ALPHA: _bindgen_ty_119 = 1;
-pub const AEGP_TrackMatte_NOT_ALPHA: _bindgen_ty_119 = 2;
-pub const AEGP_TrackMatte_LUMA: _bindgen_ty_119 = 3;
-pub const AEGP_TrackMatte_NOT_LUMA: _bindgen_ty_119 = 4;
-pub type _bindgen_ty_119 = ::std::os::raw::c_uint;
+pub const AEGP_TrackMatte_NO_TRACK_MATTE: _bindgen_ty_122 = 0;
+pub const AEGP_TrackMatte_ALPHA: _bindgen_ty_122 = 1;
+pub const AEGP_TrackMatte_NOT_ALPHA: _bindgen_ty_122 = 2;
+pub const AEGP_TrackMatte_LUMA: _bindgen_ty_122 = 3;
+pub const AEGP_TrackMatte_NOT_LUMA: _bindgen_ty_122 = 4;
+pub type _bindgen_ty_122 = ::std::os::raw::c_uint;
 pub type AEGP_TrackMatte = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7368,57 +7634,57 @@ pub struct AEGP_LayerTransferMode {
     pub flags: AEGP_TransferFlags,
     pub track_matte: AEGP_TrackMatte,
 }
-pub const AEGP_LayerQual_NONE: _bindgen_ty_120 = -1;
-pub const AEGP_LayerQual_WIREFRAME: _bindgen_ty_120 = 0;
-pub const AEGP_LayerQual_DRAFT: _bindgen_ty_120 = 1;
-pub const AEGP_LayerQual_BEST: _bindgen_ty_120 = 2;
-pub type _bindgen_ty_120 = ::std::os::raw::c_int;
-pub type AEGP_LayerQuality = A_short;
-pub const AEGP_LayerSamplingQual_BILINEAR: _bindgen_ty_121 = 0;
-pub const AEGP_LayerSamplingQual_BICUBIC: _bindgen_ty_121 = 1;
-pub type _bindgen_ty_121 = ::std::os::raw::c_uint;
-pub type AEGP_LayerSamplingQuality = A_short;
-pub const AEGP_LayerFlag_NONE: _bindgen_ty_122 = 0;
-pub const AEGP_LayerFlag_VIDEO_ACTIVE: _bindgen_ty_122 = 1;
-pub const AEGP_LayerFlag_AUDIO_ACTIVE: _bindgen_ty_122 = 2;
-pub const AEGP_LayerFlag_EFFECTS_ACTIVE: _bindgen_ty_122 = 4;
-pub const AEGP_LayerFlag_MOTION_BLUR: _bindgen_ty_122 = 8;
-pub const AEGP_LayerFlag_FRAME_BLENDING: _bindgen_ty_122 = 16;
-pub const AEGP_LayerFlag_LOCKED: _bindgen_ty_122 = 32;
-pub const AEGP_LayerFlag_SHY: _bindgen_ty_122 = 64;
-pub const AEGP_LayerFlag_COLLAPSE: _bindgen_ty_122 = 128;
-pub const AEGP_LayerFlag_AUTO_ORIENT_ROTATION: _bindgen_ty_122 = 256;
-pub const AEGP_LayerFlag_ADJUSTMENT_LAYER: _bindgen_ty_122 = 512;
-pub const AEGP_LayerFlag_TIME_REMAPPING: _bindgen_ty_122 = 1024;
-pub const AEGP_LayerFlag_LAYER_IS_3D: _bindgen_ty_122 = 2048;
-pub const AEGP_LayerFlag_LOOK_AT_CAMERA: _bindgen_ty_122 = 4096;
-pub const AEGP_LayerFlag_LOOK_AT_POI: _bindgen_ty_122 = 8192;
-pub const AEGP_LayerFlag_SOLO: _bindgen_ty_122 = 16384;
-pub const AEGP_LayerFlag_MARKERS_LOCKED: _bindgen_ty_122 = 32768;
-pub const AEGP_LayerFlag_NULL_LAYER: _bindgen_ty_122 = 65536;
-pub const AEGP_LayerFlag_HIDE_LOCKED_MASKS: _bindgen_ty_122 = 131072;
-pub const AEGP_LayerFlag_GUIDE_LAYER: _bindgen_ty_122 = 262144;
-pub const AEGP_LayerFlag_ADVANCED_FRAME_BLENDING: _bindgen_ty_122 = 524288;
-pub const AEGP_LayerFlag_SUBLAYERS_RENDER_SEPARATELY: _bindgen_ty_122 = 1048576;
-pub const AEGP_LayerFlag_ENVIRONMENT_LAYER: _bindgen_ty_122 = 2097152;
-pub type _bindgen_ty_122 = ::std::os::raw::c_uint;
-pub type AEGP_LayerFlags = A_long;
-pub const AEGP_ObjectType_NONE: _bindgen_ty_123 = -1;
-pub const AEGP_ObjectType_AV: _bindgen_ty_123 = 0;
-pub const AEGP_ObjectType_LIGHT: _bindgen_ty_123 = 1;
-pub const AEGP_ObjectType_CAMERA: _bindgen_ty_123 = 2;
-pub const AEGP_ObjectType_TEXT: _bindgen_ty_123 = 3;
-pub const AEGP_ObjectType_VECTOR: _bindgen_ty_123 = 4;
-pub const AEGP_ObjectType_3D_MODEL: _bindgen_ty_123 = 5;
-pub const AEGP_ObjectType_RESERVED1: _bindgen_ty_123 = 6;
-pub const AEGP_ObjectType_RESERVED2: _bindgen_ty_123 = 7;
-pub const AEGP_ObjectType_RESERVED3: _bindgen_ty_123 = 8;
-pub const AEGP_ObjectType_NUM_TYPES: _bindgen_ty_123 = 9;
+pub const AEGP_LayerQual_NONE: _bindgen_ty_123 = -1;
+pub const AEGP_LayerQual_WIREFRAME: _bindgen_ty_123 = 0;
+pub const AEGP_LayerQual_DRAFT: _bindgen_ty_123 = 1;
+pub const AEGP_LayerQual_BEST: _bindgen_ty_123 = 2;
 pub type _bindgen_ty_123 = ::std::os::raw::c_int;
-pub type AEGP_ObjectType = A_long;
-pub const AEGP_LTimeMode_LayerTime: _bindgen_ty_124 = 0;
-pub const AEGP_LTimeMode_CompTime: _bindgen_ty_124 = 1;
+pub type AEGP_LayerQuality = A_short;
+pub const AEGP_LayerSamplingQual_BILINEAR: _bindgen_ty_124 = 0;
+pub const AEGP_LayerSamplingQual_BICUBIC: _bindgen_ty_124 = 1;
 pub type _bindgen_ty_124 = ::std::os::raw::c_uint;
+pub type AEGP_LayerSamplingQuality = A_short;
+pub const AEGP_LayerFlag_NONE: _bindgen_ty_125 = 0;
+pub const AEGP_LayerFlag_VIDEO_ACTIVE: _bindgen_ty_125 = 1;
+pub const AEGP_LayerFlag_AUDIO_ACTIVE: _bindgen_ty_125 = 2;
+pub const AEGP_LayerFlag_EFFECTS_ACTIVE: _bindgen_ty_125 = 4;
+pub const AEGP_LayerFlag_MOTION_BLUR: _bindgen_ty_125 = 8;
+pub const AEGP_LayerFlag_FRAME_BLENDING: _bindgen_ty_125 = 16;
+pub const AEGP_LayerFlag_LOCKED: _bindgen_ty_125 = 32;
+pub const AEGP_LayerFlag_SHY: _bindgen_ty_125 = 64;
+pub const AEGP_LayerFlag_COLLAPSE: _bindgen_ty_125 = 128;
+pub const AEGP_LayerFlag_AUTO_ORIENT_ROTATION: _bindgen_ty_125 = 256;
+pub const AEGP_LayerFlag_ADJUSTMENT_LAYER: _bindgen_ty_125 = 512;
+pub const AEGP_LayerFlag_TIME_REMAPPING: _bindgen_ty_125 = 1024;
+pub const AEGP_LayerFlag_LAYER_IS_3D: _bindgen_ty_125 = 2048;
+pub const AEGP_LayerFlag_LOOK_AT_CAMERA: _bindgen_ty_125 = 4096;
+pub const AEGP_LayerFlag_LOOK_AT_POI: _bindgen_ty_125 = 8192;
+pub const AEGP_LayerFlag_SOLO: _bindgen_ty_125 = 16384;
+pub const AEGP_LayerFlag_MARKERS_LOCKED: _bindgen_ty_125 = 32768;
+pub const AEGP_LayerFlag_NULL_LAYER: _bindgen_ty_125 = 65536;
+pub const AEGP_LayerFlag_HIDE_LOCKED_MASKS: _bindgen_ty_125 = 131072;
+pub const AEGP_LayerFlag_GUIDE_LAYER: _bindgen_ty_125 = 262144;
+pub const AEGP_LayerFlag_ADVANCED_FRAME_BLENDING: _bindgen_ty_125 = 524288;
+pub const AEGP_LayerFlag_SUBLAYERS_RENDER_SEPARATELY: _bindgen_ty_125 = 1048576;
+pub const AEGP_LayerFlag_ENVIRONMENT_LAYER: _bindgen_ty_125 = 2097152;
+pub type _bindgen_ty_125 = ::std::os::raw::c_uint;
+pub type AEGP_LayerFlags = A_long;
+pub const AEGP_ObjectType_NONE: _bindgen_ty_126 = -1;
+pub const AEGP_ObjectType_AV: _bindgen_ty_126 = 0;
+pub const AEGP_ObjectType_LIGHT: _bindgen_ty_126 = 1;
+pub const AEGP_ObjectType_CAMERA: _bindgen_ty_126 = 2;
+pub const AEGP_ObjectType_TEXT: _bindgen_ty_126 = 3;
+pub const AEGP_ObjectType_VECTOR: _bindgen_ty_126 = 4;
+pub const AEGP_ObjectType_3D_MODEL: _bindgen_ty_126 = 5;
+pub const AEGP_ObjectType_RESERVED0: _bindgen_ty_126 = 6;
+pub const AEGP_ObjectType_3D_PARAMETRIC_MESH: _bindgen_ty_126 = 7;
+pub const AEGP_ObjectType_RESERVED1: _bindgen_ty_126 = 8;
+pub const AEGP_ObjectType_NUM_TYPES: _bindgen_ty_126 = 9;
+pub type _bindgen_ty_126 = ::std::os::raw::c_int;
+pub type AEGP_ObjectType = A_long;
+pub const AEGP_LTimeMode_LayerTime: _bindgen_ty_127 = 0;
+pub const AEGP_LTimeMode_CompTime: _bindgen_ty_127 = 1;
+pub type _bindgen_ty_127 = ::std::os::raw::c_uint;
 pub type AEGP_LTimeMode = A_short;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7672,86 +7938,86 @@ pub struct AEGP_LayerSuite9 {
     pub AEGP_RemoveTrackMatte:
         ::std::option::Option<unsafe extern "C" fn(layerH: AEGP_LayerH) -> A_Err>,
 }
-pub const AEGP_LayerStream_NONE: _bindgen_ty_125 = -1;
-pub const AEGP_LayerStream_ANCHORPOINT: _bindgen_ty_125 = 0;
-pub const AEGP_LayerStream_POSITION: _bindgen_ty_125 = 1;
-pub const AEGP_LayerStream_SCALE: _bindgen_ty_125 = 2;
-pub const AEGP_LayerStream_ROTATION: _bindgen_ty_125 = 3;
-pub const AEGP_LayerStream_ROTATE_Z: _bindgen_ty_125 = 3;
-pub const AEGP_LayerStream_OPACITY: _bindgen_ty_125 = 4;
-pub const AEGP_LayerStream_AUDIO: _bindgen_ty_125 = 5;
-pub const AEGP_LayerStream_MARKER: _bindgen_ty_125 = 6;
-pub const AEGP_LayerStream_TIME_REMAP: _bindgen_ty_125 = 7;
-pub const AEGP_LayerStream_ROTATE_X: _bindgen_ty_125 = 8;
-pub const AEGP_LayerStream_ROTATE_Y: _bindgen_ty_125 = 9;
-pub const AEGP_LayerStream_ORIENTATION: _bindgen_ty_125 = 10;
-pub const AEGP_LayerStream_ZOOM: _bindgen_ty_125 = 11;
-pub const AEGP_LayerStream_DEPTH_OF_FIELD: _bindgen_ty_125 = 12;
-pub const AEGP_LayerStream_FOCUS_DISTANCE: _bindgen_ty_125 = 13;
-pub const AEGP_LayerStream_APERTURE: _bindgen_ty_125 = 14;
-pub const AEGP_LayerStream_BLUR_LEVEL: _bindgen_ty_125 = 15;
-pub const AEGP_LayerStream_INTENSITY: _bindgen_ty_125 = 16;
-pub const AEGP_LayerStream_COLOR: _bindgen_ty_125 = 17;
-pub const AEGP_LayerStream_CONE_ANGLE: _bindgen_ty_125 = 18;
-pub const AEGP_LayerStream_CONE_FEATHER: _bindgen_ty_125 = 19;
-pub const AEGP_LayerStream_SHADOW_DARKNESS: _bindgen_ty_125 = 20;
-pub const AEGP_LayerStream_SHADOW_DIFFUSION: _bindgen_ty_125 = 21;
-pub const AEGP_LayerStream_ACCEPTS_SHADOWS: _bindgen_ty_125 = 22;
-pub const AEGP_LayerStream_ACCEPTS_LIGHTS: _bindgen_ty_125 = 23;
-pub const AEGP_LayerStream_AMBIENT_COEFF: _bindgen_ty_125 = 24;
-pub const AEGP_LayerStream_DIFFUSE_COEFF: _bindgen_ty_125 = 25;
-pub const AEGP_LayerStream_SPECULAR_INTENSITY: _bindgen_ty_125 = 26;
-pub const AEGP_LayerStream_SPECULAR_SHININESS: _bindgen_ty_125 = 27;
-pub const AEGP_LayerStream_CASTS_SHADOWS: _bindgen_ty_125 = 28;
-pub const AEGP_LayerStream_LIGHT_TRANSMISSION: _bindgen_ty_125 = 29;
-pub const AEGP_LayerStream_METAL: _bindgen_ty_125 = 30;
-pub const AEGP_LayerStream_SOURCE_TEXT: _bindgen_ty_125 = 31;
-pub const AEGP_LayerStream_IRIS_SHAPE: _bindgen_ty_125 = 32;
-pub const AEGP_LayerStream_IRIS_ROTATION: _bindgen_ty_125 = 33;
-pub const AEGP_LayerStream_IRIS_ROUNDNESS: _bindgen_ty_125 = 34;
-pub const AEGP_LayerStream_IRIS_ASPECT_RATIO: _bindgen_ty_125 = 35;
-pub const AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE: _bindgen_ty_125 = 36;
-pub const AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN: _bindgen_ty_125 = 37;
-pub const AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD: _bindgen_ty_125 = 38;
-pub const AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION: _bindgen_ty_125 = 39;
-pub const AEGP_LayerStream_LIGHT_FALLOFF_TYPE: _bindgen_ty_125 = 40;
-pub const AEGP_LayerStream_LIGHT_FALLOFF_START: _bindgen_ty_125 = 41;
-pub const AEGP_LayerStream_LIGHT_FALLOFF_DISTANCE: _bindgen_ty_125 = 42;
-pub const AEGP_LayerStream_REFLECTION_INTENSITY: _bindgen_ty_125 = 43;
-pub const AEGP_LayerStream_REFLECTION_SHARPNESS: _bindgen_ty_125 = 44;
-pub const AEGP_LayerStream_REFLECTION_ROLLOFF: _bindgen_ty_125 = 45;
-pub const AEGP_LayerStream_TRANSPARENCY_COEFF: _bindgen_ty_125 = 46;
-pub const AEGP_LayerStream_TRANSPARENCY_ROLLOFF: _bindgen_ty_125 = 47;
-pub const AEGP_LayerStream_INDEX_OF_REFRACTION: _bindgen_ty_125 = 48;
-pub const AEGP_LayerStream_EXTRUSION_BEVEL_STYLE: _bindgen_ty_125 = 49;
-pub const AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION: _bindgen_ty_125 = 50;
-pub const AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH: _bindgen_ty_125 = 51;
-pub const AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH: _bindgen_ty_125 = 52;
-pub const AEGP_LayerStream_EXTRUSION_DEPTH: _bindgen_ty_125 = 53;
-pub const AEGP_LayerStream_PLANE_CURVATURE: _bindgen_ty_125 = 54;
-pub const AEGP_LayerStream_PLANE_SUBDIVISION: _bindgen_ty_125 = 55;
-pub const AEGP_LayerStream_LIGHT_BACKGROUND_VISIBLE: _bindgen_ty_125 = 56;
-pub const AEGP_LayerStream_LIGHT_BACKGROUND_OPACITY: _bindgen_ty_125 = 57;
-pub const AEGP_LayerStream_LIGHT_BACKGROUND_BLUR: _bindgen_ty_125 = 58;
-pub const AEGP_LayerStream_SHADOW_COLOR: _bindgen_ty_125 = 59;
-pub const AEGP_LayerStream_NUMTYPES: _bindgen_ty_125 = 60;
-pub const AEGP_LayerStream_BEGIN: _bindgen_ty_125 = 0;
-pub const AEGP_LayerStream_END: _bindgen_ty_125 = 60;
-pub type _bindgen_ty_125 = ::std::os::raw::c_int;
+pub const AEGP_LayerStream_NONE: _bindgen_ty_128 = -1;
+pub const AEGP_LayerStream_ANCHORPOINT: _bindgen_ty_128 = 0;
+pub const AEGP_LayerStream_POSITION: _bindgen_ty_128 = 1;
+pub const AEGP_LayerStream_SCALE: _bindgen_ty_128 = 2;
+pub const AEGP_LayerStream_ROTATION: _bindgen_ty_128 = 3;
+pub const AEGP_LayerStream_ROTATE_Z: _bindgen_ty_128 = 3;
+pub const AEGP_LayerStream_OPACITY: _bindgen_ty_128 = 4;
+pub const AEGP_LayerStream_AUDIO: _bindgen_ty_128 = 5;
+pub const AEGP_LayerStream_MARKER: _bindgen_ty_128 = 6;
+pub const AEGP_LayerStream_TIME_REMAP: _bindgen_ty_128 = 7;
+pub const AEGP_LayerStream_ROTATE_X: _bindgen_ty_128 = 8;
+pub const AEGP_LayerStream_ROTATE_Y: _bindgen_ty_128 = 9;
+pub const AEGP_LayerStream_ORIENTATION: _bindgen_ty_128 = 10;
+pub const AEGP_LayerStream_ZOOM: _bindgen_ty_128 = 11;
+pub const AEGP_LayerStream_DEPTH_OF_FIELD: _bindgen_ty_128 = 12;
+pub const AEGP_LayerStream_FOCUS_DISTANCE: _bindgen_ty_128 = 13;
+pub const AEGP_LayerStream_APERTURE: _bindgen_ty_128 = 14;
+pub const AEGP_LayerStream_BLUR_LEVEL: _bindgen_ty_128 = 15;
+pub const AEGP_LayerStream_INTENSITY: _bindgen_ty_128 = 16;
+pub const AEGP_LayerStream_COLOR: _bindgen_ty_128 = 17;
+pub const AEGP_LayerStream_CONE_ANGLE: _bindgen_ty_128 = 18;
+pub const AEGP_LayerStream_CONE_FEATHER: _bindgen_ty_128 = 19;
+pub const AEGP_LayerStream_SHADOW_DARKNESS: _bindgen_ty_128 = 20;
+pub const AEGP_LayerStream_SHADOW_DIFFUSION: _bindgen_ty_128 = 21;
+pub const AEGP_LayerStream_ACCEPTS_SHADOWS: _bindgen_ty_128 = 22;
+pub const AEGP_LayerStream_ACCEPTS_LIGHTS: _bindgen_ty_128 = 23;
+pub const AEGP_LayerStream_AMBIENT_COEFF: _bindgen_ty_128 = 24;
+pub const AEGP_LayerStream_DIFFUSE_COEFF: _bindgen_ty_128 = 25;
+pub const AEGP_LayerStream_SPECULAR_INTENSITY: _bindgen_ty_128 = 26;
+pub const AEGP_LayerStream_SPECULAR_SHININESS: _bindgen_ty_128 = 27;
+pub const AEGP_LayerStream_CASTS_SHADOWS: _bindgen_ty_128 = 28;
+pub const AEGP_LayerStream_LIGHT_TRANSMISSION: _bindgen_ty_128 = 29;
+pub const AEGP_LayerStream_METAL: _bindgen_ty_128 = 30;
+pub const AEGP_LayerStream_SOURCE_TEXT: _bindgen_ty_128 = 31;
+pub const AEGP_LayerStream_IRIS_SHAPE: _bindgen_ty_128 = 32;
+pub const AEGP_LayerStream_IRIS_ROTATION: _bindgen_ty_128 = 33;
+pub const AEGP_LayerStream_IRIS_ROUNDNESS: _bindgen_ty_128 = 34;
+pub const AEGP_LayerStream_IRIS_ASPECT_RATIO: _bindgen_ty_128 = 35;
+pub const AEGP_LayerStream_IRIS_DIFFRACTION_FRINGE: _bindgen_ty_128 = 36;
+pub const AEGP_LayerStream_IRIS_HIGHLIGHT_GAIN: _bindgen_ty_128 = 37;
+pub const AEGP_LayerStream_IRIS_HIGHLIGHT_THRESHOLD: _bindgen_ty_128 = 38;
+pub const AEGP_LayerStream_IRIS_HIGHLIGHT_SATURATION: _bindgen_ty_128 = 39;
+pub const AEGP_LayerStream_LIGHT_FALLOFF_TYPE: _bindgen_ty_128 = 40;
+pub const AEGP_LayerStream_LIGHT_FALLOFF_START: _bindgen_ty_128 = 41;
+pub const AEGP_LayerStream_LIGHT_FALLOFF_DISTANCE: _bindgen_ty_128 = 42;
+pub const AEGP_LayerStream_REFLECTION_INTENSITY: _bindgen_ty_128 = 43;
+pub const AEGP_LayerStream_REFLECTION_SHARPNESS: _bindgen_ty_128 = 44;
+pub const AEGP_LayerStream_REFLECTION_ROLLOFF: _bindgen_ty_128 = 45;
+pub const AEGP_LayerStream_TRANSPARENCY_COEFF: _bindgen_ty_128 = 46;
+pub const AEGP_LayerStream_TRANSPARENCY_ROLLOFF: _bindgen_ty_128 = 47;
+pub const AEGP_LayerStream_INDEX_OF_REFRACTION: _bindgen_ty_128 = 48;
+pub const AEGP_LayerStream_EXTRUSION_BEVEL_STYLE: _bindgen_ty_128 = 49;
+pub const AEGP_LayerStream_EXTRUSION_BEVEL_DIRECTION: _bindgen_ty_128 = 50;
+pub const AEGP_LayerStream_EXTRUSION_BEVEL_DEPTH: _bindgen_ty_128 = 51;
+pub const AEGP_LayerStream_EXTRUSION_HOLE_BEVEL_DEPTH: _bindgen_ty_128 = 52;
+pub const AEGP_LayerStream_EXTRUSION_DEPTH: _bindgen_ty_128 = 53;
+pub const AEGP_LayerStream_PLANE_CURVATURE: _bindgen_ty_128 = 54;
+pub const AEGP_LayerStream_PLANE_SUBDIVISION: _bindgen_ty_128 = 55;
+pub const AEGP_LayerStream_LIGHT_BACKGROUND_VISIBLE: _bindgen_ty_128 = 56;
+pub const AEGP_LayerStream_LIGHT_BACKGROUND_OPACITY: _bindgen_ty_128 = 57;
+pub const AEGP_LayerStream_LIGHT_BACKGROUND_BLUR: _bindgen_ty_128 = 58;
+pub const AEGP_LayerStream_SHADOW_COLOR: _bindgen_ty_128 = 59;
+pub const AEGP_LayerStream_NUMTYPES: _bindgen_ty_128 = 60;
+pub const AEGP_LayerStream_BEGIN: _bindgen_ty_128 = 0;
+pub const AEGP_LayerStream_END: _bindgen_ty_128 = 60;
+pub type _bindgen_ty_128 = ::std::os::raw::c_int;
 pub type AEGP_LayerStream = A_long;
-pub const AEGP_MaskStream_OUTLINE: _bindgen_ty_126 = 400;
-pub const AEGP_MaskStream_OPACITY: _bindgen_ty_126 = 401;
-pub const AEGP_MaskStream_FEATHER: _bindgen_ty_126 = 402;
-pub const AEGP_MaskStream_EXPANSION: _bindgen_ty_126 = 403;
-pub const AEGP_MaskStream_BEGIN: _bindgen_ty_126 = 400;
-pub const AEGP_MaskStream_END: _bindgen_ty_126 = 404;
-pub type _bindgen_ty_126 = ::std::os::raw::c_uint;
+pub const AEGP_MaskStream_OUTLINE: _bindgen_ty_129 = 400;
+pub const AEGP_MaskStream_OPACITY: _bindgen_ty_129 = 401;
+pub const AEGP_MaskStream_FEATHER: _bindgen_ty_129 = 402;
+pub const AEGP_MaskStream_EXPANSION: _bindgen_ty_129 = 403;
+pub const AEGP_MaskStream_BEGIN: _bindgen_ty_129 = 400;
+pub const AEGP_MaskStream_END: _bindgen_ty_129 = 404;
+pub type _bindgen_ty_129 = ::std::os::raw::c_uint;
 pub type AEGP_MaskStream = A_long;
-pub const AEGP_StreamFlag_NONE: _bindgen_ty_127 = 0;
-pub const AEGP_StreamFlag_HAS_MIN: _bindgen_ty_127 = 1;
-pub const AEGP_StreamFlag_HAS_MAX: _bindgen_ty_127 = 2;
-pub const AEGP_StreamFlag_IS_SPATIAL: _bindgen_ty_127 = 4;
-pub type _bindgen_ty_127 = ::std::os::raw::c_uint;
+pub const AEGP_StreamFlag_NONE: _bindgen_ty_130 = 0;
+pub const AEGP_StreamFlag_HAS_MIN: _bindgen_ty_130 = 1;
+pub const AEGP_StreamFlag_HAS_MAX: _bindgen_ty_130 = 2;
+pub const AEGP_StreamFlag_IS_SPATIAL: _bindgen_ty_130 = 4;
+pub type _bindgen_ty_130 = ::std::os::raw::c_uint;
 pub type AEGP_StreamFlags = A_long;
 pub type AEGP_OneDVal = A_FpLong;
 #[repr(C)]
@@ -7769,20 +8035,20 @@ pub struct AEGP_ThreeDVal {
 }
 pub type AEGP_FourDVal = [A_FpLong; 4usize];
 pub type AEGP_ArbBlockVal = A_Handle;
-pub const AEGP_KeyInterp_NONE: _bindgen_ty_128 = 0;
-pub const AEGP_KeyInterp_LINEAR: _bindgen_ty_128 = 1;
-pub const AEGP_KeyInterp_BEZIER: _bindgen_ty_128 = 2;
-pub const AEGP_KeyInterp_HOLD: _bindgen_ty_128 = 3;
-pub const AEGP_Interp_NUM_VALUES: _bindgen_ty_128 = 4;
-pub type _bindgen_ty_128 = ::std::os::raw::c_uint;
+pub const AEGP_KeyInterp_NONE: _bindgen_ty_131 = 0;
+pub const AEGP_KeyInterp_LINEAR: _bindgen_ty_131 = 1;
+pub const AEGP_KeyInterp_BEZIER: _bindgen_ty_131 = 2;
+pub const AEGP_KeyInterp_HOLD: _bindgen_ty_131 = 3;
+pub const AEGP_Interp_NUM_VALUES: _bindgen_ty_131 = 4;
+pub type _bindgen_ty_131 = ::std::os::raw::c_uint;
 pub type AEGP_KeyframeInterpolationType = A_long;
-pub const AEGP_KeyInterpMask_NONE: _bindgen_ty_129 = 0;
-pub const AEGP_KeyInterpMask_LINEAR: _bindgen_ty_129 = 1;
-pub const AEGP_KeyInterpMask_BEZIER: _bindgen_ty_129 = 2;
-pub const AEGP_KeyInterpMask_HOLD: _bindgen_ty_129 = 4;
-pub const AEGP_KeyInterpMask_CUSTOM: _bindgen_ty_129 = 8;
-pub const AEGP_KeyInterpMask_ANY: _bindgen_ty_129 = 65535;
-pub type _bindgen_ty_129 = ::std::os::raw::c_uint;
+pub const AEGP_KeyInterpMask_NONE: _bindgen_ty_132 = 0;
+pub const AEGP_KeyInterpMask_LINEAR: _bindgen_ty_132 = 1;
+pub const AEGP_KeyInterpMask_BEZIER: _bindgen_ty_132 = 2;
+pub const AEGP_KeyInterpMask_HOLD: _bindgen_ty_132 = 4;
+pub const AEGP_KeyInterpMask_CUSTOM: _bindgen_ty_132 = 8;
+pub const AEGP_KeyInterpMask_ANY: _bindgen_ty_132 = 65535;
+pub type _bindgen_ty_132 = ::std::os::raw::c_uint;
 pub type AEGP_KeyInterpolationMask = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -7811,24 +8077,29 @@ pub struct AEGP_StreamValue2 {
     pub streamH: AEGP_StreamRefH,
     pub val: AEGP_StreamVal2,
 }
-pub const AEGP_StreamType_NO_DATA: _bindgen_ty_130 = 0;
-pub const AEGP_StreamType_ThreeD_SPATIAL: _bindgen_ty_130 = 1;
-pub const AEGP_StreamType_ThreeD: _bindgen_ty_130 = 2;
-pub const AEGP_StreamType_TwoD_SPATIAL: _bindgen_ty_130 = 3;
-pub const AEGP_StreamType_TwoD: _bindgen_ty_130 = 4;
-pub const AEGP_StreamType_OneD: _bindgen_ty_130 = 5;
-pub const AEGP_StreamType_COLOR: _bindgen_ty_130 = 6;
-pub const AEGP_StreamType_ARB: _bindgen_ty_130 = 7;
-pub const AEGP_StreamType_MARKER: _bindgen_ty_130 = 8;
-pub const AEGP_StreamType_LAYER_ID: _bindgen_ty_130 = 9;
-pub const AEGP_StreamType_MASK_ID: _bindgen_ty_130 = 10;
-pub const AEGP_StreamType_MASK: _bindgen_ty_130 = 11;
-pub const AEGP_StreamType_TEXT_DOCUMENT: _bindgen_ty_130 = 12;
-pub type _bindgen_ty_130 = ::std::os::raw::c_uint;
+pub const AEGP_StreamType_NO_DATA: _bindgen_ty_133 = 0;
+pub const AEGP_StreamType_ThreeD_SPATIAL: _bindgen_ty_133 = 1;
+pub const AEGP_StreamType_ThreeD: _bindgen_ty_133 = 2;
+pub const AEGP_StreamType_TwoD_SPATIAL: _bindgen_ty_133 = 3;
+pub const AEGP_StreamType_TwoD: _bindgen_ty_133 = 4;
+pub const AEGP_StreamType_OneD: _bindgen_ty_133 = 5;
+pub const AEGP_StreamType_COLOR: _bindgen_ty_133 = 6;
+pub const AEGP_StreamType_ARB: _bindgen_ty_133 = 7;
+pub const AEGP_StreamType_MARKER: _bindgen_ty_133 = 8;
+pub const AEGP_StreamType_LAYER_ID: _bindgen_ty_133 = 9;
+pub const AEGP_StreamType_MASK_ID: _bindgen_ty_133 = 10;
+pub const AEGP_StreamType_MASK: _bindgen_ty_133 = 11;
+pub const AEGP_StreamType_TEXT_DOCUMENT: _bindgen_ty_133 = 12;
+pub type _bindgen_ty_133 = ::std::os::raw::c_uint;
 pub type AEGP_StreamType = A_long;
+pub const AEGP_LayerParamStage_SOURCE: _bindgen_ty_134 = 0;
+pub const AEGP_LayerParamStage_ONLY_MASKS: _bindgen_ty_134 = -2;
+pub const AEGP_LayerParamStage_ALL_EFFECTS: _bindgen_ty_134 = -1;
+pub type _bindgen_ty_134 = ::std::os::raw::c_int;
+pub type AEGP_LayerParamStage = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct AEGP_StreamSuite6 {
+pub struct AEGP_StreamSuite7 {
     pub AEGP_IsStreamLegal: ::std::option::Option<
         unsafe extern "C" fn(
             layerH: AEGP_LayerH,
@@ -7922,6 +8193,43 @@ pub struct AEGP_StreamSuite6 {
             valueP: *mut AEGP_StreamValue2,
         ) -> A_Err,
     >,
+    pub AEGP_GetStreamLayerParamStageValue: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            stage_outP: *mut AEGP_LayerParamStage,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetStreamLayerParamStageValue: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            stage: AEGP_LayerParamStage,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetStreamLayerParamAndStageValue: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            valueP: *mut AEGP_StreamValue2,
+            stage_outP: *mut AEGP_LayerParamStage,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetStreamLayerParamAndStageValue: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            valueP: *mut AEGP_StreamValue2,
+            stage: AEGP_LayerParamStage,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetStreamInputStageCycleSafeLimit: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            max_stage_outP: *mut AEGP_LayerParamStage,
+        ) -> A_Err,
+    >,
     pub AEGP_GetLayerStreamValue: ::std::option::Option<
         unsafe extern "C" fn(
             layerH: AEGP_LayerH,
@@ -7972,19 +8280,19 @@ pub struct AEGP_StreamSuite6 {
         unsafe extern "C" fn(streamH: AEGP_StreamRefH, outID: *mut i32) -> A_Err,
     >,
 }
-pub const AEGP_StreamGroupingType_NONE: _bindgen_ty_131 = -1;
-pub const AEGP_StreamGroupingType_LEAF: _bindgen_ty_131 = 0;
-pub const AEGP_StreamGroupingType_NAMED_GROUP: _bindgen_ty_131 = 1;
-pub const AEGP_StreamGroupingType_INDEXED_GROUP: _bindgen_ty_131 = 2;
-pub type _bindgen_ty_131 = ::std::os::raw::c_int;
+pub const AEGP_StreamGroupingType_NONE: _bindgen_ty_135 = -1;
+pub const AEGP_StreamGroupingType_LEAF: _bindgen_ty_135 = 0;
+pub const AEGP_StreamGroupingType_NAMED_GROUP: _bindgen_ty_135 = 1;
+pub const AEGP_StreamGroupingType_INDEXED_GROUP: _bindgen_ty_135 = 2;
+pub type _bindgen_ty_135 = ::std::os::raw::c_int;
 pub type AEGP_StreamGroupingType = A_long;
-pub const AEGP_DynStreamFlag_ACTIVE_EYEBALL: _bindgen_ty_132 = 1;
-pub const AEGP_DynStreamFlag_HIDDEN: _bindgen_ty_132 = 2;
-pub const AEGP_DynStreamFlag_DISABLED: _bindgen_ty_132 = 16;
-pub const AEGP_DynStreamFlag_ELIDED: _bindgen_ty_132 = 32;
-pub const AEGP_DynStreamFlag_SHOWN_WHEN_EMPTY: _bindgen_ty_132 = 1024;
-pub const AEGP_DynStreamFlag_SKIP_REVEAL_WHEN_UNHIDDEN: _bindgen_ty_132 = 65536;
-pub type _bindgen_ty_132 = ::std::os::raw::c_uint;
+pub const AEGP_DynStreamFlag_ACTIVE_EYEBALL: _bindgen_ty_136 = 1;
+pub const AEGP_DynStreamFlag_HIDDEN: _bindgen_ty_136 = 2;
+pub const AEGP_DynStreamFlag_DISABLED: _bindgen_ty_136 = 16;
+pub const AEGP_DynStreamFlag_ELIDED: _bindgen_ty_136 = 32;
+pub const AEGP_DynStreamFlag_SHOWN_WHEN_EMPTY: _bindgen_ty_136 = 1024;
+pub const AEGP_DynStreamFlag_SKIP_REVEAL_WHEN_UNHIDDEN: _bindgen_ty_136 = 65536;
+pub type _bindgen_ty_136 = ::std::os::raw::c_uint;
 pub type AEGP_DynStreamFlags = A_u_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8121,16 +8429,16 @@ pub struct AEGP_DynamicStreamSuite4 {
     >,
 }
 pub type AEGP_KeyframeIndex = A_long;
-pub const AEGP_KeyframeFlag_NONE: _bindgen_ty_133 = 0;
-pub const AEGP_KeyframeFlag_TEMPORAL_CONTINUOUS: _bindgen_ty_133 = 1;
-pub const AEGP_KeyframeFlag_TEMPORAL_AUTOBEZIER: _bindgen_ty_133 = 2;
-pub const AEGP_KeyframeFlag_SPATIAL_CONTINUOUS: _bindgen_ty_133 = 4;
-pub const AEGP_KeyframeFlag_SPATIAL_AUTOBEZIER: _bindgen_ty_133 = 8;
-pub const AEGP_KeyframeFlag_ROVING: _bindgen_ty_133 = 16;
-pub type _bindgen_ty_133 = ::std::os::raw::c_uint;
+pub const AEGP_KeyframeFlag_NONE: _bindgen_ty_137 = 0;
+pub const AEGP_KeyframeFlag_TEMPORAL_CONTINUOUS: _bindgen_ty_137 = 1;
+pub const AEGP_KeyframeFlag_TEMPORAL_AUTOBEZIER: _bindgen_ty_137 = 2;
+pub const AEGP_KeyframeFlag_SPATIAL_CONTINUOUS: _bindgen_ty_137 = 4;
+pub const AEGP_KeyframeFlag_SPATIAL_AUTOBEZIER: _bindgen_ty_137 = 8;
+pub const AEGP_KeyframeFlag_ROVING: _bindgen_ty_137 = 16;
+pub type _bindgen_ty_137 = ::std::os::raw::c_uint;
 pub type AEGP_KeyframeFlags = A_long;
-pub const AEGP_NumKF_NO_DATA: _bindgen_ty_134 = -1;
-pub type _bindgen_ty_134 = ::std::os::raw::c_int;
+pub const AEGP_NumKF_NO_DATA: _bindgen_ty_138 = -1;
+pub type _bindgen_ty_138 = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct AEGP_KeyframeSuite5 {
@@ -8297,19 +8605,19 @@ pub struct AEGP_TextDocumentSuite1 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_MarkerString_NONE: _bindgen_ty_135 = 0;
-pub const AEGP_MarkerString_COMMENT: _bindgen_ty_135 = 1;
-pub const AEGP_MarkerString_CHAPTER: _bindgen_ty_135 = 2;
-pub const AEGP_MarkerString_URL: _bindgen_ty_135 = 3;
-pub const AEGP_MarkerString_FRAME_TARGET: _bindgen_ty_135 = 4;
-pub const AEGP_MarkerString_CUE_POINT_NAME: _bindgen_ty_135 = 5;
-pub const AEGP_MarkerString_NUMTYPES: _bindgen_ty_135 = 6;
-pub type _bindgen_ty_135 = ::std::os::raw::c_uint;
+pub const AEGP_MarkerString_NONE: _bindgen_ty_139 = 0;
+pub const AEGP_MarkerString_COMMENT: _bindgen_ty_139 = 1;
+pub const AEGP_MarkerString_CHAPTER: _bindgen_ty_139 = 2;
+pub const AEGP_MarkerString_URL: _bindgen_ty_139 = 3;
+pub const AEGP_MarkerString_FRAME_TARGET: _bindgen_ty_139 = 4;
+pub const AEGP_MarkerString_CUE_POINT_NAME: _bindgen_ty_139 = 5;
+pub const AEGP_MarkerString_NUMTYPES: _bindgen_ty_139 = 6;
+pub type _bindgen_ty_139 = ::std::os::raw::c_uint;
 pub type AEGP_MarkerStringType = A_long;
-pub const AEGP_MarkerFlag_NONE: _bindgen_ty_136 = 0;
-pub const AEGP_MarkerFlag_NAVIGATION: _bindgen_ty_136 = 1;
-pub const AEGP_MarkerFlag_PROTECT_REGION: _bindgen_ty_136 = 2;
-pub type _bindgen_ty_136 = ::std::os::raw::c_uint;
+pub const AEGP_MarkerFlag_NONE: _bindgen_ty_140 = 0;
+pub const AEGP_MarkerFlag_NAVIGATION: _bindgen_ty_140 = 1;
+pub const AEGP_MarkerFlag_PROTECT_REGION: _bindgen_ty_140 = 2;
+pub type _bindgen_ty_140 = ::std::os::raw::c_uint;
 pub type AEGP_MarkerFlagType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8416,12 +8724,12 @@ pub struct AEGP_TextLayerSuite1 {
     >,
 }
 pub type AEGP_InstalledEffectKey = A_long;
-pub const AEGP_EffectFlags_NONE: _bindgen_ty_137 = 0;
-pub const AEGP_EffectFlags_ACTIVE: _bindgen_ty_137 = 1;
-pub const AEGP_EffectFlags_AUDIO_ONLY: _bindgen_ty_137 = 2;
-pub const AEGP_EffectFlags_AUDIO_TOO: _bindgen_ty_137 = 4;
-pub const AEGP_EffectFlags_MISSING: _bindgen_ty_137 = 8;
-pub type _bindgen_ty_137 = ::std::os::raw::c_uint;
+pub const AEGP_EffectFlags_NONE: _bindgen_ty_141 = 0;
+pub const AEGP_EffectFlags_ACTIVE: _bindgen_ty_141 = 1;
+pub const AEGP_EffectFlags_AUDIO_ONLY: _bindgen_ty_141 = 2;
+pub const AEGP_EffectFlags_AUDIO_TOO: _bindgen_ty_141 = 4;
+pub const AEGP_EffectFlags_MISSING: _bindgen_ty_141 = 8;
+pub type _bindgen_ty_141 = ::std::os::raw::c_uint;
 pub type AEGP_EffectFlags = A_long;
 pub type AEGP_EffectIndex = A_long;
 #[repr(C)]
@@ -8560,22 +8868,22 @@ pub struct AEGP_EffectSuite5 {
     >,
 }
 pub type AEGP_MaskIndex = A_long;
-pub const AEGP_MaskMBlur_SAME_AS_LAYER: _bindgen_ty_138 = 0;
-pub const AEGP_MaskMBlur_OFF: _bindgen_ty_138 = 1;
-pub const AEGP_MaskMBlur_ON: _bindgen_ty_138 = 2;
-pub type _bindgen_ty_138 = ::std::os::raw::c_uint;
+pub const AEGP_MaskMBlur_SAME_AS_LAYER: _bindgen_ty_142 = 0;
+pub const AEGP_MaskMBlur_OFF: _bindgen_ty_142 = 1;
+pub const AEGP_MaskMBlur_ON: _bindgen_ty_142 = 2;
+pub type _bindgen_ty_142 = ::std::os::raw::c_uint;
 pub type AEGP_MaskMBlur = A_u_char;
-pub const AEGP_MaskFeatherFalloff_SMOOTH: _bindgen_ty_139 = 0;
-pub const AEGP_MaskFeatherFalloff_LINEAR: _bindgen_ty_139 = 1;
-pub type _bindgen_ty_139 = ::std::os::raw::c_uint;
+pub const AEGP_MaskFeatherFalloff_SMOOTH: _bindgen_ty_143 = 0;
+pub const AEGP_MaskFeatherFalloff_LINEAR: _bindgen_ty_143 = 1;
+pub type _bindgen_ty_143 = ::std::os::raw::c_uint;
 pub type AEGP_MaskFeatherFalloff = A_u_char;
-pub const AEGP_MaskFeatherInterp_NORMAL: _bindgen_ty_140 = 0;
-pub const AEGP_MaskFeatherInterp_HOLD_CW: _bindgen_ty_140 = 1;
-pub type _bindgen_ty_140 = ::std::os::raw::c_uint;
+pub const AEGP_MaskFeatherInterp_NORMAL: _bindgen_ty_144 = 0;
+pub const AEGP_MaskFeatherInterp_HOLD_CW: _bindgen_ty_144 = 1;
+pub type _bindgen_ty_144 = ::std::os::raw::c_uint;
 pub type AEGP_MaskFeatherInterp = A_u_char;
-pub const AEGP_MaskFeatherType_OUTER: _bindgen_ty_141 = 0;
-pub const AEGP_MaskFeatherType_INNER: _bindgen_ty_141 = 1;
-pub type _bindgen_ty_141 = ::std::os::raw::c_uint;
+pub const AEGP_MaskFeatherType_OUTER: _bindgen_ty_145 = 0;
+pub const AEGP_MaskFeatherType_INNER: _bindgen_ty_145 = 1;
+pub type _bindgen_ty_145 = ::std::os::raw::c_uint;
 pub type AEGP_MaskFeatherType = A_u_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8746,10 +9054,10 @@ pub struct AEGP_MaskOutlineSuite3 {
     >,
 }
 pub type AEGP_InterlaceLabel = FIEL_Label;
-pub const AEGP_AlphaPremul: _bindgen_ty_142 = 1;
-pub const AEGP_AlphaInverted: _bindgen_ty_142 = 2;
-pub const AEGP_AlphaIgnore: _bindgen_ty_142 = 4;
-pub type _bindgen_ty_142 = ::std::os::raw::c_uint;
+pub const AEGP_AlphaPremul: _bindgen_ty_146 = 1;
+pub const AEGP_AlphaInverted: _bindgen_ty_146 = 2;
+pub const AEGP_AlphaIgnore: _bindgen_ty_146 = 4;
+pub type _bindgen_ty_146 = ::std::os::raw::c_uint;
 pub type AEGP_AlphaFlags = A_u_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8759,18 +9067,18 @@ pub struct AEGP_AlphaLabel {
     pub greenCu: A_u_char,
     pub blueCu: A_u_char,
 }
-pub const AEGP_PulldownPhase_NO_PULLDOWN: _bindgen_ty_143 = 0;
-pub const AEGP_PulldownPhase_WSSWW: _bindgen_ty_143 = 1;
-pub const AEGP_PulldownPhase_SSWWW: _bindgen_ty_143 = 2;
-pub const AEGP_PulldownPhase_SWWWS: _bindgen_ty_143 = 3;
-pub const AEGP_PulldownPhase_WWWSS: _bindgen_ty_143 = 4;
-pub const AEGP_PulldownPhase_WWSSW: _bindgen_ty_143 = 5;
-pub const AEGP_PulldownPhase_WWWSW: _bindgen_ty_143 = 6;
-pub const AEGP_PulldownPhase_WWSWW: _bindgen_ty_143 = 7;
-pub const AEGP_PulldownPhase_WSWWW: _bindgen_ty_143 = 8;
-pub const AEGP_PulldownPhase_SWWWW: _bindgen_ty_143 = 9;
-pub const AEGP_PulldownPhase_WWWWS: _bindgen_ty_143 = 10;
-pub type _bindgen_ty_143 = ::std::os::raw::c_uint;
+pub const AEGP_PulldownPhase_NO_PULLDOWN: _bindgen_ty_147 = 0;
+pub const AEGP_PulldownPhase_WSSWW: _bindgen_ty_147 = 1;
+pub const AEGP_PulldownPhase_SSWWW: _bindgen_ty_147 = 2;
+pub const AEGP_PulldownPhase_SWWWS: _bindgen_ty_147 = 3;
+pub const AEGP_PulldownPhase_WWWSS: _bindgen_ty_147 = 4;
+pub const AEGP_PulldownPhase_WWSSW: _bindgen_ty_147 = 5;
+pub const AEGP_PulldownPhase_WWWSW: _bindgen_ty_147 = 6;
+pub const AEGP_PulldownPhase_WWSWW: _bindgen_ty_147 = 7;
+pub const AEGP_PulldownPhase_WSWWW: _bindgen_ty_147 = 8;
+pub const AEGP_PulldownPhase_SWWWW: _bindgen_ty_147 = 9;
+pub const AEGP_PulldownPhase_WWWWS: _bindgen_ty_147 = 10;
+pub type _bindgen_ty_147 = ::std::os::raw::c_uint;
 pub type AEGP_PulldownPhase = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8791,9 +9099,9 @@ pub struct AEGP_FootageInterp {
     pub depthL: A_long,
     pub motion_dB: A_Boolean,
 }
-pub const AEGP_LayerDrawStyle_LAYER_BOUNDS: _bindgen_ty_144 = 0;
-pub const AEGP_LayerDrawStyle_DOCUMENT_BOUNDS: _bindgen_ty_144 = 1;
-pub type _bindgen_ty_144 = ::std::os::raw::c_uint;
+pub const AEGP_LayerDrawStyle_LAYER_BOUNDS: _bindgen_ty_148 = 0;
+pub const AEGP_LayerDrawStyle_DOCUMENT_BOUNDS: _bindgen_ty_148 = 1;
+pub type _bindgen_ty_148 = ::std::os::raw::c_uint;
 pub type AEGP_LayerDrawStyle = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8811,15 +9119,15 @@ pub struct AEGP_FileSequenceImportOptions {
     pub start_frameL: A_long,
     pub end_frameL: A_long,
 }
-pub const AEGP_FootageSignature_NONE: _bindgen_ty_145 = -1;
-pub const AEGP_FootageSignature_MISSING: _bindgen_ty_145 = 0;
-pub const AEGP_FootageSignature_SOLID: _bindgen_ty_145 = 1399811177;
-pub type _bindgen_ty_145 = ::std::os::raw::c_int;
+pub const AEGP_FootageSignature_NONE: _bindgen_ty_149 = -1;
+pub const AEGP_FootageSignature_MISSING: _bindgen_ty_149 = 0;
+pub const AEGP_FootageSignature_SOLID: _bindgen_ty_149 = 1399811177;
+pub type _bindgen_ty_149 = ::std::os::raw::c_int;
 pub type AEGP_FootageSignature = A_long;
-pub const AEGP_InterpretationStyle_NO_DIALOG_GUESS: _bindgen_ty_146 = 0;
-pub const AEGP_InterpretationStyle_DIALOG_OK: _bindgen_ty_146 = 1;
-pub const AEGP_InterpretationStyle_NO_DIALOG_NO_GUESS: _bindgen_ty_146 = 2;
-pub type _bindgen_ty_146 = ::std::os::raw::c_uint;
+pub const AEGP_InterpretationStyle_NO_DIALOG_GUESS: _bindgen_ty_150 = 0;
+pub const AEGP_InterpretationStyle_DIALOG_OK: _bindgen_ty_150 = 1;
+pub const AEGP_InterpretationStyle_NO_DIALOG_NO_GUESS: _bindgen_ty_150 = 2;
+pub type _bindgen_ty_150 = ::std::os::raw::c_uint;
 pub type AEGP_InterpretationStyle = A_u_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -8961,23 +9269,23 @@ pub struct AEGP_FootageSuite5 {
     >,
 }
 pub type AEGP_Command = A_long;
-pub const AEGP_WindType_NONE: _bindgen_ty_147 = 0;
-pub const AEGP_WindType_PROJECT: _bindgen_ty_147 = 1;
-pub const AEGP_WindType_COMP: _bindgen_ty_147 = 2;
-pub const AEGP_WindType_TIME_LAYOUT: _bindgen_ty_147 = 3;
-pub const AEGP_WindType_LAYER: _bindgen_ty_147 = 4;
-pub const AEGP_WindType_FOOTAGE: _bindgen_ty_147 = 5;
-pub const AEGP_WindType_RENDER_QUEUE: _bindgen_ty_147 = 6;
-pub const AEGP_WindType_QT: _bindgen_ty_147 = 7;
-pub const AEGP_WindType_DIALOG: _bindgen_ty_147 = 8;
-pub const AEGP_WindType_FLOWCHART: _bindgen_ty_147 = 9;
-pub const AEGP_WindType_EFFECT: _bindgen_ty_147 = 10;
-pub const AEGP_WindType_OTHER: _bindgen_ty_147 = 11;
-pub type _bindgen_ty_147 = ::std::os::raw::c_uint;
+pub const AEGP_WindType_NONE: _bindgen_ty_151 = 0;
+pub const AEGP_WindType_PROJECT: _bindgen_ty_151 = 1;
+pub const AEGP_WindType_COMP: _bindgen_ty_151 = 2;
+pub const AEGP_WindType_TIME_LAYOUT: _bindgen_ty_151 = 3;
+pub const AEGP_WindType_LAYER: _bindgen_ty_151 = 4;
+pub const AEGP_WindType_FOOTAGE: _bindgen_ty_151 = 5;
+pub const AEGP_WindType_RENDER_QUEUE: _bindgen_ty_151 = 6;
+pub const AEGP_WindType_QT: _bindgen_ty_151 = 7;
+pub const AEGP_WindType_DIALOG: _bindgen_ty_151 = 8;
+pub const AEGP_WindType_FLOWCHART: _bindgen_ty_151 = 9;
+pub const AEGP_WindType_EFFECT: _bindgen_ty_151 = 10;
+pub const AEGP_WindType_OTHER: _bindgen_ty_151 = 11;
+pub type _bindgen_ty_151 = ::std::os::raw::c_uint;
 pub type AEGP_WindowType = A_LegacyEnumType;
-pub const AEGP_HP_BeforeAE: _bindgen_ty_148 = 1;
-pub const AEGP_HP_AfterAE: _bindgen_ty_148 = 2;
-pub type _bindgen_ty_148 = ::std::os::raw::c_uint;
+pub const AEGP_HP_BeforeAE: _bindgen_ty_152 = 1;
+pub const AEGP_HP_AfterAE: _bindgen_ty_152 = 2;
+pub type _bindgen_ty_152 = ::std::os::raw::c_uint;
 pub type AEGP_HookPriority = A_u_long;
 pub type AEGP_CommandHook = ::std::option::Option<
     unsafe extern "C" fn(
@@ -9122,24 +9430,24 @@ pub struct AEGP_RegisterSuite5 {
         unsafe extern "C" fn(english_nameZ: *const A_char, localized_nameZ: *const A_char) -> A_Err,
     >,
 }
-pub const AEGP_Menu_NONE: _bindgen_ty_149 = 0;
-pub const AEGP_Menu_APPLE: _bindgen_ty_149 = 1;
-pub const AEGP_Menu_FILE: _bindgen_ty_149 = 2;
-pub const AEGP_Menu_EDIT: _bindgen_ty_149 = 3;
-pub const AEGP_Menu_COMPOSITION: _bindgen_ty_149 = 4;
-pub const AEGP_Menu_LAYER: _bindgen_ty_149 = 5;
-pub const AEGP_Menu_EFFECT: _bindgen_ty_149 = 6;
-pub const AEGP_Menu_WINDOW: _bindgen_ty_149 = 7;
-pub const AEGP_Menu_FLOATERS: _bindgen_ty_149 = 8;
-pub const AEGP_Menu_KF_ASSIST: _bindgen_ty_149 = 9;
-pub const AEGP_Menu_IMPORT: _bindgen_ty_149 = 10;
-pub const AEGP_Menu_SAVE_FRAME_AS: _bindgen_ty_149 = 11;
-pub const AEGP_Menu_PREFS: _bindgen_ty_149 = 12;
-pub const AEGP_Menu_EXPORT: _bindgen_ty_149 = 13;
-pub const AEGP_Menu_ANIMATION: _bindgen_ty_149 = 14;
-pub const AEGP_Menu_PURGE: _bindgen_ty_149 = 15;
-pub const AEGP_Menu_NEW: _bindgen_ty_149 = 16;
-pub type _bindgen_ty_149 = ::std::os::raw::c_uint;
+pub const AEGP_Menu_NONE: _bindgen_ty_153 = 0;
+pub const AEGP_Menu_APPLE: _bindgen_ty_153 = 1;
+pub const AEGP_Menu_FILE: _bindgen_ty_153 = 2;
+pub const AEGP_Menu_EDIT: _bindgen_ty_153 = 3;
+pub const AEGP_Menu_COMPOSITION: _bindgen_ty_153 = 4;
+pub const AEGP_Menu_LAYER: _bindgen_ty_153 = 5;
+pub const AEGP_Menu_EFFECT: _bindgen_ty_153 = 6;
+pub const AEGP_Menu_WINDOW: _bindgen_ty_153 = 7;
+pub const AEGP_Menu_FLOATERS: _bindgen_ty_153 = 8;
+pub const AEGP_Menu_KF_ASSIST: _bindgen_ty_153 = 9;
+pub const AEGP_Menu_IMPORT: _bindgen_ty_153 = 10;
+pub const AEGP_Menu_SAVE_FRAME_AS: _bindgen_ty_153 = 11;
+pub const AEGP_Menu_PREFS: _bindgen_ty_153 = 12;
+pub const AEGP_Menu_EXPORT: _bindgen_ty_153 = 13;
+pub const AEGP_Menu_ANIMATION: _bindgen_ty_153 = 14;
+pub const AEGP_Menu_PURGE: _bindgen_ty_153 = 15;
+pub const AEGP_Menu_NEW: _bindgen_ty_153 = 16;
+pub type _bindgen_ty_153 = ::std::os::raw::c_uint;
 pub type AEGP_MenuID = A_LegacyEnumType;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -9173,11 +9481,11 @@ pub struct AEGP_CommandSuite1 {
 pub struct AEGP_ErrReportState {
     pub reservedAL: [A_long; 12usize],
 }
-pub const AEGP_GetPathTypes_PLUGIN: _bindgen_ty_150 = 0;
-pub const AEGP_GetPathTypes_USER_PLUGIN: _bindgen_ty_150 = 1;
-pub const AEGP_GetPathTypes_ALLUSER_PLUGIN: _bindgen_ty_150 = 2;
-pub const AEGP_GetPathTypes_APP: _bindgen_ty_150 = 3;
-pub type _bindgen_ty_150 = ::std::os::raw::c_uint;
+pub const AEGP_GetPathTypes_PLUGIN: _bindgen_ty_154 = 0;
+pub const AEGP_GetPathTypes_USER_PLUGIN: _bindgen_ty_154 = 1;
+pub const AEGP_GetPathTypes_ALLUSER_PLUGIN: _bindgen_ty_154 = 2;
+pub const AEGP_GetPathTypes_APP: _bindgen_ty_154 = 3;
+pub type _bindgen_ty_154 = ::std::os::raw::c_uint;
 pub type AEGP_GetPathTypes = A_u_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -9459,22 +9767,22 @@ pub struct AEGP_ColorSettingsSuite6 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_RenderQueueState_STOPPED: _bindgen_ty_151 = 0;
-pub const AEGP_RenderQueueState_PAUSED: _bindgen_ty_151 = 1;
-pub const AEGP_RenderQueueState_RENDERING: _bindgen_ty_151 = 2;
-pub type _bindgen_ty_151 = ::std::os::raw::c_uint;
+pub const AEGP_RenderQueueState_STOPPED: _bindgen_ty_155 = 0;
+pub const AEGP_RenderQueueState_PAUSED: _bindgen_ty_155 = 1;
+pub const AEGP_RenderQueueState_RENDERING: _bindgen_ty_155 = 2;
+pub type _bindgen_ty_155 = ::std::os::raw::c_uint;
 pub type AEGP_RenderQueueState = A_u_long;
-pub const AEGP_RenderItemStatus_NONE: _bindgen_ty_152 = -2;
-pub const AEGP_RenderItemStatus_WILL_CONTINUE: _bindgen_ty_152 = -1;
-pub const AEGP_RenderItemStatus_NEEDS_OUTPUT: _bindgen_ty_152 = 0;
-pub const AEGP_RenderItemStatus_UNQUEUED: _bindgen_ty_152 = 1;
-pub const AEGP_RenderItemStatus_QUEUED: _bindgen_ty_152 = 2;
-pub const AEGP_RenderItemStatus_RENDERING: _bindgen_ty_152 = 3;
-pub const AEGP_RenderItemStatus_USER_STOPPED: _bindgen_ty_152 = 4;
-pub const AEGP_RenderItemStatus_ERR_STOPPED: _bindgen_ty_152 = 5;
-pub const AEGP_RenderItemStatus_DONE: _bindgen_ty_152 = 6;
-pub const AEGP_RenderItemStatus_LAST_PLUS_ONE: _bindgen_ty_152 = 7;
-pub type _bindgen_ty_152 = ::std::os::raw::c_int;
+pub const AEGP_RenderItemStatus_NONE: _bindgen_ty_156 = -2;
+pub const AEGP_RenderItemStatus_WILL_CONTINUE: _bindgen_ty_156 = -1;
+pub const AEGP_RenderItemStatus_NEEDS_OUTPUT: _bindgen_ty_156 = 0;
+pub const AEGP_RenderItemStatus_UNQUEUED: _bindgen_ty_156 = 1;
+pub const AEGP_RenderItemStatus_QUEUED: _bindgen_ty_156 = 2;
+pub const AEGP_RenderItemStatus_RENDERING: _bindgen_ty_156 = 3;
+pub const AEGP_RenderItemStatus_USER_STOPPED: _bindgen_ty_156 = 4;
+pub const AEGP_RenderItemStatus_ERR_STOPPED: _bindgen_ty_156 = 5;
+pub const AEGP_RenderItemStatus_DONE: _bindgen_ty_156 = 6;
+pub const AEGP_RenderItemStatus_LAST_PLUS_ONE: _bindgen_ty_156 = 7;
+pub type _bindgen_ty_156 = ::std::os::raw::c_int;
 pub type AEGP_RenderItemStatusType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -9487,49 +9795,49 @@ pub struct AEGP_RenderQueueSuite1 {
     pub AEGP_GetRenderQueueState:
         ::std::option::Option<unsafe extern "C" fn(stateP: *mut AEGP_RenderQueueState) -> A_Err>,
 }
-pub const AEGP_LogType_NONE: _bindgen_ty_153 = -1;
-pub const AEGP_LogType_ERRORS_ONLY: _bindgen_ty_153 = 0;
-pub const AEGP_LogType_PLUS_SETTINGS: _bindgen_ty_153 = 1;
-pub const AEGP_LogType_PER_FRAME_INFO: _bindgen_ty_153 = 2;
-pub const AEGP_LogType_NUM_TYPES: _bindgen_ty_153 = 3;
-pub type _bindgen_ty_153 = ::std::os::raw::c_int;
-pub type AEGP_LogType = A_long;
-pub const AEGP_Embedding_NONE: _bindgen_ty_154 = -1;
-pub const AEGP_Embedding_NOTHING: _bindgen_ty_154 = 0;
-pub const AEGP_Embedding_LINK: _bindgen_ty_154 = 1;
-pub const AEGP_Embedding_LINK_AND_COPY: _bindgen_ty_154 = 2;
-pub const AEGP_Embedding_NUM_TYPES: _bindgen_ty_154 = 3;
-pub type _bindgen_ty_154 = ::std::os::raw::c_int;
-pub type AEGP_EmbeddingType = A_long;
-pub const AEGP_PostRenderOptions_NONE: _bindgen_ty_155 = -1;
-pub const AEGP_PostRenderOptions_IMPORT: _bindgen_ty_155 = 0;
-pub const AEGP_PostRenderOptions_IMPORT_AND_REPLACE_USAGE: _bindgen_ty_155 = 1;
-pub const AEGP_PostRenderOptions_SET_PROXY: _bindgen_ty_155 = 2;
-pub const AEGP_PostRenderOptions_NUM_OPTIONS: _bindgen_ty_155 = 3;
-pub type _bindgen_ty_155 = ::std::os::raw::c_int;
-pub type AEGP_PostRenderAction = A_long;
-pub const AEGP_OutputType_NONE: _bindgen_ty_156 = 0;
-pub const AEGP_OutputType_VIDEO: _bindgen_ty_156 = 1;
-pub const AEGP_OutputType_AUDIO: _bindgen_ty_156 = 2;
-pub const AEGP_OutputType_NUM_TYPES: _bindgen_ty_156 = 3;
-pub type _bindgen_ty_156 = ::std::os::raw::c_uint;
-pub type AEGP_OutputTypes = A_long;
-pub const AEGP_VideoChannels_NONE: _bindgen_ty_157 = -1;
-pub const AEGP_VideoChannels_RGB: _bindgen_ty_157 = 0;
-pub const AEGP_VideoChannels_RGBA: _bindgen_ty_157 = 1;
-pub const AEGP_VideoChannels_ALPHA: _bindgen_ty_157 = 2;
-pub const AEGP_VideoChannels_NUMTYPES: _bindgen_ty_157 = 3;
+pub const AEGP_LogType_NONE: _bindgen_ty_157 = -1;
+pub const AEGP_LogType_ERRORS_ONLY: _bindgen_ty_157 = 0;
+pub const AEGP_LogType_PLUS_SETTINGS: _bindgen_ty_157 = 1;
+pub const AEGP_LogType_PER_FRAME_INFO: _bindgen_ty_157 = 2;
+pub const AEGP_LogType_NUM_TYPES: _bindgen_ty_157 = 3;
 pub type _bindgen_ty_157 = ::std::os::raw::c_int;
-pub type AEGP_VideoChannels = A_long;
-pub const AEGP_StretchQual_NONE: _bindgen_ty_158 = -1;
-pub const AEGP_StretchQual_LOW: _bindgen_ty_158 = 0;
-pub const AEGP_StretchQual_HIGH: _bindgen_ty_158 = 1;
-pub const AEGP_StretchQual_NUMTYPES: _bindgen_ty_158 = 2;
+pub type AEGP_LogType = A_long;
+pub const AEGP_Embedding_NONE: _bindgen_ty_158 = -1;
+pub const AEGP_Embedding_NOTHING: _bindgen_ty_158 = 0;
+pub const AEGP_Embedding_LINK: _bindgen_ty_158 = 1;
+pub const AEGP_Embedding_LINK_AND_COPY: _bindgen_ty_158 = 2;
+pub const AEGP_Embedding_NUM_TYPES: _bindgen_ty_158 = 3;
 pub type _bindgen_ty_158 = ::std::os::raw::c_int;
-pub type AEGP_StretchQuality = A_long;
-pub const AEGP_OutputColorType_STRAIGHT: _bindgen_ty_159 = -1;
-pub const AEGP_OutputColorType_PREMUL: _bindgen_ty_159 = 0;
+pub type AEGP_EmbeddingType = A_long;
+pub const AEGP_PostRenderOptions_NONE: _bindgen_ty_159 = -1;
+pub const AEGP_PostRenderOptions_IMPORT: _bindgen_ty_159 = 0;
+pub const AEGP_PostRenderOptions_IMPORT_AND_REPLACE_USAGE: _bindgen_ty_159 = 1;
+pub const AEGP_PostRenderOptions_SET_PROXY: _bindgen_ty_159 = 2;
+pub const AEGP_PostRenderOptions_NUM_OPTIONS: _bindgen_ty_159 = 3;
 pub type _bindgen_ty_159 = ::std::os::raw::c_int;
+pub type AEGP_PostRenderAction = A_long;
+pub const AEGP_OutputType_NONE: _bindgen_ty_160 = 0;
+pub const AEGP_OutputType_VIDEO: _bindgen_ty_160 = 1;
+pub const AEGP_OutputType_AUDIO: _bindgen_ty_160 = 2;
+pub const AEGP_OutputType_NUM_TYPES: _bindgen_ty_160 = 3;
+pub type _bindgen_ty_160 = ::std::os::raw::c_uint;
+pub type AEGP_OutputTypes = A_long;
+pub const AEGP_VideoChannels_NONE: _bindgen_ty_161 = -1;
+pub const AEGP_VideoChannels_RGB: _bindgen_ty_161 = 0;
+pub const AEGP_VideoChannels_RGBA: _bindgen_ty_161 = 1;
+pub const AEGP_VideoChannels_ALPHA: _bindgen_ty_161 = 2;
+pub const AEGP_VideoChannels_NUMTYPES: _bindgen_ty_161 = 3;
+pub type _bindgen_ty_161 = ::std::os::raw::c_int;
+pub type AEGP_VideoChannels = A_long;
+pub const AEGP_StretchQual_NONE: _bindgen_ty_162 = -1;
+pub const AEGP_StretchQual_LOW: _bindgen_ty_162 = 0;
+pub const AEGP_StretchQual_HIGH: _bindgen_ty_162 = 1;
+pub const AEGP_StretchQual_NUMTYPES: _bindgen_ty_162 = 2;
+pub type _bindgen_ty_162 = ::std::os::raw::c_int;
+pub type AEGP_StretchQuality = A_long;
+pub const AEGP_OutputColorType_STRAIGHT: _bindgen_ty_163 = -1;
+pub const AEGP_OutputColorType_PREMUL: _bindgen_ty_163 = 0;
+pub type _bindgen_ty_163 = ::std::os::raw::c_int;
 pub type AEGP_OutputColorType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -9730,36 +10038,36 @@ pub struct AEGP_OutputModuleSuite4 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_RenderHints_NONE: _bindgen_ty_160 = 0;
-pub const AEGP_RenderHints_IGNORE_EXTENTS: _bindgen_ty_160 = 1;
-pub const AEGP_RenderHints_NO_TRANSFER_MODE: _bindgen_ty_160 = 2;
-pub type _bindgen_ty_160 = ::std::os::raw::c_uint;
+pub const AEGP_RenderHints_NONE: _bindgen_ty_164 = 0;
+pub const AEGP_RenderHints_IGNORE_EXTENTS: _bindgen_ty_164 = 1;
+pub const AEGP_RenderHints_NO_TRANSFER_MODE: _bindgen_ty_164 = 2;
+pub type _bindgen_ty_164 = ::std::os::raw::c_uint;
 pub type AEGP_RenderHints = A_u_long;
-pub const AEGP_RenderReceiptStatus_INVALID: _bindgen_ty_161 = 0;
-pub const AEGP_RenderReceiptStatus_VALID: _bindgen_ty_161 = 1;
-pub const AEGP_RenderReceiptStatus_VALID_BUT_INCOMPLETE: _bindgen_ty_161 = 2;
-pub type _bindgen_ty_161 = ::std::os::raw::c_uint;
+pub const AEGP_RenderReceiptStatus_INVALID: _bindgen_ty_165 = 0;
+pub const AEGP_RenderReceiptStatus_VALID: _bindgen_ty_165 = 1;
+pub const AEGP_RenderReceiptStatus_VALID_BUT_INCOMPLETE: _bindgen_ty_165 = 2;
+pub type _bindgen_ty_165 = ::std::os::raw::c_uint;
 pub type AEGP_RenderReceiptStatus = A_u_long;
-pub const AEGP_BinType_NONE: _bindgen_ty_162 = -1;
-pub const AEGP_BinType_2D: _bindgen_ty_162 = 0;
-pub const AEGP_BinType_3D: _bindgen_ty_162 = 1;
-pub type _bindgen_ty_162 = ::std::os::raw::c_int;
+pub const AEGP_BinType_NONE: _bindgen_ty_166 = -1;
+pub const AEGP_BinType_2D: _bindgen_ty_166 = 0;
+pub const AEGP_BinType_3D: _bindgen_ty_166 = 1;
+pub type _bindgen_ty_166 = ::std::os::raw::c_int;
 pub type AEGP_BinType = A_long;
 pub type AEGP_PlatformWindowRef = *mut ::std::os::raw::c_void;
-pub const AEGP_DisplayChannel_NONE: _bindgen_ty_163 = 0;
-pub const AEGP_DisplayChannel_RED: _bindgen_ty_163 = 1;
-pub const AEGP_DisplayChannel_GREEN: _bindgen_ty_163 = 2;
-pub const AEGP_DisplayChannel_BLUE: _bindgen_ty_163 = 3;
-pub const AEGP_DisplayChannel_ALPHA: _bindgen_ty_163 = 4;
-pub const AEGP_DisplayChannel_RED_ALT: _bindgen_ty_163 = 5;
-pub const AEGP_DisplayChannel_GREEN_ALT: _bindgen_ty_163 = 6;
-pub const AEGP_DisplayChannel_BLUE_ALT: _bindgen_ty_163 = 7;
-pub const AEGP_DisplayChannel_ALPHA_ALT: _bindgen_ty_163 = 8;
-pub const AEGP_DisplayChannel_NUM_ITEMS: _bindgen_ty_163 = 9;
-pub type _bindgen_ty_163 = ::std::os::raw::c_uint;
+pub const AEGP_DisplayChannel_NONE: _bindgen_ty_167 = 0;
+pub const AEGP_DisplayChannel_RED: _bindgen_ty_167 = 1;
+pub const AEGP_DisplayChannel_GREEN: _bindgen_ty_167 = 2;
+pub const AEGP_DisplayChannel_BLUE: _bindgen_ty_167 = 3;
+pub const AEGP_DisplayChannel_ALPHA: _bindgen_ty_167 = 4;
+pub const AEGP_DisplayChannel_RED_ALT: _bindgen_ty_167 = 5;
+pub const AEGP_DisplayChannel_GREEN_ALT: _bindgen_ty_167 = 6;
+pub const AEGP_DisplayChannel_BLUE_ALT: _bindgen_ty_167 = 7;
+pub const AEGP_DisplayChannel_ALPHA_ALT: _bindgen_ty_167 = 8;
+pub const AEGP_DisplayChannel_NUM_ITEMS: _bindgen_ty_167 = 9;
+pub type _bindgen_ty_167 = ::std::os::raw::c_uint;
 pub type AEGP_DisplayChannelType = A_long;
-pub const AEGP_RenderNumEffects_ALL_EFFECTS: _bindgen_ty_164 = -1;
-pub type _bindgen_ty_164 = ::std::os::raw::c_int;
+pub const AEGP_RenderNumEffects_ALL_EFFECTS: _bindgen_ty_168 = -1;
+pub type _bindgen_ty_168 = ::std::os::raw::c_int;
 pub type AEGP_NumEffectsToRenderType = A_short;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -10196,12 +10504,12 @@ pub struct AEGP_LightSuite3 {
         unsafe extern "C" fn(light_layerH: AEGP_LayerH, light_sourceH: AEGP_LayerH) -> A_Err,
     >,
 }
-pub const AEGP_Query_Xform_LAYER: _bindgen_ty_165 = 0;
-pub const AEGP_Query_Xform_WORLD: _bindgen_ty_165 = 1;
-pub const AEGP_Query_Xform_VIEW: _bindgen_ty_165 = 2;
-pub const AEGP_Query_Xform_SCREEN: _bindgen_ty_165 = 3;
+pub const AEGP_Query_Xform_LAYER: _bindgen_ty_169 = 0;
+pub const AEGP_Query_Xform_WORLD: _bindgen_ty_169 = 1;
+pub const AEGP_Query_Xform_VIEW: _bindgen_ty_169 = 2;
+pub const AEGP_Query_Xform_SCREEN: _bindgen_ty_169 = 3;
 #[doc = " the type of source or dst transformation wanted"]
-pub type _bindgen_ty_165 = ::std::os::raw::c_uint;
+pub type _bindgen_ty_169 = ::std::os::raw::c_uint;
 pub type AEGP_QueryXformType = A_u_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -10981,17 +11289,17 @@ pub struct AEGP_PersistentDataSuite4 {
     pub AEGP_GetPrefsDirectory:
         ::std::option::Option<unsafe extern "C" fn(unicode_pathPH: *mut AEGP_MemHandle) -> A_Err>,
 }
-pub const AEGP_CollectionItemType_NONE: _bindgen_ty_171 = 0;
-pub const AEGP_CollectionItemType_LAYER: _bindgen_ty_171 = 1;
-pub const AEGP_CollectionItemType_MASK: _bindgen_ty_171 = 2;
-pub const AEGP_CollectionItemType_EFFECT: _bindgen_ty_171 = 3;
-pub const AEGP_CollectionItemType_STREAM: _bindgen_ty_171 = 4;
-pub const AEGP_CollectionItemType_KEYFRAME: _bindgen_ty_171 = 5;
-pub const AEGP_CollectionItemType_MASK_VERTEX: _bindgen_ty_171 = 6;
-pub const AEGP_CollectionItemType_STREAMREF: _bindgen_ty_171 = 7;
-pub const AEGP_CollectionItemType_END: _bindgen_ty_171 = 8;
-pub const AEGP_CollectionItemType_BEGIN: _bindgen_ty_171 = 1;
-pub type _bindgen_ty_171 = ::std::os::raw::c_uint;
+pub const AEGP_CollectionItemType_NONE: _bindgen_ty_175 = 0;
+pub const AEGP_CollectionItemType_LAYER: _bindgen_ty_175 = 1;
+pub const AEGP_CollectionItemType_MASK: _bindgen_ty_175 = 2;
+pub const AEGP_CollectionItemType_EFFECT: _bindgen_ty_175 = 3;
+pub const AEGP_CollectionItemType_STREAM: _bindgen_ty_175 = 4;
+pub const AEGP_CollectionItemType_KEYFRAME: _bindgen_ty_175 = 5;
+pub const AEGP_CollectionItemType_MASK_VERTEX: _bindgen_ty_175 = 6;
+pub const AEGP_CollectionItemType_STREAMREF: _bindgen_ty_175 = 7;
+pub const AEGP_CollectionItemType_END: _bindgen_ty_175 = 8;
+pub const AEGP_CollectionItemType_BEGIN: _bindgen_ty_175 = 1;
+pub type _bindgen_ty_175 = ::std::os::raw::c_uint;
 pub type AEGP_CollectionItemType = A_LegacyEnumType;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -11010,13 +11318,13 @@ pub struct AEGP_EffectCollectionItem {
     pub layerH: AEGP_LayerH,
     pub index: AEGP_EffectIndex,
 }
-pub const AEGP_StreamCollectionItemType_NONE: _bindgen_ty_172 = 0;
-pub const AEGP_StreamCollectionItemType_LAYER: _bindgen_ty_172 = 1;
-pub const AEGP_StreamCollectionItemType_MASK: _bindgen_ty_172 = 2;
-pub const AEGP_StreamCollectionItemType_EFFECT: _bindgen_ty_172 = 3;
-pub const AEGP_StreamCollectionItemType_END: _bindgen_ty_172 = 4;
-pub const AEGP_StreamCollectionItemType_BEGIN: _bindgen_ty_172 = 1;
-pub type _bindgen_ty_172 = ::std::os::raw::c_uint;
+pub const AEGP_StreamCollectionItemType_NONE: _bindgen_ty_176 = 0;
+pub const AEGP_StreamCollectionItemType_LAYER: _bindgen_ty_176 = 1;
+pub const AEGP_StreamCollectionItemType_MASK: _bindgen_ty_176 = 2;
+pub const AEGP_StreamCollectionItemType_EFFECT: _bindgen_ty_176 = 3;
+pub const AEGP_StreamCollectionItemType_END: _bindgen_ty_176 = 4;
+pub const AEGP_StreamCollectionItemType_BEGIN: _bindgen_ty_176 = 1;
+pub type _bindgen_ty_176 = ::std::os::raw::c_uint;
 pub type AEGP_StreamCollectionItemType = A_LegacyEnumType;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -11113,11 +11421,11 @@ pub struct AEGP_CollectionSuite2 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_WorldType_NONE: _bindgen_ty_173 = 0;
-pub const AEGP_WorldType_8: _bindgen_ty_173 = 1;
-pub const AEGP_WorldType_16: _bindgen_ty_173 = 2;
-pub const AEGP_WorldType_32: _bindgen_ty_173 = 3;
-pub type _bindgen_ty_173 = ::std::os::raw::c_uint;
+pub const AEGP_WorldType_NONE: _bindgen_ty_177 = 0;
+pub const AEGP_WorldType_8: _bindgen_ty_177 = 1;
+pub const AEGP_WorldType_16: _bindgen_ty_177 = 2;
+pub const AEGP_WorldType_32: _bindgen_ty_177 = 3;
+pub type _bindgen_ty_177 = ::std::os::raw::c_uint;
 pub type AEGP_WorldType = A_long;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -11184,18 +11492,18 @@ pub struct AEGP_WorldSuite3 {
         ) -> A_Err,
     >,
 }
-pub const AEGP_MatteMode_STRAIGHT: _bindgen_ty_174 = 0;
-pub const AEGP_MatteMode_PREMUL_BLACK: _bindgen_ty_174 = 1;
-pub const AEGP_MatteMode_PREMUL_BG_COLOR: _bindgen_ty_174 = 2;
-pub type _bindgen_ty_174 = ::std::os::raw::c_uint;
+pub const AEGP_MatteMode_STRAIGHT: _bindgen_ty_178 = 0;
+pub const AEGP_MatteMode_PREMUL_BLACK: _bindgen_ty_178 = 1;
+pub const AEGP_MatteMode_PREMUL_BG_COLOR: _bindgen_ty_178 = 2;
+pub type _bindgen_ty_178 = ::std::os::raw::c_uint;
 pub type AEGP_MatteMode = A_long;
-pub const AEGP_ChannelOrder_ARGB: _bindgen_ty_175 = 0;
-pub const AEGP_ChannelOrder_BGRA: _bindgen_ty_175 = 1;
-pub type _bindgen_ty_175 = ::std::os::raw::c_uint;
+pub const AEGP_ChannelOrder_ARGB: _bindgen_ty_179 = 0;
+pub const AEGP_ChannelOrder_BGRA: _bindgen_ty_179 = 1;
+pub type _bindgen_ty_179 = ::std::os::raw::c_uint;
 pub type AEGP_ChannelOrder = A_char;
-pub const AEGP_ItemQuality_DRAFT: _bindgen_ty_176 = 0;
-pub const AEGP_ItemQuality_BEST: _bindgen_ty_176 = 1;
-pub type _bindgen_ty_176 = ::std::os::raw::c_uint;
+pub const AEGP_ItemQuality_DRAFT: _bindgen_ty_180 = 0;
+pub const AEGP_ItemQuality_BEST: _bindgen_ty_180 = 1;
+pub type _bindgen_ty_180 = ::std::os::raw::c_uint;
 pub type AEGP_ItemQuality = A_char;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -13505,6 +13813,200 @@ pub struct AEGP_MaskOutlineSuite1 {
     pub AEGP_DeleteVertex: ::std::option::Option<
         unsafe extern "C" fn(mask_outlineH: AEGP_MaskOutlineValH, index: AEGP_VertexIndex) -> A_Err,
     >,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_CompSuite12 {
+    pub AEGP_GetCompFromItem: ::std::option::Option<
+        unsafe extern "C" fn(itemH: AEGP_ItemH, compPH: *mut AEGP_CompH) -> A_Err,
+    >,
+    pub AEGP_GetItemFromComp: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, itemPH: *mut AEGP_ItemH) -> A_Err,
+    >,
+    pub AEGP_GetCompDownsampleFactor: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, dsfP: *mut AEGP_DownsampleFactor) -> A_Err,
+    >,
+    pub AEGP_SetCompDownsampleFactor: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, dsfP: *const AEGP_DownsampleFactor) -> A_Err,
+    >,
+    pub AEGP_GetCompBGColor: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, bg_colorP: *mut AEGP_ColorVal) -> A_Err,
+    >,
+    pub AEGP_SetCompBGColor: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, bg_colorP: *const AEGP_ColorVal) -> A_Err,
+    >,
+    pub AEGP_GetCompFlags: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, comp_flagsP: *mut AEGP_CompFlags) -> A_Err,
+    >,
+    pub AEGP_GetShowLayerNameOrSourceName: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, layer_names_shownPB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_SetShowLayerNameOrSourceName: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, show_layer_namesB: A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetShowBlendModes: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, blend_modes_shownPB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_SetShowBlendModes: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, show_blend_modesB: A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetCompFramerate: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, fpsPF: *mut A_FpLong) -> A_Err,
+    >,
+    pub AEGP_SetCompFrameRate: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, fpsPF: *const A_FpLong) -> A_Err,
+    >,
+    pub AEGP_GetCompShutterAnglePhase: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, angle: *mut A_Ratio, phase: *mut A_Ratio) -> A_Err,
+    >,
+    pub AEGP_GetCompShutterFrameRange: ::std::option::Option<
+        unsafe extern "C" fn(
+            compH: AEGP_CompH,
+            comp_timeP: *const A_Time,
+            start: *mut A_Time,
+            duration: *mut A_Time,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetCompSuggestedMotionBlurSamples: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, samplesPL: *mut A_long) -> A_Err,
+    >,
+    pub AEGP_SetCompSuggestedMotionBlurSamples:
+        ::std::option::Option<unsafe extern "C" fn(compH: AEGP_CompH, samplesL: A_long) -> A_Err>,
+    pub AEGP_GetCompMotionBlurAdaptiveSampleLimit: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, samplesPL: *mut A_long) -> A_Err,
+    >,
+    pub AEGP_SetCompMotionBlurAdaptiveSampleLimit:
+        ::std::option::Option<unsafe extern "C" fn(compH: AEGP_CompH, samplesL: A_long) -> A_Err>,
+    pub AEGP_GetCompWorkAreaStart: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, work_area_startPT: *mut A_Time) -> A_Err,
+    >,
+    pub AEGP_GetCompWorkAreaDuration: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, work_area_durationPT: *mut A_Time) -> A_Err,
+    >,
+    pub AEGP_SetCompWorkAreaStartAndDuration: ::std::option::Option<
+        unsafe extern "C" fn(
+            compH: AEGP_CompH,
+            work_area_startPT: *const A_Time,
+            work_area_durationPT: *const A_Time,
+        ) -> A_Err,
+    >,
+    pub AEGP_CreateSolidInComp: ::std::option::Option<
+        unsafe extern "C" fn(
+            utf_nameZ: *const A_UTF16Char,
+            width: A_long,
+            height: A_long,
+            color: *const AEGP_ColorVal,
+            parent_compH: AEGP_CompH,
+            durationPT0: *const A_Time,
+            new_solidPH: *mut AEGP_LayerH,
+        ) -> A_Err,
+    >,
+    pub AEGP_CreateCameraInComp: ::std::option::Option<
+        unsafe extern "C" fn(
+            utf_nameZ: *const A_UTF16Char,
+            center_point: A_FloatPoint,
+            parent_compH: AEGP_CompH,
+            new_cameraPH: *mut AEGP_LayerH,
+        ) -> A_Err,
+    >,
+    pub AEGP_CreateLightInComp: ::std::option::Option<
+        unsafe extern "C" fn(
+            utf_nameZ: *const A_UTF16Char,
+            center_point: A_FloatPoint,
+            parent_compH: AEGP_CompH,
+            new_lightPH: *mut AEGP_LayerH,
+        ) -> A_Err,
+    >,
+    pub AEGP_CreateComp: ::std::option::Option<
+        unsafe extern "C" fn(
+            parent_folderH0: AEGP_ItemH,
+            utf_nameZ: *const A_UTF16Char,
+            widthL: A_long,
+            heightL: A_long,
+            pixel_aspect_ratioPRt: *const A_Ratio,
+            durationPT: *const A_Time,
+            frameratePRt: *const A_Ratio,
+            new_compPH: *mut AEGP_CompH,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetNewCollectionFromCompSelection: ::std::option::Option<
+        unsafe extern "C" fn(
+            plugin_id: AEGP_PluginID,
+            compH: AEGP_CompH,
+            collectionPH: *mut AEGP_Collection2H,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetSelection: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, collectionH: AEGP_Collection2H) -> A_Err,
+    >,
+    pub AEGP_GetCompDisplayStartTime: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, start_timePT: *mut A_Time) -> A_Err,
+    >,
+    pub AEGP_SetCompDisplayStartTime: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, start_timePT: *const A_Time) -> A_Err,
+    >,
+    pub AEGP_SetCompDuration: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, durationPT: *const A_Time) -> A_Err,
+    >,
+    pub AEGP_CreateNullInComp: ::std::option::Option<
+        unsafe extern "C" fn(
+            utf_nameZ: *const A_UTF16Char,
+            parent_compH: AEGP_CompH,
+            durationPT0: *const A_Time,
+            new_null_solidPH: *mut AEGP_LayerH,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetCompPixelAspectRatio: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, pix_aspectratioPRt: *const A_Ratio) -> A_Err,
+    >,
+    pub AEGP_CreateTextLayerInComp: ::std::option::Option<
+        unsafe extern "C" fn(
+            parent_compH: AEGP_CompH,
+            select_new_layerB: A_Boolean,
+            horzB: A_Boolean,
+            new_text_layerPH: *mut AEGP_LayerH,
+        ) -> A_Err,
+    >,
+    pub AEGP_CreateBoxTextLayerInComp: ::std::option::Option<
+        unsafe extern "C" fn(
+            parent_compH: AEGP_CompH,
+            select_new_layerB: A_Boolean,
+            box_dimensions: A_FloatPoint,
+            horzB: A_Boolean,
+            new_text_layerPH: *mut AEGP_LayerH,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetCompDimensions: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, widthL: A_long, heightL: A_long) -> A_Err,
+    >,
+    pub AEGP_DuplicateComp: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, new_compPH: *mut AEGP_CompH) -> A_Err,
+    >,
+    pub AEGP_GetCompFrameDuration:
+        ::std::option::Option<unsafe extern "C" fn(compH: AEGP_CompH, timeP: *mut A_Time) -> A_Err>,
+    pub AEGP_GetMostRecentlyUsedComp:
+        ::std::option::Option<unsafe extern "C" fn(compPH: *mut AEGP_CompH) -> A_Err>,
+    pub AEGP_CreateVectorLayerInComp: ::std::option::Option<
+        unsafe extern "C" fn(
+            parent_compH: AEGP_CompH,
+            new_vector_layerPH: *mut AEGP_LayerH,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetNewCompMarkerStream: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            parent_compH: AEGP_CompH,
+            streamPH: *mut AEGP_StreamRefH,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetCompDisplayDropFrame: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, dropFramePB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_SetCompDisplayDropFrame: ::std::option::Option<
+        unsafe extern "C" fn(compH: AEGP_CompH, dropFrameB: A_Boolean) -> A_Err,
+    >,
+    pub AEGP_ReorderCompSelection:
+        ::std::option::Option<unsafe extern "C" fn(compH: AEGP_CompH, index: A_long) -> A_Err>,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -16502,6 +17004,152 @@ pub union AEGP_StreamVal {
 pub struct AEGP_StreamValue {
     pub streamH: AEGP_StreamRefH,
     pub val: AEGP_StreamVal,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct AEGP_StreamSuite6 {
+    pub AEGP_IsStreamLegal: ::std::option::Option<
+        unsafe extern "C" fn(
+            layerH: AEGP_LayerH,
+            which_stream: AEGP_LayerStream,
+            is_legalP: *mut A_Boolean,
+        ) -> A_Err,
+    >,
+    pub AEGP_CanVaryOverTime: ::std::option::Option<
+        unsafe extern "C" fn(streamH: AEGP_StreamRefH, can_varyPB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetValidInterpolations: ::std::option::Option<
+        unsafe extern "C" fn(
+            streamH: AEGP_StreamRefH,
+            valid_interpolationsP: *mut AEGP_KeyInterpolationMask,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetNewLayerStream: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            layerH: AEGP_LayerH,
+            which_stream: AEGP_LayerStream,
+            streamPH: *mut AEGP_StreamRefH,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetEffectNumParamStreams: ::std::option::Option<
+        unsafe extern "C" fn(effect_refH: AEGP_EffectRefH, num_paramsPL: *mut A_long) -> A_Err,
+    >,
+    pub AEGP_GetNewEffectStreamByIndex: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            effect_refH: AEGP_EffectRefH,
+            param_index: PF_ParamIndex,
+            streamPH: *mut AEGP_StreamRefH,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetNewMaskStream: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            mask_refH: AEGP_MaskRefH,
+            which_stream: AEGP_MaskStream,
+            mask_streamPH: *mut AEGP_StreamRefH,
+        ) -> A_Err,
+    >,
+    pub AEGP_DisposeStream:
+        ::std::option::Option<unsafe extern "C" fn(streamH: AEGP_StreamRefH) -> A_Err>,
+    pub AEGP_GetStreamName: ::std::option::Option<
+        unsafe extern "C" fn(
+            pluginID: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            force_englishB: A_Boolean,
+            utf_stream_namePH: *mut AEGP_MemHandle,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetStreamUnitsText: ::std::option::Option<
+        unsafe extern "C" fn(
+            streamH: AEGP_StreamRefH,
+            force_englishB: A_Boolean,
+            unitsZ: *mut A_char,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetStreamProperties: ::std::option::Option<
+        unsafe extern "C" fn(
+            streamH: AEGP_StreamRefH,
+            flagsP: *mut AEGP_StreamFlags,
+            minP0: *mut A_FpLong,
+            maxP0: *mut A_FpLong,
+        ) -> A_Err,
+    >,
+    pub AEGP_IsStreamTimevarying: ::std::option::Option<
+        unsafe extern "C" fn(streamH: AEGP_StreamRefH, is_timevaryingPB: *mut A_Boolean) -> A_Err,
+    >,
+    pub AEGP_GetStreamType: ::std::option::Option<
+        unsafe extern "C" fn(streamH: AEGP_StreamRefH, stream_typeP: *mut AEGP_StreamType) -> A_Err,
+    >,
+    pub AEGP_GetNewStreamValue: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            time_mode: AEGP_LTimeMode,
+            timePT: *const A_Time,
+            pre_expressionB: A_Boolean,
+            valueP: *mut AEGP_StreamValue2,
+        ) -> A_Err,
+    >,
+    pub AEGP_DisposeStreamValue:
+        ::std::option::Option<unsafe extern "C" fn(valueP: *mut AEGP_StreamValue2) -> A_Err>,
+    pub AEGP_SetStreamValue: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            valueP: *mut AEGP_StreamValue2,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetLayerStreamValue: ::std::option::Option<
+        unsafe extern "C" fn(
+            layerH: AEGP_LayerH,
+            which_stream: AEGP_LayerStream,
+            time_mode: AEGP_LTimeMode,
+            timePT: *const A_Time,
+            pre_expressionB: A_Boolean,
+            stream_valP: *mut AEGP_StreamVal2,
+            stream_typeP0: *mut AEGP_StreamType,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetExpressionState: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            enabledPB: *mut A_Boolean,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetExpressionState: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            enabledB: A_Boolean,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetExpression: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            unicodeHZ: *mut AEGP_MemHandle,
+        ) -> A_Err,
+    >,
+    pub AEGP_SetExpression: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            expressionP: *const A_UTF16Char,
+        ) -> A_Err,
+    >,
+    pub AEGP_DuplicateStreamRef: ::std::option::Option<
+        unsafe extern "C" fn(
+            aegp_plugin_id: AEGP_PluginID,
+            streamH: AEGP_StreamRefH,
+            dup_streamPH: *mut AEGP_StreamRefH,
+        ) -> A_Err,
+    >,
+    pub AEGP_GetUniqueStreamID: ::std::option::Option<
+        unsafe extern "C" fn(streamH: AEGP_StreamRefH, outID: *mut i32) -> A_Err,
+    >,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -19577,6 +20225,17 @@ pub struct AEGP_ItemSuite1 {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct AEGP_ItemViewSuite1 {
+    pub AEGP_GetItemViewPlaybackTime: ::std::option::Option<
+        unsafe extern "C" fn(
+            item_viewP: AEGP_ItemViewP,
+            is_currently_previewingPB0: *mut A_Boolean,
+            curr_timePT: *mut A_Time,
+        ) -> A_Err,
+    >,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct AEGP_UtilitySuite5 {
     pub AEGP_ReportInfo: ::std::option::Option<
         unsafe extern "C" fn(aegp_plugin_id: AEGP_PluginID, info_stringZ: *const A_char) -> A_Err,
@@ -22357,11 +23016,27 @@ pub type PF_PluginDataCB2 = ::std::option::Option<
         inMatchNamePtr: *const A_u_char,
         inCategoryPtr: *const A_u_char,
         inEntryPointNamePtr: *const A_u_char,
-        inkind: A_long,
+        inKind: A_long,
         inApiVersionMajor: A_long,
         inApiVersionMinor: A_long,
         inReservedInfo: A_long,
         inSupportURLPtr: *const A_u_char,
+    ) -> A_Err,
+>;
+pub type PF_PluginDataCB3 = ::std::option::Option<
+    unsafe extern "C" fn(
+        inPtr: PF_PluginDataPtr,
+        inNamePtr: *const A_u_char,
+        inMatchNamePtr: *const A_u_char,
+        inCategoryPtr: *const A_u_char,
+        inEntryPointNamePtr: *const A_u_char,
+        inKind: A_long,
+        inApiVersionMajor: A_long,
+        inApiVersionMinor: A_long,
+        inReservedInfo: A_long,
+        inSupportURLPtr: *const A_u_char,
+        inSearchKeywordsPtr: *const A_u_char,
+        inEffectDescriptionPtr: *const A_u_char,
     ) -> A_Err,
 >;
 pub type PF_PluginDataCB = ::std::option::Option<
@@ -22371,7 +23046,7 @@ pub type PF_PluginDataCB = ::std::option::Option<
         inMatchNamePtr: *const A_u_char,
         inCategoryPtr: *const A_u_char,
         inEntryPointNamePtr: *const A_u_char,
-        inkind: A_long,
+        inKind: A_long,
         inApiVersionMajor: A_long,
         inApiVersionMinor: A_long,
         inReservedInfo: A_long,
@@ -22464,99 +23139,99 @@ pub struct AEGP_HashSuite1 {
         ) -> A_Err,
     >,
 }
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRA_4444_8u: PrPixelFormat = 1634887522;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYA_4444_8u: PrPixelFormat = 1635349878;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYA_4444_8u_709: PrPixelFormat = 1096373590;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_ARGB_4444_8u: PrPixelFormat = 1650946657;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRX_4444_8u: PrPixelFormat = 2020763490;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYX_4444_8u: PrPixelFormat = 2021225846;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYX_4444_8u_709: PrPixelFormat = 930641270;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_XRGB_4444_8u: PrPixelFormat = 1650946680;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRP_4444_8u: PrPixelFormat = 1886545762;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYP_4444_8u: PrPixelFormat = 1887008118;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYP_4444_8u_709: PrPixelFormat = 930116982;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_PRGB_4444_8u: PrPixelFormat = 1650946672;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRA_4444_16u: PrPixelFormat = 1634887490;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYA_4444_16u: PrPixelFormat = 1635349846;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_ARGB_4444_16u: PrPixelFormat = 1650946625;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRX_4444_16u: PrPixelFormat = 2020763458;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_XRGB_4444_16u: PrPixelFormat = 1650946648;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRP_4444_16u: PrPixelFormat = 1886545730;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_PRGB_4444_16u: PrPixelFormat = 1650946640;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRA_4444_32f: PrPixelFormat = 1634879298;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYA_4444_32f: PrPixelFormat = 1635341654;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYA_4444_32f_709: PrPixelFormat = 1633244534;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_ARGB_4444_32f: PrPixelFormat = 1650938433;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRX_4444_32f: PrPixelFormat = 2020755266;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYX_4444_32f: PrPixelFormat = 2021217622;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYX_4444_32f_709: PrPixelFormat = 930633046;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_XRGB_4444_32f: PrPixelFormat = 1650938456;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRP_4444_32f: PrPixelFormat = 1886537538;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYP_4444_32f: PrPixelFormat = 1886999894;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_VUYP_4444_32f_709: PrPixelFormat = 930108758;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_PRGB_4444_32f: PrPixelFormat = 1650938448;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_RGB_444_10u: PrPixelFormat = 826427218;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_YUYV_422_8u_601: PrPixelFormat = 846820729;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_YUYV_422_8u_709: PrPixelFormat = 863597945;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_UYVY_422_8u_601: PrPixelFormat = 2037807477;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_UYVY_422_8u_709: PrPixelFormat = 930511221;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_V210_422_10u_601: PrPixelFormat = 808530550;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_V210_422_10u_709: PrPixelFormat = 825307766;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_UYVY_422_32f_601: PrPixelFormat = 2037799253;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_UYVY_422_32f_709: PrPixelFormat = 930502997;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRA_4444_32f_Linear: PrPixelFormat = 1281443650;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRP_4444_32f_Linear: PrPixelFormat = 1282426690;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_BGRX_4444_32f_Linear: PrPixelFormat = 1282950978;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_ARGB_4444_32f_Linear: PrPixelFormat = 1281839681;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_PRGB_4444_32f_Linear: PrPixelFormat = 1281839696;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_XRGB_4444_32f_Linear: PrPixelFormat = 1281839704;
-#[doc = "\tCurrently supported types"]
+#[doc = "  Currently supported types"]
 pub const PrPixelFormat_PrPixelFormat_RGB_444_12u_PQ_709: PrPixelFormat = 928075840;
 pub const PrPixelFormat_PrPixelFormat_RGB_444_12u_PQ_P3: PrPixelFormat = 1347506240;
 pub const PrPixelFormat_PrPixelFormat_RGB_444_12u_PQ_2020: PrPixelFormat = 844189760;
@@ -22603,7 +23278,7 @@ pub const PrPixelFormat_PrPixelFormat_PALDV100_1080i: PrPixelFormat = 829453924;
 pub const PrPixelFormat_PrPixelFormat_Raw: PrPixelFormat = 2004312434;
 pub const PrPixelFormat_PrPixelFormat_Invalid: PrPixelFormat = 1717854562;
 pub const PrPixelFormat_PrPixelFormat_Any: PrPixelFormat = 0;
-#[doc = "\tPremiere supported pixel formats for RenderFrame and PPixs"]
+#[doc = "  Premiere supported pixel formats for RenderFrame and PPixs"]
 pub type PrPixelFormat = ::std::os::raw::c_uint;
 pub type csSDK_uint32 = ::std::os::raw::c_uint;
 pub type csSDK_int32 = ::std::os::raw::c_int;
@@ -22618,16 +23293,16 @@ pub type PrTime = prInt64;
 pub struct PrSDKString {
     pub opaque: [csSDK_int64; 2usize],
 }
-pub const PF_TimeDisplay_24: _bindgen_ty_180 = 1;
-pub const PF_TimeDisplay_25: _bindgen_ty_180 = 2;
-pub const PF_TimeDisplay_30Drop: _bindgen_ty_180 = 3;
-pub const PF_TimeDisplay_30NonDrop: _bindgen_ty_180 = 4;
-pub const PF_TimeDisplay_50: _bindgen_ty_180 = 5;
-pub const PF_TimeDisplay_60Drop: _bindgen_ty_180 = 6;
-pub const PF_TimeDisplay_60NonDrop: _bindgen_ty_180 = 7;
-pub const PF_TimeDisplay_NonStandard: _bindgen_ty_180 = 8;
-pub const PF_TimeDisplay_Invalid: _bindgen_ty_180 = 9;
-pub type _bindgen_ty_180 = ::std::os::raw::c_uint;
+pub const PF_TimeDisplay_24: _bindgen_ty_184 = 1;
+pub const PF_TimeDisplay_25: _bindgen_ty_184 = 2;
+pub const PF_TimeDisplay_30Drop: _bindgen_ty_184 = 3;
+pub const PF_TimeDisplay_30NonDrop: _bindgen_ty_184 = 4;
+pub const PF_TimeDisplay_50: _bindgen_ty_184 = 5;
+pub const PF_TimeDisplay_60Drop: _bindgen_ty_184 = 6;
+pub const PF_TimeDisplay_60NonDrop: _bindgen_ty_184 = 7;
+pub const PF_TimeDisplay_NonStandard: _bindgen_ty_184 = 8;
+pub const PF_TimeDisplay_Invalid: _bindgen_ty_184 = 9;
+pub type _bindgen_ty_184 = ::std::os::raw::c_uint;
 pub type PF_TimeDisplay = csSDK_uint32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -23061,33 +23736,18 @@ pub struct PF_SourceSettingsSuite {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PF_TransitionSuite {
-    #[doc = "\tRegister an effect as a transition using the passed in\n\tinput layer as the outgoing clip. When registered the effect\n\twill be available to be dragged directly onto clip ends rather\n\tthan only applied to layers."]
+    #[doc = "  Register an effect as a transition using the passed in\n  input layer as the outgoing clip. When registered the effect\n  will be available to be dragged directly onto clip ends rather\n  than only applied to layers."]
     pub RegisterTransitionInputParam: ::std::option::Option<
         unsafe extern "C" fn(inEffectRef: PF_ProgPtr, inIndex: PF_ParamIndex) -> PF_Err,
     >,
-    #[doc = "\tRegister a PF_ADD_FLOAT_SLIDER parameter to receive\n\tchanges to the start of the transition region through the\n\tPF_Cmd_USER_CHANGED_PARAM command."]
+    #[doc = "  Register a PF_ADD_FLOAT_SLIDER parameter to receive\n  changes to the start of the transition region through the\n  PF_Cmd_USER_CHANGED_PARAM command."]
     pub RegisterTransitionStartParam: ::std::option::Option<
         unsafe extern "C" fn(inEffectRef: PF_ProgPtr, inIndex: PF_ParamIndex) -> PF_Err,
     >,
-    #[doc = "\tRegister a PF_ADD_FLOAT_SLIDER parameter to receive\n\tchanges to the end of the transition region through the\n\tPF_Cmd_USER_CHANGED_PARAM command."]
+    #[doc = "  Register a PF_ADD_FLOAT_SLIDER parameter to receive\n  changes to the end of the transition region through the\n  PF_Cmd_USER_CHANGED_PARAM command."]
     pub RegisterTransitionEndParam: ::std::option::Option<
         unsafe extern "C" fn(inEffectRef: PF_ProgPtr, inIndex: PF_ParamIndex) -> PF_Err,
     >,
-}
-#[repr(C)]
-pub struct std_exception__bindgen_vtable(::std::os::raw::c_void);
-#[repr(C)]
-#[derive(Debug)]
-pub struct std_exception {
-    pub vtable_: *const std_exception__bindgen_vtable,
-}
-unsafe extern "C" {
-    #[link_name = "\u{1}__ZNSt9exceptionD1Ev"]
-    pub fn std_exception_exception_destructor(this: *mut std_exception);
-}
-unsafe extern "C" {
-    #[link_name = "\u{1}__ZNKSt9exception4whatEv"]
-    pub fn std_exception_what(this: *mut ::std::os::raw::c_void) -> *const ::std::os::raw::c_char;
 }
 pub type ADOBESDK_UTF16Char = u16;
 pub type ADOBESDK_Boolean = u8;
@@ -23407,10 +24067,10 @@ pub struct DRAWBOT_SaveAndRestoreStateStack {
     pub mSuiteP: *mut DRAWBOT_SurfaceSuite2,
 }
 pub type prSuiteError = csSDK_int32;
-pub const suiteError_InvalidParms: _bindgen_ty_182 = 2147483649;
-pub const suiteError_StringNotFound: _bindgen_ty_182 = 2148139008;
-pub const suiteError_StringBufferTooSmall: _bindgen_ty_182 = 2148139009;
-pub type _bindgen_ty_182 = ::std::os::raw::c_uint;
+pub const suiteError_InvalidParms: _bindgen_ty_186 = 2147483649;
+pub const suiteError_StringNotFound: _bindgen_ty_186 = 2148139008;
+pub const suiteError_StringBufferTooSmall: _bindgen_ty_186 = 2148139009;
+pub type _bindgen_ty_186 = ::std::os::raw::c_uint;
 #[repr(C, packed)]
 #[derive(Debug, Copy, Clone)]
 pub struct PrSDKStringSuite {
