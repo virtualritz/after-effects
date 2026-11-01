@@ -76,7 +76,7 @@ define_suite_item_wrapper!(
         /// Retrieves the original (non-interpreted, un-re-timed) frame rate, of the media to which the effect instance is applied.
         original_clip_frame_rate()                                      ->  PrTime => pf_utility.original_clip_frame_rate,
         /// Retrieves the source media timecode for the specified frame within the specified layer, with or without transforms and start time offsets applied.
-        source_track_media_timecode(layer_param_index: u32, apply_transform: bool, add_start_time_offset: bool)  ->  A_long => pf_utility.source_track_media_timecode,
+        source_track_media_timecode(layer_param_index: u32, apply_transform: pf::suites::utility::ApplyTransform, add_start_time_offset: pf::suites::utility::AddStartTimeOffset)  ->  A_long => pf_utility.source_track_media_timecode,
         /// Retrieves the name of the layer in use by the effect instance.
         source_track_clip_name(layer_param_index: u32, get_master_clip_name: bool)                               ->  String => pf_utility.source_track_clip_name,
         /// Retrieves the file name of the source track item for the specified layer parameter.
@@ -88,7 +88,7 @@ define_suite_item_wrapper!(
         /// Returns a tuple containing `(current_frame, time_display)`
         media_timecode2(apply_trim: bool)                                                                        ->  (i32, PF_TimeDisplay) => pf_utility.media_timecode2,
         /// Given a specific sequence time, retrieves the source track media timecode for the specified layer parameter.
-        source_track_media_timecode2(layer_param_index: u32, apply_transform: bool, add_start_time_offset: bool, sequence_time: PrTime) -> A_long => pf_utility.source_track_media_timecode2,
+        source_track_media_timecode2(layer_param_index: u32, apply_transform: pf::suites::utility::ApplyTransform, add_start_time_offset: pf::suites::utility::AddStartTimeOffset, sequence_time: PrTime) -> A_long => pf_utility.source_track_media_timecode2,
         /// Retrieves the clip name used by the specific layer parameter.
         source_track_clip_name2(layer_param_index: u32, get_master_clip_name: bool, sequence_time: PrTime)       ->  String => pf_utility.source_track_clip_name2,
         /// Retrieves the clip name in use by the specified layer parameter.

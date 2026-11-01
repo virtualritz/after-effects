@@ -2,6 +2,20 @@ use crate::*;
 use crate::aegp::*;
 use ae_sys::{ AEGP_LayerH, AEGP_MaskRefH, AEGP_StreamRefH, AEGP_EffectRefH};
 
+/// Whether a stream change is added to the undo stack.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Undoable { Undoable, NotUndoable }
+impl From<bool> for Undoable {
+    fn from(b: bool) -> Self { if b { Self::Undoable } else { Self::NotUndoable } }
+}
+
+/// Whether a dynamic stream flag is set (enabled) or cleared (disabled).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FlagValue { Enabled, Disabled }
+impl From<bool> for FlagValue {
+    fn from(b: bool) -> Self { if b { Self::Enabled } else { Self::Disabled } }
+}
+
 define_suite!(
     /// Access and manipulate the values of a layer's streams. For paint and text streams, use [`DynamicStreamSuite`] instead.
     StreamSuite,
@@ -276,9 +290,9 @@ impl DynamicStreamSuite {
     ///
     /// This call may be used to dynamically show or hide parameters, by setting and clearing [`DynamicStreamFlags::Hidden`].
     /// However, [`DynamicStreamFlags::Disabled`] may not be set.
-    pub fn set_dynamic_stream_flag(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>, flag: DynamicStreamFlags, undoable: bool, enabled: bool) -> Result<(), Error> {
+    pub fn set_dynamic_stream_flag(&self, stream_ref: impl AsPtr<AEGP_StreamRefH>, flag: DynamicStreamFlags, undoable: Undoable, enabled: FlagValue) -> Result<(), Error> {
         debug_assert_eq!(flag.bits().count_ones(), 1, "AEGP_SetDynamicStreamFlag expects a single flag");
-        call_suite_fn!(self, AEGP_SetDynamicStreamFlag, stream_ref.as_ptr(), flag.bits(), undoable as _, enabled as _)
+        call_suite_fn!(self, AEGP_SetDynamicStreamFlag, stream_ref.as_ptr(), flag.bits(), matches!(undoable, Undoable::Undoable) as _, matches!(enabled, FlagValue::Enabled) as _)
     }
 
     /// Retrieves a sub-stream by index from a given [`StreamReferenceHandle`]. Cannot be used on streams of type [`StreamGroupingType::Leaf`].
@@ -1033,7 +1047,7 @@ define_suite_item_wrapper!(
         ///
         /// This call may be used to dynamically show or hide parameters, by setting and clearing [`DynamicStreamFlags::Hidden`].
         /// However, [`DynamicStreamFlags::Disabled`] may not be set.
-        set_dynamic_stream_flag(flag: DynamicStreamFlags, undoable: bool, enabled: bool) -> () => dynamic.set_dynamic_stream_flag,
+        set_dynamic_stream_flag(flag: DynamicStreamFlags, undoable: Undoable, enabled: FlagValue) -> () => dynamic.set_dynamic_stream_flag,
 
         /// Retrieves a sub-stream by index from a given [`Stream`]. Cannot be used on streams of type [`StreamGroupingType::Leaf`].
         new_stream_by_index(plugin_id: PluginId, index: i32) -> StreamReferenceHandle => dynamic.new_stream_ref_by_index,

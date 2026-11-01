@@ -325,9 +325,9 @@ impl AdobePluginInstance for Instance {
                         let checkbox_stream = me.new_stream_by_index(plugin_id, params.index(Params::Checkbox).unwrap() as _)?;
 
                         // Toggle visibility of parameters
-                        color_stream   .set_dynamic_stream_flag(ae::aegp::DynamicStreamFlags::Hidden, false, hide_them)?;
-                        slider_stream  .set_dynamic_stream_flag(ae::aegp::DynamicStreamFlags::Hidden, false, hide_them)?;
-                        checkbox_stream.set_dynamic_stream_flag(ae::aegp::DynamicStreamFlags::Hidden, false, hide_them)?;
+                        color_stream   .set_dynamic_stream_flag(ae::aegp::DynamicStreamFlags::Hidden, false.into(), hide_them.into())?;
+                        slider_stream  .set_dynamic_stream_flag(ae::aegp::DynamicStreamFlags::Hidden, false.into(), hide_them.into())?;
+                        checkbox_stream.set_dynamic_stream_flag(ae::aegp::DynamicStreamFlags::Hidden, false.into(), hide_them.into())?;
 
                         // Change popup menu items
                         let param_union = me.param_union_by_index(plugin_id, params.index(Params::Flavor).unwrap() as _)?;
