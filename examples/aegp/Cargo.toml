@@ -14,7 +14,7 @@ after-effects = { path = "../../after-effects" }
 image = { version = "0.25.10", default-features = false, features = ["png"] }
 homedir = "0.3.6"
 raw-window-handle = "0.6.2"
-rfd = "0.17.2"
+rfd = "0.18.0"
 
 [build-dependencies]
 pipl = { path = "../../pipl" }
